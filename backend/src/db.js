@@ -42,6 +42,9 @@ const Post = sequelize.define('Post', {
   sponsorDescription: { type: DataTypes.STRING(200), allowNull: true },
   sponsorCta: { type: DataTypes.STRING(30), allowNull: true },
   sponsorUrl: { type: DataTypes.STRING(1024), allowNull: true },
+  topic: { type: DataTypes.STRING(64), allowNull: true },
+  allowRemix: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+  isAiGenerated: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
 }, {
   tableName: 'posts',

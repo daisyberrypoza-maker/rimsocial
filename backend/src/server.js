@@ -87,6 +87,9 @@ async function start() {
   if (!currentPostColumns.sponsorDescription) await qi.addColumn('posts', 'sponsorDescription', { type: DataTypes.STRING(200), allowNull: true });
   if (!currentPostColumns.sponsorCta) await qi.addColumn('posts', 'sponsorCta', { type: DataTypes.STRING(30), allowNull: true });
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
+  if (!currentPostColumns.topic) await qi.addColumn('posts', 'topic', { type: DataTypes.STRING(64), allowNull: true });
+  if (!currentPostColumns.allowRemix) await qi.addColumn('posts', 'allowRemix', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true });
+  if (!currentPostColumns.isAiGenerated) await qi.addColumn('posts', 'isAiGenerated', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   await seedGifts();
   app.listen(config.port, () => console.log(`Clipverse API on http://localhost:${config.port}`));
 }

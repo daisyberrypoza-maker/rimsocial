@@ -16,6 +16,9 @@ function toPostDTO(post) {
     sponsorDescription: p.sponsorDescription || null,
     sponsorCta: p.sponsorCta || null,
     sponsorUrl: p.sponsorUrl || null,
+    topic: p.topic || null,
+    allowRemix: p.allowRemix !== false,
+    isAiGenerated: Boolean(p.isAiGenerated),
     createdAt: p.createdAt,
     expiresAt: p.expiresAt || null,
     author: p.author

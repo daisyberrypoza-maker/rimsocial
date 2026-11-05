@@ -16,6 +16,9 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     const sponsorDescription = String(req.body.sponsorDescription || '').trim().slice(0, 200);
     const sponsorCta = String(req.body.sponsorCta || 'Shop Now').trim().slice(0, 30);
     const sponsorUrl = String(req.body.sponsorUrl || '').trim().slice(0, 1024);
+    const topic = String(req.body.topic || '').trim().replace(/^#/, '').slice(0, 64) || null;
+    const allowRemix = req.body.allowRemix !== 'false';
+    const isAiGenerated = req.body.isAiGenerated === 'true';
     if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
@@ -26,6 +29,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       sponsorDescription: isSponsored ? sponsorDescription : null,
       sponsorCta: isSponsored ? (sponsorCta || 'Shop Now') : null,
       sponsorUrl: isSponsored ? sponsorUrl : null,
+      topic, allowRemix, isAiGenerated,
     });
     if (visibility === 'public') {
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });

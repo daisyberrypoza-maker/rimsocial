@@ -747,3 +747,43 @@ input:focus { border-color:#4c5cff; }
 .post-menu-item:nth-of-type(3), .post-menu-item:nth-of-type(4) { color: var(--danger); }
 .post-report-reason { display: block; margin: 12px 0 4px; color: var(--muted); font-size: 13px; }
 .post-report-reason select { margin-top: 6px; }
+
+
+/* Screenshot-aligned creator composer and device media picker */
+.upload-page { padding:0 0 calc(104px + env(safe-area-inset-bottom, 0px)); background:#f7f8fc; }
+.upload-refresh { max-width:620px; margin:12px auto 24px; border-radius:18px; padding:16px; box-shadow:0 4px 20px rgba(22,34,66,.04); }
+.upload-heading { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.upload-heading .icon-button { flex:none; width:38px; height:38px; padding:0; display:grid; place-items:center; background:#eef1ff; color:#3447c8; border-radius:50%; }
+.upload-heading h2 { margin:0 0 3px; font-size:20px; }
+.upload-heading p { margin:0; }
+.upload-picker { width:100%; min-height:174px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:1.5px dashed #b8c2f6; border-radius:16px; background:#f7f8ff; color:#20243a; padding:22px 14px; }
+.upload-picker small { color:#737b91; font-weight:500; }
+.upload-picker-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:50%; background:#e5eaff; color:#4053df; font-size:30px; font-weight:400; }
+.reel-picker { padding:12px; border:1px solid var(--line); border-radius:16px; background:#fff; margin:10px 0 18px; }
+.reel-picker-head { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:14px; }
+.reel-picker-head span { color:var(--muted); font-size:12px; }
+.reel-picker-tabs { display:flex; gap:7px; overflow-x:auto; padding:12px 0; scrollbar-width:none; }
+.reel-picker-tabs button { flex:none; background:#f1f3f8; color:#606779; padding:8px 13px; font-size:13px; }
+.reel-picker-tabs button.on { background:#4b5cff; color:#fff; }
+.upload-preview-wrap { position:relative; overflow:hidden; border-radius:14px; background:#10121a; }
+.upload-preview { display:block; width:100%; max-height:390px; object-fit:contain; }
+.upload-change { position:absolute; bottom:10px; right:10px; }
+.upload-label { display:block; margin:14px 0 7px; font-weight:700; font-size:14px; }
+.upload-caption { width:100%; min-height:105px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:12px; color:var(--text); background:#fff; font:inherit; }
+.upload-caption-meta { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:11px; margin-top:6px; }
+.upload-extra-fields input { margin:0; }
+.upload-privacy { border:1px solid var(--line); border-radius:14px; padding:12px; margin:18px 0; min-width:0; }
+.upload-privacy legend { padding:0 5px; font-weight:750; font-size:14px; }
+.upload-privacy > label { display:flex; align-items:flex-start; gap:10px; border:1px solid transparent; border-radius:10px; padding:10px; margin:4px 0; cursor:pointer; }
+.upload-privacy > label.selected { background:#f3f5ff; border-color:#dce1ff; }
+.upload-privacy > label input { width:18px; height:18px; flex:none; margin:2px 0 0; accent-color:#4b5cff; }
+.upload-privacy > label span { display:flex; flex-direction:column; gap:4px; }
+.upload-privacy > label small { color:var(--muted); line-height:1.4; font-size:12px; }
+.mention-preview { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:10px 0; font-size:12px; color:var(--muted); }
+.mention-chip { background:#edf0ff; color:#3447c8; border-radius:999px; padding:5px 9px; }
+.remix-credit { margin:10px 0 0; padding:10px; border-radius:10px; background:#f1f3ff; color:#343f8d; font-size:13px; line-height:1.4; }
+.upload-footer-actions { display:flex; gap:10px; margin-top:18px; }
+.upload-footer-actions > button { flex:1; min-width:0; }
+.upload-submit { width:100%; background:#4b5cff; color:#fff; padding:13px 16px; }
+.upload-public-note { color:#3447c8; font-size:13px; }
+@media (max-width:680px) { .upload-refresh { margin:8px 10px 18px; padding:14px; } .upload-caption-meta { align-items:flex-start; } .upload-caption-meta span:first-child { max-width:72%; } }
