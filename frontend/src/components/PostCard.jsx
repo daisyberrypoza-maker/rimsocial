@@ -139,6 +139,7 @@ export default function PostCard({ post, active }) {
     {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
       : <img src={src} alt="" loading="lazy" />}
     <div className="shade" />
+    {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
       <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
@@ -153,8 +154,13 @@ export default function PostCard({ post, active }) {
     <div className="info">
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
-      <div className="meta-row">{formatCount(post.viewCount)} views</div>
-      <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+      {post.isSponsored ? <>
+        <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
+        {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
+      </> : <>
+        <div className="meta-row">{formatCount(post.viewCount)} views</div>
+        <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+      </>}
     </div>
     {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>
       <section className="sheet repost-sheet" role="dialog" aria-label="Repost" onClick={(e) => e.stopPropagation()}>
