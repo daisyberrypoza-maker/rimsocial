@@ -34,6 +34,11 @@ export default function Upload() {
   const [mentionResults, setMentionResults] = useState([]);
   const templates = [{ label: 'Behind the scenes', caption: 'Behind the scenes 🎬 ' }, { label: 'Quick tutorial', caption: 'Here is how I do it: ' }, { label: 'My latest', caption: 'My latest update ✨ ' }];
 
+  // Preserve all composer fields when one field changes; the store setter replaces the draft object.
+  function updateDraft(patch) {
+    setDraft({ ...draft, ...patch });
+  }
+
   useEffect(() => {
     const query = mentionQuery.trim().replace(/^@/, '');
     if (!query) { setMentionResults([]); return undefined; }
