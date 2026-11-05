@@ -282,3 +282,10 @@ summary { cursor: pointer; padding: 6px 0; }
 .suggestion-person strong,.suggestion-person small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:136px; }
 .suggestion-person small { font-size:11px; color:var(--muted); font-weight:500; }
 .suggestion-follow { width:100%; padding:8px 10px; }
+
+
+.post-more-icon { display:block; color:#fff; font-weight:800; letter-spacing:2px; font-size:18px; line-height:18px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+.post-menu { position:absolute; z-index:8; right:64px; bottom:170px; width:min(230px,65vw); display:flex; flex-direction:column; padding:7px; border:1px solid rgba(255,255,255,.16); border-radius:16px; background:rgba(18,18,25,.96); box-shadow:0 10px 35px rgba(0,0,0,.35); backdrop-filter:blur(16px); }
+.post-menu button { width:100%; text-align:left; border-radius:10px; padding:12px; background:transparent; color:var(--text); font-weight:600; }
+.post-menu button:active { background:var(--surface-2); }
+.post-menu button:disabled { opacity:.55; }
