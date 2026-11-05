@@ -15,6 +15,8 @@ export default function Feed({ tab }) {
   const setFeed = useAppStore((s) => s.setFeed);
   const containerRef = useRef(null);
   const saveTimer = useRef(null);
+  const touchStartY = useRef(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const items = cached?.items || [];
@@ -44,6 +46,13 @@ export default function Feed({ tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  async function pullToRefresh(e) {
+    const delta = e.changedTouches[0].clientY - touchStartY.current;
+    if (delta < 85 || containerRef.current?.scrollTop > 0 || refreshing) return;
+    setRefreshing(true);
+    try { await run(true); } finally { setRefreshing(false); }
+  }
+
   function onScroll(e) {
     const el = e.currentTarget;
     const idx = Math.round(el.scrollTop / el.clientHeight);
@@ -59,7 +68,8 @@ export default function Feed({ tab }) {
   return (
     <>
       {tab === 'discover' && <StoryRail />}
-      <div className="feed" ref={containerRef} onScroll={onScroll}>
+      <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
+        {refreshing && <div className="feed-refresh-indicator"><span className="refresh-spinner" /> Refreshing</div>}
         {items.map((p, i) =>
           Math.abs(i - active) <= WINDOW
             ? <PostCard key={p.id} post={p} active={i === active} />

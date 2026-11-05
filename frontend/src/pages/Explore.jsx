@@ -22,7 +22,11 @@ export default function Explore() {
   const [searchType, setSearchType] = useState('all');
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [followBusy, setFollowBusy] = useState({});
+  const [recommendations, setRecommendations] = useState({ suggested: [], followBack: [] });
   const sentinel = useRef(null);
+  const touchStartY = useRef(0);
+  const [refreshing, setRefreshing] = useState(false);
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
 
@@ -32,6 +36,10 @@ export default function Explore() {
       .catch((e) => toast(e.message))
       .finally(() => setLoading(false));
   }
+
+  useEffect(() => {
+    api('/v1/users/suggestions').then(setRecommendations).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const stale = !cached?.updatedAt || Date.now() - cached.updatedAt > STALE_AFTER_MS;
@@ -49,6 +57,16 @@ export default function Explore() {
     return () => io.disconnect();
   }, [hasMore, loading, items.length, results]);
 
+  async function refreshExplore() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      if (results && query.trim()) setResults(await api(`/v1/search?q=${encodeURIComponent(query.trim())}&type=${searchType}`));
+      else await more(true);
+    } catch (e) { toast(e.message); }
+    finally { setRefreshing(false); }
+  }
+
   async function search(e) {
     e?.preventDefault();
     const q = query.trim();
@@ -57,6 +75,25 @@ export default function Explore() {
     try { setResults(await api(`/v1/search?q=${encodeURIComponent(q)}&type=${searchType}`)); }
     catch (err) { toast(err.message); }
     finally { setSearching(false); }
+  }
+
+  async function toggleFollow(person) {
+    if (followBusy[person.id]) return;
+    setFollowBusy((current) => ({ ...current, [person.id]: true }));
+    try {
+      const response = person.isFollowing
+        ? await api(`/v1/users/${person.id}/follow`, { method: 'DELETE' })
+        : await api(`/v1/users/${person.id}/follow`, { method: 'POST' });
+      const updatePerson = (item) => item.id === person.id
+        ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
+        : item;
+      setResults((current) => current ? ({ ...current, people: (current.people || []).map(updatePerson) }) : current);
+      setRecommendations((current) => ({
+        suggested: current.suggested.map(updatePerson),
+        followBack: current.followBack.map(updatePerson),
+      }));
+    } catch (err) { toast(err.message); }
+    finally { setFollowBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
   function searchHashtag(tag) {
@@ -74,7 +111,7 @@ export default function Explore() {
   }, [searchParams]);
 
   return (
-    <div className="page explore-page">
+    <div className="page explore-page" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>\n      {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing Explore…</div>}
       <form className="explore-search" onSubmit={search}>
         <Icon name="search" size={21} />
         <input aria-label="Search creators, posts and hashtags" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people, videos, #hashtags" />
@@ -86,13 +123,28 @@ export default function Explore() {
       </div>
 
       {results ? <>
-        {results.people?.length > 0 && <section className="people-results"><h3>People</h3>{results.people.map((person) => <button className="person-result" key={person.id} onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={46} /><span><strong>{person.displayName}</strong><small>@{person.username} · {formatCount(person.followerCount)} followers</small></span><Icon name="chevron" size={20} /></button>)}</section>}
-        {results.posts?.length > 0 && <><h3 className="explore-section-title">Posts</h3><div className="grid">{results.posts.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/u/${p.author?.username}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div></>}
+        {results.people?.length > 0 && <section className="people-results"><h3>People</h3>{results.people.map((person) => <div className="person-result" key={person.id}><button className="person-result-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={46} /><span><strong>{person.displayName}</strong><small>@{person.username} · {formatCount(person.followerCount)} followers</small></span></button><button className={person.isFollowing ? 'follow-result following' : 'follow-result'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button></div>)}</section>}
+        {results.posts?.length > 0 && <><h3 className="explore-section-title">Posts</h3><div className="grid">{results.posts.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div></>}
         {!results.people?.length && !results.posts?.length && <p className="muted center">No results yet. Try another name or hashtag.</p>}
       </> : <>
-        <div className="explore-heading"><h2>Explore</h2><span className="muted">Find your next favourite</span></div>
+        <div className="explore-heading"><h2>Discover people</h2><span className="muted">Creators you may know</span></div>
+        {recommendations.suggested.length > 0 && <section className="discover-people-section">
+          <div className="discover-section-heading"><h3>Suggested for you</h3><button type="button" onClick={() => navigate('/explore?q=')}>See all</button></div>
+          {recommendations.suggested.map((person) => <div className="discover-person-row" key={person.id}>
+            <button className="discover-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={54} /><span><strong>{person.displayName || person.username}</strong><small>@{person.username} · Suggested for you</small></span></button>
+            <button className={person.isFollowing ? 'discover-follow following' : 'discover-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+          </div>)}
+        </section>}
+        {recommendations.followBack.length > 0 && <section className="discover-people-section">
+          <div className="discover-section-heading"><h3>Follow back</h3><button type="button" onClick={() => navigate('/explore?q=')}>See all</button></div>
+          {recommendations.followBack.map((person) => <div className="discover-person-row" key={person.id}>
+            <button className="discover-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={54} /><span><strong>{person.displayName || person.username}</strong><small>@{person.username} · Follows you</small></span></button>
+            <button className={person.isFollowing ? 'discover-follow following' : 'discover-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
+          </div>)}
+        </section>}
+        <div className="explore-section-title">Explore posts</div>
         <div className="hashtag-chips"><button onClick={() => searchHashtag('fyp')}>#fyp</button><button onClick={() => searchHashtag('trending')}>#trending</button><button onClick={() => searchHashtag('comedy')}>#comedy</button><button onClick={() => searchHashtag('music')}>#music</button></div>
-        <div className="grid">{items.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/u/${p.author?.username}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div>
+        <div className="grid">{items.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div>
         <div ref={sentinel} className="sentinel" />{loading && <p className="muted center">Loading…</p>}{!items.length && !loading && <p className="muted center">Nothing to explore yet.</p>}
       </>}
     </div>
