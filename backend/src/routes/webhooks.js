@@ -52,6 +52,7 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
       await LedgerEntry.create({
         userId: metadata.userId, kind: 'coin_purchase', deltaMinor: amount, refId: reference,
       }, { transaction: t });
+      await Wallet.findOrCreate({ where: { userId: metadata.userId }, defaults: { userId: metadata.userId }, transaction: t });
       await Wallet.increment('coinBalance', { by: coins, where: { userId: metadata.userId }, transaction: t });
     });
   } catch (e) {
