@@ -31,7 +31,7 @@ router.get('/:username/posts', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
     res.json(await feed.pagePosts({
-      where: { authorId: user.id, status: 'live', isStory: false },
+      where: { authorId: user.id, status: 'live', isStory: false, ...(user.id === req.user.id ? {} : { visibility: 'public' }) },
       cursor: req.query.cursor,
       limit: feed.clampLimit(req.query.limit),
     }));
