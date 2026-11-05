@@ -1,4 +1,4 @@
-const { sequelize, Wallet, Gift, Post, EarningsWallet, GiftTransaction, LedgerEntry, LiveMatch } = require('../db');
+const { sequelize, Wallet, Gift, Post, User, EarningsWallet, GiftTransaction, LedgerEntry, LiveMatch } = require('../db');
 const config = require('../config');
 const { Op } = require('sequelize');
 const httpError = require('../utils/httpError');
@@ -6,7 +6,10 @@ const httpError = require('../utils/httpError');
 async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
   // Fast path: a retry of a completed gift returns the original result
   const existing = await GiftTransaction.findOne({ where: { idempotencyKey } });
-  if (existing) return { id: existing.id, duplicate: true };
+  if (existing) {
+    if (existing.senderId !== senderId) throw httpError(409, 'Idempotency-Key has already been used by another account');
+    return { id: existing.id, duplicate: true };
+  }
 
   try {
     return await sequelize.transaction(async (t) => {
@@ -14,9 +17,11 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
       if (!gift) throw httpError(404, 'Gift not available');
       const coins = gift.coinPrice;
 
-      const post = await Post.findOne({ where: { id: postId, status: 'live' }, transaction: t });
-      if (!post) throw httpError(404, 'Post not found');
+      const post = await Post.findOne({ where: { id: postId, status: 'live', isStory: false, visibility: 'public' }, transaction: t });
+      if (!post) throw httpError(404, 'Public post not found');
       if (post.authorId === senderId) throw httpError(400, 'You cannot gift your own post');
+      const creator = await User.findByPk(post.authorId, { attributes: ['id', 'isCreator'], transaction: t });
+      if (!creator?.isCreator) throw httpError(409, 'This account has not enabled creator monetization');
 
       // Row lock stops two concurrent gifts from overspending the balance
       const wallet = await Wallet.findOne({
@@ -58,7 +63,11 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
     });
   } catch (err) {
     // Two parallel retries hit the unique idempotency key: treat as success
-    if (err.name === 'SequelizeUniqueConstraintError') return { duplicate: true };
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      const duplicate = await GiftTransaction.findOne({ where: { idempotencyKey } });
+      if (duplicate?.senderId === senderId) return { id: duplicate.id, duplicate: true };
+      if (duplicate) throw httpError(409, 'Idempotency-Key has already been used by another account');
+    }
     throw err;
   }
 }
