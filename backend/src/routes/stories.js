@@ -35,6 +35,29 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
   } catch (e) { next(e); }
 });
 
+// Reshare a public story to the current user's story rail for a fresh 24-hour window.
+router.post('/:id/repost', requireAuth, async (req, res, next) => {
+  try {
+    const original = await Post.findOne({
+      where: { id: req.params.id, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
+      include: [{ model: require('../db').User, as: 'author', attributes: ['username'] }],
+    });
+    if (!original) throw httpError(404, 'Story not found or expired');
+    if (original.authorId === req.user.id) throw httpError(400, 'This is your own story');
+    const story = await Post.create({
+      authorId: req.user.id,
+      kind: original.kind,
+      mediaUrl: original.mediaUrl,
+      thumbUrl: original.thumbUrl,
+      caption: `Shared from @${original.author?.username || 'creator'}: ${original.caption || ''}`.slice(0, 200),
+      isStory: true,
+      visibility: 'public',
+      expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
+    });
+    res.status(201).json(toPostDTO(story));
+  } catch (e) { next(e); }
+});
+
 // POST /v1/stories/:id/view  (counted once per viewer)
 router.post('/:id/view', requireAuth, async (req, res, next) => {
   try {

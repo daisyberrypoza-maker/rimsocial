@@ -14,6 +14,7 @@ module.exports = {
   },
   redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
   paystackSecret: process.env.PAYSTACK_SECRET || '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   adminApiKey: process.env.ADMIN_API_KEY || '',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,https://localhost,capacitor://localhost')

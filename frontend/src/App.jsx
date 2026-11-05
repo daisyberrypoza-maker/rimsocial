@@ -12,6 +12,8 @@ import Explore from './pages/Explore.jsx';
 import Upload from './pages/Upload.jsx';
 import Profile from './pages/Profile.jsx';
 import CreatorStudio from './pages/CreatorStudio.jsx';
+import PostDetail from './pages/PostDetail.jsx';
+import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -56,14 +58,16 @@ export default function App() {
 
   return (
     <div className="app">
-      {showChrome && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && location.pathname !== '/upload' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
+        <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

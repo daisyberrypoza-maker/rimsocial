@@ -1,4 +1,4 @@
-const { Op, Post, User } = require('../db');
+const { Op, Post, User, Follow } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor } = require('../lib/cursor');
@@ -41,21 +41,44 @@ async function pagePosts({ where, include = [authorInclude()], cursor, limit }) 
 }
 
 // Discover: newest public posts in the viewer's country. First page is cached briefly.
-async function getDiscoverPage({ country, cursor, limit }) {
+async function getDiscoverPage({ userId, cursor, limit }) {
   const n = clampLimit(limit);
-  const cacheKey = !cursor && n === config.feedPageSize ? `feed:discover:${country}` : null;
-  if (cacheKey) {
-    const hit = await redis.get(cacheKey);
-    if (hit) return JSON.parse(hit);
+  const parsed = /^rank:(\\d+)$/.exec(String(cursor || ''));
+  const offset = parsed ? Number(parsed[1]) : 0;
+  const cacheKey = `feed:discover:ranked:${userId}`;
+  let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
+
+  if (!ids) {
+    const [candidates, follows] = await Promise.all([
+      Post.findAll({
+        where: { status: 'live', isStory: false, visibility: 'public' },
+        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
+        order: [['createdAt', 'DESC']], limit: 500, raw: true,
+      }),
+      Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
+    ]);
+    const followed = new Set(follows.map((f) => f.followeeId));
+    const now = Date.now();
+    ids = candidates.map((p) => {
+      const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
+      const freshness = 12 * Math.exp(-ageHours / 48);
+      const engagement = Math.log1p(Number(p.viewCount) || 0) * 1.2
+        + (Number(p.likeCount) || 0) * 2
+        + (Number(p.repostCount) || 0) * 3
+        + Math.log1p(Number(p.giftCoins) || 0) * 1.5;
+      const community = followed.has(p.authorId) ? 5 : 0;
+      return { id: p.id, score: freshness + engagement + community, createdAt: new Date(p.createdAt).getTime() };
+    }).sort((a, b) => b.score - a.score || b.createdAt - a.createdAt).map((p) => p.id);
+    await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
   }
-  const page = await pagePosts({
-    where: { status: 'live', isStory: false },
-    include: [authorInclude({ where: { country }, required: true })],
-    cursor,
-    limit: n,
-  });
-  if (cacheKey) await redis.set(cacheKey, JSON.stringify(page), 'EX', 30);
-  return page;
+
+  const pageIds = ids.slice(offset, offset + n + 1);
+  const hasMore = pageIds.length > n;
+  const page = await hydrate(pageIds.slice(0, n));
+  return {
+    items: page.map(toPostDTO),
+    nextCursor: hasMore ? `rank:${offset + n}` : null,
+  };
 }
 
 // Following: a Redis sorted set per user (score = post time), filled on post.
@@ -90,7 +113,7 @@ async function getFollowingPage({ userId, cursor, limit }) {
 async function hydrate(ids) {
   if (!ids.length) return [];
   const rows = await Post.findAll({
-    where: { id: ids, status: 'live', isStory: false },
+    where: { id: ids, status: 'live', isStory: false, visibility: 'public' },
     include: [authorInclude()],
   });
   const byId = new Map(rows.map((r) => [r.id, r]));

@@ -27,8 +27,10 @@ app.use('/v1/posts', require('./routes/posts'));
 app.use('/v1/feed', require('./routes/feed'));
 app.use('/v1/stories', require('./routes/stories'));
 app.use('/v1/users', require('./routes/users'));
+app.use('/v1/search', require('./routes/search'));
 app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
+app.use('/v1/live', require('./routes/live'));
 app.use('/v1/admin', require('./routes/admin'));
 
 app.use('/v1', (req, res) => res.status(404).json({ error: 'Not found' }));
@@ -68,6 +70,14 @@ async function start() {
   const payoutColumns = await qi.describeTable('payouts');
   if (!payoutColumns.providerTransferCode) {
     await qi.addColumn('payouts', 'providerTransferCode', { type: require('sequelize').DataTypes.STRING(128), allowNull: true });
+  }
+  // Additive social-feature upgrade for existing installations. Never drop user content.
+  const postColumns = await qi.describeTable('posts');
+  if (!postColumns.repostCount) {
+    await qi.addColumn('posts', 'repostCount', { type: require('sequelize').DataTypes.INTEGER, allowNull: false, defaultValue: 0 });
+  }
+  if (!postColumns.visibility) {
+    await qi.addColumn('posts', 'visibility', { type: require('sequelize').DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' });
   }
   await seedGifts();
   app.listen(config.port, () => console.log(`Clipverse API on http://localhost:${config.port}`));
