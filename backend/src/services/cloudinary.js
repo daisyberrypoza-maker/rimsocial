@@ -47,8 +47,8 @@ function multipart(fields, file) {
     chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`));
   }
   if (file) {
-    const filename = path.basename(file.originalname || 'upload');
-    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename.replace(/"/g, '')}"\r\nContent-Type: ${file.mimetype || 'application/octet-stream'}\r\n\r\n`));
+    const filename = path.basename(file.originalname || 'upload').replace(/"/g, '');
+    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${file.mimetype || 'application/octet-stream'}\r\n\r\n`));
     chunks.push(file.buffer);
     chunks.push(Buffer.from('\r\n'));
   }
@@ -57,17 +57,17 @@ function multipart(fields, file) {
 }
 async function uploadFile(file, folder = 'rimsocial') {
   if (!file) throw new Error('Missing uploaded file');
-  const { cloudName, apiKey, apiSecret } = credentials();
-  const params = { folder, timestamp: String(Math.floor(Date.now() / 1000)) };
-  const fields = { ...params, api_key: apiKey, signature: signature(params, apiSecret) };
-  const payload = { ...file, buffer: file.buffer || await fs.promises.readFile(file.path) };
-  const resourceType = String(file.mimetype || '').startsWith('video/') ? 'video' : 'image';
   try {
-    const form = multipart(fields, payload);
+    const { cloudName, apiKey, apiSecret } = credentials();
+    const params = { folder, timestamp: String(Math.floor(Date.now() / 1000)) };
+    const fields = { ...params, api_key: apiKey, signature: signature(params, apiSecret) };
+    const buffer = file.buffer || await fs.promises.readFile(file.path);
+    const form = multipart(fields, { ...file, buffer });
+    const resourceType = String(file.mimetype || '').startsWith('video/') ? 'video' : 'image';
     const result = await request(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, form.body, form.contentType);
     return { url: result.secure_url, publicId: result.public_id, resourceType: result.resource_type };
   } finally {
-    if (file.path) fs.promises.unlink(file.path).catch(() => {});
+    if (file.path) await fs.promises.unlink(file.path).catch(() => {});
   }
 }
 async function deleteAsset(publicId, resourceType = 'image') {
@@ -85,9 +85,8 @@ function publicIdFromUrl(url) {
     const parts = parsed.pathname.split('/');
     const uploadIndex = parts.indexOf('upload');
     if (uploadIndex < 0) return null;
-    const afterVersion = parts.slice(uploadIndex + 1).filter((p) => !/^v\d+$/.test(p));
-    const last = afterVersion.join('/').replace(/\.[^.]+$/, '');
-    return last || null;
+    const publicId = parts.slice(uploadIndex + 1).filter((p) => !/^v\d+$/.test(p)).join('/').replace(/\.[^.]+$/, '');
+    return publicId || null;
   } catch { return null; }
 }
 module.exports = { uploadFile, deleteAsset, publicIdFromUrl };
