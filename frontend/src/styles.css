@@ -253,3 +253,19 @@ summary { cursor: pointer; padding: 6px 0; }
 .auth-footer { margin:18px 0 0; font-size:11px; font-weight:700; color:#222; text-align:center; }
 .auth-footer span { color:#111; font-size:8px; margin-left:4px; }
 @media (max-width:380px) { .auth-screen { padding:16px 12px calc(18px + env(safe-area-inset-bottom, 0px)); } .auth-card { padding:22px 18px 18px; border-radius:22px; } .auth-intro { margin:21px 0 16px; } }
+
+
+/* Social discovery and follower surfaces */
+.profile-counts { display:flex; align-items:center; justify-content:center; gap:28px; margin-top:4px; }
+.count-link { display:flex; flex-direction:column; gap:2px; align-items:center; background:transparent; color:var(--text); padding:5px 10px; border-radius:10px; }
+.count-link strong { font-size:15px; }
+.count-link span { color:var(--muted); font-size:12px; font-weight:500; }
+.count-link:active { background:var(--surface-2); }
+.people-backdrop { align-items:flex-end; }
+.people-sheet { max-height:min(78dvh,680px); overflow-y:auto; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px); }
+.people-sheet-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.people-sheet-head h3 { margin:0; text-transform:capitalize; }
+.person-result { width:100%; display:flex; align-items:center; gap:12px; text-align:left; background:transparent; color:var(--text); border-radius:12px; padding:10px 4px; }
+.person-result span { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.person-result small { color:var(--muted); font-size:12px; font-weight:500; }
+@media (min-width: 720px) { .people-sheet { width:min(100%,520px); margin:0 auto; border-radius:20px 20px 0 0; } }
