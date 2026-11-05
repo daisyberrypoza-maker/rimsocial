@@ -214,7 +214,7 @@ export default function PostCard({ post, active }) {
       <section className="sheet post-menu-sheet" role="dialog" aria-label="Post controls" onClick={(e) => e.stopPropagation()}>
         <div className="people-sheet-handle" />
         <div className="comments-heading"><h3>Post options</h3><button className="icon-button" onClick={() => setShowMenu(false)} aria-label="Close menu">✕</button></div>
-        <button className="post-menu-item" onClick={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}>Remix this post</button>
+        {post.allowRemix && <button className="post-menu-item" onClick={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}>Remix this post</button>}
         <button className="post-menu-item" onClick={blockCreator}>Block @{username}</button>
         <label className="post-report-reason">Report reason
           <select value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
