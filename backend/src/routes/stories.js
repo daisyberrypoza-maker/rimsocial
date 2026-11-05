@@ -6,6 +6,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
+const cloudinary = require('../services/cloudinary');
 
 // GET /v1/stories/rail  -> creators with active stories, unseen first
 router.get('/rail', requireAuth, async (req, res, next) => {
@@ -23,10 +24,12 @@ router.get('/users/:userId', requireAuth, async (req, res, next) => {
 router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
   try {
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/stories');
     const story = await Post.create({
       authorId: req.user.id,
       kind: kindFor(req.file.mimetype),
-      mediaUrl: mediaPath(req.file.filename),
+      mediaUrl: asset.url,
+      mediaPublicId: asset.publicId,
       caption: String(req.body.caption || '').slice(0, 200),
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
@@ -48,6 +51,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       authorId: req.user.id,
       kind: original.kind,
       mediaUrl: original.mediaUrl,
+      mediaPublicId: original.mediaPublicId,
       thumbUrl: original.thumbUrl,
       caption: `Shared from @${original.author?.username || 'creator'}: ${original.caption || ''}`.slice(0, 200),
       isStory: true,
