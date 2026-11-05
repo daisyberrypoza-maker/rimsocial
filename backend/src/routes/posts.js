@@ -48,6 +48,18 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/:id/engagement', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
+    if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    const [liked, reposted] = await Promise.all([
+      PostLike.findOne({ where: { postId: post.id, userId: req.user.id } }),
+      Repost.findOne({ where: { postId: post.id, userId: req.user.id } }),
+    ]);
+    res.json({ liked: Boolean(liked), reposted: Boolean(reposted) });
+  } catch (e) { next(e); }
+});
+
 router.post('/:id/like', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
