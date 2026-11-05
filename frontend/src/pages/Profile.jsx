@@ -26,6 +26,8 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [peopleList, setPeopleList] = useState(null);
+  const [peopleLoading, setPeopleLoading] = useState(false);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -41,6 +43,16 @@ export default function Profile() {
       .then((d) => setStories(d.items))
       .catch(() => setStories([]));
   }, [tab, profile]);
+
+  async function openPeopleList(kind) {
+    setPeopleList({ kind, items: [] });
+    setPeopleLoading(true);
+    try {
+      const data = await api(`/v1/users/${username}/${kind}`);
+      setPeopleList({ kind, items: data.items || [] });
+    } catch (e) { toast(e.message); setPeopleList(null); }
+    finally { setPeopleLoading(false); }
+  }
 
   async function toggleFollow() {
     if (!profile) return;
@@ -84,7 +96,10 @@ export default function Profile() {
       <section className="profile-top">
         <Avatar user={profile} size={104} ring />
         <h2 className="profile-name">{profile.displayName}</h2>
-        <div className="followers">{formatCount(profile.followerCount)} Followers</div>
+        <div className="profile-counts">
+          <button type="button" className="count-link" onClick={() => openPeopleList('followers')}><strong>{formatCount(profile.followerCount)}</strong><span>Followers</span></button>
+          <button type="button" className="count-link" onClick={() => openPeopleList('following')}><strong>Following</strong><span>People</span></button>
+        </div>
         <span className="chip">{profile.country}</span>
 
         {profile.isMe ? (
@@ -99,6 +114,15 @@ export default function Profile() {
           </button>
         )}
       </section>
+
+      {peopleList && <div className="sheet-backdrop people-backdrop" onClick={() => setPeopleList(null)}>
+        <section className="sheet people-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={peopleList.kind}>
+          <div className="people-sheet-head"><h3>{peopleList.kind === 'followers' ? 'Followers' : 'Following'}</h3><button className="ghost small" onClick={() => setPeopleList(null)}>Close</button></div>
+          {peopleLoading ? <p className="muted center">Loading people…</p> : peopleList.items.length ? peopleList.items.map((person) => <button className="person-result" key={person.id} onClick={() => { setPeopleList(null); navigate('/u/' + person.username); }}>
+            <Avatar user={person} size={44} /><span><strong>{person.displayName}</strong><small>@{person.username} · {formatCount(person.followerCount)} followers</small></span>
+          </button>) : <p className="muted center">No {peopleList.kind} yet.</p>}
+        </section>
+      </div>}
 
       <nav className="ptabs">
         <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Posts</button>
