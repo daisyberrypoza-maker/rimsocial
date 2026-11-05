@@ -1,15 +1,15 @@
 :root {
-  --bg: #0a0a10;
-  --surface: #15151f;
-  --surface-2: #1d1d2a;
-  --line: #262636;
-  --text: #f6f6fa;
-  --muted: #9a9ab0;
-  --brand-a: #ff4d7d;
-  --brand-b: #ff9a3c;
-  --danger: #ff5c6c;
-  --brand: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-  color-scheme: dark;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f2f4;
+  --line: #e5e7eb;
+  --text: #17191f;
+  --muted: #6b7280;
+  --brand-a: #4b5cff;
+  --brand-b: #4b5cff;
+  --danger: #ff3158;
+  --brand: #4b5cff;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -199,7 +199,7 @@ summary { cursor: pointer; padding: 6px 0; }
 .explore-search .search-clear { background:transparent; color:var(--muted); padding:6px; font-size:20px; }
 .search-filters { display:flex; gap:8px; overflow-x:auto; padding:2px 12px 12px; scrollbar-width:none; }
 .search-filters button,.hashtag-chips button { flex:none; padding:8px 13px; background:var(--surface-2); color:var(--muted); border:1px solid var(--line); font-size:13px; }
-.search-filters button.on { color:#111; background:var(--brand-a); border-color:var(--brand-a); }
+.search-filters button.on { color:#fff; background:var(--brand-a); border-color:var(--brand-a); }
 .explore-heading { display:flex; align-items:baseline; justify-content:space-between; padding:0 14px 10px; }
 .explore-heading h2 { margin:8px 0; }
 .hashtag-chips { display:flex; gap:8px; overflow-x:auto; padding:0 12px 14px; }
@@ -216,7 +216,7 @@ summary { cursor: pointer; padding: 6px 0; }
 .profile-actions { flex-wrap:wrap; }
 @media (max-width:390px) { .explore-search { gap:5px; } .explore-search button { padding:8px 10px; font-size:12px; } }
 
-/* Snapchat-inspired authentication: bright snap yellow, ink black, clean mobile-first forms */
+/* Authentication uses the same clean white-and-blue visual language as the supplied social screens. */
 .auth-screen { position:relative; flex:1; min-height:100dvh; overflow-y:auto; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px calc(24px + env(safe-area-inset-bottom, 0px)); background:#fff900; color:#111; isolation:isolate; }
 .auth-glow { position:absolute; z-index:-1; border-radius:50%; pointer-events:none; filter:blur(2px); opacity:.42; }
 .auth-glow-one { width:280px; height:280px; top:-120px; right:-100px; background:#fff; }
