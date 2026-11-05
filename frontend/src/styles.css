@@ -362,3 +362,26 @@ input:focus, select:focus { border-color: var(--brand-a); }
   .profile-actions button { flex:1; }
   .upload { border-radius:18px; }
 }
+
+
+.profile-top-refresh { position:relative; padding:22px 16px 18px; text-align:center; }
+.profile-cover-tools { position:relative; display:flex; justify-content:center; align-items:center; margin:0 auto 8px; }
+.avatar-edit { position:absolute; bottom:-3px; left:calc(50% + 12px); padding:6px 10px; border:2px solid var(--bg); background:var(--surface-2); color:var(--text); font-size:11px; white-space:nowrap; }
+.profile-handle { color:var(--muted); margin-top:-6px; font-size:14px; }
+.profile-stats-row { display:flex; justify-content:center; gap:clamp(18px, 6vw, 48px); margin:14px 0; }
+.profile-stats-row button,.profile-stats-row div { display:flex; flex-direction:column; gap:3px; align-items:center; background:transparent; color:var(--text); padding:0; border-radius:0; }
+.profile-stats-row strong { font-size:18px; }
+.profile-stats-row span { color:var(--muted); font-size:12px; font-weight:500; }
+.profile-actions-refresh { width:min(100%, 460px); margin:12px auto 0; }
+.profile-actions-refresh button { flex:1; min-height:42px; }
+.profile-drawer-backdrop { position:fixed; inset:0; z-index:130; background:rgba(0,0,0,.62); display:flex; justify-content:flex-end; }
+.profile-drawer { width:min(86vw, 360px); height:100%; overflow:auto; background:var(--surface); border-left:1px solid var(--line); padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:8px; box-shadow:-20px 0 60px rgba(0,0,0,.28); }
+.drawer-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.drawer-head h3 { margin:0; }
+.profile-drawer > button { text-align:left; width:100%; border-radius:12px; background:var(--surface-2); color:var(--text); padding:14px; font-weight:600; }
+.profile-drawer > .drawer-danger { color:#ff5364; margin-top:auto; }
+.people-backdrop { z-index:125; align-items:center; justify-content:center; padding:16px; }
+.people-sheet { width:min(100%, 480px); max-height:75dvh; overflow:auto; border-radius:20px; padding:18px; }
+.people-sheet .person-result { width:100%; display:flex; align-items:center; gap:10px; text-align:left; color:var(--text); background:transparent; border-radius:12px; padding:10px 4px; }
+.people-sheet .person-result span { display:flex; flex-direction:column; gap:3px; flex:1; }
+.people-sheet .person-result small { color:var(--muted); }
