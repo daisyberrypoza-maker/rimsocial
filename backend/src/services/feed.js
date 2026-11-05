@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow } = require('../db');
+const { Op, Post, User, Follow, UserBlock } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor } = require('../lib/cursor');
@@ -49,17 +49,19 @@ async function getDiscoverPage({ userId, cursor, limit }) {
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
-    const [candidates, follows] = await Promise.all([
+    const [candidates, follows, blocks] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
         attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
         order: [['createdAt', 'DESC']], limit: 500, raw: true,
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
+      UserBlock.findAll({ where: { blockerId: userId }, attributes: ['blockedUserId'], raw: true }),
     ]);
+    const blocked = new Set(blocks.map((b) => b.blockedUserId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const now = Date.now();
-    ids = candidates.map((p) => {
+    ids = candidates.filter((p) => !blocked.has(p.authorId)).map((p) => {
       const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
       const freshness = 12 * Math.exp(-ageHours / 48);
       const engagement = Math.log1p(Number(p.viewCount) || 0) * 1.2
