@@ -693,3 +693,48 @@ input:focus { border-color:#4c5cff; }
 .discover-follow { flex:none; min-width:104px; min-height:40px; padding:8px 13px; border-radius:10px; background:#4c5cff; color:#fff; font-size:13px; }
 .discover-follow.following { background:#f0f2f5; color:#16181c; }
 .explore-section-title { margin:14px 16px 8px; font-size:19px; font-weight:650; }
+
+
+/* Sponsored posts follow the supplied full-screen Ad reference. */
+.sponsored-label {
+  position: absolute;
+  left: 16px;
+  bottom: 250px;
+  z-index: 3;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: #fff;
+  background: rgba(20, 20, 20, .68);
+  font-size: 13px;
+  font-weight: 700;
+}
+.sponsor-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 10px 0 14px;
+}
+.sponsor-copy strong { font-size: 17px; }
+.sponsor-copy span { color: rgba(255,255,255,.82); font-size: 14px; }
+.sponsor-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  color: #111;
+  background: #ffeb00;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+}
+.sponsor-fields { display: grid; gap: 8px; padding-top: 10px; }
+.sponsor-fields label { display: grid; gap: 4px; color: var(--text); font-size: 13px; font-weight: 650; }
+.sponsor-fields input, .sponsor-fields select { margin: 0; }
+@media (max-width: 420px) {
+  .sponsor-cta { min-height: 46px; font-size: 15px; }
+  .sponsored-label { bottom: 238px; }
+}
