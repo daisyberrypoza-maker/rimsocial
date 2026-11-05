@@ -19,10 +19,20 @@ export default function CreatorStudio() {
 
 
   async function load() {
-    const d = await api('/v1/creator/dashboard'); setData(d);
-    const m = await api('/v1/creator/matches'); setMatches(m.items || []);
-    const discovered = await api('/v1/creator/discover'); setCreators(discovered.items || []);
-    if (!data?.payoutProfile?.verified) { try { const b = await api('/v1/creator/payout-banks'); setBanks(b.items || []); } catch { setBanks([]); } }
+    const d = await api('/v1/creator/dashboard');
+    setData(d);
+    const [m, discovered] = await Promise.all([
+      api('/v1/creator/matches'),
+      api('/v1/creator/discover'),
+    ]);
+    setMatches(m.items || []);
+    setCreators(discovered.items || []);
+    if (!d.payoutProfile?.verified) {
+      try { const b = await api('/v1/creator/payout-banks'); setBanks(b.items || []); }
+      catch { setBanks([]); }
+    } else {
+      setBanks([]);
+    }
   }
   useEffect(() => { load().catch((e) => toast(e.message)); }, []);
 
