@@ -45,6 +45,11 @@ const Post = sequelize.define('Post', {
   ],
 });
 
+const PostLike = sequelize.define('PostLike', {
+  postId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'post_likes', indexes: [{ fields: ['userId'] }] });
+
 const Follow = sequelize.define('Follow', {
   followerId: { type: DataTypes.UUID, primaryKey: true },
   followeeId: { type: DataTypes.UUID, primaryKey: true },
@@ -150,6 +155,6 @@ async function seedGifts() {
 }
 
 module.exports = {
-  sequelize, Op, User, Post, Follow, StoryView, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, PostLike, Follow, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, seedGifts,
 };
