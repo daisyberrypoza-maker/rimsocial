@@ -32,8 +32,10 @@ router.get('/wallet', requireAuth, async (req, res, next) => {
 // Starts a Paystack payment. Coins are credited only by the webhook, never here.
 router.post('/wallet/topup', requireAuth, async (req, res, next) => {
   try {
+    if (!config.paystackSecret) throw httpError(503, 'Coin top-ups are temporarily unavailable because the payment provider is not configured');
     const amountMinor = Number(req.body.amountMinor);
-    if (!Number.isInteger(amountMinor) || amountMinor < 100) throw httpError(400, 'Minimum top-up is 100 minor units');
+    if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) throw httpError(400, 'Minimum top-up is 100 minor units');
+    if (req.body.email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(req.body.email))) throw httpError(400, 'Enter a valid email address');
     const r = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
