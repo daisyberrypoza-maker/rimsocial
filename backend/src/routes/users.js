@@ -12,6 +12,21 @@ async function resolveUser(req, ref, attributes) {
   return User.findOne({ where: { username: ref.toLowerCase() }, attributes });
 }
 
+// GET /v1/users/suggestions — creators not followed by the current user
+router.get('/suggestions', requireAuth, async (req, res, next) => {
+  try {
+    const follows = await Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true });
+    const excluded = [req.user.id, ...follows.map((row) => row.followeeId)];
+    const items = await User.findAll({
+      where: { id: { [require('sequelize').Op.notIn]: excluded } },
+      attributes: PUBLIC_ATTRS,
+      order: [['followerCount', 'DESC'], ['createdAt', 'DESC']],
+      limit: 12,
+    });
+    res.json({ items });
+  } catch (e) { next(e); }
+});
+
 // GET /v1/users/:username
 router.get('/:username', requireAuth, async (req, res, next) => {
   try {
