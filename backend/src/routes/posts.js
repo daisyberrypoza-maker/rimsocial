@@ -125,6 +125,11 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
         await post.decrement('repostCount', { by: 1, transaction: t });
       }
     });
+    if (reposted) {
+      // Distribute the original post into the reposter's followers feed, as a real repost action.
+      const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
+      await feed.fanOutPost(post, followers.map((f) => f.followerId));
+    }
     const fresh = await Post.findByPk(post.id, { attributes: ['repostCount'] });
     res.json({ reposted, repostCount: Math.max(0, Number(fresh.repostCount)) });
   } catch (e) { next(e); }
