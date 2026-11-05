@@ -99,9 +99,17 @@ async function start() {
   if (!config.jwtSecret || config.jwtSecret.length < 32 || /replace|change-this|paste-output/i.test(config.jwtSecret)) {
     throw new Error('JWT_SECRET must be set to a random secret of at least 32 characters. Copy backend/.env.example and set it before starting.');
   }
-  await ensureDatabaseExists();
+  if (config.nodeEnv === 'production') {
+    const origins = config.corsOrigins;
+    if (!process.env.CORS_ORIGINS || !origins.some((origin) => /^https:\/\//.test(origin))) {
+      throw new Error('Production requires CORS_ORIGINS with at least one HTTPS frontend origin.');
+    }
+    if (config.createDatabase) throw new Error('AUTO_CREATE_DATABASE must be false in production.');
+    if (config.syncDatabase) throw new Error('DB_SYNC must be false in production; apply schema migrations before deployment.');
+  }
+  if (config.createDatabase) await ensureDatabaseExists();
   await sequelize.authenticate();
-  await sequelize.sync(); // creates missing tables automatically
+  if (config.syncDatabase) await sequelize.sync();
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
   const payoutColumns = await qi.describeTable('payouts');
