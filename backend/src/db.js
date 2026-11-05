@@ -56,6 +56,13 @@ const PostLike = sequelize.define('PostLike', {
   userId: { type: DataTypes.UUID, primaryKey: true },
 }, { tableName: 'post_likes', indexes: [{ fields: ['userId'] }] });
 
+// One reshare per user per original post; the copied post is delivered to followers.
+const Repost = sequelize.define('Repost', {
+  originalPostId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+  repostedPostId: { type: DataTypes.UUID, allowNull: false, unique: true },
+}, { tableName: 'reposts', indexes: [{ fields: ['userId'] }] });
+
 // One row per viewer per story, so story view counts are not inflated
 const StoryView = sequelize.define('StoryView', {
   storyId: { type: DataTypes.UUID, primaryKey: true },
@@ -156,6 +163,6 @@ async function seedGifts() {
 }
 
 module.exports = {
-  sequelize, Op, User, Post, Follow, PostLike, StoryView, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, Follow, PostLike, Repost, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, seedGifts,
 };
