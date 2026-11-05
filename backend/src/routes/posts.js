@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Post, Follow, PostLike, sequelize } = require('../db');
+const { Post, Follow, PostLike, Repost, User, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -32,6 +32,39 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     if (!post) throw httpError(404, 'Post not found');
     await post.update({ status: 'removed' });
     res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+// POST /v1/posts/:id/repost — publish a reshare to the current user's followers
+router.post('/:id/repost', requireAuth, async (req, res, next) => {
+  try {
+    const original = await Post.findOne({
+      where: { id: req.params.id, status: 'live', isStory: false },
+      include: [{ model: User, as: 'author', attributes: ['username', 'displayName'] }],
+    });
+    if (!original) throw httpError(404, 'Post not found');
+    if (String(original.authorId) === String(req.user.id)) throw httpError(400, 'You cannot repost your own post');
+    const existing = await Repost.findOne({ where: { originalPostId: original.id, userId: req.user.id } });
+    if (existing) {
+      const previous = await Post.findByPk(existing.repostedPostId);
+      return res.status(200).json(previous ? toPostDTO(previous) : { reposted: true });
+    }
+    let reposted;
+    await sequelize.transaction(async (t) => {
+      reposted = await Post.create({
+        authorId: req.user.id,
+        kind: original.kind,
+        mediaUrl: original.mediaUrl,
+        thumbUrl: original.thumbUrl,
+        caption: `Reposted from @${original.author?.username || 'creator'} — ${original.caption || ''}`.slice(0, 500),
+        status: 'live',
+        isStory: false,
+      }, { transaction: t });
+      await Repost.create({ originalPostId: original.id, userId: req.user.id, repostedPostId: reposted.id }, { transaction: t });
+    });
+    const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
+    await feed.fanOutPost(reposted, followers.map((f) => f.followerId));
+    res.status(201).json(toPostDTO(reposted));
   } catch (e) { next(e); }
 });
 
