@@ -36,6 +36,8 @@ const Post = sequelize.define('Post', {
   viewCount: { type: DataTypes.BIGINT, defaultValue: 0 },
   likeCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
+  visibility: { type: DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' },
+  resharedPostId: { type: DataTypes.UUID, allowNull: true },
 }, {
   tableName: 'posts',
   indexes: [
@@ -49,6 +51,13 @@ const PostLike = sequelize.define('PostLike', {
   postId: { type: DataTypes.UUID, primaryKey: true },
   userId: { type: DataTypes.UUID, primaryKey: true },
 }, { tableName: 'post_likes', indexes: [{ fields: ['userId'] }] });
+
+const Comment = sequelize.define('Comment', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  postId: { type: DataTypes.UUID, allowNull: false },
+  authorId: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.STRING(1000), allowNull: false },
+}, { tableName: 'comments', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['authorId', 'createdAt'] }] });
 
 const Follow = sequelize.define('Follow', {
   followerId: { type: DataTypes.UUID, primaryKey: true },
@@ -144,6 +153,8 @@ const ContentEarning = sequelize.define('ContentEarning', {
 
 User.hasMany(Post, { foreignKey: 'authorId' });
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+Comment.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+Post.hasMany(Comment, { as: 'comments', foreignKey: 'postId' });
 
 async function seedGifts() {
   if (await Gift.count()) return;
@@ -155,6 +166,6 @@ async function seedGifts() {
 }
 
 module.exports = {
-  sequelize, Op, User, Post, PostLike, Follow, StoryView, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, PostLike, Comment, Follow, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, seedGifts,
 };
