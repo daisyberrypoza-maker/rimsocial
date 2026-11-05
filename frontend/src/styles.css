@@ -269,3 +269,16 @@ summary { cursor: pointer; padding: 6px 0; }
 .person-result span { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
 .person-result small { color:var(--muted); font-size:12px; font-weight:500; }
 @media (min-width: 720px) { .people-sheet { width:min(100%,520px); margin:0 auto; border-radius:20px 20px 0 0; } }
+
+
+.suggestions-section { margin:18px 14px 22px; }
+.suggestions-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.suggestions-head h3 { margin:0; font-size:16px; }
+.suggestions-list { display:flex; gap:10px; overflow-x:auto; padding:2px 0 8px; scrollbar-width:none; }
+.suggestions-list::-webkit-scrollbar { display:none; }
+.suggestion-card { flex:0 0 164px; display:flex; flex-direction:column; align-items:stretch; gap:12px; padding:14px 12px; border:1px solid var(--line); background:var(--surface); border-radius:16px; }
+.suggestion-person { display:flex; flex-direction:column; align-items:center; gap:7px; background:transparent; color:var(--text); padding:0; text-align:center; }
+.suggestion-person span { display:flex; flex-direction:column; gap:3px; min-width:0; max-width:100%; }
+.suggestion-person strong,.suggestion-person small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:136px; }
+.suggestion-person small { font-size:11px; color:var(--muted); font-weight:500; }
+.suggestion-follow { width:100%; padding:8px 10px; }
