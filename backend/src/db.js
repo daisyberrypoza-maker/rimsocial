@@ -37,6 +37,11 @@ const Post = sequelize.define('Post', {
   likeCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   repostCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   visibility: { type: DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' },
+  isSponsored: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  sponsorName: { type: DataTypes.STRING(100), allowNull: true },
+  sponsorDescription: { type: DataTypes.STRING(200), allowNull: true },
+  sponsorCta: { type: DataTypes.STRING(30), allowNull: true },
+  sponsorUrl: { type: DataTypes.STRING(1024), allowNull: true },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
 }, {
   tableName: 'posts',
