@@ -28,6 +28,7 @@ const Post = sequelize.define('Post', {
   authorId: { type: DataTypes.UUID, allowNull: false },
   kind: { type: DataTypes.ENUM('video', 'photo'), allowNull: false },
   mediaUrl: { type: DataTypes.STRING(512), allowNull: false },
+  mediaPublicId: { type: DataTypes.STRING(255), allowNull: true },
   thumbUrl: DataTypes.STRING(512),
   caption: { type: DataTypes.STRING(500), defaultValue: '' },
   status: { type: DataTypes.ENUM('live', 'removed'), defaultValue: 'live' },
