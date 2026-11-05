@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadAccount } from '../account.js';
@@ -8,6 +8,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setSession = useAppStore((s) => s.setSession);
   const googleButton = useRef(null);
   const [mode, setMode] = useState('login');
@@ -20,7 +21,8 @@ export default function Login() {
   async function finishSession(data) {
     setSession(data.token, data.user);
     await loadAccount();
-    navigate('/', { replace: true });
+    const requestedPath = location.state?.from;
+    navigate(typeof requestedPath === 'string' && requestedPath.startsWith('/') ? requestedPath : '/', { replace: true });
   }
 
   async function submit(e) {
