@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Post, Follow } = require('../db');
+const { Post, Follow, PostLike, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -43,12 +43,43 @@ router.post('/:id/view', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /v1/posts/:id/like — current viewer's durable like state
+router.get('/:id/like', requireAuth, async (req, res, next) => {
+  try {
+    const [post, like] = await Promise.all([
+      Post.findOne({ where: { id: req.params.id, status: 'live' }, attributes: ['id', 'likeCount'] }),
+      PostLike.findOne({ where: { postId: req.params.id, userId: req.user.id } }),
+    ]);
+    if (!post) throw httpError(404, 'Post not found');
+    res.json({ liked: Boolean(like), likeCount: post.likeCount });
+  } catch (e) { next(e); }
+});
+
 router.post('/:id/like', requireAuth, async (req, res, next) => {
   try {
-    const [affected] = await Post.increment('likeCount', { by: 1, where: { id: req.params.id, status: 'live' } });
-    if (!affected) throw httpError(404, 'Post not found');
-    const post = await Post.findByPk(req.params.id, { attributes: ['likeCount'] });
-    res.json({ likeCount: post.likeCount });
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live' } });
+    if (!post) throw httpError(404, 'Post not found');
+    await sequelize.transaction(async (t) => {
+      const [, created] = await PostLike.findOrCreate({
+        where: { postId: post.id, userId: req.user.id }, defaults: { postId: post.id, userId: req.user.id }, transaction: t,
+      });
+      if (created) await Post.increment('likeCount', { by: 1, where: { id: post.id }, transaction: t });
+    });
+    const fresh = await Post.findByPk(post.id, { attributes: ['likeCount'] });
+    res.json({ liked: true, likeCount: fresh.likeCount });
+  } catch (e) { next(e); }
+});
+
+router.delete('/:id/like', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live' } });
+    if (!post) throw httpError(404, 'Post not found');
+    await sequelize.transaction(async (t) => {
+      const removed = await PostLike.destroy({ where: { postId: post.id, userId: req.user.id }, transaction: t });
+      if (removed) await Post.decrement('likeCount', { by: 1, where: { id: post.id, likeCount: { [require('sequelize').Op.gt]: 0 } }, transaction: t });
+    });
+    const fresh = await Post.findByPk(post.id, { attributes: ['likeCount'] });
+    res.json({ liked: false, likeCount: fresh.likeCount });
   } catch (e) { next(e); }
 });
 
