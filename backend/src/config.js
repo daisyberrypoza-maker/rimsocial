@@ -17,8 +17,10 @@ module.exports = {
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   adminApiKey: process.env.ADMIN_API_KEY || '',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
-  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,https://localhost,capacitor://localhost')
-    .split(',').map((o) => o.trim()).filter(Boolean),
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://localhost,capacitor://localhost,ionic://localhost')
+    .split(',').map((o) => o.trim().replace(/\\/$/, '')).filter(Boolean),
+  serveFrontend: !['false', '0', 'no'].includes(String(process.env.SERVE_FRONTEND || 'true').toLowerCase()),
+  trustProxy: num(process.env.TRUST_PROXY, 0),
 
   // Paging: small pages keep mobile data use low
   feedPageSize: 10,
