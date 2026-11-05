@@ -66,6 +66,9 @@ async function start() {
   await sequelize.sync(); // creates missing tables automatically
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
+  const postColumns = await qi.describeTable('posts');
+  if (!postColumns.visibility) await qi.addColumn('posts', 'visibility', { type: require('sequelize').DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' });
+  if (!postColumns.resharedPostId) await qi.addColumn('posts', 'resharedPostId', { type: require('sequelize').DataTypes.UUID, allowNull: true });
   const payoutColumns = await qi.describeTable('payouts');
   if (!payoutColumns.providerTransferCode) {
     await qi.addColumn('payouts', 'providerTransferCode', { type: require('sequelize').DataTypes.STRING(128), allowNull: true });
