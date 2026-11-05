@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Follow } = require('../db');
+const { sequelize, User, Post, Follow, UserBlock } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -112,6 +112,23 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
     const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC']], limit: 300, raw: true });
     const people = await User.findAll({ where: { id: rows.map((r) => r.followeeId) }, attributes: PUBLIC_ATTRS });
     res.json({ items: await withFollowState(people, req.user.id) });
+  } catch (e) { next(e); }
+});
+
+// Block and unblock creators from the post controls menu.
+router.post('/:id/block', requireAuth, async (req, res, next) => {
+  try {
+    if (req.params.id === req.user.id) throw httpError(400, 'You cannot block yourself');
+    const target = await User.findByPk(req.params.id, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'User not found');
+    await UserBlock.findOrCreate({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
+    res.json({ blocked: true });
+  } catch (e) { next(e); }
+});
+router.delete('/:id/block', requireAuth, async (req, res, next) => {
+  try {
+    await UserBlock.destroy({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
+    res.json({ blocked: false });
   } catch (e) { next(e); }
 });
 
