@@ -41,10 +41,19 @@ async function purgeExpiredStories() {
         try { await cloudinary.deleteAsset(p.mediaPublicId, p.kind === 'video' ? 'video' : 'image'); }
         catch (e) { console.error('Expired story Cloudinary cleanup failed:', p.mediaPublicId, e.message); }
       }
-    } else if (!/res\\.cloudinary\\.com\\//.test(p.mediaUrl || '')) {
-      const fs = require('fs');
-      const path = require('path');
-      fs.promises.unlink(path.join(config.uploadDir, path.basename(p.mediaUrl))).catch(() => {});
+    } else {
+      const legacyId = cloudinary.publicIdFromUrl(p.mediaUrl);
+      if (legacyId) {
+        const remaining = await Post.count({ where: { mediaUrl: p.mediaUrl, status: 'live' } });
+        if (!remaining) {
+          try { await cloudinary.deleteAsset(legacyId, p.kind === 'video' ? 'video' : 'image'); }
+          catch (e) { console.error('Expired legacy story Cloudinary cleanup failed:', legacyId, e.message); }
+        }
+      } else {
+        const fs = require('fs');
+        const path = require('path');
+        fs.promises.unlink(path.join(config.uploadDir, path.basename(p.mediaUrl))).catch(() => {});
+      }
     }
   }
   return ids.length;
