@@ -416,3 +416,15 @@ input:focus, select:focus { border-color: var(--brand-a); }
   .upload-picker { min-height:180px; }
   .upload-caption-meta { font-size:10px; }
 }
+
+
+.viewer-head-actions { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.post-detail-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid var(--line); }
+.detail-action { display:flex; align-items:center; justify-content:center; gap:7px; background:var(--surface-2); color:var(--text); border-radius:999px; padding:10px 13px; font-size:13px; }
+.detail-action.liked { color:#ff304f; }
+.detail-action.liked svg { fill:#ff304f; stroke:#ff304f; }
+.detail-action.reposted { color:#39d98a; }
+.detail-comments { padding:14px 0; }
+.detail-comments h3 { margin:0 0 8px; }
+.detail-comments h3 span { color:var(--muted); font-size:13px; }
+.post-detail-stats { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; padding-top:10px; }
