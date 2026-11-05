@@ -120,7 +120,7 @@ router.post('/:id/reshare', requireAuth, async (req, res, next) => {
     if (!original || (original.visibility === 'private' && original.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     if (original.authorId === req.user.id) throw httpError(400, 'You cannot reshare your own post');
     const [reshare, created] = await Post.findOrCreate({
-      where: { authorId: req.user.id, resharedPostId: original.id, status: 'live' },
+      where: { authorId: req.user.id, resharedPostId: original.id, status: 'live', isStory: false },
       defaults: { authorId: req.user.id, kind: original.kind, mediaUrl: original.mediaUrl, thumbUrl: original.thumbUrl, caption: original.caption, resharedPostId: original.id, visibility: 'public' },
     });
     if (created) {
