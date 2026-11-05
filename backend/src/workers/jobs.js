@@ -1,5 +1,4 @@
-const fs = require('fs');
-const path = require('path');
+const cloudinary = require('../services/cloudinary');
 const { Op } = require('sequelize');
 const config = require('../config');
 const redis = require('../redis');
@@ -27,7 +26,7 @@ async function flushViews() {
 async function purgeExpiredStories() {
   const expired = await Post.findAll({
     where: { isStory: true, expiresAt: { [Op.lt]: new Date() } },
-    attributes: ['id', 'mediaUrl'],
+    attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind'],
     limit: 500,
   });
   if (!expired.length) return 0;
@@ -36,7 +35,17 @@ async function purgeExpiredStories() {
   await StoryView.destroy({ where: { storyId: ids } });
   await Post.destroy({ where: { id: ids } });
   for (const p of expired) {
-    fs.promises.unlink(path.join(config.uploadDir, path.basename(p.mediaUrl))).catch(() => {});
+    if (p.mediaPublicId) {
+      const remaining = await Post.count({ where: { mediaPublicId: p.mediaPublicId, status: 'live' } });
+      if (!remaining) {
+        try { await cloudinary.deleteAsset(p.mediaPublicId, p.kind === 'video' ? 'video' : 'image'); }
+        catch (e) { console.error('Expired story Cloudinary cleanup failed:', p.mediaPublicId, e.message); }
+      }
+    } else if (!/res\\.cloudinary\\.com\\//.test(p.mediaUrl || '')) {
+      const fs = require('fs');
+      const path = require('path');
+      fs.promises.unlink(path.join(config.uploadDir, path.basename(p.mediaUrl))).catch(() => {});
+    }
   }
   return ids.length;
 }
