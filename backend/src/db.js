@@ -37,6 +37,11 @@ const Post = sequelize.define('Post', {
   likeCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   repostCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   visibility: { type: DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' },
+  isSponsored: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  sponsorName: { type: DataTypes.STRING(100), allowNull: true },
+  sponsorDescription: { type: DataTypes.STRING(200), allowNull: true },
+  sponsorCta: { type: DataTypes.STRING(30), allowNull: true },
+  sponsorUrl: { type: DataTypes.STRING(1024), allowNull: true },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
 }, {
   tableName: 'posts',
@@ -153,6 +158,19 @@ const LiveSignal = sequelize.define('LiveSignal', {
   payload: { type: DataTypes.JSON, allowNull: false },
 }, { tableName: 'live_signals', indexes: [{ fields: ['matchId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
+const UserBlock = sequelize.define('UserBlock', {
+  blockerId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  blockedUserId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+}, { tableName: 'user_blocks', indexes: [{ fields: ['blockedUserId'] }] });
+
+const PostReport = sequelize.define('PostReport', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  postId: { type: DataTypes.UUID, allowNull: false },
+  reporterId: { type: DataTypes.UUID, allowNull: false },
+  reason: { type: DataTypes.STRING(500), allowNull: false },
+  status: { type: DataTypes.ENUM('pending', 'reviewed', 'dismissed'), defaultValue: 'pending' },
+}, { tableName: 'post_reports', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['reporterId', 'createdAt'] }] });
+
 const ContentEarning = sequelize.define('ContentEarning', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   creatorId: { type: DataTypes.UUID, allowNull: false },
@@ -180,5 +198,5 @@ async function seedGifts() {
 
 module.exports = {
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, seedGifts,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport, seedGifts,
 };
