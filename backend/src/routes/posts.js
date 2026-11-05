@@ -25,6 +25,18 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
   } catch (e) { next(e); }
 });
 
+// GET /v1/posts/:id — shareable post detail with its public creator fields.
+router.get('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({
+      where: { id: req.params.id, status: 'live', isStory: false },
+      include: [{ model: require('../db').User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }],
+    });
+    if (!post) throw httpError(404, 'Post not found');
+    res.json(toPostDTO(post));
+  } catch (e) { next(e); }
+});
+
 // DELETE /v1/posts/:id  (owner only; soft delete)
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
