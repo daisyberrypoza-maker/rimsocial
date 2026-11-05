@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
@@ -11,7 +10,6 @@ export default function ProfileFeed() {
   const navigate = useNavigate();
   const key = `u:${username}`;
   const cached = useAppStore((s) => s.feeds[key]);
-  const setFeed = useAppStore((s) => s.setFeed);
   const items = cached?.items || [];
   const nextCursor = cached?.nextCursor ?? null;
   const container = useRef(null);
