@@ -24,6 +24,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     const sponsorDescription = String(req.body.sponsorDescription || '').trim().slice(0, 200);
     const sponsorCta = String(req.body.sponsorCta || 'Shop Now').trim().slice(0, 30);
     const sponsorUrl = String(req.body.sponsorUrl || '').trim().slice(0, 1024);
+    if (isSponsored && visibility !== 'public') throw httpError(400, 'Sponsored posts must be public');
     if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
