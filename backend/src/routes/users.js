@@ -74,4 +74,29 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/* Followers/following lists use public profile fields only. */
+router.get('/:username/followers', requireAuth, async (req, res, next) => {
+  try {
+    const target = await resolveUser(req, req.params.username, ['id']);
+    if (!target) throw httpError(404, 'User not found');
+    const rows = await Follow.findAll({ where: { followeeId: target.id }, attributes: ['followerId'], order: [['createdAt', 'DESC']], limit: 100 });
+    const ids = rows.map((row) => row.followerId);
+    const users = ids.length ? await User.findAll({ where: { id: ids }, attributes: PUBLIC_ATTRS }) : [];
+    const byId = new Map(users.map((user) => [user.id, user]));
+    res.json({ items: ids.map((id) => byId.get(id)).filter(Boolean) });
+  } catch (e) { next(e); }
+});
+
+router.get('/:username/following', requireAuth, async (req, res, next) => {
+  try {
+    const target = await resolveUser(req, req.params.username, ['id']);
+    if (!target) throw httpError(404, 'User not found');
+    const rows = await Follow.findAll({ where: { followerId: target.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC']], limit: 100 });
+    const ids = rows.map((row) => row.followeeId);
+    const users = ids.length ? await User.findAll({ where: { id: ids }, attributes: PUBLIC_ATTRS }) : [];
+    const byId = new Map(users.map((user) => [user.id, user]));
+    res.json({ items: ids.map((id) => byId.get(id)).filter(Boolean) });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
