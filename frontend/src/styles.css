@@ -253,3 +253,73 @@ summary { cursor: pointer; padding: 6px 0; }
 .auth-footer { margin:18px 0 0; font-size:11px; font-weight:700; color:#222; text-align:center; }
 .auth-footer span { color:#111; font-size:8px; margin-left:4px; }
 @media (max-width:380px) { .auth-screen { padding:16px 12px calc(18px + env(safe-area-inset-bottom, 0px)); } .auth-card { padding:22px 18px 18px; border-radius:22px; } .auth-intro { margin:21px 0 16px; } }
+
+
+/* RimSocial visual system: Snapchat-inspired yellow/black without changing app structure. */
+:root {
+  --bg: #080808;
+  --surface: #141414;
+  --surface-2: #202020;
+  --line: #303030;
+  --text: #fff;
+  --muted: #b4b4b4;
+  --brand-a: #fffc00;
+  --brand-b: #f5d900;
+  --danger: #ff5c6c;
+  --brand: linear-gradient(135deg, #fffc00, #f5d900);
+}
+.brand { color: var(--brand-a); background: none; -webkit-text-fill-color: var(--brand-a); }
+.bottomnav a.active { color: var(--brand-a); }
+.bottomnav .create span.plus { color: #080808; }
+.rail-btn.on { color: var(--brand-a); }
+.story-ring.unseen { background: var(--brand-a); }
+.story-ring.unseen img { border-color: #080808; }
+input:focus, select:focus { border-color: var(--brand-a); }
+.auth-screen { background: #080808; }
+.auth-card { border-color: rgba(255,252,0,.18); }
+.auth-brand { color: var(--brand-a); }
+.auth-primary { color: #080808; background: var(--brand-a); }
+.auth-mode-switch button.selected { background: var(--brand-a); color: #080808; }
+.hashtag-inline { color: var(--brand-a); }
+.search-filters button.on, .hashtag-chips button { color: #080808; background: var(--brand-a); }
+
+.post-detail-page { width: min(100%, 860px); margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.post-detail-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.post-detail-toolbar > strong { font-size: 18px; }
+.post-detail-toolbar button, .post-detail-stats button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.post-detail-card { overflow: hidden; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; }
+.post-detail-author { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; background: transparent; color: var(--text); border-radius: 0; }
+.post-detail-author span { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.post-detail-author small { color: var(--muted); font-weight: 400; }
+.post-detail-media { display: grid; place-items: center; background: #000; max-height: min(72vh, 760px); }
+.post-detail-media img, .post-detail-media video { display: block; width: 100%; max-height: min(72vh, 760px); object-fit: contain; }
+.post-detail-caption { margin: 0; padding: 14px 16px; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; line-height: 1.5; }
+.post-detail-stats { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.post-detail-stats span { display: inline-flex; align-items: center; gap: 6px; }
+.post-detail-stats button { margin-left: auto; }
+
+@media (max-width: 640px) {
+  .topbar { padding-left: 12px; padding-right: 12px; }
+  .bottomnav { padding-left: 4px; padding-right: 4px; }
+  .bottomnav a { min-width: 0; flex: 1; font-size: 10px; }
+  .bottomnav .create span.plus { width: 42px; height: 34px; }
+  .info { left: 14px; right: 76px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  .info p { text-align: left; overflow-wrap: anywhere; }
+  .rail { right: 9px; bottom: calc(140px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+  .rail-avatar img { max-width: 42px; }
+  .story-rail { top: calc(env(safe-area-inset-top, 0px) + 46px); }
+  .page { padding-left: 12px; padding-right: 12px; }
+  .explore-search { gap: 7px; }
+  .explore-search input { min-width: 0; }
+  .search-filters { gap: 7px; overflow-x: auto; }
+  .search-filters button { white-space: nowrap; flex: 0 0 auto; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .tile { min-width: 0; }
+  .tile-title { left: 8px; right: 8px; text-align: left; overflow-wrap: anywhere; }
+  .profile-actions { flex-wrap: wrap; justify-content: center; }
+  .post-detail-page { padding: 12px 10px calc(92px + env(safe-area-inset-bottom, 0px)); }
+  .post-detail-card { border-radius: 10px; }
+  .post-detail-stats { gap: 10px; }
+  .post-detail-stats button { margin-left: 0; }
+  .auth-card { width: min(100% - 24px, 440px); padding: 24px 18px; }
+}
