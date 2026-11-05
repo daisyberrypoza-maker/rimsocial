@@ -31,7 +31,8 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     const asset = await cloudinary.uploadFile(req.file);
     const post = await Post.create({
       authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: asset.url, mediaPublicId: asset.publicId,
-      caption: String(req.body.caption || '').slice(0, 500), visibility, allowRemix, sourcePostId,
+      caption: String(req.body.caption || '').slice(0, 500), topic: String(req.body.topic || '').trim().slice(0, 60) || null,
+      aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId,
       isSponsored, sponsorName: isSponsored ? sponsorName : null,
       sponsorDescription: isSponsored ? sponsorDescription : null,
       sponsorCta: isSponsored ? (sponsorCta || 'Shop Now') : null,
