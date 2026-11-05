@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -26,6 +26,9 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInput = useRef(null);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -68,6 +71,15 @@ export default function Profile() {
     finally { setDeleting(null); }
   }
 
+  async function changeAvatar(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { toast('Choose a JPG, PNG or WebP image'); e.target.value = ''; return; }
+    const fd = new FormData(); fd.append('avatar', file); setAvatarBusy(true);
+    try { const result = await api('/v1/users/me/avatar', { method: 'POST', body: fd }); setProfile(username, { user: { ...profile, avatarUrl: result.avatarUrl } }); toast('Profile picture updated'); }
+    catch (err) { toast(err.message); } finally { setAvatarBusy(false); e.target.value = ''; }
+  }
+
   async function loadMore() {
     setLoadingMore(true);
     try { await loadPage(feedKey, `/v1/users/${username}/posts`); }
@@ -82,16 +94,17 @@ export default function Profile() {
   return (
     <div className="page">
       <section className="profile-top">
-        <Avatar user={profile} size={104} ring />
+        {profile.isMe && <button className="profile-menu-trigger" aria-label="Open profile menu" onClick={() => setMenuOpen(true)}>•••</button>}
+        <button className="avatar-edit-button" type="button" onClick={() => profile.isMe && avatarInput.current?.click()} disabled={!profile.isMe || avatarBusy} aria-label="Change profile picture"><Avatar user={profile} size={104} ring /><span>{avatarBusy ? 'Uploading…' : profile.isMe ? 'Edit photo' : ''}</span></button>
+        <input ref={avatarInput} className="file-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={changeAvatar} />
         <h2 className="profile-name">{profile.displayName}</h2>
         <div className="followers">{formatCount(profile.followerCount)} Followers</div>
         <span className="chip">{profile.country}</span>
 
         {profile.isMe ? (
           <div className="profile-actions">
-            <button className="ghost" onClick={() => navigate('/upload')}>New post</button>
+            <button className="ghost" onClick={() => navigate('/upload')}>＋ Create</button>
             <button className="ghost" onClick={() => navigate('/creator')}>Creator Studio</button>
-            <button className="ghost" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
           </div>
         ) : (
           <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
@@ -100,6 +113,7 @@ export default function Profile() {
         )}
       </section>
 
+      {menuOpen && <div className="profile-drawer-backdrop" onClick={() => setMenuOpen(false)}><aside className="profile-drawer" onClick={(e) => e.stopPropagation()}><div className="drawer-head"><div><strong>Profile & settings</strong><small>@{profile.username}</small></div><button className="ghost small" onClick={() => setMenuOpen(false)} aria-label="Close menu">×</button></div><button className="drawer-item" onClick={() => { setMenuOpen(false); navigate('/upload'); }}>＋ <span><strong>Create post or story</strong><small>Share a photo, reel or story</small></span></button><button className="drawer-item" onClick={() => { setMenuOpen(false); navigate('/creator'); }}>✦ <span><strong>Creator Studio</strong><small>Gifts, coins, cashout and Creator Match</small></span></button><button className="drawer-item" onClick={() => { setMenuOpen(false); navigate('/explore'); }}>⌕ <span><strong>Find friends</strong><small>Discover people and follow creators</small></span></button><div className="drawer-divider" /><button className="drawer-item" onClick={() => { setMenuOpen(false); avatarInput.current?.click(); }}>◉ <span><strong>Profile picture</strong><small>Upload or change your photo</small></span></button><button className="drawer-item" onClick={() => { setMenuOpen(false); toast('More account settings will be added here.'); }}>⚙ <span><strong>Settings & privacy</strong><small>Profile and privacy controls</small></span></button><button className="drawer-item drawer-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}>↪ <span><strong>Log out</strong><small>Sign out of ClipVerse</small></span></button></aside></div>}
       <nav className="ptabs">
         <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Posts</button>
         <button className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
