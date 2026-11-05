@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Never commit local secrets or environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Generated files, local data and IDE metadata
+**/dist/
+**/build/
+**/uploads/**
+**/data/**
+*.log
+*.zip
+.DS_Store
+.idea/
+**/.idea/

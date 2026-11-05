@@ -35,6 +35,8 @@ const Post = sequelize.define('Post', {
   expiresAt: DataTypes.DATE,
   viewCount: { type: DataTypes.BIGINT, defaultValue: 0 },
   likeCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  repostCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  visibility: { type: DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
 }, {
   tableName: 'posts',
@@ -44,6 +46,23 @@ const Post = sequelize.define('Post', {
     { fields: ['isStory', 'expiresAt'] },                   // story rail and expiry purge
   ],
 });
+
+const PostLike = sequelize.define('PostLike', {
+  postId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'post_likes', indexes: [{ fields: ['userId'] }] });
+
+const PostComment = sequelize.define('PostComment', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  postId: { type: DataTypes.UUID, allowNull: false },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.STRING(1000), allowNull: false },
+}, { tableName: 'post_comments', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['userId', 'createdAt'] }] });
+
+const Repost = sequelize.define('Repost', {
+  postId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'reposts', indexes: [{ fields: ['userId', 'createdAt'] }] });
 
 const Follow = sequelize.define('Follow', {
   followerId: { type: DataTypes.UUID, primaryKey: true },
@@ -126,6 +145,14 @@ const LiveMatch = sequelize.define('LiveMatch', {
   endsAt: DataTypes.DATE,
 }, { tableName: 'live_matches', indexes: [{ fields: ['status', 'createdAt'] }, { fields: ['hostId', 'status'] }, { fields: ['opponentId', 'status'] }] });
 
+const LiveSignal = sequelize.define('LiveSignal', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  matchId: { type: DataTypes.UUID, allowNull: false },
+  senderId: { type: DataTypes.UUID, allowNull: false },
+  kind: { type: DataTypes.ENUM('offer', 'answer', 'candidate'), allowNull: false },
+  payload: { type: DataTypes.JSON, allowNull: false },
+}, { tableName: 'live_signals', indexes: [{ fields: ['matchId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
+
 const ContentEarning = sequelize.define('ContentEarning', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   creatorId: { type: DataTypes.UUID, allowNull: false },
@@ -139,6 +166,8 @@ const ContentEarning = sequelize.define('ContentEarning', {
 
 User.hasMany(Post, { foreignKey: 'authorId' });
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+PostComment.belongsTo(User, { as: 'author', foreignKey: 'userId' });
+Post.hasMany(PostComment, { as: 'comments', foreignKey: 'postId' });
 
 async function seedGifts() {
   if (await Gift.count()) return;
@@ -150,6 +179,6 @@ async function seedGifts() {
 }
 
 module.exports = {
-  sequelize, Op, User, Post, Follow, StoryView, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, seedGifts,
+  sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, seedGifts,
 };

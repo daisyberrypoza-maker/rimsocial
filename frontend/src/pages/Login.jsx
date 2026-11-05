@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadAccount } from '../account.js';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const COUNTRY_CODES = `AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW`.split(' ');
+const countryNames = new Intl.DisplayNames([typeof navigator !== 'undefined' ? navigator.language : 'en'], { type: 'region' });
+const COUNTRIES = COUNTRY_CODES.map((code) => ({ code, name: countryNames.of(code) || code })).sort((a, b) => a.name.localeCompare(b.name));
+
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setSession = useAppStore((s) => s.setSession);
   const googleButton = useRef(null);
   const [mode, setMode] = useState('login');
@@ -20,7 +25,8 @@ export default function Login() {
   async function finishSession(data) {
     setSession(data.token, data.user);
     await loadAccount();
-    navigate('/', { replace: true });
+    const requestedPath = location.state?.from;
+    navigate(typeof requestedPath === 'string' && requestedPath.startsWith('/') ? requestedPath : '/', { replace: true });
   }
 
   async function submit(e) {
@@ -79,7 +85,7 @@ export default function Login() {
           {mode === 'register' && <><label>Display name<input autoComplete="name" placeholder="How should we call you?" value={form.displayName} onChange={field('displayName')} required maxLength={64} /></label><label>Email address<input type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={field('email')} required /></label></>}
           <label>Username<input autoComplete="username" placeholder="Your username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} /></label>
           <label>Password<input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder={mode === 'login' ? 'Your password' : 'At least 8 characters'} value={form.password} onChange={field('password')} required minLength={8} /></label>
-          {mode === 'register' && <label>Country<select value={form.country} onChange={field('country')}><option value="NG">Nigeria</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="GH">Ghana</option><option value="ZA">South Africa</option><option value="CA">Canada</option><option value="IN">India</option></select></label>}
+          {mode === 'register' && <label>Country<select value={form.country} onChange={field('country')} required>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>}
           <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'} <span aria-hidden="true">→</span></button>
         </form>
         <div className="auth-divider"><span>or continue with</span></div>

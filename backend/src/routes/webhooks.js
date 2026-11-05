@@ -21,7 +21,8 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     const payout = await Payout.findOne({ where: { providerRef: transfer.reference } });
     if (!payout || payout.status !== 'pending') return res.status(200).end();
     if (event.event === 'transfer.success') {
-      await payout.update({ status: 'paid' });
+      // Conditional update prevents a delayed success event from overriding a failed/refunded payout.
+      await Payout.update({ status: 'paid' }, { where: { id: payout.id, status: 'pending' } });
     } else {
       await sequelize.transaction(async (t) => {
         const [changed] = await Payout.update({ status: 'failed' }, { where: { id: payout.id, status: 'pending' }, transaction: t });
@@ -39,8 +40,11 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
   if (status !== 'success' || !reference || !Number.isSafeInteger(Number(amount)) || Number(amount) <= 0 || !metadata || !metadata.userId) return res.status(200).end();
   const { User } = require('../db');
   if (!(await User.findByPk(metadata.userId, { attributes: ['id'] }))) return res.status(200).end();
-  if (currency && !['NGN', 'USD', 'GHS', 'ZAR', 'KES'].includes(currency)) return res.status(200).end();
-  const coins = Math.floor(amount / config.coinPriceMinor);
+  // Coin pricing is configured in NGN minor units. Never convert another
+  // currency using the NGN price, which would mis-credit a wallet.
+  if (currency !== 'NGN') return res.status(200).end();
+  const coins = Math.floor(Number(amount) / config.coinPriceMinor);
+  if (!Number.isSafeInteger(coins) || coins < 1) return res.status(200).end();
 
   try {
     await sequelize.transaction(async (t) => {
@@ -48,6 +52,7 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
       await LedgerEntry.create({
         userId: metadata.userId, kind: 'coin_purchase', deltaMinor: amount, refId: reference,
       }, { transaction: t });
+      await Wallet.findOrCreate({ where: { userId: metadata.userId }, defaults: { userId: metadata.userId }, transaction: t });
       await Wallet.increment('coinBalance', { by: coins, where: { userId: metadata.userId }, transaction: t });
     });
   } catch (e) {

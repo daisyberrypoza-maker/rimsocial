@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 import Avatar from './Avatar.jsx';
+import { toast } from '../toast.js';
 
 const PHOTO_MS = 5000;
 
@@ -12,6 +13,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [resharing, setResharing] = useState(false);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -70,6 +72,16 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   const total = stories?.length || 0;
 
+  async function reshare() {
+    if (!current || resharing) return;
+    setResharing(true);
+    try {
+      await api(`/v1/stories/${current.id}/repost`, { method: 'POST' });
+      toast('Story reshared to your public story for 24 hours');
+    } catch (e) { toast(e.message); }
+    finally { setResharing(false); }
+  }
+
   return (
     <div className="viewer" role="dialog" aria-label={`Stories from ${group.user.username}`}>
       <div className="viewer-bars">
@@ -83,7 +95,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       <div className="viewer-head">
         <Avatar user={group.user} size={34} />
         <span>@{group.user.username}</span>
-        <button className="ghost small" onClick={() => closeRef.current()} aria-label="Close">✕</button>
+        <div className="viewer-head-actions"><button className="ghost small" disabled={!current || resharing} onClick={reshare}>{resharing ? 'Sharing…' : 'Reshare'}</button><button className="ghost small" onClick={() => closeRef.current()} aria-label="Close">✕</button></div>
       </div>
 
       {current ? (

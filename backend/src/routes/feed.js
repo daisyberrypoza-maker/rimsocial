@@ -6,7 +6,7 @@ const feed = require('../services/feed');
 router.get('/discover', requireAuth, async (req, res, next) => {
   try {
     res.json(await feed.getDiscoverPage({
-      country: req.user.country, cursor: req.query.cursor, limit: req.query.limit,
+      userId: req.user.id, cursor: req.query.cursor, limit: req.query.limit,
     }));
   } catch (e) { next(e); }
 });
