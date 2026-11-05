@@ -43,14 +43,14 @@ async function pagePosts({ where, include = [authorInclude()], cursor, limit }) 
 // Discover: newest public posts in the viewer's country. First page is cached briefly.
 async function getDiscoverPage({ country, cursor, limit }) {
   const n = clampLimit(limit);
-  const cacheKey = !cursor && n === config.feedPageSize ? `feed:discover:${country}` : null;
+  const cacheKey = !cursor && n === config.feedPageSize ? 'feed:discover:global' : null;
   if (cacheKey) {
     const hit = await redis.get(cacheKey);
     if (hit) return JSON.parse(hit);
   }
   const page = await pagePosts({
     where: { status: 'live', isStory: false, visibility: 'public' },
-    include: [authorInclude({ where: { country }, required: true })],
+    include: [authorInclude()],
     cursor,
     limit: n,
   });
