@@ -49,7 +49,7 @@ async function getDiscoverPage({ country, cursor, limit }) {
     if (hit) return JSON.parse(hit);
   }
   const page = await pagePosts({
-    where: { status: 'live', isStory: false },
+    where: { status: 'live', isStory: false, visibility: 'public' },
     include: [authorInclude({ where: { country }, required: true })],
     cursor,
     limit: n,
@@ -90,7 +90,7 @@ async function getFollowingPage({ userId, cursor, limit }) {
 async function hydrate(ids) {
   if (!ids.length) return [];
   const rows = await Post.findAll({
-    where: { id: ids, status: 'live', isStory: false },
+    where: { id: ids, status: 'live', isStory: false, visibility: 'public' },
     include: [authorInclude()],
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
