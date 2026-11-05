@@ -120,6 +120,8 @@ async function start() {
   const currentPostColumns = await qi.describeTable('posts');
   const DataTypes = require('sequelize').DataTypes;
   if (!currentPostColumns.mediaPublicId) await qi.addColumn('posts', 'mediaPublicId', { type: DataTypes.STRING(255), allowNull: true });
+  if (!currentPostColumns.allowRemix) await qi.addColumn('posts', 'allowRemix', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
+  if (!currentPostColumns.sourcePostId) await qi.addColumn('posts', 'sourcePostId', { type: DataTypes.UUID, allowNull: true });
   if (!currentPostColumns.isSponsored) await qi.addColumn('posts', 'isSponsored', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorName) await qi.addColumn('posts', 'sponsorName', { type: DataTypes.STRING(100), allowNull: true });
   if (!currentPostColumns.sponsorDescription) await qi.addColumn('posts', 'sponsorDescription', { type: DataTypes.STRING(200), allowNull: true });
