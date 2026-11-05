@@ -754,3 +754,11 @@ input:focus { border-color:#4c5cff; }
 .profile-watch-feed { height: 100dvh; padding-top: 0; }
 .profile-watch-back { position: absolute; z-index: 50; top: max(12px, env(safe-area-inset-top)); left: 12px; border: 0; border-radius: 999px; padding: 9px 13px; color: #fff; background: rgba(0,0,0,.48); backdrop-filter: blur(12px); font-weight: 600; }
 .profile-watch-action { display: flex; justify-content: center; padding: 10px 12px 14px; }
+
+
+/* Remix attribution stays inside the existing composer visual language. */
+.remix-source-card { margin: 0 0 16px; padding: 14px; }
+.remix-source-card > p { margin: 5px 0 10px; }
+.remix-source-media { max-height: 220px; overflow: hidden; border-radius: 12px; background: #111; }
+.remix-source-media img, .remix-source-media video { display: block; width: 100%; max-height: 220px; object-fit: contain; }
+.remix-permission { margin-top: 12px; }
