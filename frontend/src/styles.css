@@ -289,3 +289,9 @@ summary { cursor: pointer; padding: 6px 0; }
 .post-menu button { width:100%; text-align:left; border-radius:10px; padding:12px; background:transparent; color:var(--text); font-weight:600; }
 .post-menu button:active { background:var(--surface-2); }
 .post-menu button:disabled { opacity:.55; }
+
+
+/* Like is a true red-filled toggle, matching the requested social interaction */
+.rail-btn.on { color:#ff3040; }
+.rail-btn.on svg { fill:#ff3040; stroke:#ff3040; }
+.rail-btn[aria-pressed="true"] { color:#ff3040; }
