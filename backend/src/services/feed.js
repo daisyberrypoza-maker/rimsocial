@@ -104,10 +104,15 @@ async function getFollowingPage({ userId, cursor, limit }) {
   const hasMore = window.length > n;
   const page = window.slice(0, n);
 
-  const rows = await hydrate(page.map((e) => e.id));
+  const [rows, blockedRows] = await Promise.all([
+    hydrate(page.map((e) => e.id)),
+    UserBlock.findAll({ where: { blockerId: userId }, attributes: ['blockedUserId'], raw: true }),
+  ]);
+  const blockedIds = new Set(blockedRows.map((row) => row.blockedUserId));
+  const visibleRows = rows.filter((post) => !blockedIds.has(post.authorId));
   const last = page[page.length - 1];
   return {
-    items: rows.map(toPostDTO),
+    items: visibleRows.map(toPostDTO),
     nextCursor: hasMore && last ? encodeCursor(last.t, last.id) : null,
   };
 }
