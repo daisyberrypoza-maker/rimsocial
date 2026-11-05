@@ -295,3 +295,30 @@ summary { cursor: pointer; padding: 6px 0; }
 .rail-btn.on { color:#ff3040; }
 .rail-btn.on svg { fill:#ff3040; stroke:#ff3040; }
 .rail-btn[aria-pressed="true"] { color:#ff3040; }
+
+/* Post composer: selected-media preview and publish flow */
+.upload-composer { max-width:680px; margin:18px auto; padding:clamp(16px,4vw,24px); }
+.upload-heading h2 { margin:0 0 5px; font-size:clamp(22px,5vw,28px); }
+.upload-heading .muted { margin:0 0 14px; }
+.upload-eyebrow { margin:0 0 5px; font-size:10px; letter-spacing:1.8px; font-weight:900; color:var(--brand-a); }
+.upload-composer .seg { margin:16px 0; }
+.upload-picker { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:140px; padding:18px; border:1px dashed #55556a; border-radius:16px; background:var(--surface-2); text-align:center; cursor:pointer; }
+.upload-picker input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.upload-picker:focus-within { outline:2px solid var(--brand-a); outline-offset:2px; }
+.upload-picker-icon { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; background:var(--brand); color:#fff; font-size:26px; line-height:1; }
+.upload-picker strong { font-size:14px; }
+.upload-picker small { max-width:100%; overflow-wrap:anywhere; color:var(--muted); font-size:12px; }
+.upload-preview { margin:14px 0; padding:10px; border:1px solid var(--line); border-radius:16px; background:var(--surface-2); }
+.upload-preview-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.upload-preview img,.upload-preview video { display:block; width:100%; max-height: min(52dvh,420px); object-fit:contain; border-radius:10px; background:#08080c; }
+.upload-preview > small { display:block; margin-top:8px; color:var(--muted); font-size:11px; }
+.upload-caption-label { display:block; margin:16px 0 5px; font-size:13px; font-weight:700; }
+.upload-caption { display:block; width:100%; resize:vertical; min-height:100px; margin:0; padding:13px 14px; border:1px solid var(--line); border-radius:13px; background:var(--surface); color:var(--text); font:inherit; line-height:1.45; }
+.upload-caption:focus { border-color:var(--brand-a); outline:1px solid var(--brand-a); }
+.upload-caption-footer { display:flex; justify-content:space-between; gap:10px; margin:7px 2px 14px; }
+.upload-caption-footer small { font-size:11px; }
+.upload-limit { color:var(--muted); white-space:nowrap; }
+.upload-limit.reached { color:var(--danger); font-weight:700; }
+.upload-submit { width:100%; min-height:48px; }
+@media (min-width:700px) { .upload-composer { border-radius:20px; } }
+@media (max-width:390px) { .upload-composer { margin:10px; padding:14px; } .upload-picker { min-height:120px; } }
