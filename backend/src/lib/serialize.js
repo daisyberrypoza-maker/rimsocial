@@ -11,6 +11,11 @@ function toPostDTO(post) {
     likeCount: Number(p.likeCount) || 0,
     repostCount: Number(p.repostCount) || 0,
     visibility: p.visibility || 'public',
+    isSponsored: Boolean(p.isSponsored),
+    sponsorName: p.sponsorName || null,
+    sponsorDescription: p.sponsorDescription || null,
+    sponsorCta: p.sponsorCta || null,
+    sponsorUrl: p.sponsorUrl || null,
     createdAt: p.createdAt,
     expiresAt: p.expiresAt || null,
     author: p.author

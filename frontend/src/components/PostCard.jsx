@@ -89,6 +89,10 @@ export default function PostCard({ post, active }) {
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
   const [showGifts, setShowGifts] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [reportReason, setReportReason] = useState('Spam or misleading');
+  const [reporting, setReporting] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [repostBusy, setRepostBusy] = useState(false);
   const username = post.author?.username || 'unknown';
@@ -123,6 +127,38 @@ export default function PostCard({ post, active }) {
     finally { setLikeBusy(false); }
   }
 
+  async function copyPostLink() {
+    const url = `${window.location.origin}/p/${post.id}`;
+    try { await navigator.clipboard.writeText(url); toast('Post link copied'); setShowMenu(false); }
+    catch { toast(url); }
+  }
+
+  async function sharePost() {
+    const url = `${window.location.origin}/p/${post.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: `Post by @${username}`, url });
+      else await navigator.clipboard.writeText(url);
+      setShowMenu(false);
+    } catch { /* Share sheet dismissed. */ }
+  }
+
+  async function blockCreator() {
+    if (!post.author?.id) return toast('Creator information is unavailable');
+    try {
+      await api(`/v1/users/${post.author.id}/block`, { method: 'POST' });
+      setHidden(true); setShowMenu(false); toast(`@${username} blocked`);
+    } catch (e) { toast(e.message); }
+  }
+
+  async function reportPost() {
+    if (reporting) return;
+    setReporting(true);
+    try {
+      await api(`/v1/posts/${post.id}/report`, { method: 'POST', body: { reason: reportReason } });
+      toast('Report submitted for review'); setShowMenu(false);
+    } catch (e) { toast(e.message); }
+    finally { setReporting(false); }
+  }
   async function repost() {
     if (repostBusy) return;
     setRepostBusy(true);
@@ -135,10 +171,13 @@ export default function PostCard({ post, active }) {
     finally { setRepostBusy(false); }
   }
 
+  if (hidden) return null;
+
   return <article className="post" data-id={post.id}>
     {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
       : <img src={src} alt="" loading="lazy" />}
     <div className="shade" />
+    {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
       <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
@@ -149,12 +188,18 @@ export default function PostCard({ post, active }) {
         <Icon name="repeat" /><span>{reposted ? 'Reposted' : 'Repost'}</span>{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
       </button>
       <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /><span>Gift</span></button>
+      <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span><span>More</span></button>
     </aside>
     <div className="info">
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
-      <div className="meta-row">{formatCount(post.viewCount)} views</div>
-      <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+      {post.isSponsored ? <>
+        <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
+        {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
+      </> : <>
+        <div className="meta-row">{formatCount(post.viewCount)} views</div>
+        <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+      </>}
     </div>
     {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>
       <section className="sheet repost-sheet" role="dialog" aria-label="Repost" onClick={(e) => e.stopPropagation()}>
@@ -163,6 +208,23 @@ export default function PostCard({ post, active }) {
         <p className="muted">{reposted ? 'This post will no longer be shared with people who follow you.' : 'Share this video with people who follow you. The original creator and post stay credited.'}</p>
         <div className="repost-preview"><Avatar user={post.author} size={38} /><div><strong>@{username}</strong><small>{post.caption || 'Video post'}</small></div><Icon name="repeat" size={20} /></div>
         <button className={reposted ? 'repost-confirm remove' : 'repost-confirm'} disabled={repostBusy} onClick={async () => { const success = await repost(); if (success) setShowRepostSheet(false); }}>{repostBusy ? 'Please wait…' : reposted ? 'Remove repost' : 'Repost'}</button>
+      </section>
+    </div>}
+    {showMenu && <div className="sheet-backdrop post-menu-backdrop" onClick={() => setShowMenu(false)}>
+      <section className="sheet post-menu-sheet" role="dialog" aria-label="Post controls" onClick={(e) => e.stopPropagation()}>
+        <div className="people-sheet-handle" />
+        <div className="comments-heading"><h3>Post options</h3><button className="icon-button" onClick={() => setShowMenu(false)} aria-label="Close menu">✕</button></div>
+        <button className="post-menu-item" onClick={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}>Remix this post</button>
+        <button className="post-menu-item" onClick={blockCreator}>Block @{username}</button>
+        <label className="post-report-reason">Report reason
+          <select value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
+            <option>Spam or misleading</option><option>Harassment or bullying</option><option>Hate or harmful content</option><option>Violence or dangerous acts</option><option>Copyright concern</option><option>Other</option>
+          </select>
+        </label>
+        <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
+        <button className="post-menu-item" onClick={() => { setHidden(true); setShowMenu(false); toast("You will see fewer posts like this"); }}>Not interested</button>
+        <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
+        <button className="post-menu-item" onClick={sharePost}>Export or send</button>
       </section>
     </div>}
     {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}

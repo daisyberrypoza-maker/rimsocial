@@ -15,6 +15,11 @@ export default function Upload() {
   const [preview, setPreview] = useState('');
   const [asStory, setAsStory] = useState(false);
   const [visibility, setVisibility] = useState('public');
+  const [isSponsored, setIsSponsored] = useState(false);
+  const [sponsorName, setSponsorName] = useState('');
+  const [sponsorDescription, setSponsorDescription] = useState('');
+  const [sponsorCta, setSponsorCta] = useState('Shop Now');
+  const [sponsorUrl, setSponsorUrl] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,6 +36,15 @@ export default function Upload() {
     fd.append('media', file);
     fd.append('caption', draft.caption || '');
     if (!asStory) fd.append('visibility', visibility);
+    if (!asStory && isSponsored) {
+      if (!sponsorName.trim()) return toast('Enter the sponsor or business name');
+      if (!/^https?:\/\//i.test(sponsorUrl.trim())) return toast('Enter a valid sponsor destination URL');
+      fd.append('isSponsored', 'true');
+      fd.append('sponsorName', sponsorName.trim());
+      fd.append('sponsorDescription', sponsorDescription.trim());
+      fd.append('sponsorCta', sponsorCta.trim() || 'Shop Now');
+      fd.append('sponsorUrl', sponsorUrl.trim());
+    }
     setBusy(true);
     try {
       await api(asStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
@@ -74,6 +88,19 @@ export default function Upload() {
         <legend>Who can see this post?</legend>
         <label className={visibility === 'public' ? 'selected' : ''}><input type="radio" name="visibility" value="public" checked={visibility === 'public'} onChange={() => setVisibility('public')} /><span><strong>🌎 Public</strong><small>Everyone can discover and view this post.</small></span></label>
         <label className={visibility === 'private' ? 'selected' : ''}><input type="radio" name="visibility" value="private" checked={visibility === 'private'} onChange={() => setVisibility('private')} /><span><strong>🔒 Only me</strong><small>Only you can view this post.</small></span></label>
+      </fieldset>}
+      {!asStory && visibility === 'public' && <fieldset className="upload-privacy sponsor-setup">
+        <legend>Paid partnership / sponsored post</legend>
+        <label className={isSponsored ? 'selected' : ''}>
+          <input type="checkbox" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} />
+          <span><strong>Show an Ad label</strong><small>Disclose when this post promotes a business or paid partner.</small></span>
+        </label>
+        {isSponsored && <div className="sponsor-fields">
+          <label>Sponsor or business name<input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} maxLength={100} placeholder="Business name" /></label>
+          <label>Short description<input value={sponsorDescription} onChange={(e) => setSponsorDescription(e.target.value)} maxLength={200} placeholder="What is being promoted?" /></label>
+          <label>Call-to-action label<select value={sponsorCta} onChange={(e) => setSponsorCta(e.target.value)}><option>Shop Now</option><option>Learn More</option><option>Sign Up</option><option>Contact Us</option><option>Download</option></select></label>
+          <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
+        </div>}
       </fieldset>}
       {asStory && <p className="upload-public-note">🌎 Stories are public and expire after 24 hours.</p>}
       <button className="upload-submit" type="submit" disabled={busy || !file}>{busy ? 'Publishing…' : asStory ? 'Share public story' : visibility === 'public' ? 'Publish publicly' : 'Save · Only me'}</button>

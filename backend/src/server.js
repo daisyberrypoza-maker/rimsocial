@@ -79,6 +79,14 @@ async function start() {
   if (!postColumns.visibility) {
     await qi.addColumn('posts', 'visibility', { type: require('sequelize').DataTypes.ENUM('public', 'private'), allowNull: false, defaultValue: 'public' });
   }
+  // Additive paid-partnership fields for existing posts tables.
+  const currentPostColumns = await qi.describeTable('posts');
+  const DataTypes = require('sequelize').DataTypes;
+  if (!currentPostColumns.isSponsored) await qi.addColumn('posts', 'isSponsored', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
+  if (!currentPostColumns.sponsorName) await qi.addColumn('posts', 'sponsorName', { type: DataTypes.STRING(100), allowNull: true });
+  if (!currentPostColumns.sponsorDescription) await qi.addColumn('posts', 'sponsorDescription', { type: DataTypes.STRING(200), allowNull: true });
+  if (!currentPostColumns.sponsorCta) await qi.addColumn('posts', 'sponsorCta', { type: DataTypes.STRING(30), allowNull: true });
+  if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   await seedGifts();
   app.listen(config.port, () => console.log(`Clipverse API on http://localhost:${config.port}`));
 }
