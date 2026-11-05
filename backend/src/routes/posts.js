@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Post, PostLike, PostComment, Repost, Follow, User, sequelize } = require('../db');
+const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -51,6 +51,19 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     if (!post) throw httpError(404, 'Post not found');
     await post.update({ status: 'removed' });
     res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+router.post('/:id/report', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
+    if (!post) throw httpError(404, 'Post not found');
+    const reason = String(req.body?.reason || '').trim().slice(0, 500);
+    if (!reason) throw httpError(400, 'Choose a reason for reporting this post');
+    const existing = await PostReport.findOne({ where: { postId: post.id, reporterId: req.user.id, status: 'pending' } });
+    if (existing) throw httpError(409, 'You have already reported this post');
+    await PostReport.create({ postId: post.id, reporterId: req.user.id, reason });
+    res.status(201).json({ reported: true });
   } catch (e) { next(e); }
 });
 
