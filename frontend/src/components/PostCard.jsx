@@ -151,7 +151,7 @@ export default function PostCard({ post, active }) {
         <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}>
           <Avatar user={post.author} size={48} ring />
         </button>
-        <button className={`rail-btn ${liked ? 'on' : ''}`} onClick={like}>
+        <button className={`rail-btn ${liked ? 'on' : ''}`} onClick={like} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
           <Icon name="heart" />
           <span>{formatCount(likes)}</span>
         </button>
