@@ -100,8 +100,11 @@ async function createPayouts() {
 }
 
 async function main() {
+  if (config.nodeEnv === 'production' && config.syncDatabase) {
+    throw new Error('DB_SYNC must be false in production; apply schema migrations before starting the worker.');
+  }
   await sequelize.authenticate();
-  await sequelize.sync();
+  if (config.syncDatabase) await sequelize.sync();
   await seedGifts();
   console.log('Worker running');
 
