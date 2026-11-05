@@ -54,7 +54,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const profileWatch = /\/u\/[^/]+\/watch$/.test(location.pathname);
+  const profileWatch = location.pathname.split('/').length === 4 && location.pathname.startsWith('/u/') && location.pathname.endsWith('/watch');
   const immersive = IMMERSIVE_PATHS.includes(location.pathname) || profileWatch;
   const showChrome = Boolean(token) && location.pathname !== '/login';
 
