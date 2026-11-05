@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
+const cloudinary = require('../services/cloudinary');
 
 const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'];
 
@@ -36,7 +37,11 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
     if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP profile photo');
     const user = await User.findByPk(req.user.id);
     if (!user) throw httpError(404, 'User not found');
-    await user.update({ avatarUrl: mediaPath(req.file.filename) });
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/avatars');
+    const oldAvatar = user.avatarUrl;
+    await user.update({ avatarUrl: asset.url });
+    const oldId = cloudinary.publicIdFromUrl(oldAvatar);
+    if (oldId) await cloudinary.deleteAsset(oldId, 'image').catch((e) => console.error('Old avatar cleanup failed:', e.message));
     res.json({ avatarUrl: user.avatarUrl });
   } catch (e) { next(e); }
 });
