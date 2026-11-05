@@ -30,7 +30,17 @@ export default function Upload() {
   const [topic, setTopic] = useState(draft.topic || '');
   const [aiLabel, setAiLabel] = useState(Boolean(draft.aiLabel));
   const [shareToStory, setShareToStory] = useState(Boolean(draft.shareToStory));
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionResults, setMentionResults] = useState([]);
   const templates = [{ label: 'Behind the scenes', caption: 'Behind the scenes 🎬 ' }, { label: 'Quick tutorial', caption: 'Here is how I do it: ' }, { label: 'My latest', caption: 'My latest update ✨ ' }];
+
+  useEffect(() => {
+    const query = mentionQuery.trim().replace(/^@/, '');
+    if (!query) { setMentionResults([]); return undefined; }
+    let active = true;
+    api(`/v1/search?q=${encodeURIComponent(query)}&type=people`).then((r) => { if (active) setMentionResults((r.people || []).slice(0, 6)); }).catch(() => { if (active) setMentionResults([]); });
+    return () => { active = false; };
+  }, [mentionQuery]);
 
   useEffect(() => {
     if (!remixId) { setSourcePost(null); return undefined; }
@@ -127,7 +137,10 @@ export default function Upload() {
 
       <label className="upload-label" htmlFor="post-topic">Add topic</label>
       <input id="post-topic" className="upload-topic-input" value={topic} maxLength={60} placeholder="e.g. Fashion, Comedy, Tech" onChange={(e) => { setTopic(e.target.value); setDraft({ caption: draft.caption || '', topic: e.target.value, aiLabel, shareToStory }); }} />
-      <label className="upload-label" htmlFor="post-caption">Description · use @username to mention someone</label>
+      <label className="upload-label" htmlFor="mention-search">Add mention</label>
+      <input id="mention-search" className="upload-topic-input" value={mentionQuery} maxLength={32} placeholder="Search username" onChange={(e) => setMentionQuery(e.target.value)} />
+      {mentionResults.length > 0 && <div className="upload-mention-results">{mentionResults.map((person) => <button key={person.id} type="button" className="ghost small" onClick={() => { const current = draft.caption || ''; const mention = '@' + person.username; setDraft({ caption: current + (current && !current.endsWith(' ') ? ' ' : '') + mention + ' ', topic, aiLabel, shareToStory }); setMentionQuery(''); setMentionResults([]); }}>{person.displayName || person.username} · @{person.username}</button>)}</div>}
+      <label className="upload-label" htmlFor="post-caption">Description</label>
       <textarea id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={(e) => setDraft({ caption: e.target.value })} rows={4} />
       <div className="upload-caption-meta"><span>Use #hashtags to help people discover your post</span><span>{(draft.caption || '').length}/{asStory ? 200 : 500}</span></div>
 
