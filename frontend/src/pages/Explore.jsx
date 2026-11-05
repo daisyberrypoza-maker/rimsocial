@@ -22,6 +22,8 @@ export default function Explore() {
   const [searchType, setSearchType] = useState('all');
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [followBusy, setFollowBusy] = useState({});
   const sentinel = useRef(null);
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
@@ -31,6 +33,21 @@ export default function Explore() {
     return loadPage(KEY, PATH, reset)
       .catch((e) => toast(e.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    api('/v1/users/suggestions').then((data) => setSuggestions(data.items || [])).catch(() => {});
+  }, []);
+
+  async function toggleSuggestion(person) {
+    if (followBusy[person.id]) return;
+    setFollowBusy((s) => ({ ...s, [person.id]: true }));
+    try {
+      await api(`/v1/users/${person.id}/follow`, { method: 'POST' });
+      setSuggestions((items) => items.filter((item) => item.id !== person.id));
+      toast(`Following @${person.username}`);
+    } catch (e) { toast(e.message); }
+    finally { setFollowBusy((s) => ({ ...s, [person.id]: false })); }
   }
 
   useEffect(() => {
@@ -91,6 +108,7 @@ export default function Explore() {
         {!results.people?.length && !results.posts?.length && <p className="muted center">No results yet. Try another name or hashtag.</p>}
       </> : <>
         <div className="explore-heading"><h2>Explore</h2><span className="muted">Find your next favourite</span></div>
+        {suggestions.length > 0 && <section className="suggestions-section"><div className="suggestions-head"><h3>People you may like</h3><span className="muted">Discover creators</span></div><div className="suggestions-list">{suggestions.map((person) => <article className="suggestion-card" key={person.id}><button className="suggestion-person" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={48} /><span><strong>{person.displayName}</strong><small>@{person.username}</small><small>{formatCount(person.followerCount)} followers</small></span></button><button className="small suggestion-follow" disabled={Boolean(followBusy[person.id])} onClick={() => toggleSuggestion(person)}>{followBusy[person.id] ? "…" : "Follow"}</button></article>)}</div></section> }
         <div className="hashtag-chips"><button onClick={() => searchHashtag('fyp')}>#fyp</button><button onClick={() => searchHashtag('trending')}>#trending</button><button onClick={() => searchHashtag('comedy')}>#comedy</button><button onClick={() => searchHashtag('music')}>#music</button></div>
         <div className="grid">{items.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/u/${p.author?.username}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div>
         <div ref={sentinel} className="sentinel" />{loading && <p className="muted center">Loading…</p>}{!items.length && !loading && <p className="muted center">Nothing to explore yet.</p>}
