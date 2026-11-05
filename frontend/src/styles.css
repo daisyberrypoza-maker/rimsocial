@@ -444,3 +444,25 @@ input:focus, select:focus { border-color: var(--brand-a); }
 .coin-email-label { display:block; margin:10px 0; font-size:13px; font-weight:700; }
 .coin-checkout { width:100%; min-height:48px; margin-top:8px; }
 @media(min-width:600px) { .coin-backdrop { align-items:center; padding:16px; } .coin-sheet { border-radius:24px; } }
+
+
+/* Creator earnings and cashout surfaces */
+.creator-page { overflow-y:auto; padding-bottom:28px; }
+.creator-hero { border-radius:22px; padding:22px; gap:16px; }
+.creator-page .panel { border-radius:20px; padding:clamp(16px, 3vw, 24px); margin:14px 0; }
+.studio-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.studio-stats article { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:15px; min-width:0; }
+.studio-stats article strong { display:block; font-size:clamp(18px,4vw,26px); overflow-wrap:anywhere; margin:6px 0; }
+.payout-form,.match-form { display:grid; gap:8px; }
+.payout-form label,.match-form label { margin-top:6px; font-size:13px; font-weight:700; }
+.payout-form button,.match-form button { width:100%; min-height:46px; margin-top:8px; }
+.history-list { display:flex; flex-direction:column; gap:0; }
+.history-row { gap:12px; padding:13px 0; border-bottom:1px solid var(--line); }
+.history-row:last-child { border-bottom:0; }
+.status { flex-shrink:0; }
+@media(max-width:520px) {
+  .creator-page { padding-left:10px; padding-right:10px; }
+  .creator-hero { padding:17px; }
+  .studio-stats { gap:8px; }
+  .studio-stats article { padding:12px; }
+}
