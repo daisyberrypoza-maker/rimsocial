@@ -50,6 +50,12 @@ const Follow = sequelize.define('Follow', {
   followeeId: { type: DataTypes.UUID, primaryKey: true },
 }, { tableName: 'follows', indexes: [{ fields: ['followeeId'] }] });
 
+// A durable per-user like record prevents duplicate likes and supports unlike.
+const PostLike = sequelize.define('PostLike', {
+  postId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'post_likes', indexes: [{ fields: ['userId'] }] });
+
 // One row per viewer per story, so story view counts are not inflated
 const StoryView = sequelize.define('StoryView', {
   storyId: { type: DataTypes.UUID, primaryKey: true },
@@ -150,6 +156,6 @@ async function seedGifts() {
 }
 
 module.exports = {
-  sequelize, Op, User, Post, Follow, StoryView, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, Follow, PostLike, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, seedGifts,
 };
