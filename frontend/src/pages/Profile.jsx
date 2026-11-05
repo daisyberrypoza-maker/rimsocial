@@ -164,7 +164,7 @@ export default function Profile() {
         <>
           <div className="grid">
             {posts.map((p) => (
-              <div key={p.id} className="tile">
+              <div key={p.id} className="tile profile-post-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
