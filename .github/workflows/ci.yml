@@ -1,0 +1,34 @@
+name: ClipVerse CI
+
+on:
+  push:
+    branches:
+      - main
+      - rimsocial-full-feature-fixes
+      - clipverse-production-fixes-2026-11-05
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+      - name: Check backend JavaScript syntax
+        run: find backend/src -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+      - name: Build frontend
+        run: npm run build --prefix frontend

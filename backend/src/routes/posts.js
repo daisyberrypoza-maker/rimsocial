@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Post, Follow } = require('../db');
+const { Post, PostLike, Follow, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -57,10 +57,18 @@ router.post('/:id/view', async (req, res, next) => {
 
 router.post('/:id/like', requireAuth, async (req, res, next) => {
   try {
-    const [affected] = await Post.increment('likeCount', { by: 1, where: { id: req.params.id, status: 'live' } });
-    if (!affected) throw httpError(404, 'Post not found');
-    const post = await Post.findByPk(req.params.id, { attributes: ['likeCount'] });
-    res.json({ likeCount: post.likeCount });
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
+    if (!post) throw httpError(404, 'Post not found');
+    await sequelize.transaction(async (t) => {
+      const [, created] = await PostLike.findOrCreate({
+        where: { postId: post.id, userId: req.user.id },
+        defaults: { postId: post.id, userId: req.user.id },
+        transaction: t,
+      });
+      if (created) await post.increment('likeCount', { by: 1, transaction: t });
+    });
+    const fresh = await Post.findByPk(post.id, { attributes: ['likeCount'] });
+    res.json({ likeCount: Number(fresh.likeCount), liked: true });
   } catch (e) { next(e); }
 });
 

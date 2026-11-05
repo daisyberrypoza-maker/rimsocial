@@ -58,4 +58,54 @@ router.get('/me', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+
+router.post('/google', async (req, res, next) => {
+  try {
+    if (!config.googleClientId) throw httpError(503, 'Google sign-in is not configured on the server');
+    const credential = String(req.body.credential || '');
+    if (!credential || credential.length > 10000) throw httpError(400, 'Google credential is missing or invalid');
+
+    const verifyUrl = new URL('https://oauth2.googleapis.com/tokeninfo');
+    verifyUrl.searchParams.set('id_token', credential);
+    const verifyResponse = await fetch(verifyUrl, { signal: AbortSignal.timeout(8000) });
+    if (!verifyResponse.ok) throw httpError(401, 'Google sign-in could not be verified');
+    const claims = await verifyResponse.json();
+    if (!['accounts.google.com', 'https://accounts.google.com'].includes(claims.iss) ||
+        claims.aud !== config.googleClientId || claims.email_verified !== 'true' ||
+        !claims.email || !claims.sub || Number(claims.exp) * 1000 <= Date.now()) {
+      throw httpError(401, 'Google sign-in token is invalid or expired');
+    }
+
+    const email = String(claims.email).trim().toLowerCase();
+    const countryInput = String(req.body.country || 'US').trim().toUpperCase();
+    const country = /^[A-Z]{2}$/.test(countryInput) ? countryInput : 'US';
+    let user = await User.findOne({ where: { email } });
+    if (!user) {
+      const base = String(claims.name || email.split('@')[0]).toLowerCase()
+        .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'creator';
+      let username = base.length >= 3 ? base : 'user_' + base;
+      if (await User.findOne({ where: { username } })) {
+        username = (base.slice(0, 17) + '_' + Date.now().toString(36)).slice(0, 32);
+      }
+      user = await sequelize.transaction(async (t) => {
+        const created = await User.create({
+          username, email,
+          passwordHash: await bcrypt.hash(String(claims.sub) + String(Date.now()), 10),
+          displayName: String(claims.name || username).slice(0, 64), country,
+        }, { transaction: t });
+        await Wallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });
+        await EarningsWallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });
+        return created;
+      });
+    } else {
+      await Wallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
+      await EarningsWallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
+    }
+    res.json({ token: sign(user), user: publicUser(user) });
+  } catch (e) {
+    if (e.name === 'SequelizeUniqueConstraintError') return next(httpError(409, 'This Google account is already being created. Please try again.'));
+    next(e);
+  }
+});
+
 module.exports = router;
