@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import Icon from '../components/Icon.jsx';
+import { mediaUrl } from '../lib/config.js';
 
 export default function Upload() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const remixId = searchParams.get('remix');
   const draft = useAppStore((s) => s.uploadDraft);
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const setFeed = useAppStore((s) => s.setFeed);
@@ -14,6 +17,8 @@ export default function Upload() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [asStory, setAsStory] = useState(false);
+  const [allowRemix, setAllowRemix] = useState(false);
+  const [sourcePost, setSourcePost] = useState(null);
   const [visibility, setVisibility] = useState('public');
   const [isSponsored, setIsSponsored] = useState(false);
   const [sponsorName, setSponsorName] = useState('');
@@ -21,6 +26,18 @@ export default function Upload() {
   const [sponsorCta, setSponsorCta] = useState('Shop Now');
   const [sponsorUrl, setSponsorUrl] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!remixId) { setSourcePost(null); return undefined; }
+    let active = true;
+    api(`/v1/posts/${encodeURIComponent(remixId)}`).then((item) => {
+      if (!active) return;
+      if (!item.allowRemix) { toast('The creator has not allowed remixing this post'); setSourcePost(null); return; }
+      setSourcePost(item);
+      setDraft({ caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' });
+    }).catch((error) => { if (active) toast(error.message); });
+    return () => { active = false; };
+  }, [remixId, setDraft]);
 
   useEffect(() => {
     if (!file) { setPreview(''); return undefined; }
@@ -32,9 +49,12 @@ export default function Upload() {
   async function submit(e) {
     e.preventDefault();
     if (!file) return toast('Choose a photo or video first');
+    if (remixId && !sourcePost) return toast('This post cannot be remixed. Choose a post whose creator allows remixing.');
     const fd = new FormData();
     fd.append('media', file);
     fd.append('caption', draft.caption || '');
+    fd.append('allowRemix', String(!asStory && allowRemix));
+    if (sourcePost) fd.append('sourcePostId', sourcePost.id);
     if (!asStory) fd.append('visibility', visibility);
     if (!asStory && isSponsored) {
       if (!sponsorName.trim()) return toast('Enter the sponsor or business name');
@@ -50,6 +70,7 @@ export default function Upload() {
       await api(asStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
       setDraft({ caption: '' });
       setFile(null);
+      setSourcePost(null);
       if (asStory) setStoryRail({ items: [], updatedAt: 0 });
       else {
         setFeed('discover', { updatedAt: 0 });
@@ -67,6 +88,7 @@ export default function Upload() {
         <button type="button" className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button>
         <div><h2>{asStory ? 'New public story' : 'Create a post'}</h2><p className="muted">Share a moment with your community</p></div>
       </header>
+      {sourcePost && <div className="panel remix-source-card"><strong>Remixing @{sourcePost.author?.username || 'creator'}</strong><p className="muted">Your new post will credit the original creator.</p><div className="remix-source-media">{sourcePost.kind === 'video' ? <video src={mediaUrl(sourcePost.mediaUrl)} controls playsInline /> : <img src={mediaUrl(sourcePost.mediaUrl)} alt="Original post being remixed" />}</div></div>}
       <div className="seg upload-kind">
         <button type="button" className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>Post / Reel</button>
         <button type="button" className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>Story · 24h</button>
@@ -102,6 +124,7 @@ export default function Upload() {
           <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
         </div>}
       </fieldset>}
+      {!asStory && <fieldset className="upload-privacy remix-permission"><legend>Remix permissions</legend><label className={allowRemix ? 'selected' : ''}><input type="checkbox" checked={allowRemix} onChange={(e) => setAllowRemix(e.target.checked)} /><span><strong>Allow others to remix this post</strong><small>Other creators can use this post as the source for a new, attributed post.</small></span></label></fieldset>}
       {asStory && <p className="upload-public-note">🌎 Stories are public and expire after 24 hours.</p>}
       <button className="upload-submit" type="submit" disabled={busy || !file}>{busy ? 'Publishing…' : asStory ? 'Share public story' : visibility === 'public' ? 'Publish publicly' : 'Save · Only me'}</button>
     </form>
