@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { sequelize, User, Post, Follow } = require('../db');
+const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -11,6 +12,17 @@ async function resolveUser(req, ref, attributes) {
   if (ref === 'me') return User.findByPk(req.user.id, { attributes });
   return User.findOne({ where: { username: ref.toLowerCase() }, attributes });
 }
+
+// POST /v1/users/me/avatar — replace the signed-in user's profile picture.
+router.post('/me/avatar', requireAuth, upload.single('avatar'), async (req, res, next) => {
+  try {
+    if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP profile picture');
+    const user = await User.findByPk(req.user.id);
+    if (!user) throw httpError(404, 'User not found');
+    await user.update({ avatarUrl: mediaPath(req.file.filename) });
+    res.json({ avatarUrl: user.avatarUrl });
+  } catch (e) { next(e); }
+});
 
 // GET /v1/users/:username
 router.get('/:username', requireAuth, async (req, res, next) => {
@@ -31,7 +43,7 @@ router.get('/:username/posts', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
     res.json(await feed.pagePosts({
-      where: { authorId: user.id, status: 'live', isStory: false },
+      where: { authorId: user.id, status: 'live', isStory: false, ...(user.id === req.user.id ? {} : { visibility: 'public' }) },
       cursor: req.query.cursor,
       limit: feed.clampLimit(req.query.limit),
     }));
