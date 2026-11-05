@@ -738,3 +738,12 @@ input:focus { border-color:#4c5cff; }
   .sponsor-cta { min-height: 46px; font-size: 15px; }
   .sponsored-label { bottom: 238px; }
 }
+
+
+.post-more-glyph { font-size: 21px; line-height: 18px; letter-spacing: 1px; }
+.post-menu-sheet { max-height: min(82dvh, 720px); overflow-y: auto; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.post-menu-item { display: block; width: 100%; text-align: left; border-radius: 0; border-bottom: 1px solid var(--line); padding: 15px 8px; background: transparent; color: var(--text); font-weight: 600; }
+.post-menu-item:hover { background: var(--surface-2); }
+.post-menu-item:nth-of-type(3), .post-menu-item:nth-of-type(4) { color: var(--danger); }
+.post-report-reason { display: block; margin: 12px 0 4px; color: var(--muted); font-size: 13px; }
+.post-report-reason select { margin-top: 6px; }
