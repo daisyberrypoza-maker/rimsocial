@@ -95,12 +95,12 @@ export default function PostCard({ post, active }) {
   }
 
   async function share() {
-    const url = `${location.origin}/u/${username}`;
+    const url = `${window.location.origin}/#/p/${encodeURIComponent(post.id)}`;
     try {
       if (navigator.share) await navigator.share({ title: 'Clipverse', url });
       else {
         await navigator.clipboard.writeText(url);
-        toast('Link copied');
+        toast('Post link copied');
       }
     } catch { /* cancelled */ }
   }
