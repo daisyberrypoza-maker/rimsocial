@@ -747,3 +747,10 @@ input:focus { border-color:#4c5cff; }
 .post-menu-item:nth-of-type(3), .post-menu-item:nth-of-type(4) { color: var(--danger); }
 .post-report-reason { display: block; margin: 12px 0 4px; color: var(--muted); font-size: 13px; }
 .post-report-reason select { margin-top: 6px; }
+
+
+/* Profile posts can be watched in the same immersive, swipeable feed as For You. */
+.profile-watch-page { position: fixed; inset: 0; z-index: 30; background: #000; }
+.profile-watch-feed { height: 100dvh; padding-top: 0; }
+.profile-watch-back { position: absolute; z-index: 50; top: max(12px, env(safe-area-inset-top)); left: 12px; border: 0; border-radius: 999px; padding: 9px 13px; color: #fff; background: rgba(0,0,0,.48); backdrop-filter: blur(12px); font-weight: 600; }
+.profile-watch-action { display: flex; justify-content: center; padding: 10px 12px 14px; }

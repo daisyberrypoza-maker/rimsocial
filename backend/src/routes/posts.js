@@ -6,6 +6,7 @@ const feed = require('../services/feed');
 const redis = require('../redis');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
+const cloudinary = require('../services/cloudinary');
 
 router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
   try {
@@ -19,8 +20,9 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
+    const asset = await cloudinary.uploadFile(req.file);
     const post = await Post.create({
-      authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: mediaPath(req.file.filename),
+      authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: asset.url, mediaPublicId: asset.publicId,
       caption: String(req.body.caption || '').slice(0, 500), visibility,
       isSponsored, sponsorName: isSponsored ? sponsorName : null,
       sponsorDescription: isSponsored ? sponsorDescription : null,
@@ -50,6 +52,16 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     const post = await Post.findOne({ where: { id: req.params.id, authorId: req.user.id } });
     if (!post) throw httpError(404, 'Post not found');
     await post.update({ status: 'removed' });
+    if (post.mediaPublicId) {
+      const remaining = await Post.count({ where: { mediaPublicId: post.mediaPublicId, status: 'live' } });
+      if (!remaining) await cloudinary.deleteAsset(post.mediaPublicId, post.kind === 'video' ? 'video' : 'image');
+    } else {
+      const legacyId = cloudinary.publicIdFromUrl(post.mediaUrl);
+      if (legacyId) {
+        const remaining = await Post.count({ where: { mediaUrl: post.mediaUrl, status: 'live' } });
+        if (!remaining) await cloudinary.deleteAsset(legacyId, post.kind === 'video' ? 'video' : 'image');
+      }
+    }
     res.status(204).end();
   } catch (e) { next(e); }
 });

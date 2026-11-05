@@ -11,6 +11,7 @@ import Feed from './pages/Feed.jsx';
 import Explore from './pages/Explore.jsx';
 import Upload from './pages/Upload.jsx';
 import Profile from './pages/Profile.jsx';
+import ProfileFeed from './pages/ProfileFeed.jsx';
 import CreatorStudio from './pages/CreatorStudio.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
@@ -53,12 +54,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const immersive = IMMERSIVE_PATHS.includes(location.pathname);
+  const profileWatch = location.pathname.split('/').length === 4 && location.pathname.startsWith('/u/') && location.pathname.endsWith('/watch');
+  const immersive = IMMERSIVE_PATHS.includes(location.pathname) || profileWatch;
   const showChrome = Boolean(token) && location.pathname !== '/login';
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && location.pathname !== '/upload' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !profileWatch && location.pathname !== '/upload' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -71,7 +73,7 @@ export default function App() {
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && <BottomNav />}
+      {showChrome && !profileWatch && <BottomNav />}
       <Toast />
     </div>
   );
