@@ -11,7 +11,22 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
   try {
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const visibility = req.body.visibility === 'private' ? 'private' : 'public';
-    const post = await Post.create({ authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: mediaPath(req.file.filename), caption: String(req.body.caption || '').slice(0, 500), visibility });
+    const isSponsored = req.body.isSponsored === 'true';
+    const sponsorName = String(req.body.sponsorName || '').trim().slice(0, 100);
+    const sponsorDescription = String(req.body.sponsorDescription || '').trim().slice(0, 200);
+    const sponsorCta = String(req.body.sponsorCta || 'Shop Now').trim().slice(0, 30);
+    const sponsorUrl = String(req.body.sponsorUrl || '').trim().slice(0, 1024);
+    if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
+      throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
+    }
+    const post = await Post.create({
+      authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: mediaPath(req.file.filename),
+      caption: String(req.body.caption || '').slice(0, 500), visibility,
+      isSponsored, sponsorName: isSponsored ? sponsorName : null,
+      sponsorDescription: isSponsored ? sponsorDescription : null,
+      sponsorCta: isSponsored ? (sponsorCta || 'Shop Now') : null,
+      sponsorUrl: isSponsored ? sponsorUrl : null,
+    });
     if (visibility === 'public') {
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
       await feed.fanOutPost(post, followers.map((f) => f.followerId));
