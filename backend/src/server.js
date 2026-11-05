@@ -81,6 +81,7 @@ async function start() {
   }
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
+  if (!currentPostColumns.mediaPublicId) await qi.addColumn('posts', 'mediaPublicId', { type: DataTypes.STRING(255), allowNull: true });
   const DataTypes = require('sequelize').DataTypes;
   if (!currentPostColumns.isSponsored) await qi.addColumn('posts', 'isSponsored', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorName) await qi.addColumn('posts', 'sponsorName', { type: DataTypes.STRING(100), allowNull: true });
