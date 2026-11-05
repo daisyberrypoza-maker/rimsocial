@@ -60,13 +60,39 @@ function GiftSheet({ post, onClose }) {
   );
 }
 
+
+function CommentsSheet({ post, onClose, onCount }) {
+  const [items, setItems] = useState([]);
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api(`/v1/posts/${post.id}/comments`).then((r) => { setItems(r.items || []); onCount((r.items || []).length); }).catch((e) => toast(e.message)); }, [post.id, onCount]);
+  async function submit(e) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setBusy(true);
+    try { const item = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: { body: body.trim() } }); setItems((prev) => [...prev, item]); onCount((n) => n + 1); setBody(''); }
+    catch (e) { toast(e.message); } finally { setBusy(false); }
+  }
+  return <div className="sheet-backdrop comments-backdrop" onClick={onClose}><section className="sheet comments-sheet" onClick={(e) => e.stopPropagation()}><div className="comments-heading"><h3>Comments</h3><button className="ghost small" type="button" onClick={onClose}>Done</button></div><div className="comments-list">{items.map((item) => <article className="comment-item" key={item.id}><Avatar user={item.author} size={34} /><div><strong>@{item.author?.username || 'user'}</strong><p>{item.body}</p></div></article>)}{!items.length && <p className="muted center">Be the first to comment.</p>}</div><form className="comment-form" onSubmit={submit}><input value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder="Add a comment…" aria-label="Comment" /><button type="submit" disabled={busy || !body.trim()}>{busy ? '…' : 'Send'}</button></form></section></div>;
+}
+
 // active: true only for the post on screen. Only that post loads its video.
 export default function PostCard({ post, active }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showComments, setShowComments] = useState(false);
   const [showGifts, setShowGifts] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api(`/v1/posts/${post.id}/engagement`).then((r) => {
+      if (alive) { setLiked(Boolean(r.liked)); setLikes(r.likeCount); setCommentCount(r.commentCount || 0); }
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [post.id]);
 
   const username = post.author?.username || 'unknown';
   const src = mediaUrl(post.mediaUrl);
@@ -84,26 +110,23 @@ export default function PostCard({ post, active }) {
   }, [active, post.id]);
 
   async function like() {
-    if (liked) return;
     try {
       const r = await api(`/v1/posts/${post.id}/like`, { method: 'POST' });
       setLikes(r.likeCount);
-      setLiked(true);
+      setLiked(Boolean(r.liked));
     } catch (err) {
       toast(err.message);
     }
   }
 
   async function share() {
-    const url = `${window.location.origin}/#/p/${encodeURIComponent(post.id)}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'Clipverse', url });
-      else {
-        await navigator.clipboard.writeText(url);
-        toast('Post link copied');
-      }
-    } catch { /* cancelled */ }
+      const result = await api(`/v1/posts/${post.id}/reshare`, { method: 'POST', body: {} });
+      toast(result.created ? 'Post reshared to your profile' : 'You already reshared this post');
+    } catch (err) { toast(err.message); }
   }
+
+  async function openComments() { setShowComments(true); }
 
   return (
     <article className="post" data-id={post.id}>
@@ -126,10 +149,11 @@ export default function PostCard({ post, active }) {
         <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}>
           <Avatar user={post.author} size={48} ring />
         </button>
-        <button className={`rail-btn ${liked ? 'on' : ''}`} onClick={like}>
+        <button className={`rail-btn ${liked ? 'on' : ''}`} onClick={like} aria-label={liked ? 'Unlike post' : 'Like post'}>
           <Icon name="heart" />
           <span>{formatCount(likes)}</span>
         </button>
+        <button className="rail-btn" onClick={openComments} aria-label="View comments"><Icon name="message-circle" /><span>{formatCount(commentCount)}</span></button>
         <button className="rail-btn" onClick={() => setShowGifts(true)}>
           <Icon name="gift" />
           <span>Gift</span>
@@ -148,6 +172,7 @@ export default function PostCard({ post, active }) {
       </div>
 
       {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
+      {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} onCount={setCommentCount} />}
     </article>
   );
 }
