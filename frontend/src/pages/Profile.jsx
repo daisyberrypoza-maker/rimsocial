@@ -216,6 +216,7 @@ export default function Profile() {
 
       {tab === 'posts' ? (
         <>
+          {posts.length > 0 && <div className="profile-watch-action"><button className="pill" onClick={() => navigate(`/u/${username}/watch`)}>▶ Watch posts like For You</button></div>}
           <div className="grid">
             {posts.map((p) => (
               <div key={p.id} className="tile profile-post-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
@@ -253,7 +254,7 @@ export default function Profile() {
           </div>
           {!stories.length && <p className="muted center">No active stories. Stories disappear after 24 hours.</p>}
           {viewing !== false && stories.length > 0 && (
-            <StoryViewer groups={[{ user: profile }]} startIndex={0} onClose={() => setViewing(false)} />
+            <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
           )}
         </>
       )}

@@ -4,7 +4,9 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts } = require('./db');
+const { sequelize, seedGifts, Post, StoryView } = require('./db');
+const { Op } = require('sequelize');
+const cloudinary = require('./services/cloudinary');
 
 const app = express();
 const frontendDist = path.resolve(__dirname, '../../frontend/dist');
@@ -82,13 +84,33 @@ async function start() {
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
   const DataTypes = require('sequelize').DataTypes;
+  if (!currentPostColumns.mediaPublicId) await qi.addColumn('posts', 'mediaPublicId', { type: DataTypes.STRING(255), allowNull: true });
   if (!currentPostColumns.isSponsored) await qi.addColumn('posts', 'isSponsored', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorName) await qi.addColumn('posts', 'sponsorName', { type: DataTypes.STRING(100), allowNull: true });
   if (!currentPostColumns.sponsorDescription) await qi.addColumn('posts', 'sponsorDescription', { type: DataTypes.STRING(200), allowNull: true });
   if (!currentPostColumns.sponsorCta) await qi.addColumn('posts', 'sponsorCta', { type: DataTypes.STRING(30), allowNull: true });
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   await seedGifts();
+  const purgeExpiredStories = async () => {
+    const expired = await Post.findAll({ where: { isStory: true, expiresAt: { [Op.lt]: new Date() } }, attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind'], limit: 500 });
+    if (!expired.length) return;
+    const ids = expired.map((story) => story.id);
+    await StoryView.destroy({ where: { storyId: ids } });
+    await Post.destroy({ where: { id: ids } });
+    for (const story of expired) {
+      const publicId = story.mediaPublicId || cloudinary.publicIdFromUrl(story.mediaUrl);
+      if (publicId) {
+        const where = story.mediaPublicId ? { mediaPublicId: publicId, status: 'live' } : { mediaUrl: story.mediaUrl, status: 'live' };
+        if (!(await Post.count({ where }))) {
+          try { await cloudinary.deleteAsset(publicId, story.kind === 'video' ? 'video' : 'image'); }
+          catch (error) { console.error('Expired story media cleanup failed:', publicId, error.message); }
+        }
+      }
+    }
+  };
   app.listen(config.port, () => console.log(`Clipverse API on http://localhost:${config.port}`));
+  Promise.resolve().then(purgeExpiredStories).catch((e) => console.error('Initial story cleanup failed:', e.message));
+  setInterval(() => purgeExpiredStories().catch((e) => console.error('Story cleanup failed:', e.message)), 10 * 60 * 1000).unref();
 }
 
 start().catch((e) => { console.error('Startup failed:', e); process.exit(1); });
