@@ -65,8 +65,16 @@ export default function PostCard({ post, active }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(Boolean(post.isLiked));
   const [showGifts, setShowGifts] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api(`/v1/posts/${post.id}/like`).then((r) => {
+      if (!cancelled) { setLikes(r.likeCount); setLiked(Boolean(r.liked)); }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [post.id]);
 
   const username = post.author?.username || 'unknown';
   const src = mediaUrl(post.mediaUrl);
@@ -84,12 +92,16 @@ export default function PostCard({ post, active }) {
   }, [active, post.id]);
 
   async function like() {
-    if (liked) return;
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikes((n) => Math.max(0, n + (wasLiked ? -1 : 1)));
     try {
-      const r = await api(`/v1/posts/${post.id}/like`, { method: 'POST' });
+      const r = await api(`/v1/posts/${post.id}/like`, { method: wasLiked ? 'DELETE' : 'POST' });
       setLikes(r.likeCount);
-      setLiked(true);
+      setLiked(Boolean(r.liked));
     } catch (err) {
+      setLiked(wasLiked);
+      setLikes((n) => Math.max(0, n + (wasLiked ? 1 : -1)));
       toast(err.message);
     }
   }
