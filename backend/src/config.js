@@ -21,6 +21,9 @@ module.exports = {
     .split(',').map((o) => o.trim().replace(/\\/$/, '')).filter(Boolean),
   serveFrontend: !['false', '0', 'no'].includes(String(process.env.SERVE_FRONTEND || 'true').toLowerCase()),
   trustProxy: num(process.env.TRUST_PROXY, 0),
+  createDatabase: process.env.AUTO_CREATE_DATABASE === undefined ? process.env.NODE_ENV !== 'production' : process.env.AUTO_CREATE_DATABASE === 'true',
+  syncDatabase: process.env.DB_SYNC === undefined ? process.env.NODE_ENV !== 'production' : process.env.DB_SYNC === 'true',
+  nodeEnv: process.env.NODE_ENV || 'development',
 
   // Paging: small pages keep mobile data use low
   feedPageSize: 10,
