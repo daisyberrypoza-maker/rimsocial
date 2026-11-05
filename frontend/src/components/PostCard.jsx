@@ -67,6 +67,8 @@ export default function PostCard({ post, active }) {
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(Boolean(post.isLiked));
   const [showGifts, setShowGifts] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [reposting, setReposting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,12 +111,23 @@ export default function PostCard({ post, active }) {
   async function share() {
     const url = `${location.origin}/u/${username}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'Clipverse', url });
+      if (navigator.share) await navigator.share({ title: 'RimSocial', text: post.caption || `Post by @${username}`, url });
       else {
         await navigator.clipboard.writeText(url);
         toast('Link copied');
       }
-    } catch { /* cancelled */ }
+    } catch { /* user cancelled sharing */ }
+  }
+
+  async function repost() {
+    if (reposting) return;
+    setReposting(true);
+    try {
+      await api(`/v1/posts/${post.id}/repost`, { method: 'POST' });
+      toast('Reposted to your followers');
+      setShowMenu(false);
+    } catch (err) { toast(err.message); }
+    finally { setReposting(false); }
   }
 
   return (
@@ -146,11 +159,21 @@ export default function PostCard({ post, active }) {
           <Icon name="gift" />
           <span>Gift</span>
         </button>
-        <button className="rail-btn" onClick={share}>
+        <button className="rail-btn" onClick={repost} disabled={reposting}>
           <Icon name="share" />
-          <span>Share</span>
+          <span>{reposting ? '…' : 'Repost'}</span>
+        </button>
+        <button className="rail-btn" onClick={() => setShowMenu((v) => !v)} aria-label="Post options" aria-expanded={showMenu}>
+          <span className="post-more-icon">•••</span><span>More</span>
         </button>
       </aside>
+
+      {showMenu && <div className="post-menu" role="menu">
+        <button type="button" onClick={share}>Share link…</button>
+        <button type="button" onClick={repost} disabled={reposting}>{reposting ? 'Reposting…' : 'Repost to followers'}</button>
+        <button type="button" onClick={() => { setShowMenu(false); toast('Report flow will be available when moderation tools are enabled.'); }}>Report post</button>
+        <button type="button" onClick={() => setShowMenu(false)}>Cancel</button>
+      </div>}
 
       <div className="info">
         <div className="author">@{username}</div>
