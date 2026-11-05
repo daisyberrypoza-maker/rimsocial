@@ -26,6 +26,10 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [listType, setListType] = useState('');
+  const [people, setPeople] = useState([]);
+  const [avatarBusy, setAvatarBusy] = useState(false);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -41,6 +45,30 @@ export default function Profile() {
       .then((d) => setStories(d.items))
       .catch(() => setStories([]));
   }, [tab, profile]);
+
+  async function openPeople(type) {
+    setListType(type);
+    try {
+      const data = await api(`/v1/users/${username}/${type}`);
+      setPeople(data.items || []);
+    } catch (e) { toast(e.message); setListType(''); }
+  }
+
+  async function uploadAvatar(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('Choose a JPG, PNG or WebP image');
+    const form = new FormData();
+    form.append('media', file);
+    setAvatarBusy(true);
+    try {
+      const result = await api('/v1/users/me/avatar', { method: 'POST', body: form });
+      setProfile(username, { user: { ...profile, avatarUrl: result.avatarUrl } });
+      toast('Profile photo updated');
+    } catch (e) { toast(e.message); }
+    finally { setAvatarBusy(false); }
+  }
 
   async function toggleFollow() {
     if (!profile) return;
@@ -81,24 +109,51 @@ export default function Profile() {
 
   return (
     <div className="page">
-      <section className="profile-top">
-        <Avatar user={profile} size={104} ring />
+      <section className="profile-top profile-top-refresh">
+        <div className="profile-cover-tools">
+          <Avatar user={profile} size={104} ring />
+          {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : 'Edit photo'}</button>}
+        </div>
         <h2 className="profile-name">{profile.displayName}</h2>
-        <div className="followers">{formatCount(profile.followerCount)} Followers</div>
+        <div className="profile-handle">@{profile.username}</div>
+        <div className="profile-stats-row">
+          <button onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount)}</strong><span>Followers</span></button>
+          <button onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+          <div><strong>{formatCount(profile.postCount || 0)}</strong><span>Posts</span></div>
+        </div>
         <span className="chip">{profile.country}</span>
-
         {profile.isMe ? (
-          <div className="profile-actions">
-            <button className="ghost" onClick={() => navigate('/upload')}>New post</button>
-            <button className="ghost" onClick={() => navigate('/creator')}>Creator Studio</button>
-            <button className="ghost" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
+          <div className="profile-actions profile-actions-refresh">
+            <button onClick={() => navigate('/upload')}>＋ Create</button>
+            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings">☰ Settings</button>
           </div>
         ) : (
           <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
-            {profile.isFollowing ? 'Following' : 'Follow'}
+            {profile.isFollowing ? 'Following' : '＋ Follow'}
           </button>
         )}
       </section>
+      {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
+
+      {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
+        <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
+          <div className="drawer-head"><h3>Profile & settings</h3><button className="ghost small" onClick={() => setDrawerOpen(false)}>✕</button></div>
+          <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}>＋ Create post or story</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/explore'); }}>⌕ Find friends & creators</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}>✦ Creator Studio · earnings & cashout</button>
+          <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}>Followers</button>
+          <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}>Following</button>
+          <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
+          <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
+        </aside>
+      </div>}
+
+      {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
+        <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
+          <div className="comments-heading"><h3>{listType === 'followers' ? 'Followers' : 'Following'}</h3><button className="ghost small" onClick={() => setListType('')}>✕</button></div>
+          {people.length ? people.map((person) => <button className="person-result" key={person.id} onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}><Avatar user={person} size={42} /><span><strong>{person.displayName}</strong><small>@{person.username}</small></span></button>) : <p className="muted center">No {listType} yet.</p>}
+        </section>
+      </div>}
 
       <nav className="ptabs">
         <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Posts</button>
@@ -109,7 +164,7 @@ export default function Profile() {
         <>
           <div className="grid">
             {posts.map((p) => (
-              <div key={p.id} className="tile">
+              <div key={p.id} className="tile profile-post-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}

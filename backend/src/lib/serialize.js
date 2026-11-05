@@ -9,6 +9,8 @@ function toPostDTO(post) {
     caption: p.caption || '',
     viewCount: Number(p.viewCount) || 0,
     likeCount: Number(p.likeCount) || 0,
+    repostCount: Number(p.repostCount) || 0,
+    visibility: p.visibility || 'public',
     createdAt: p.createdAt,
     expiresAt: p.expiresAt || null,
     author: p.author

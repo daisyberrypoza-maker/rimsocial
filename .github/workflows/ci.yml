@@ -6,9 +6,11 @@ on:
       - main
       - rimsocial-full-feature-fixes
       - clipverse-production-fixes-2026-11-05
+      - clipverse-social-experience-2026-11-05
   pull_request:
     branches:
       - main
+      - rimsocial-full-feature-fixes
 
 jobs:
   verify:
