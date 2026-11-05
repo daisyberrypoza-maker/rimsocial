@@ -42,6 +42,7 @@ router.post('/wallet/topup', requireAuth, async (req, res, next) => {
       body: JSON.stringify({
         email: req.body.email || `${req.user.id}@clipverse.local`,
         amount: amountMinor,
+        currency: 'NGN',
         metadata: { userId: req.user.id },
       }),
     });
