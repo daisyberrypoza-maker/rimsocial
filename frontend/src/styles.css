@@ -105,7 +105,7 @@ input:focus { border-color: var(--brand-a); }
 .page-title { margin: 16px 16px 12px; font-size: 22px; }
 
 .profile-top { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 16px 14px; text-align: center;
-  background: linear-gradient(180deg, rgba(255,252,0,.18), transparent 260px); }
+  background: linear-gradient(180deg, rgba(0,0,0,.18), transparent 260px); }
 .profile-name { font-size: 20px; font-weight: 700; margin: 10px 0 0; }
 .followers { color: var(--muted); font-size: 14px; }
 .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
@@ -156,7 +156,7 @@ summary { cursor: pointer; padding: 6px 0; }
 
 /* ---------- Creator Studio: responsive creator earnings and match tools ---------- */
 .creator-page { padding: 0 0 calc(112px + env(safe-area-inset-bottom, 0px)); }
-.creator-hero { padding: 24px 18px 22px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; background: radial-gradient(ellipse at top right, rgba(255,252,0,.18), transparent 60%), linear-gradient(140deg, #171725, #101018); border-bottom:1px solid var(--line); }
+.creator-hero { padding: 24px 18px 22px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; background: radial-gradient(ellipse at top right, rgba(0,0,0,.18), transparent 60%), linear-gradient(140deg, #171725, #101018); border-bottom:1px solid var(--line); }
 .creator-hero h1 { margin:10px 0 6px; font-size:clamp(25px,5vw,34px); letter-spacing:-.03em; }
 .creator-hero p { color:var(--muted); margin:0; max-width:480px; line-height:1.45; font-size:14px; }
 .studio-share { flex:none; background:var(--brand); color:white; padding:11px 16px; border-radius:999px; font-weight:700; }
@@ -264,10 +264,10 @@ summary { cursor: pointer; padding: 6px 0; }
   --line: #303030;
   --text: #fff;
   --muted: #b4b4b4;
-  --brand-a: #fffc00;
-  --brand-b: #f5d900;
+  --brand-a: #111111;
+  --brand-b: #111111;
   --danger: #ff5c6c;
-  --brand: linear-gradient(135deg, #fffc00, #f5d900);
+  --brand: linear-gradient(135deg, #111111, #111111);
 }
 .brand { color: var(--brand-a); background: none; -webkit-text-fill-color: var(--brand-a); }
 .bottomnav a.active { color: var(--brand-a); }
@@ -277,7 +277,7 @@ summary { cursor: pointer; padding: 6px 0; }
 .story-ring.unseen img { border-color: #080808; }
 input:focus, select:focus { border-color: var(--brand-a); }
 .auth-screen { background: #080808; }
-.auth-card { border-color: rgba(255,252,0,.18); }
+.auth-card { border-color: rgba(0,0,0,.18); }
 .auth-brand { color: var(--brand-a); }
 .auth-primary { color: #080808; background: var(--brand-a); }
 .auth-mode-switch button.selected { background: var(--brand-a); color: #080808; }
@@ -998,8 +998,8 @@ input:focus { border-color:#4c5cff; }
 
 
 /* RimSocial auth refresh: edge-to-edge mobile layout + Snapchat yellow */
-:root { --brand-a:#FFFC00; --brand-b:#FFFC00; --brand:#FFFC00; }
-button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button):not(.mention-inline):not(.share-target) { background-color:#FFFC00; color:#080808; }
+:root { --brand-a:#111111; --brand-b:#111111; --brand:#111111; }
+button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button):not(.mention-inline):not(.share-target) { background-color:#111111; color:#080808; }
 .auth-screen {
   position:fixed; inset:0; z-index:100; width:100%; min-height:100vh; min-height:100dvh; height:100%;
   overflow-x:hidden; overflow-y:auto; overscroll-behavior-y:contain; display:flex; flex-direction:column;
@@ -1009,24 +1009,24 @@ button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button
 }
 .auth-card { width:100%; max-width:480px; margin:auto; padding:28px 24px 22px; border:0; border-radius:0; background:#080808; box-shadow:none; }
 .auth-brand-row { margin-bottom:28px; }
-.auth-brand { color:#FFFC00 !important; }
-.snap-mark { color:#080808; background:#FFFC00; border-radius:14px; padding:7px; }
-.auth-eyebrow { color:#FFFC00; letter-spacing:.12em; }
+.auth-brand { color:#111111 !important; }
+.snap-mark { color:#080808; background:#111111; border-radius:14px; padding:7px; }
+.auth-eyebrow { color:#111111; letter-spacing:.12em; }
 .auth-intro h1 { color:#fff; font-size:clamp(28px,7vw,36px); line-height:1.1; }
 .auth-intro > p:last-child { color:rgba(255,255,255,.72); }
 .auth-mode-switch { background:#1a1a1a; border-radius:14px; padding:4px; }
 .auth-mode-switch button { background:transparent !important; color:#bdbdbd !important; border-radius:11px; }
-.auth-mode-switch button.selected { background:#FFFC00 !important; color:#080808 !important; }
+.auth-mode-switch button.selected { background:#111111 !important; color:#080808 !important; }
 .auth-form label { color:rgba(255,255,255,.88); }
 .auth-form input,.auth-form select { width:100%; min-height:48px; margin:6px 0 14px; padding:13px 14px; color:#fff; background:#171717; border:1px solid #383838; border-radius:12px; }
-.auth-form input:focus,.auth-form select:focus { border-color:#FFFC00; outline:2px solid rgba(255,252,0,.15); }
-.auth-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:50px; margin-top:6px; border-radius:14px; background:#FFFC00 !important; color:#080808 !important; font-weight:800; }
+.auth-form input:focus,.auth-form select:focus { border-color:#111111; outline:2px solid rgba(0,0,0,.15); }
+.auth-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:50px; margin-top:6px; border-radius:14px; background:#111111 !important; color:#080808 !important; font-weight:800; }
 .google-unconfigured { width:100%; min-height:48px; background:#fff !important; color:#111 !important; border-radius:14px; }
 .auth-divider { color:#a4a4a4; }
 .auth-terms,.auth-footer { color:#929292; }
 .auth-footer { margin:14px auto 0; padding:0 18px; text-align:center; }
 .auth-error { color:#ff667a; overflow-wrap:anywhere; }
-.auth-notice { color:#FFFC00; overflow-wrap:anywhere; }
+.auth-notice { color:#111111; overflow-wrap:anywhere; }
 @media (max-width:600px) {
  .auth-screen { justify-content:flex-start; padding-top:max(28px,env(safe-area-inset-top,0px)); }
  .auth-card { max-width:none; min-height:0; margin:0; padding:24px 22px 22px; }
@@ -1038,16 +1038,16 @@ button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button
  .auth-footer { margin:auto auto 0; padding-top:16px; padding-bottom:4px; }
  .auth-glow { display:none; }
 }
-@media (min-width:601px) { .auth-card { border:1px solid rgba(255,252,0,.2); border-radius:24px; } }
+@media (min-width:601px) { .auth-card { border:1px solid rgba(0,0,0,.2); border-radius:24px; } }
 
 
 /* Step-by-step mobile sign-up flow */
 .auth-step-meta { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 18px; color:#a7a7a7; font-size:11px; font-weight:800; letter-spacing:.12em; }
 .auth-step-meta button { flex:none; min-width:40px; min-height:40px; padding:8px 10px; border-radius:12px; }
 .auth-step-meta .auth-back { background:#1d1d1d !important; color:#fff !important; font-size:22px; }
-.auth-step-meta .auth-cancel { background:transparent !important; color:#FFFC00 !important; font-size:12px; letter-spacing:0; }
+.auth-step-meta .auth-cancel { background:transparent !important; color:#111111 !important; font-size:12px; letter-spacing:0; }
 .auth-progress { height:4px; width:100%; overflow:hidden; border-radius:99px; background:#292929; margin:0 0 30px; }
-.auth-progress span { display:block; height:100%; border-radius:inherit; background:#FFFC00; transition:width .2s ease; }
+.auth-progress span { display:block; height:100%; border-radius:inherit; background:#111111; transition:width .2s ease; }
 .auth-step-intro { margin-bottom:32px; }
 .auth-step-intro h1 { max-width:360px; overflow-wrap:anywhere; }
 .auth-step-form label { display:block; margin-bottom:18px; }
@@ -1080,10 +1080,10 @@ body { overflow:hidden; }
   display:flex; flex-direction:column; justify-content:flex-start;
 }
 .auth-screen .auth-intro h1,.auth-screen .auth-brand,.auth-screen .auth-form label { color:#fff !important; }
-.auth-screen .auth-eyebrow { color:#FFFC00 !important; }
+.auth-screen .auth-eyebrow { color:#111111 !important; }
 .auth-screen .auth-intro > p:last-child,.auth-screen .auth-step-description { color:#d0d0d0 !important; font-size:15px !important; line-height:1.6 !important; }
 .auth-screen .auth-step-description { display:block !important; visibility:visible !important; opacity:1 !important; margin:10px 0 0 !important; max-width:34rem; }
-.auth-screen .auth-primary { background:#FFFC00 !important; color:#050505 !important; }
+.auth-screen .auth-primary { background:#111111 !important; color:#050505 !important; }
 .auth-screen .auth-form input,.auth-screen .auth-form select { background:#171717 !important; color:#fff !important; border-color:#414141 !important; }
 .auth-screen .auth-footer { display:none !important; }
 .auth-terms { margin-top:auto; padding-top:24px; font-size:11px; line-height:1.5; text-align:center; }
@@ -1124,7 +1124,7 @@ body { overflow:hidden; }
 }
 .auth-screen .auth-step-meta .auth-cancel { color:#111111 !important; }
 .auth-screen .auth-progress { background:#ededed !important; }
-.auth-screen .auth-progress span { background:#FFFC00 !important; }
+.auth-screen .auth-progress span { background:#111111 !important; }
 .auth-screen .auth-form input,
 .auth-screen .auth-form select {
   background:#f5f5f5 !important; color:#111111 !important;
@@ -1133,21 +1133,21 @@ body { overflow:hidden; }
 .auth-screen .auth-form input::placeholder { color:#777777 !important; opacity:1; }
 .auth-screen .auth-form input:focus,
 .auth-screen .auth-form select:focus {
-  border-color:#c7c400 !important; outline:2px solid rgba(255,252,0,.32) !important;
+  border-color:#c7c400 !important; outline:2px solid rgba(0,0,0,.32) !important;
 }
 .auth-screen .auth-primary {
-  background:#FFFC00 !important; color:#111111 !important;
+  background:#111111 !important; color:#111111 !important;
 }
 .auth-screen .auth-mode-switch { background:#f1f1f1 !important; }
 .auth-screen .auth-mode-switch button { color:#444444 !important; }
-.auth-screen .auth-mode-switch button.selected { background:#FFFC00 !important; color:#111111 !important; }
+.auth-screen .auth-mode-switch button.selected { background:#111111 !important; color:#111111 !important; }
 .auth-screen .auth-divider { color:#777777 !important; }
 .auth-screen .google-unconfigured { background:#ffffff !important; color:#111111 !important; border:1px solid #d8d8d8 !important; }
 .auth-screen .auth-terms,
 .auth-screen .auth-step-footnote { color:#737373 !important; }
 .auth-screen .auth-error { color:#c5223b !important; }
 .auth-screen .auth-notice { color:#655f00 !important; }
-.auth-screen .snap-mark { background:#FFFC00 !important; color:#111111 !important; }
+.auth-screen .snap-mark { background:#111111 !important; color:#111111 !important; }
 
 
 /* Device-fit and native-feeling interaction pass */
@@ -1699,9 +1699,9 @@ input:focus, textarea:focus, select:focus { border-color:#4c5cff; }
    bottom bar; it supersedes the older overrides above it.
    ===================================================================== */
 :root {
-  --brand: #fffc00;
-  --brand-a: #fffc00;
-  --brand-b: #fffc00;
+  --brand: #111111;
+  --brand-a: #111111;
+  --brand-b: #111111;
   --on-brand: #000000;
   --nav-bg: #000000;
   --nav-muted: #8e8e93;
@@ -1887,14 +1887,14 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
    Full-screen mobile layout; no horizontal scroll.
    ===================================================================== */
 .profile-page { padding-bottom: 96px; max-width: 100%; overflow-x: hidden; background: var(--bg); }
-.snap-hero { position: relative; height: 230px; overflow: hidden; background: linear-gradient(160deg, #ffe600, #111); }
+.snap-hero { position: relative; height: 230px; overflow: hidden; background: linear-gradient(160deg, #111111, #111); }
 .snap-cover { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(18px) brightness(.75); transform: scale(1.15); }
 .snap-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.65)); }
 .snap-hero-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; }
 .snap-round { width: 40px; height: 40px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; }
 .snap-round svg { width: 20px; height: 20px; }
 .profile-top.profile-top-refresh { margin-top: -62px; position: relative; z-index: 2; padding: 0 16px 14px; text-align: left; background: transparent; }
-.profile-top .avatar.ring { --ring: linear-gradient(135deg, #fffc00, #ff5c8a); }
+.profile-top .avatar.ring { --ring: linear-gradient(135deg, #111111, #ff5c8a); }
 .profile-top .profile-name { color: var(--text); font-size: 20px; font-weight: 800; margin: 8px 0 0; }
 .profile-top .profile-handle { color: var(--muted); font-size: 14px; }
 .profile-stats-row { justify-content: flex-start; gap: 22px; margin: 12px 0 0; }
@@ -1971,3 +1971,17 @@ button.ghost { background: var(--surface-2); color: var(--text); }
 .people-sheet .people-follow-btn { flex: none; background: #0095f6; color: #fff; border: 0; border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600; min-width: 96px; }
 .people-sheet .people-follow-btn.following { background: #efefef; color: #000; }
 .people-sheet .people-empty { text-align: center; padding: 40px 20px; color: #8e8e8e; }
+
+/* =====================================================================
+   Yellow removed: all accent colour is black/white (per request)
+   Text on the now-black buttons is white.
+   ===================================================================== */
+:root { --brand: #111111; --brand-a: #111111; --brand-b: #111111; --on-brand: #ffffff; }
+.brand::before { background: #111111; }
+button, .pill, .coin-checkout, .upload-submit, .auth-primary, .auth-screen .auth-primary,
+.auth-mode-switch button.selected, .auth-screen .auth-mode-switch button.selected,
+.profile-top .pill, .profile-actions-refresh > button:first-child, .snap-mark, .auth-screen .snap-mark { color: #ffffff !important; }
+button.ghost, .people-sheet .people-tabs button, .ptabs button, .people-sheet .people-follow-btn.following { color: #111111 !important; }
+.people-sheet .people-tabs button.active, .ptabs button.on { color: #111111 !important; }
+.profile-top .pill, .profile-actions-refresh > button:first-child { background: #111111 !important; }
+.app .bottomnav .create span.plus, .bottomnav .create span.plus { background: #111111; color: #ffffff; }
