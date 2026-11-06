@@ -46,10 +46,6 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey, liveMatchId 
           lock: t.LOCK.UPDATE,
         });
         if (!match) throw httpError(409, 'This LIVE match is not active for this creator');
-        if (![match.hostId, match.opponentId].includes(senderId)) {
-          // Gifts in a creator battle are sent by viewers, not either participant.
-          // The caller's identity is not required to be a participant.
-        }
         if (match.hostId === post.authorId) await match.increment('hostScore', { by: coins, transaction: t });
         else await match.increment('opponentScore', { by: coins, transaction: t });
       }
