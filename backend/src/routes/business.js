@@ -212,7 +212,8 @@ router.get('/opportunities/:id', async (req, res, next) => {
     const item = await BusinessOpportunity.findByPk(req.params.id);
     if (!item || (item.reviewStatus !== 'approved' && item.ownerId !== req.user.id)) throw httpError(404, 'Opportunity not found');
     const [full] = await enrich([item], req.user.id);
-    const updates = item.lane === 'fix' ? await BusinessWorkUpdate.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'ASC']], limit: 100 }) : [];
+    const isParticipant = [item.ownerId, item.assignedUserId].includes(req.user.id);
+    const updates = item.lane === 'fix' && isParticipant ? await BusinessWorkUpdate.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'ASC']], limit: 100 }) : [];
     const canSeeOffers = item.ownerId === req.user.id;
     const offers = canSeeOffers ? await BusinessOffer.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'DESC']], limit: 100 }) : [];
     res.json({ opportunity: full, updates, offers });
@@ -273,7 +274,15 @@ router.post('/opportunities/:id/offers', async (req, res, next) => {
         return res.status(200).json({ offer: existing, replayed: true });
       }
     }
-    const offer = await BusinessOffer.create({ opportunityId: item.id, senderId: req.user.id, recipientId: item.ownerId, amountMinor, currency: item.currency, message, idempotencyKey });
+    let offer;
+    try {
+      offer = await BusinessOffer.create({ opportunityId: item.id, senderId: req.user.id, recipientId: item.ownerId, amountMinor, currency: item.currency, message, idempotencyKey });
+    } catch (error) {
+      if (error.name !== 'SequelizeUniqueConstraintError' || !idempotencyKey) throw error;
+      const existing = await BusinessOffer.findOne({ where: { idempotencyKey } });
+      if (!existing || existing.senderId !== req.user.id || existing.opportunityId !== item.id) throw httpError(409, 'Idempotency key has already been used');
+      return res.status(200).json({ offer: existing, replayed: true });
+    }
     res.status(201).json({ offer, message: 'Offer sent. No payment has been taken.' });
   } catch (e) { next(e); }
 });
