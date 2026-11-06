@@ -8,6 +8,7 @@ import { toast } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
+import Icon from '../components/Icon.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
 
 export default function Profile() {
@@ -181,7 +182,7 @@ export default function Profile() {
             <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
               {profile.isFollowing ? 'Following' : '＋ Follow'}
             </button>
-            {profile.isFollowing && <button className={`profile-notification-button${postNotifications ? ' is-on' : ''}`} type="button" onClick={togglePostNotifications} disabled={notificationBusy} aria-pressed={postNotifications} aria-label={postNotifications ? 'Turn off post and story notifications' : 'Turn on post and story notifications'} title={postNotifications ? 'Notifications on' : 'Notify me when this creator posts'}>{postNotifications ? '🔔' : '♧'} <span>{postNotifications ? 'Notifications on' : 'Notify me'}</span></button>}
+            {profile.isFollowing && <button className={`profile-notification-button${postNotifications ? ' is-on' : ''}`} type="button" onClick={togglePostNotifications} disabled={notificationBusy} aria-pressed={postNotifications} aria-label={postNotifications ? 'Turn off post and story notifications' : 'Turn on post and story notifications'} title={postNotifications ? 'Notifications on' : 'Notify me when this creator posts'}><Icon name="bell" size={18} /> <span>{postNotifications ? 'Notifications on' : 'Notify me'}</span></button>}
           </div>
         )}
       </section>
