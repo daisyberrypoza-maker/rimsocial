@@ -11,6 +11,17 @@ const { requestAssetCleanup } = require('../services/mediaCleanup');
 const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'];
 
 // Resolve whether the currently authenticated viewer follows each person in a list.
+async function excludeBlockedPeople(people, viewerId) {
+  if (!people.length) return [];
+  const rows = await UserBlock.findAll({
+    where: { [Op.or]: [{ blockerId: viewerId }, { blockedUserId: viewerId }] },
+    attributes: ['blockerId', 'blockedUserId'],
+    raw: true,
+  });
+  const blockedIds = new Set(rows.map((row) => row.blockerId === viewerId ? row.blockedUserId : row.blockerId));
+  return people.filter((person) => !blockedIds.has(person.id));
+}
+
 async function withFollowState(people, viewerId) {
   if (!people.length) return [];
   const ids = people.map((person) => person.id);
@@ -120,7 +131,8 @@ router.get('/:username/followers', requireAuth, async (req, res, next) => {
     if (!user) throw httpError(404, 'User not found');
     const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId'], order: [['createdAt', 'DESC']], limit: 300, raw: true });
     const people = await User.findAll({ where: { id: rows.map((r) => r.followerId) }, attributes: PUBLIC_ATTRS });
-    res.json({ items: await withFollowState(people, req.user.id) });
+    const visiblePeople = await excludeBlockedPeople(people, req.user.id);
+    res.json({ items: await withFollowState(visiblePeople, req.user.id) });
   } catch (e) { next(e); }
 });
 
@@ -130,7 +142,8 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
     if (!user) throw httpError(404, 'User not found');
     const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC']], limit: 300, raw: true });
     const people = await User.findAll({ where: { id: rows.map((r) => r.followeeId) }, attributes: PUBLIC_ATTRS });
-    res.json({ items: await withFollowState(people, req.user.id) });
+    const visiblePeople = await excludeBlockedPeople(people, req.user.id);
+    res.json({ items: await withFollowState(visiblePeople, req.user.id) });
   } catch (e) { next(e); }
 });
 
