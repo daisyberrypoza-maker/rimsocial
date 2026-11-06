@@ -6,6 +6,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
+const notificationRoutes = require('./notifications');
 
 // GET /v1/stories/rail  -> creators with active stories, unseen first
 router.get('/rail', requireAuth, async (req, res, next) => {
@@ -31,6 +32,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
+    await notificationRoutes.recordUploadNotifications(req.user.id, story.id, 'story');
     res.status(201).json(toPostDTO(story));
   } catch (e) { next(e); }
 });
