@@ -38,6 +38,7 @@ async function call(path, options = {}) {
 }
 
 test.before(async () => {
+  if (process.env.RUN_BUSINESS_INTEGRATION !== 'true') return;
   assert.ok(config.jwtSecret.length >= 32, 'test JWT_SECRET must be configured');
   assert.ok(config.adminApiKey.length >= 32, 'test ADMIN_API_KEY must be configured');
   await sequelize.authenticate();
@@ -62,7 +63,7 @@ test.after(async () => {
   await sequelize.close();
 });
 
-test('Find Flip Fix profile review, approved discovery, idempotent offers, private work evidence and two-party completion', async () => {
+test('Find Flip Fix profile review, approved discovery, idempotent offers, private work evidence and two-party completion', { skip: process.env.RUN_BUSINESS_INTEGRATION !== 'true' }, async () => {
   const profileResponse = await call('/v1/business/profiles', {
     method: 'POST', as: 'owner',
     body: { name: 'Test Wholesale', category: 'wholesale', description: 'Test business profile', country: 'NG', city: 'Warri', website: 'https://example.test' },
