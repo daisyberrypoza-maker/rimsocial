@@ -2981,3 +2981,31 @@ html, body, #root { background: #ffffff; color: #111111; }
 .sc-profile .sc-hero-shade { z-index:-1 !important; }
 .sc-profile .sc-add { min-width:112px; justify-content:center; }
 .sc-profile .sc-seg-row { gap:10px !important; }
+
+
+/* Consistency pass: strict light surfaces, native list spacing, and correctly layered profile hero. */
+.sc-profile .sc-hero { position:relative !important; isolation:isolate !important; overflow:hidden !important; }
+.sc-profile .sc-hero-bg { position:absolute !important; inset:0 !important; z-index:0 !important; background-repeat:no-repeat !important; background-size:cover !important; background-position:center center !important; }
+.sc-profile .sc-hero-shade { position:absolute !important; inset:0 !important; z-index:1 !important; pointer-events:none !important; }
+.sc-profile .sc-hero > :not(.sc-hero-bg):not(.sc-hero-shade) { position:relative; z-index:2 !important; }
+.sc-profile .sc-stats { display:flex !important; flex-wrap:wrap !important; align-items:baseline !important; justify-content:flex-start !important; gap:8px 20px !important; padding:12px 16px 8px !important; margin:0 !important; }
+.sc-profile .sc-stats > * { display:inline-flex !important; align-items:baseline !important; gap:4px !important; height:auto !important; min-height:0 !important; padding:0 !important; margin:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; color:#17191f !important; box-shadow:none !important; font-size:14px !important; font-weight:400 !important; white-space:nowrap !important; }
+.sc-profile .sc-stats strong { font-size:14px !important; font-weight:600 !important; }
+.sc-profile .sc-add { display:flex !important; align-items:center !important; justify-content:center !important; gap:8px !important; min-width:116px !important; min-height:40px !important; padding:0 16px !important; border-radius:10px !important; font-size:14px !important; font-weight:500 !important; }
+.sc-profile .sc-add.added { background:#f1f2f4 !important; color:#17191f !important; border:1px solid #e5e7eb !important; }
+.sc-profile .sc-seg-row { display:flex !important; gap:10px !important; }
+.sc-profile .sc-seg { flex:1 1 0 !important; min-width:0 !important; min-height:40px !important; border-radius:10px !important; font-size:14px !important; font-weight:500 !important; }
+.sc-stories .sc-top-icon, .sc-stories .sc-top-avatar { background:transparent !important; box-shadow:none !important; }
+.sc-stories .sc-ring-item { background:transparent !important; color:#17191f !important; box-shadow:none !important; border:0 !important; }
+.sc-stories .sc-ring, .sc-stories .sc-ring.none { background:transparent !important; box-shadow:none !important; }
+.sc-stories .sc-ring.unseen { background:conic-gradient(from 200deg,#a855f7,#ff3d8b,#ffb020,#a855f7) !important; }
+.sc-stories .sc-ring.none .sc-avatar.own { display:grid !important; place-items:center !important; position:relative !important; inset:auto !important; transform:none !important; margin:0 !important; }
+.sc-stories .sc-ring.none .sc-avatar.own svg { display:block !important; margin:auto !important; }
+.activity-page { padding-top:0 !important; }
+.activity-page .activity-heading { padding:12px 16px 8px !important; margin:0 !important; border:0 !important; background:#fff !important; }
+.activity-page .activity-heading .page-title { margin:0 !important; font-size:22px !important; line-height:1.3 !important; font-weight:600 !important; color:#17191f !important; }
+.activity-page .activity-heading::before, .activity-page::before { content:none !important; display:none !important; }
+.activity-page .activity-filters { display:flex !important; gap:22px !important; overflow-x:auto !important; padding:0 16px !important; margin:0 !important; background:#fff !important; border-top:0 !important; border-bottom:1px solid #e5e7eb !important; }
+.activity-page .activity-filter, .activity-page .activity-filter.active { flex:0 0 auto !important; min-height:42px !important; padding:0 0 2px !important; border:0 !important; border-bottom:2px solid transparent !important; border-radius:0 !important; background:transparent !important; color:#777 !important; box-shadow:none !important; font-size:14px !important; font-weight:500 !important; }
+.activity-page .activity-filter.active { color:#17191f !important; border-bottom-color:#4b5cff !important; font-weight:600 !important; }
+.activity-page .activity-item, .activity-page .activity-item:hover, .activity-page .activity-item:focus { background:#fff !important; color:#17191f !important; }
