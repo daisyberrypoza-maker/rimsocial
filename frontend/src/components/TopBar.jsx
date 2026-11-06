@@ -32,7 +32,7 @@ export default function TopBar({ immersive, title }) {
   async function checkout() {
     const pack = COIN_PACKS.find((item) => item.id === packId);
     if (!pack) return toast('Choose a valid coin package.');
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email.trim())) return toast('Enter a valid receipt email.');
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast('Enter a valid receipt email.');
     setBusy(true);
     try {
       const data = await api('/v1/wallet/topup', { method: 'POST', body: { packId: pack.id, ...(email.trim() ? { email: email.trim() } : {}) } });
