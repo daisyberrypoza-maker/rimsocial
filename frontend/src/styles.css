@@ -2582,3 +2582,109 @@ html, body, #root { background: #ffffff; color: #111111; }
 .sc-switch.on::after { transform:translateX(19px); }
 @keyframes sc-sheet-in { from { transform:translateY(18px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 @media (prefers-reduced-motion: reduce) { .sc-options-sheet { animation:none; } }
+
+
+/* RimSocial profile light-surface correction — keep profile surfaces light in every theme. */
+.sc-profile .sc-hero {
+  position:relative !important;
+  isolation:isolate;
+  overflow:hidden !important;
+  background:transparent !important;
+}
+.sc-profile .sc-hero-bg {
+  position:absolute !important;
+  inset:0 !important;
+  top:0 !important;
+  left:0 !important;
+  width:100% !important;
+  height:100% !important;
+  background-size:cover !important;
+  background-position:center !important;
+  filter:blur(5px) !important;
+  transform:scale(1.04) !important;
+  z-index:0 !important;
+  pointer-events:none;
+}
+.sc-profile .sc-hero-shade {
+  position:absolute !important;
+  inset:0 !important;
+  z-index:1 !important;
+  background:linear-gradient(180deg,rgba(0,0,0,.20),rgba(0,0,0,.04) 38%,rgba(0,0,0,.36)) !important;
+  pointer-events:none;
+}
+.sc-profile .sc-hero-top,
+.sc-profile .sc-hero-id,
+.sc-profile .sc-seg-row,
+.sc-profile .sc-add-row { position:relative !important; z-index:2 !important; }
+
+/* The settings drawer must use light cards, not black priority buttons. */
+.profile-drawer-backdrop { background:rgba(0,0,0,.42) !important; }
+.profile-drawer {
+  background:#fff !important;
+  color:#111 !important;
+  border-left:1px solid #e7e7e7 !important;
+}
+.profile-drawer .drawer-head,
+.profile-drawer .drawer-head h3 { color:#111 !important; }
+.profile-drawer > button,
+.profile-drawer button:not(.drawer-danger):not(.icon-button) {
+  background:#f3f4f6 !important;
+  color:#111 !important;
+  border:1px solid #ededed !important;
+  box-shadow:none !important;
+}
+.profile-drawer > button:hover,
+.profile-drawer button:not(.drawer-danger):not(.icon-button):active {
+  background:#e9ebef !important;
+}
+.profile-drawer .icon-button {
+  background:#fff !important;
+  color:#111 !important;
+  border:1px solid #e5e5e5 !important;
+}
+.profile-drawer > button.drawer-danger {
+  background:#fff !important;
+  color:#e5485d !important;
+  border:1px solid #f1d9dd !important;
+}
+
+/* Profile options sheet: white sheet, black text, full list scrollable, separate Done action. */
+.sc-options-backdrop {
+  background:rgba(0,0,0,.42) !important;
+  padding:calc(8px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.sc-options-sheet {
+  width:min(100%,560px) !important;
+  max-height:calc(100dvh - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
+  background:#fff !important;
+  color:#111 !important;
+  border:1px solid #ededed !important;
+  border-radius:24px !important;
+  box-shadow:0 12px 36px rgba(0,0,0,.18) !important;
+}
+.sc-options-backdrop .sc-options-sheet .sc-option {
+  display:flex !important;
+  width:100% !important;
+  min-height:62px !important;
+  padding:16px 20px !important;
+  background:#fff !important;
+  color:#111 !important;
+  border:0 !important;
+  border-bottom:1px solid #ededed !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  text-align:left !important;
+}
+.sc-options-backdrop .sc-options-sheet .sc-option.danger { color:#e54868 !important; }
+.sc-options-backdrop .sc-options-sheet .sc-option:active { background:#f6f6f6 !important; }
+.sc-options-backdrop .sc-options-done {
+  background:#fff !important;
+  color:#111 !important;
+  border:1px solid #e9e9e9 !important;
+  border-radius:22px !important;
+  box-shadow:0 4px 14px rgba(0,0,0,.10) !important;
+}
+.sc-options-backdrop .sc-switch { background:#c9c9c9; }
+.sc-options-backdrop .sc-switch.on { background:#22aeea; }
