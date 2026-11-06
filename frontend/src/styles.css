@@ -2010,3 +2010,32 @@ input:focus { box-shadow: none; border-color: #111; }
 
 /* Watch button is not a Follow action: keep it dark */
 .profile-watch-action .pill { background: #111; color: #fff; }
+
+/* =====================================================================
+   Mobile fit: native-sized text, full-screen pages, no side gaps
+   ===================================================================== */
+html, body, #root { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-size: 15px; line-height: 1.35; overflow: hidden; }
+.app { width: 100%; max-width: 100vw; overflow: hidden; }
+.page { max-width: 100%; overflow-x: hidden; }
+.page-title { font-size: 20px; }
+h2 { font-size: 18px; }
+h3 { font-size: 16px; }
+.muted, .activity-subtitle { font-size: 13px; }
+button, input, select, textarea { font-size: 15px; }
+input, select, textarea { font-size: 16px; } /* 16px stops iOS/Android zoom on focus */
+.people-backdrop { position: fixed; inset: 0; z-index: 100; }
+.people-backdrop .people-sheet { position: absolute; inset: 0; }
+.ig-explore, .ig-compose, .activity-page, .profile-page { min-height: 100%; }
+.ig-search { height: 38px; }
+.ig-person-main strong, .ig-suggest-main strong, .people-sheet .people-person strong { font-size: 14px; }
+.ig-person-main small, .ig-suggest-main small, .people-sheet .people-person small { font-size: 13px; }
+.ig-follow, .people-sheet .people-follow-btn { font-size: 13px; padding: 7px 14px; }
+.ig-filters button, .ig-kind button, .ptabs button, .people-sheet .people-tabs button { font-size: 14px; }
+.ig-caption textarea { font-size: 16px; }
+.ig-row { font-size: 14px; }
+@media (max-width: 380px) {
+  body { font-size: 14px; }
+  .ig-grid { grid-template-columns: repeat(3, 1fr); }
+  .ig-suggest-card { width: 136px; }
+}
