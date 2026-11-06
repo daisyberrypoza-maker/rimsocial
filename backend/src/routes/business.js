@@ -74,7 +74,7 @@ async function enrich(items, viewerId = null) {
 router.get('/admin/opportunities', requireOperator, async (req, res, next) => {
   try {
     const items = await BusinessOpportunity.findAll({ where: { reviewStatus: req.query.status === 'rejected' ? 'rejected' : 'pending' }, order: [['createdAt', 'ASC']], limit: 100 });
-    res.json({ items: await enrich(items, req.user.id) });
+    res.json({ items: await enrich(items) });
   } catch (e) { next(e); }
 });
 router.patch('/admin/opportunities/:id/review', requireOperator, async (req, res, next) => {
@@ -159,7 +159,7 @@ router.patch('/profiles/:id', async (req, res, next) => {
 router.get('/opportunities/mine', async (req, res, next) => {
   try {
     const items = await BusinessOpportunity.findAll({ where: { ownerId: req.user.id }, order: [['createdAt', 'DESC']], limit: 100 });
-    res.json({ items: await enrich(items) });
+    res.json({ items: await enrich(items, req.user.id) });
   } catch (e) { next(e); }
 });
 router.get('/opportunities', async (req, res, next) => {
