@@ -15,6 +15,11 @@ module.exports = {
   },
   redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
   paystackSecret: process.env.PAYSTACK_SECRET || '',
+  // TURN relay; TURN_SECRET enables short-lived coturn REST credentials.
+  turnUrls: (process.env.TURN_URLS || '').split(',').map((url) => url.trim()).filter(Boolean),
+  turnSecret: process.env.TURN_SECRET || '',
+  turnUsername: process.env.TURN_USERNAME || '',
+  turnPassword: process.env.TURN_PASSWORD || '',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   adminApiKey: process.env.ADMIN_API_KEY || '',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
