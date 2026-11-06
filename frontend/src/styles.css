@@ -925,3 +925,5 @@ input:focus { border-color:#4c5cff; }
 .live-empty{padding:32px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px}
 .live-error{color:#ff3158;font-size:13px;margin:8px 0}
 @media(max-width:560px){.live-room{grid-template-columns:1fr}.live-video-wrap{aspect-ratio:9/13;min-height:260px}.live-chat-list{max-height:230px}.live-toolbar h1{font-size:20px}.live-start-form{flex-wrap:wrap}.live-start-form input{flex-basis:100%}}
+
+.live-remote-audio{display:none}
