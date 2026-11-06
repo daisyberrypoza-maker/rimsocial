@@ -9,6 +9,7 @@ export default function LiveMatchRoom() {
   const [starting, setStarting] = useState(false);
   const [roomState, setRoomState] = useState('Ready to connect');
   const [error, setError] = useState('');
+  const [turnConfigured, setTurnConfigured] = useState(false);
   const localVideo = useRef(null);
   const remoteVideo = useRef(null);
   const pcRef = useRef(null);
@@ -55,12 +56,15 @@ export default function LiveMatchRoom() {
       if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
         throw new Error('This device or WebView does not support WebRTC camera access.');
       }
+      const iceConfig = await api(`/v1/live/matches/${matchId}/ice-servers`);
+      setTurnConfigured(Boolean(iceConfig.turnConfigured));
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: 'user' } });
       streamRef.current = stream;
       if (localVideo.current) localVideo.current.srcObject = stream;
 
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceServers: iceConfig.iceServers?.length ? iceConfig.iceServers : [{ urls: ['stun:stun.l.google.com:19302'] }],
+        iceCandidatePoolSize: 4,
       });
       pcRef.current = pc;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
@@ -156,7 +160,8 @@ export default function LiveMatchRoom() {
         <p className="muted">Match status: {match.status}. Allow camera and microphone access when prompted.</p>
         {match.status === 'active' ? <div className="row"><button disabled={starting || Boolean(pcRef.current)} onClick={startRoom}>{starting ? 'Starting…' : 'Start camera & connect'}</button><button className="ghost" onClick={stopRoom}>Stop camera</button></div> : <p className="notice">The other creator must accept the invitation before the room can start.</p>}
       </section>
-      <p className="muted">This first connection is creator-to-creator WebRTC. Public audience broadcasting, reliable cross-network relay (TURN), match timers, gift-based scoring and moderation still require their production services.</p>
+      <p className={turnConfigured ? 'notice' : 'muted'}>{turnConfigured ? 'TURN relay is configured for cross-network connection attempts.' : 'TURN relay is not configured on the server. Video may fail across restrictive mobile networks until TURN_URLS and TURN_SECRET (or TURN_USERNAME and TURN_PASSWORD) are set.'}</p>
+      <p className="muted">This room is creator-to-creator WebRTC, not public audience broadcasting. A TURN provider must be deployed and configured before cross-network reliability can be confirmed.</p>
     </>}
   </main>;
 }
