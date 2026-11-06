@@ -16,6 +16,7 @@ import CreatorStudio from './pages/CreatorStudio.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
 import BusinessHub from './pages/BusinessHub.jsx';
+import Activity from './pages/Activity.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
+        <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
@@ -83,9 +85,10 @@ export default function App() {
 
 function titleFor(path) {
   if (path.startsWith('/explore')) return 'Explore';
+  if (path.startsWith('/activity')) return 'Activity';
   if (path.startsWith('/upload')) return 'New post';
   if (path.startsWith('/creator')) return 'Creator Studio';
   if (path.startsWith('/business')) return 'Find, Flip & Fix';
   if (path.startsWith('/u/')) return '';
-  return 'Clipverse';
+  return 'RimSocial';
 }

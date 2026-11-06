@@ -26,7 +26,7 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
     res = await fetch(`${API_BASE}${path}`, { method, headers: h, body });
   } catch {
     const target = `${API_BASE || window.location.origin}${path}`;
-    throw new ApiError(`Cannot reach ClipVerse API at ${target}. Check that the backend is online and the API URL is correct.`, 0);
+    throw new ApiError(`Cannot reach RimSocial API at ${target}. Check that the backend is online and the API URL is correct.`, 0);
   }
   const data = res.status === 204 ? null : await res.json().catch(() => null);
 
