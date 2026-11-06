@@ -5,7 +5,7 @@ const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 
-const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'];
+const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'backgroundUrl', 'country', 'followerCount'];
 
 // "me" means the logged-in user; anything else is a username
 async function resolveUser(req, ref, attributes) {
@@ -21,6 +21,17 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
     if (!user) throw httpError(404, 'User not found');
     await user.update({ avatarUrl: mediaPath(req.file.filename) });
     res.json({ avatarUrl: user.avatarUrl });
+  } catch (e) { next(e); }
+});
+
+// Upload or replace the authenticated user's profile background image.
+router.post('/me/background', requireAuth, upload.single('media'), async (req, res, next) => {
+  try {
+    if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP background image');
+    const user = await User.findByPk(req.user.id);
+    if (!user) throw httpError(404, 'User not found');
+    await user.update({ backgroundUrl: mediaPath(req.file.filename) });
+    res.json({ backgroundUrl: user.backgroundUrl });
   } catch (e) { next(e); }
 });
 
