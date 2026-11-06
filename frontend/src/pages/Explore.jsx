@@ -135,15 +135,6 @@ export default function Explore() {
         {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3><div className="ig-grid">{results.posts.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div></section>}
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
-        {recommendations.suggested.length > 0 && <section className="ig-section">
-          <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3><button type="button" className="ig-link" onClick={() => navigate('/explore?q=')}>See all</button></div>
-          <div className="ig-suggest-row">
-            {recommendations.suggested.map((person) => <div className="ig-suggest-card" key={person.id}>
-              <button className="ig-suggest-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={64} /><strong>{person.username}</strong><small>{person.displayName || 'Suggested for you'}</small></button>
-              <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
-            </div>)}
-          </div>
-        </section>}
         {recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3><button type="button" className="ig-link" onClick={() => navigate('/explore?q=')}>See all</button></div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
