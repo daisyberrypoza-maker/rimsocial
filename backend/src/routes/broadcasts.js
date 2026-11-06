@@ -5,6 +5,7 @@ const { LiveBroadcast, LiveBroadcastMessage, User } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
+const { blockedUserIds, assertNotBlocked } = require('../lib/blocks');
 
 router.use(requireAuth);
 
@@ -25,10 +26,11 @@ function tokenFor({ userId, room, host }) {
 
 router.get('/', async (req, res, next) => {
   try {
-    const items = await LiveBroadcast.findAll({
+    const blocked = await blockedUserIds(req.user.id);
+    const items = (await LiveBroadcast.findAll({
       where: { status: 'live' }, order: [['startedAt', 'DESC']], limit: 50,
       attributes: ['id', 'hostId', 'title', 'status', 'viewerCount', 'startedAt'],
-    });
+    })).filter((item) => !blocked.has(item.hostId));
     const ids = [...new Set(items.map((item) => item.hostId))];
     const users = await User.findAll({ where: { id: ids }, attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
     const byId = new Map(users.map((user) => [user.id, user]));
@@ -56,6 +58,7 @@ router.post('/:id/token', async (req, res, next) => {
   try {
     const item = await LiveBroadcast.findByPk(req.params.id);
     if (!item || item.status !== 'live') throw httpError(404, 'This broadcast is no longer live');
+    await assertNotBlocked(req.user.id, item.hostId, 'This broadcast is no longer live');
     const host = item.hostId === req.user.id;
     if (!liveKitReady()) throw httpError(503, 'LIVE media provider is not configured yet');
     const room = roomName(item.id);
@@ -82,10 +85,12 @@ router.get('/:id/chat', async (req, res, next) => {
   try {
     const item = await LiveBroadcast.findByPk(req.params.id);
     if (!item) throw httpError(404, 'Broadcast not found');
-    const messages = await LiveBroadcastMessage.findAll({
+    await assertNotBlocked(req.user.id, item.hostId, 'Broadcast not found');
+    const blocked = await blockedUserIds(req.user.id);
+    const messages = (await LiveBroadcastMessage.findAll({
       where: { broadcastId: item.id }, order: [['createdAt', 'DESC']], limit: 60,
       attributes: ['id', 'userId', 'body', 'createdAt'],
-    });
+    })).filter((message) => !blocked.has(message.userId));
     const ids = [...new Set(messages.map((message) => message.userId))];
     const users = await User.findAll({ where: { id: ids }, attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
     const byId = new Map(users.map((user) => [user.id, user]));
@@ -97,6 +102,7 @@ router.post('/:id/chat', async (req, res, next) => {
   try {
     const item = await LiveBroadcast.findByPk(req.params.id);
     if (!item || item.status !== 'live') throw httpError(404, 'This broadcast is no longer live');
+    await assertNotBlocked(req.user.id, item.hostId, 'This broadcast is no longer live');
     const body = String(req.body.body || '').trim();
     if (!body || body.length > 500) throw httpError(400, 'Chat messages must be 1–500 characters');
     const recent = await LiveBroadcastMessage.count({ where: { broadcastId: item.id, userId: req.user.id, createdAt: { [require('sequelize').Op.gte]: new Date(Date.now() - 10_000) } } });
