@@ -30,6 +30,9 @@ export default function BusinessHub() {
   const [updateKind, setUpdateKind] = useState('progress');
   const [updateBody, setUpdateBody] = useState('');
   const [updateEvidence, setUpdateEvidence] = useState('');
+  const [actualSale, setActualSale] = useState('');
+  const [actualCosts, setActualCosts] = useState('');
+  const [financialNote, setFinancialNote] = useState('');
   const [adminKey, setAdminKey] = useState('');
   const [adminItems, setAdminItems] = useState([]);
   const [adminProfiles, setAdminProfiles] = useState([]);
@@ -52,8 +55,13 @@ export default function BusinessHub() {
     setSelected(item);
     setDetail(null);
     setOfferAmount(item.lane === 'flip' && item.askingPriceMinor != null ? String(item.askingPriceMinor / 100) : '');
-    try { setDetail(await api('/v1/business/opportunities/' + encodeURIComponent(item.id))); }
-    catch (e) { toast(e.message); setSelected(null); }
+    try {
+      const response = await api('/v1/business/opportunities/' + encodeURIComponent(item.id));
+      setDetail(response);
+      setActualSale(response.opportunity.actualSalePriceMinor == null ? '' : String(response.opportunity.actualSalePriceMinor / 100));
+      setActualCosts(response.opportunity.actualCostMinor == null ? '' : String(response.opportunity.actualCostMinor / 100));
+      setFinancialNote('');
+    } catch (e) { toast(e.message); setSelected(null); }
   }
   async function refreshDetail() {
     if (selected) await openDetail(selected);
@@ -123,6 +131,24 @@ export default function BusinessHub() {
     setBusy(true);
     try { const r = await api('/v1/business/offers/' + encodeURIComponent(offerId) + '/complete', { method: 'POST', body: {} }); toast(r.message); await refreshDetail(); }
     catch (e) { toast(e.message); }
+    finally { setBusy(false); }
+  }
+  async function recordFinancials(e) {
+    e.preventDefault(); if (!selected) return;
+    setBusy(true);
+    try {
+      const result = await api('/v1/business/opportunities/' + encodeURIComponent(selected.id) + '/financials', {
+        method: 'PATCH',
+        body: {
+          actualSalePriceMinor: Math.round(Number(actualSale) * 100),
+          actualCostMinor: Math.round(Number(actualCosts) * 100),
+          note: financialNote,
+        },
+      });
+      toast(result.message || 'Realized profit recorded');
+      setFinancialNote('');
+      await refreshDetail();
+    } catch (e) { toast(e.message); }
     finally { setBusy(false); }
   }
   async function sendWorkUpdate(e) {
@@ -241,6 +267,17 @@ export default function BusinessHub() {
             <label>Message<textarea rows={2} maxLength={1000} value={offerMessage} onChange={(e) => setOfferMessage(e.target.value)} placeholder="Explain your offer, experience or proposed approach" /></label>
             <button disabled={busy}>{busy ? 'Sending…' : 'Send offer'}</button>
           </form>}
+          {detail.opportunity.lane === 'flip' && detail.opportunity.status === 'completed' && detail.opportunity.assignedUserId === user?.id && <section className="business-detail-section">
+            <h3>Realized profit</h3>
+            {detail.opportunity.realizedProfitMinor != null && <div className="business-profit-summary"><span>Latest recorded result</span><strong>{money(detail.opportunity.realizedProfitMinor, detail.opportunity.currency)}</strong><small>Sale price − additional costs − accepted purchase price. User-entered, not independently audited.</small></div>}
+            <form className="business-inline-form" onSubmit={recordFinancials}>
+              <label>Actual sale price ({detail.opportunity.currency})<input required type="number" min="0" step="0.01" value={actualSale} onChange={(e) => setActualSale(e.target.value)} /></label>
+              <label>Additional costs, excluding purchase price ({detail.opportunity.currency})<input required type="number" min="0" step="0.01" value={actualCosts} onChange={(e) => setActualCosts(e.target.value)} /></label>
+              <label>Notes / evidence summary<textarea rows={2} maxLength={1000} value={financialNote} onChange={(e) => setFinancialNote(e.target.value)} /></label>
+              <button disabled={busy}>{busy ? 'Saving…' : 'Record outcome'}</button>
+            </form>
+            {detail.financialHistory?.length > 0 && <div><h4>Outcome history</h4>{detail.financialHistory.map((entry) => <article className="business-work-update" key={entry.id}><strong>{money(entry.realizedProfitMinor, detail.opportunity.currency)}</strong><p>{entry.note || 'No note'}</p><small className="muted">Purchase {money(entry.purchasePriceMinor, entry.currency || detail.opportunity.currency)} · Sale {money(entry.actualSalePriceMinor, detail.opportunity.currency)} · Costs {money(entry.actualCostMinor, detail.opportunity.currency)} · {new Date(entry.createdAt).toLocaleString()}</small></article>)}</div>}
+          </section>}
           {detail.offers?.length > 0 && <section className="business-detail-section"><h3>Offers / agreements</h3>{detail.offers.map((offer) => <article className="business-offer" key={offer.id}><div><strong>{money(offer.amountMinor, offer.currency)}</strong><span className="business-status">{offer.status}</span></div><p>{offer.message || 'No message supplied'}</p><small className="muted">Sender: {offer.senderId === user?.id ? 'You' : offer.senderId} · Recipient: {offer.recipientId === user?.id ? 'You' : offer.recipientId}</small><div className="business-offer-actions">{isOwner && offer.status === 'pending' && <><button className="small" disabled={busy} onClick={() => respondOffer(offer.id, 'accept')}>Accept</button><button className="ghost small" disabled={busy} onClick={() => respondOffer(offer.id, 'reject')}>Reject</button></>}{offer.senderId === user?.id && offer.status === 'pending' && <button className="ghost small" disabled={busy} onClick={() => withdrawOffer(offer.id)}>Withdraw</button>}{[offer.senderId, offer.recipientId].includes(user?.id) && ['accepted','completed'].includes(offer.status) && offer.status !== 'completed' && <button className="small" disabled={busy} onClick={() => completeOffer(offer.id)}>Confirm completion</button>}</div></article>)}</section>}
           {detail.opportunity.lane === 'fix' && ['in_progress','review'].includes(detail.opportunity.status) && <section className="business-detail-section"><h3>Work progress</h3>{(detail.updates || []).map((update) => <article className="business-work-update" key={update.id}><span className="business-status">{update.kind}</span><p>{update.body}</p>{update.evidenceUrl && <a href={update.evidenceUrl} target="_blank" rel="noreferrer">View evidence</a>}<small className="muted">{new Date(update.createdAt).toLocaleString()}</small></article>)}{[detail.opportunity.ownerId, detail.opportunity.assignedUserId].includes(user?.id) && <form className="business-inline-form" onSubmit={sendWorkUpdate}><h3>Post a work update</h3><label>Update type<select value={updateKind} onChange={(e) => setUpdateKind(e.target.value)}><option value="progress">Progress</option><option value="blocker">Blocker</option>{detail.opportunity.assignedUserId === user?.id && <option value="completion">Submit completion</option>}</select></label><label>Update<textarea required maxLength={2000} rows={3} value={updateBody} onChange={(e) => setUpdateBody(e.target.value)} /></label><label>Evidence link (HTTPS)<input type="url" value={updateEvidence} onChange={(e) => setUpdateEvidence(e.target.value)} /></label><button disabled={busy}>{busy ? 'Saving…' : 'Save update'}</button></form>}</section>}
         </>}
