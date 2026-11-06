@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
-import { mediaUrl } from '../lib/config.js';
+import { mediaUrl, postShareUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
@@ -152,6 +152,7 @@ export default function PostCard({ post, active }) {
   }
 
   function sharePost() {
+    if (!postShareUrl(post.id)) return toast('External sharing needs VITE_PUBLIC_APP_URL set to the public RimSocial website.');
     setShowMenu(false);
     setShowShare(true);
   }
@@ -244,7 +245,7 @@ export default function PostCard({ post, active }) {
         <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
       </section>
     </div>}
-    {showShare && <ShareOptions url={new URL(`/p/${post.id}`, window.location.origin).toString()} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
+    {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
   </article>;
