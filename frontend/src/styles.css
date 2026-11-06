@@ -1255,3 +1255,53 @@ button .icon-vector, a .icon-vector { pointer-events: none; }
   width: 25px;
   height: 25px;
 }
+
+
+/* Final icon polish: glyphs stay bare, crisp and properly sized. */
+.auth-screen .auth-step-meta .auth-back {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #111111 !important;
+  font-size: 0 !important;
+}
+.auth-screen .auth-step-meta .auth-back .icon-vector {
+  width: 32px !important;
+  height: 32px !important;
+  stroke-width: 2.5;
+  color: #111111 !important;
+  background: transparent !important;
+}
+.auth-screen .auth-step-meta { gap: 12px; }
+.topbar-back {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+.topbar-back .icon-vector {
+  width: 29px !important;
+  height: 29px !important;
+  stroke-width: 2.5;
+}
+.icon-button {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.icon-button .icon-vector {
+  width: 25px;
+  height: 25px;
+}
