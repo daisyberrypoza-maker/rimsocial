@@ -124,6 +124,8 @@ async function start() {
   if (config.syncDatabase) await sequelize.sync();
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
+  const userColumns = await qi.describeTable('users');
+  if (!userColumns.coverUrl) await qi.addColumn('users', 'coverUrl', { type: require('sequelize').DataTypes.STRING(512), allowNull: true });
   const payoutColumns = await qi.describeTable('payouts');
   if (!payoutColumns.providerTransferCode) {
     await qi.addColumn('payouts', 'providerTransferCode', { type: require('sequelize').DataTypes.STRING(128), allowNull: true });
