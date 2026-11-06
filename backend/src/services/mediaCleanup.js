@@ -12,13 +12,14 @@ function excludedPostWhere(excludePostIds = []) {
 async function isAssetReferenced(publicId, excludePostIds = []) {
   const base = { status: 'live', ...excludedPostWhere(excludePostIds) };
   const pattern = '%' + publicId + '%';
-  const [currentPosts, legacyPosts, activeStories, avatars] = await Promise.all([
+  const [currentPosts, legacyPosts, activeStories, avatars, covers] = await Promise.all([
     Post.count({ where: { ...base, isStory: false, mediaPublicId: publicId } }),
     Post.count({ where: { ...base, isStory: false, mediaUrl: { [Op.like]: pattern } } }),
     Post.count({ where: { ...base, isStory: true, expiresAt: { [Op.gt]: new Date() }, [Op.or]: [{ mediaPublicId: publicId }, { mediaUrl: { [Op.like]: pattern } }] } }),
     User.count({ where: { avatarUrl: { [Op.like]: pattern } } }),
+    User.count({ where: { coverUrl: { [Op.like]: pattern } } }),
   ]);
-  return currentPosts + legacyPosts + activeStories + avatars > 0;
+  return currentPosts + legacyPosts + activeStories + avatars + covers > 0;
 }
 
 function localUploadPath(mediaUrl) {
