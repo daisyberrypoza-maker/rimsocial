@@ -111,41 +111,47 @@ export default function Explore() {
   }, [searchParams]);
 
   return (
-    <div className="page explore-page" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>\n      {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing Explore…</div>}
-      <form className="explore-search" onSubmit={search}>
-        <Icon name="search" size={21} />
-        <input aria-label="Search creators, posts and hashtags" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people, videos, #hashtags" />
-        {query && <button type="button" className="search-clear" onClick={() => { setQuery(''); setResults(null); }}>×</button>}
-        <button type="submit" disabled={searching}>{searching ? '…' : 'Search'}</button>
+    <div className="ig-explore" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
+      {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
+      <form className="ig-search" onSubmit={search} role="search">
+        <Icon name="search" size={18} />
+        <input aria-label="Search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
+        {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
       </form>
-      <div className="search-filters" role="group" aria-label="Search type">
-        {['all', 'people', 'posts', 'hashtags'].map((t) => <button type="button" key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{t === 'all' ? 'Top' : t === 'people' ? 'People' : t === 'posts' ? 'Videos & posts' : '# Hashtags'}</button>)}
+      <div className="ig-filters" role="tablist" aria-label="Search type">
+        {['all', 'people', 'posts', 'hashtags'].map((t) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{t === 'all' ? 'Top' : t === 'people' ? 'Accounts' : t === 'posts' ? 'Videos & posts' : 'Tags'}</button>)}
       </div>
 
       {results ? <>
-        {results.people?.length > 0 && <section className="people-results"><h3>People</h3>{results.people.map((person) => <div className="person-result" key={person.id}><button className="person-result-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={46} /><span><strong>{person.displayName}</strong><small>@{person.username} · {formatCount(person.followerCount)} followers</small></span></button><button className={person.isFollowing ? 'follow-result following' : 'follow-result'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button></div>)}</section>}
-        {results.posts?.length > 0 && <><h3 className="explore-section-title">Posts</h3><div className="grid">{results.posts.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div></>}
-        {!results.people?.length && !results.posts?.length && <p className="muted center">No results yet. Try another name or hashtag.</p>}
+        {results.people?.length > 0 && <section className="ig-section">
+          <h3 className="ig-section-title">Accounts</h3>
+          {results.people.map((person) => <div className="ig-person" key={person.id}>
+            <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName} · {formatCount(person.followerCount)} followers</small></span></button>
+            <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+          </div>)}
+        </section>}
+        {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3><div className="ig-grid">{results.posts.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div></section>}
+        {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
-        <div className="explore-heading"><h2>Discover people</h2><span className="muted">Creators you may know</span></div>
-        {recommendations.suggested.length > 0 && <section className="discover-people-section">
-          <div className="discover-section-heading"><h3>Suggested for you</h3><button type="button" onClick={() => navigate('/explore?q=')}>See all</button></div>
-          {recommendations.suggested.map((person) => <div className="discover-person-row" key={person.id}>
-            <button className="discover-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={54} /><span><strong>{person.displayName || person.username}</strong><small>@{person.username} · Suggested for you</small></span></button>
-            <button className={person.isFollowing ? 'discover-follow following' : 'discover-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+        {recommendations.suggested.length > 0 && <section className="ig-section">
+          <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3><button type="button" className="ig-link" onClick={() => navigate('/explore?q=')}>See all</button></div>
+          <div className="ig-suggest-row">
+            {recommendations.suggested.map((person) => <div className="ig-suggest-card" key={person.id}>
+              <button className="ig-suggest-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={64} /><strong>{person.username}</strong><small>{person.displayName || 'Suggested for you'}</small></button>
+              <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+            </div>)}
+          </div>
+        </section>}
+        {recommendations.followBack.length > 0 && <section className="ig-section">
+          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3><button type="button" className="ig-link" onClick={() => navigate('/explore?q=')}>See all</button></div>
+          {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
+            <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
+            <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        {recommendations.followBack.length > 0 && <section className="discover-people-section">
-          <div className="discover-section-heading"><h3>Follow back</h3><button type="button" onClick={() => navigate('/explore?q=')}>See all</button></div>
-          {recommendations.followBack.map((person) => <div className="discover-person-row" key={person.id}>
-            <button className="discover-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={54} /><span><strong>{person.displayName || person.username}</strong><small>@{person.username} · Follows you</small></span></button>
-            <button className={person.isFollowing ? 'discover-follow following' : 'discover-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
-          </div>)}
-        </section>}
-        <div className="explore-section-title">Explore posts</div>
-        <div className="hashtag-chips"><button onClick={() => searchHashtag('fyp')}>#fyp</button><button onClick={() => searchHashtag('trending')}>#trending</button><button onClick={() => searchHashtag('comedy')}>#comedy</button><button onClick={() => searchHashtag('music')}>#music</button></div>
-        <div className="grid">{items.map((p) => <button key={p.id} className="tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="tile-shade" />{p.caption && <span className="tile-title">{p.caption}</span>}<span className="tile-count">{formatCount(p.viewCount)}</span></button>)}</div>
-        <div ref={sentinel} className="sentinel" />{loading && <p className="muted center">Loading…</p>}{!items.length && !loading && <p className="muted center">Nothing to explore yet.</p>}
+        <div className="ig-tags" aria-label="Popular tags"><button onClick={() => searchHashtag('fyp')}>#fyp</button><button onClick={() => searchHashtag('trending')}>#trending</button><button onClick={() => searchHashtag('comedy')}>#comedy</button><button onClick={() => searchHashtag('music')}>#music</button></div>
+        <div className="ig-grid">{items.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div>
+        <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
       </>}
     </div>
   );

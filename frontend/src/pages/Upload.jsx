@@ -134,63 +134,72 @@ export default function Upload() {
     finally { setBusy(false); }
   }
 
-  return <main className="page upload-page">
-    <form className="panel upload upload-refresh" onSubmit={submit}>
-      <header className="upload-heading">
-        <button type="button" className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button>
-        <div><h2>{asStory ? 'New public story' : 'Create a post'}</h2><p className="muted">Share a moment with your community</p></div>
+  return <main className="ig-compose">
+    <form className="ig-compose-form" onSubmit={submit}>
+      <header className="ig-compose-top">
+        <button type="button" className="ig-icon-btn" onClick={() => navigate(-1)} aria-label="Close"><Icon name="x" size={22} /></button>
+        <h2>{asStory ? 'New story' : 'New post'}</h2>
+        <button type="submit" className="ig-share" disabled={busy || !file}>{busy ? 'Sharing…' : 'Share'}</button>
       </header>
-      {sourcePost && <div className="panel remix-source-card"><strong>Remixing @{sourcePost.author?.username || 'creator'}</strong><p className="muted">Your new post will credit the original creator.</p><div className="remix-source-media">{sourcePost.kind === 'video' ? <video src={mediaUrl(sourcePost.mediaUrl)} controls playsInline /> : <img src={mediaUrl(sourcePost.mediaUrl)} alt="Original post being remixed" />}</div></div>}
-      <nav className="seg upload-gallery-tabs" aria-label="Composer sections">{['Edits', 'Drafts', 'Templates'].map((tab) => <button key={tab} type="button" className={galleryTab === tab ? 'on' : ''} onClick={() => { setGalleryTab(tab); if (tab === 'Drafts') { setDraft({ ...(draft || {}), caption: draft.caption || '', topic, aiLabel, shareToStory }); toast('Draft saved on this device'); } }}>{tab}</button>)}</nav>
-      {galleryTab === 'Templates' && <div className="upload-template-grid">{[{ label: 'Behind the scenes', caption: 'Behind the scenes 🎬 ' }, { label: 'Quick tutorial', caption: 'Here is how I do it: ' }, { label: 'My latest', caption: 'My latest update ✨ ' }].map((item) => <button key={item.label} type="button" className="ghost small" onClick={() => { setDraft({ ...(draft || {}), caption: item.caption, topic, aiLabel, shareToStory }); setGalleryTab('Edits'); }}>{item.label}</button>)}</div>}
-      {galleryTab === 'Drafts' && <p className="muted upload-draft-note">Your caption and composer settings are saved on this device. Choose Edits to continue creating.</p>}
-      <div className="seg upload-kind">
-        <button type="button" className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>Post / Reel</button>
-        <button type="button" className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>Story · 24h</button>
+
+      {sourcePost && <div className="ig-remix">
+        <strong>Remixing @{sourcePost.author?.username || 'creator'}</strong>
+        <p>Your new post will credit the original creator.</p>
+        <div className="ig-remix-media">{sourcePost.kind === 'video' ? <video src={mediaUrl(sourcePost.mediaUrl)} controls playsInline /> : <img src={mediaUrl(sourcePost.mediaUrl)} alt="Original post being remixed" />}</div>
+      </div>}
+
+      <div className="ig-kind" role="tablist" aria-label="Type of share">
+        <button type="button" role="tab" aria-selected={!asStory} className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>Post</button>
+        <button type="button" role="tab" aria-selected={asStory} className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>Story</button>
       </div>
 
-      {preview ? <div className="upload-preview-wrap">
-        {file?.type.startsWith('video/') ? <video className="upload-preview" src={preview} controls playsInline /> : <img className="upload-preview" src={preview} alt="Selected post preview" />}
-        <button type="button" className="ghost small upload-change" onClick={() => document.getElementById('post-media-file')?.click()}>Change cover / media</button>
-      </div> : <button type="button" className="upload-picker" onClick={() => document.getElementById('post-media-file')?.click()}>
-        <span className="upload-picker-icon">＋</span><strong>Add photo or video</strong><small>MP4, WebM, JPG, PNG or WebP</small>
-      </button>}
+      <div className="ig-media">
+        {preview ? <>
+          {file?.type.startsWith('video/') ? <video className="ig-media-preview" src={preview} controls playsInline /> : <img className="ig-media-preview" src={preview} alt="Selected post preview" />}
+          <button type="button" className="ig-change-media" onClick={() => document.getElementById('post-media-file')?.click()}>Change</button>
+        </> : <button type="button" className="ig-picker" onClick={() => document.getElementById('post-media-file')?.click()}>
+          <span className="ig-picker-plus">+</span>
+          <strong>Select photo or video</strong>
+          <small>MP4, WebM, JPG, PNG or WebP</small>
+        </button>}
+      </div>
       <input id="post-media-file" className="hidden" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
 
-      <label className="upload-label" htmlFor="post-topic">Topic</label>
-      <input id="post-topic" className="upload-topic-input" value={topic} maxLength={60} placeholder="Fashion, Comedy, Tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} />
-      <label className="upload-label" htmlFor="post-caption">Description</label>
-      <textarea ref={captionRef} id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={handleCaptionChange} rows={4} />
-      {!asStory && mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="mention-suggestions" role="listbox" aria-label="People to mention">
-        {mentionLoading ? <p className="muted">Finding people…</p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="mention-suggestion" onClick={() => insertMention(person)}><span className="mention-suggestion-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.displayName || person.username}</strong><small>@{person.username}</small></span><Icon name="at-sign" size={16} /></button>)}
+      <div className="ig-caption">
+        <textarea ref={captionRef} id="post-caption" aria-label={asStory ? 'Story caption' : 'Write a caption'} placeholder={asStory ? 'Add a story caption…' : 'Write a caption… add #hashtags and @mentions'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={handleCaptionChange} rows={4} />
+        <span className="ig-count">{(draft.caption || '').length}/{asStory ? 200 : 500}</span>
+      </div>
+      {!asStory && mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="ig-mentions" role="listbox" aria-label="People to mention">
+        {mentionLoading ? <p className="ig-empty">Finding people…</p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="ig-mention" onClick={() => insertMention(person)}><span className="ig-mention-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.username}</strong><small>{person.displayName}</small></span></button>)}
       </div>}
-      <div className="upload-caption-meta"><span>Use #hashtags to help people discover your post</span><span>{(draft.caption || '').length}/{asStory ? 200 : 500}</span></div>
 
-      {!asStory && <fieldset className="upload-privacy">
-        <legend>Who can see this post?</legend>
-        <label className={visibility === 'public' ? 'selected' : ''}><input type="radio" name="visibility" value="public" checked={visibility === 'public'} onChange={() => setVisibility('public')} /><span><strong>🌎 Public</strong><small>Everyone can discover and view this post.</small></span></label>
-        <label className={visibility === 'private' ? 'selected' : ''}><input type="radio" name="visibility" value="private" checked={visibility === 'private'} onChange={() => setVisibility('private')} /><span><strong>🔒 Only me</strong><small>Only you can view this post.</small></span></label>
-      </fieldset>}
-      {!asStory && visibility === 'public' && <fieldset className="upload-privacy sponsor-setup">
-        <legend>Paid partnership / sponsored post</legend>
-        <label className={isSponsored ? 'selected' : ''}>
-          <input type="checkbox" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} />
-          <span><strong>Show an Ad label</strong><small>Disclose when this post promotes a business or paid partner.</small></span>
+      <div className="ig-rows">
+        <label className="ig-row">
+          <span className="ig-row-label">Topic</span>
+          <input id="post-topic" value={topic} maxLength={60} placeholder="Fashion, comedy, tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} />
         </label>
-        {isSponsored && <div className="sponsor-fields">
-          <label>Sponsor or business name<input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} maxLength={100} placeholder="Business name" /></label>
-          <label>Short description<input value={sponsorDescription} onChange={(e) => setSponsorDescription(e.target.value)} maxLength={200} placeholder="What is being promoted?" /></label>
-          <label>Call-to-action label<select value={sponsorCta} onChange={(e) => setSponsorCta(e.target.value)}><option>Shop Now</option><option>Learn More</option><option>Sign Up</option><option>Contact Us</option><option>Download</option></select></label>
-          <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
+        {!asStory && <div className="ig-row ig-row-static"><span className="ig-row-label">Who can see this</span>
+          <div className="ig-choice">
+            <label className={visibility === 'public' ? 'on' : ''}><input type="radio" name="visibility" value="public" checked={visibility === 'public'} onChange={() => setVisibility('public')} />Public</label>
+            <label className={visibility === 'private' ? 'on' : ''}><input type="radio" name="visibility" value="private" checked={visibility === 'private'} onChange={() => setVisibility('private')} />Only me</label>
+          </div>
         </div>}
-      </fieldset>}
-      {!asStory && <fieldset className="upload-privacy composer-options"><legend>More sharing options</legend>
-        <label className={shareToStory ? 'selected' : ''}><input type="checkbox" checked={shareToStory} onChange={(e) => { setShareToStory(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: e.target.checked }); }} /><span><strong>Share to Story</strong><small>Also publish this media as a public 24-hour Story.</small></span></label>
-        <label className={aiLabel ? 'selected' : ''}><input type="checkbox" checked={aiLabel} onChange={(e) => { setAiLabel(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel: e.target.checked, shareToStory }); }} /><span><strong>AI-generated or AI-altered</strong><small>Disclose realistic media generated or materially altered by AI.</small></span></label>
-      </fieldset>}
-      {!asStory && <fieldset className="upload-privacy remix-permission"><legend>Remix permissions</legend><label className={allowRemix ? 'selected' : ''}><input type="checkbox" checked={allowRemix} onChange={(e) => setAllowRemix(e.target.checked)} /><span><strong>Allow others to remix this post</strong><small>Other creators can use this post as the source for a new, attributed post.</small></span></label></fieldset>}
-      {asStory && <p className="upload-public-note">🌎 Stories are public and expire after 24 hours.</p>}
-      <button className="upload-submit" type="submit" disabled={busy || !file}>{busy ? 'Publishing…' : asStory ? 'Share public story' : visibility === 'public' ? 'Publish publicly' : 'Save · Only me'}</button>
+        {!asStory && <label className="ig-row"><span className="ig-row-label">Share to story</span><input type="checkbox" className="ig-toggle" checked={shareToStory} onChange={(e) => { setShareToStory(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: e.target.checked }); }} /></label>}
+        {!asStory && <label className="ig-row"><span className="ig-row-label">Allow remixing</span><input type="checkbox" className="ig-toggle" checked={allowRemix} onChange={(e) => setAllowRemix(e.target.checked)} /></label>}
+        {!asStory && <label className="ig-row"><span className="ig-row-label">AI-generated or AI-altered</span><input type="checkbox" className="ig-toggle" checked={aiLabel} onChange={(e) => { setAiLabel(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel: e.target.checked, shareToStory }); }} /></label>}
+        {!asStory && visibility === 'public' && <label className="ig-row"><span className="ig-row-label">Paid partnership</span><input type="checkbox" className="ig-toggle" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} /></label>}
+      </div>
+
+      {!asStory && visibility === 'public' && isSponsored && <div className="ig-sponsor">
+        <p>Disclose a business or paid partner. Your post shows an Ad label.</p>
+        <label>Sponsor or business name<input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} maxLength={100} placeholder="Business name" /></label>
+        <label>Short description<input value={sponsorDescription} onChange={(e) => setSponsorDescription(e.target.value)} maxLength={200} placeholder="What is being promoted?" /></label>
+        <label>Call-to-action label<select value={sponsorCta} onChange={(e) => setSponsorCta(e.target.value)}><option>Shop Now</option><option>Learn More</option><option>Sign Up</option><option>Contact Us</option><option>Download</option></select></label>
+        <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
+      </div>}
+
+      {asStory && <p className="ig-note">Stories are public and disappear after 24 hours.</p>}
+      {!asStory && <p className="ig-note">{visibility === 'public' ? 'Your post is visible to everyone.' : 'Only you can see this post.'}</p>}
     </form>
   </main>;
 }
