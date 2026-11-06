@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { parseEconomics } = require('./lib/economics');
 
 const num = (v, fallback) => (v === undefined || v === '' ? fallback : Number(v));
 
@@ -44,10 +45,8 @@ module.exports = {
     { id: 'ngn-800', coins: 800, amountMinor: 1040000, currency: 'NGN', enabled: true },
     { id: 'ngn-4000', coins: 4000, amountMinor: 5000000, currency: 'NGN', enabled: true },
   ],
-  // Legacy conversion remains only to support payment references created before pack checkout.
-  coinPriceMinor: 100,
-  coinValueMinor: 100,
-  creatorGiftShare: 0.5,
-  payoutHoldDays: 7,
-  minPayoutMinor: 500000,
+  // Money amounts are minor units (kobo/cents); defaults preserve previous behavior.
+  ...parseEconomics(process.env),
+  // Unanswered LIVE match invitation expiry (hours).
+  matchInviteTtlHours: num(process.env.MATCH_INVITE_TTL_HOURS, 24),
 };
