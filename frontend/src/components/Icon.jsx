@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, ArrowRight, AtSign, Bell, Bookmark, Briefcase, Camera, Check,
+  ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, Briefcase, Camera, Check,
   ChevronRight, Compass, Gift, Heart, Home, Link as LinkIcon, Mail, Megaphone,
   MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2, ShieldCheck,
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp,
@@ -8,6 +8,8 @@ import {
 const ICONS = {
   'arrow-left': ArrowLeft,
   'arrow-right': ArrowRight,
+  eye: Eye,
+  'eye-off': EyeOff,
   close: X,
   x: X,
   check: Check,
