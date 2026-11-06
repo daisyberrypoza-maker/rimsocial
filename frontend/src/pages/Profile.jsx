@@ -32,6 +32,7 @@ export default function Profile() {
   const [listType, setListType] = useState('');
   const [people, setPeople] = useState([]);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [imageSheetOpen, setImageSheetOpen] = useState(false);
   const [showCoinSheet, setShowCoinSheet] = useState(false);
   const [coinAmount, setCoinAmount] = useState(1000);
   const [receiptEmail, setReceiptEmail] = useState('');
@@ -83,7 +84,7 @@ export default function Profile() {
     } catch (e) { toast(e.message); setListType(''); }
   }
 
-  async function uploadAvatar(event) {
+  async function uploadProfileImage(event, target = 'avatar') {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -92,9 +93,11 @@ export default function Profile() {
     form.append('media', file);
     setAvatarBusy(true);
     try {
-      const result = await api('/v1/users/me/avatar', { method: 'POST', body: form });
-      setProfile(username, { user: { ...profile, avatarUrl: result.avatarUrl } });
-      toast('Profile photo updated');
+      const isBackground = target === 'background';
+      const result = await api(isBackground ? '/v1/users/me/background' : '/v1/users/me/avatar', { method: 'POST', body: form });
+      setProfile(username, { user: { ...profile, ...(isBackground ? { backgroundUrl: result.backgroundUrl } : { avatarUrl: result.avatarUrl }) } });
+      setImageSheetOpen(false);
+      toast(isBackground ? 'Profile background updated' : 'Profile photo updated');
     } catch (e) { toast(e.message); }
     finally { setAvatarBusy(false); }
   }
@@ -155,11 +158,11 @@ export default function Profile() {
           <button className="profile-share-button" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: profile.displayName, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast('Profile link copied'); } }}>↗ <span>Share</span></button>
           {profile.isMe && <button className="profile-icon-button" onClick={() => setDrawerOpen(true)} aria-label="Profile settings">⚙</button>}
         </div>
-        <div className="profile-cover-art" aria-hidden="true" />
+        <div className={"profile-cover-art" + (profile.backgroundUrl ? " has-image" : "")} style={profile.backgroundUrl ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.45)), url("${mediaUrl(profile.backgroundUrl)}")` } : undefined} aria-hidden="true" />
         <div className="profile-identity-row">
           <div className="profile-cover-tools">
             <Avatar user={profile} size={76} ring />
-            {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : '✎'}</button>}
+            {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => setImageSheetOpen(true)} disabled={avatarBusy}>{avatarBusy ? '…' : '✎'}</button>}
           </div>
           <div className="profile-identity-copy">
             <h2 className="profile-name">{profile.displayName}</h2>
@@ -186,7 +189,7 @@ export default function Profile() {
           </div>
         )}
       </section>
-      {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
+      {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => uploadProfileImage(e, "avatar")} /><input id="profile-background-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => uploadProfileImage(e, "background")} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
@@ -197,9 +200,24 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}>✦ Creator Studio · earnings & cashout</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}>Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}>Following</button>
-          <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
+          <button onClick={() => { setDrawerOpen(false); setImageSheetOpen(true); }}>Change profile photo</button>
+          <button onClick={() => { setDrawerOpen(false); setImageSheetOpen(true); }}>Change profile background</button>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
         </aside>
+      </div>}
+
+      {imageSheetOpen && <div className="sheet-backdrop image-choice-backdrop" onClick={() => setImageSheetOpen(false)}>
+        <section className="sheet image-choice-sheet" role="dialog" aria-modal="true" aria-label="Choose profile image" onClick={(e) => e.stopPropagation()}>
+          <div className="comments-heading"><h3>Update your profile</h3><button className="ghost small" onClick={() => setImageSheetOpen(false)} aria-label="Close">✕</button></div>
+          <p className="muted">What would you like to change?</p>
+          <button className="image-choice-option" onClick={() => { setImageSheetOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>
+            <span className="image-choice-icon"><Icon name="user-round" size={22} /></span><span><strong>Profile photo</strong><small>Change the image shown beside your name</small></span><Icon name="chevron-right" size={20} />
+          </button>
+          <button className="image-choice-option" onClick={() => { setImageSheetOpen(false); document.getElementById('profile-background-file')?.click(); }}>
+            <span className="image-choice-icon"><Icon name="image" size={22} /></span><span><strong>Background image</strong><small>Change the cover at the top of your profile</small></span><Icon name="chevron-right" size={20} />
+          </button>
+          <button className="image-choice-cancel" onClick={() => setImageSheetOpen(false)}>Cancel</button>
+        </section>
       </div>}
 
       {showCoinSheet && <div className="sheet-backdrop coin-backdrop" onClick={() => setShowCoinSheet(false)}>
