@@ -11,7 +11,6 @@ router.get('/gifts', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Idempotency-Key header is required so retried requests never charge twice
 router.post('/gifts', requireAuth, async (req, res, next) => {
   try {
     const key = req.headers['idempotency-key'];
@@ -29,26 +28,51 @@ router.get('/wallet', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Starts a Paystack payment. Coins are credited only by the webhook, never here.
+// Prices and coin amounts are selected server-side by pack ID. Clients cannot submit
+// an arbitrary amount or coin quantity. Coin credit happens only in the signed webhook.
+router.get('/wallet/packs', requireAuth, (req, res) => {
+  res.json({
+    currency: 'NGN',
+    packs: config.coinPacks.filter((pack) => pack.enabled).map(({ id, coins, amountMinor, currency }) => ({
+      id, coins, amountMinor, currency,
+    })),
+    pricesAreDraft: true,
+  });
+});
+
 router.post('/wallet/topup', requireAuth, async (req, res, next) => {
   try {
     if (!config.paystackSecret) throw httpError(503, 'Coin top-ups are temporarily unavailable because the payment provider is not configured');
-    const amountMinor = Number(req.body.amountMinor);
-    if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) throw httpError(400, 'Minimum top-up is 100 minor units');
-    if (req.body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(req.body.email))) throw httpError(400, 'Enter a valid email address');
+    const pack = config.coinPacks.find((item) => item.enabled && item.id === req.body.packId);
+    if (!pack) throw httpError(400, 'Choose a valid coin pack');
+    if (req.body.email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(req.body.email))) {
+      throw httpError(400, 'Enter a valid email address');
+    }
     const r = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: req.body.email || `${req.user.id}@clipverse.local`,
-        amount: amountMinor,
-        currency: 'NGN',
-        metadata: { userId: req.user.id },
+        email: req.body.email || `${req.user.id}@rimsocial.invalid`,
+        amount: pack.amountMinor,
+        currency: pack.currency,
+        metadata: {
+          userId: req.user.id,
+          coinPackId: pack.id,
+          coinPackCoins: pack.coins,
+          coinPackAmountMinor: pack.amountMinor,
+          purpose: 'coin_topup',
+        },
       }),
     });
     const data = await r.json();
-    if (!data.status) throw httpError(502, 'Payment provider error');
-    res.json({ authorizationUrl: data.data.authorization_url, reference: data.data.reference });
+    if (!r.ok || !data.status || !data.data?.authorization_url || !data.data?.reference) {
+      throw httpError(502, 'Payment provider could not initialize checkout');
+    }
+    res.json({
+      authorizationUrl: data.data.authorization_url,
+      reference: data.data.reference,
+      pack: { id: pack.id, coins: pack.coins, amountMinor: pack.amountMinor, currency: pack.currency },
+    });
   } catch (e) { next(e); }
 });
 
