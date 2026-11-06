@@ -160,8 +160,8 @@ export default function Profile() {
         <span className="chip">{profile.country}</span>
         {profile.isMe ? (
           <div className="profile-actions profile-actions-refresh">
-            <button onClick={() => navigate('/upload')}>＋ Create</button>
-            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings">☰ Settings</button>
+            <button onClick={() => navigate('/upload')}><Icon name="plus" size={19} />Create</button>
+            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings"><Icon name="settings" size={19} />Settings</button>
           </div>
         ) : (
           <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
