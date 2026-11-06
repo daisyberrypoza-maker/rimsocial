@@ -35,8 +35,6 @@ const Post = sequelize.define('Post', {
   caption: { type: DataTypes.STRING(500), defaultValue: '' },
   topic: { type: DataTypes.STRING(60), allowNull: true },
   aiLabel: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-  topic: { type: DataTypes.STRING(60), allowNull: true },
-  aiLabel: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   status: { type: DataTypes.ENUM('live', 'removed'), defaultValue: 'live' },
   isStory: { type: DataTypes.BOOLEAN, defaultValue: false },
   expiresAt: DataTypes.DATE,
