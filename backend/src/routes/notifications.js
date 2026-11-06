@@ -45,8 +45,12 @@ async function recordUploadNotifications(creatorId, postId, kind = 'post') {
   await sequelize.query(
     `INSERT INTO post_notifications (userId, creatorId, postId, kind, createdAt)
      SELECT userId, creatorId, ?, ?, NOW()
-     FROM post_notification_preferences
-     WHERE creatorId = ? AND enabled = 1 AND userId <> ?`,
+     FROM post_notification_preferences p
+     WHERE p.creatorId = ? AND p.enabled = 1 AND p.userId <> ?
+       AND EXISTS (
+         SELECT 1 FROM Follows f
+         WHERE f.followerId = p.userId AND f.followeeId = p.creatorId
+       )`,
     { replacements: [postId, kind, creatorId, creatorId] }
   );
 }
