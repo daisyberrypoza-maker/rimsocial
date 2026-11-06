@@ -2564,11 +2564,11 @@ html, body, #root { background: #ffffff; color: #111111; }
 }
 .sc-option:active { background:#f6f6f6; }
 .sc-option.danger { color:#e84f70; }
-.sc-option.done {
-  margin-top:12px; border:0; border-radius:22px; min-height:62px; justify-content:center;
-  font-weight:750; font-size:18px;
+.sc-options-done {
+  display:block; width:min(100%,560px); margin:12px auto 0; min-height:62px; padding:16px;
+  border:0; border-radius:22px; background:#fff; color:#171717; font-size:18px; font-weight:750;
+  box-shadow:0 8px 24px rgba(0,0,0,.16);
 }
-.sc-options-sheet .sc-option:last-child { margin-top:12px; }
 .sc-options-sheet .toggle-row { min-height:72px; }
 .sc-switch {
   width:44px; height:25px; border-radius:20px; background:#c8c8c8; position:relative; flex:none;
