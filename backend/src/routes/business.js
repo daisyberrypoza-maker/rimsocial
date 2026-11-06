@@ -285,7 +285,15 @@ router.post('/opportunities/:id/offers', async (req, res, next) => {
     }
     let offer;
     try {
-      offer = await BusinessOffer.create({ opportunityId: item.id, senderId: req.user.id, recipientId: item.ownerId, amountMinor, currency: item.currency, message, idempotencyKey });
+      // Lock the listing so two parallel requests cannot both pass the checks below, and so an
+      // offer cannot be created while the owner is accepting another one.
+      offer = await sequelize.transaction(async (transaction) => {
+        const open = await BusinessOpportunity.findByPk(item.id, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!open || open.reviewStatus !== 'approved' || open.status !== 'published') throw httpError(409, 'Opportunity not available for offers');
+        const pending = await BusinessOffer.findOne({ where: { opportunityId: item.id, senderId: req.user.id, status: 'pending' }, transaction });
+        if (pending) throw httpError(409, 'You already have a pending offer on this listing. Withdraw it before sending a new one.');
+        return BusinessOffer.create({ opportunityId: item.id, senderId: req.user.id, recipientId: item.ownerId, amountMinor, currency: item.currency, message, idempotencyKey }, { transaction });
+      });
     } catch (error) {
       if (error.name !== 'SequelizeUniqueConstraintError' || !idempotencyKey) throw error;
       const existing = await BusinessOffer.findOne({ where: { idempotencyKey } });
@@ -320,10 +328,14 @@ router.post('/offers/:id/respond', async (req, res, next) => {
 });
 router.post('/offers/:id/withdraw', async (req, res, next) => {
   try {
-    const offer = await BusinessOffer.findOne({ where: { id: req.params.id, senderId: req.user.id } });
-    if (!offer) throw httpError(404, 'Offer not found');
-    if (offer.status !== 'pending') throw httpError(409, 'Only pending offers can be withdrawn');
-    await offer.update({ status: 'withdrawn' });
+    // Same row lock as accept/reject, so a withdrawal cannot overwrite an offer the owner just accepted
+    const offer = await sequelize.transaction(async (transaction) => {
+      const found = await BusinessOffer.findOne({ where: { id: req.params.id, senderId: req.user.id }, transaction, lock: transaction.LOCK.UPDATE });
+      if (!found) throw httpError(404, 'Offer not found');
+      if (found.status !== 'pending') throw httpError(409, 'Only pending offers can be withdrawn');
+      await found.update({ status: 'withdrawn' }, { transaction });
+      return found;
+    });
     res.json({ offer });
   } catch (e) { next(e); }
 });
