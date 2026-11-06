@@ -15,6 +15,7 @@ export default function LiveMatchRoom() {
   const streamRef = useRef(null);
   const seenRef = useRef(new Set());
   const cursorRef = useRef('1970-01-01T00:00:00.000Z');
+  const cursorIdRef = useRef('');
   const pendingCandidatesRef = useRef([]);
 
   useEffect(() => {
@@ -84,11 +85,17 @@ export default function LiveMatchRoom() {
       const poll = async () => {
         if (!pcRef.current || pcRef.current !== pc || pc.signalingState === 'closed') return;
         try {
-          const { items } = await api(`/v1/live/matches/${matchId}/signals?since=${encodeURIComponent(cursorRef.current)}`);
+          const { items } = await api(`/v1/live/matches/${matchId}/signals?since=${encodeURIComponent(cursorRef.current)}&afterId=${encodeURIComponent(cursorIdRef.current)}`);
           for (const signal of items || []) {
             if (seenRef.current.has(signal.id)) continue;
             seenRef.current.add(signal.id);
-            if (signal.createdAt && signal.createdAt > cursorRef.current) cursorRef.current = new Date(new Date(signal.createdAt).getTime() - 1000).toISOString();
+            if (signal.createdAt) {
+              const signalTime = new Date(signal.createdAt).toISOString();
+              if (signalTime > cursorRef.current || (signalTime === cursorRef.current && signal.id > cursorIdRef.current)) {
+                cursorRef.current = signalTime;
+                cursorIdRef.current = signal.id;
+              }
+            }
             if (signal.kind === 'offer' && pc.signalingState === 'stable') {
               await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
               await flushCandidates(pc);

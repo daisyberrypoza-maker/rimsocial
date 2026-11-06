@@ -22,15 +22,20 @@ router.get('/matches/:id/signals', async (req, res, next) => {
   try {
     await getParticipantMatch(req.params.id, req.user.id);
     const since = req.query.since ? new Date(String(req.query.since)) : new Date(0);
+    const afterId = req.query.afterId ? String(req.query.afterId) : '';
     if (Number.isNaN(since.getTime())) throw httpError(400, 'Invalid signal cursor');
+    if (afterId.length > 64) throw httpError(400, 'Invalid signal cursor ID');
     const items = await LiveSignal.findAll({
       where: {
         matchId: req.params.id,
         senderId: { [Op.ne]: req.user.id },
-        createdAt: { [Op.gt]: since },
+        [Op.or]: [
+          { createdAt: { [Op.gt]: since } },
+          ...(afterId ? [{ createdAt: since, id: { [Op.gt]: afterId } }] : []),
+        ],
       },
       attributes: ['id', 'kind', 'payload', 'createdAt'],
-      order: [['createdAt', 'ASC']],
+      order: [['createdAt', 'ASC'], ['id', 'ASC']],
       limit: 100,
     });
     res.json({ items, serverTime: new Date().toISOString() });
