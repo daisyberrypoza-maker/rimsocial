@@ -640,3 +640,7 @@ input:focus, select:focus { border-color: var(--brand-a); }
 .notifications-empty > span { display:inline-grid; place-items:center; width:64px; height:64px; border-radius:50%; background:var(--surface, #f3f3f3); color:var(--text, #111); font-size:32px; }
 .notifications-empty h2 { font-size:19px; font-weight:600; margin:16px 0 8px; }
 .notifications-empty p { color:var(--muted); line-height:1.5; margin:0; }
+
+.profile-follow-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.profile-follow-actions > .pill { flex:1 1 120px; }
+.profile-follow-actions > .profile-notification-button { flex:0 1 auto; }
