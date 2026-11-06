@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const express = require('express');
 const config = require('../config');
 const { sequelize, Wallet, LedgerEntry, Payout, EarningsWallet } = require('../db');
+const { settlePayoutTransfer } = require('../services/payoutSettlement');
 
 // Must receive the raw body to verify the signature
 router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
@@ -15,22 +16,17 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
 
   let event;
   try { event = JSON.parse(req.body.toString('utf8')); } catch { return res.status(400).end(); }
-  if (event.event === 'transfer.success' || event.event === 'transfer.failed' || event.event === 'transfer.reversed') {
-    const transfer = event.data || {};
-    if (!transfer.reference) return res.status(200).end();
-    const payout = await Payout.findOne({ where: { providerRef: transfer.reference } });
-    if (!payout || payout.status !== 'pending') return res.status(200).end();
-    if (event.event === 'transfer.success') {
-      // Conditional update prevents a delayed success event from overriding a failed/refunded payout.
-      await Payout.update({ status: 'paid' }, { where: { id: payout.id, status: 'pending' } });
-    } else {
-      await sequelize.transaction(async (t) => {
-        const [changed] = await Payout.update({ status: 'failed' }, { where: { id: payout.id, status: 'pending' }, transaction: t });
-        if (!changed) return;
-        const [wallet] = await EarningsWallet.findOrCreate({ where: { userId: payout.userId }, defaults: { userId: payout.userId }, transaction: t });
-        await wallet.increment('balanceMinor', { by: Number(payout.amountMinor), transaction: t });
-        await LedgerEntry.create({ userId: payout.userId, kind: 'payout_refund', deltaMinor: Number(payout.amountMinor), refId: payout.id }, { transaction: t });
+  if (['transfer.success', 'transfer.failed', 'transfer.reversed'].includes(event.event)) {
+    try {
+      await settlePayoutTransfer({
+        eventName: event.event,
+        reference: event.data?.reference,
+        sequelize, Payout, EarningsWallet, LedgerEntry,
       });
+    } catch (error) {
+      // Return 500 so the provider can retry; the DB transaction rolls back all partial changes.
+      console.error('Payout settlement webhook failed:', error.message);
+      return res.status(500).end();
     }
     return res.status(200).end();
   }
