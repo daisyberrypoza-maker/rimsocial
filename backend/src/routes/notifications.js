@@ -28,6 +28,13 @@ async function ensureTables() {
         KEY idx_post_notifications_user (userId, createdAt),
         KEY idx_post_notifications_post (postId)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+      // Keep these reference columns compatible with the app's UUID primary keys,
+      // including databases where an earlier deployment created the tables.
+      await sequelize.query('ALTER TABLE post_notification_preferences MODIFY userId CHAR(36) NOT NULL');
+      await sequelize.query('ALTER TABLE post_notification_preferences MODIFY creatorId CHAR(36) NOT NULL');
+      await sequelize.query('ALTER TABLE post_notifications MODIFY userId CHAR(36) NOT NULL');
+      await sequelize.query('ALTER TABLE post_notifications MODIFY creatorId CHAR(36) NOT NULL');
+      await sequelize.query('ALTER TABLE post_notifications MODIFY postId CHAR(36) NOT NULL');
     })().catch((error) => { schemaReady = null; throw error; });
   }
   return schemaReady;
@@ -88,7 +95,7 @@ router.get('/', requireAuth, async (req, res, next) => {
       `SELECT n.id, n.kind, n.postId, n.createdAt, n.readAt,
         u.id AS creatorId, u.username, u.displayName, u.avatarUrl
        FROM post_notifications n
-       JOIN users u ON u.id = n.creatorId
+       JOIN Users u ON u.id = n.creatorId
        WHERE n.userId = ?
        ORDER BY n.createdAt DESC LIMIT 100`,
       { replacements: [req.user.id] }
