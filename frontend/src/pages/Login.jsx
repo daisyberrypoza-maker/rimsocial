@@ -72,6 +72,9 @@ export default function Login() {
       }
       script.addEventListener('load', renderGoogleButton, { once: true });
     }
+    return () => { cancelled = true; };
+  }, [form.country, mode]);
+
     const registerSteps = [
     { title: 'What should we call you?', subtitle: 'Start with the name your friends will see.', field: 'displayName' },
     { title: 'What’s your email?', subtitle: 'Use an email address you can access.', field: 'email' },
@@ -89,7 +92,6 @@ export default function Login() {
     }
     submit(e);
   };
-
   return (
     <main className="auth-screen">
       <section className="auth-card" aria-label="RimSocial account">
