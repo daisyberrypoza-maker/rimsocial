@@ -136,6 +136,8 @@ async function start() {
   if (!currentPostColumns.sponsorName) await qi.addColumn('posts', 'sponsorName', { type: DataTypes.STRING(100), allowNull: true });
   if (!currentPostColumns.sponsorDescription) await qi.addColumn('posts', 'sponsorDescription', { type: DataTypes.STRING(200), allowNull: true });
   if (!currentPostColumns.sponsorCta) await qi.addColumn('posts', 'sponsorCta', { type: DataTypes.STRING(30), allowNull: true });
+  if (!currentPostColumns.topic) await qi.addColumn('posts', 'topic', { type: DataTypes.STRING(60), allowNull: true });
+  if (!currentPostColumns.aiLabel) await qi.addColumn('posts', 'aiLabel', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   await seedGifts();
   const purgeExpiredStories = async () => {
