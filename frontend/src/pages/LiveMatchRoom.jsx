@@ -10,6 +10,12 @@ export default function LiveMatchRoom() {
   const [roomState, setRoomState] = useState('Ready to connect');
   const [error, setError] = useState('');
   const [turnConfigured, setTurnConfigured] = useState(false);
+  const [giftOptions, setGiftOptions] = useState({ posts: [], creators: [], gifts: [], match: null });
+  const [coinBalance, setCoinBalance] = useState(null);
+  const [sendingGift, setSendingGift] = useState(false);
+  const [selectedGift, setSelectedGift] = useState('');
+  const [giftMessage, setGiftMessage] = useState('');
+  const [currentUserId, setCurrentUserId] = useState('');
   const localVideo = useRef(null);
   const remoteVideo = useRef(null);
   const pcRef = useRef(null);
@@ -25,7 +31,21 @@ export default function LiveMatchRoom() {
       .then(({ items }) => {
         const found = (items || []).find((item) => item.id === matchId);
         if (!found) throw new Error('Match not found or you are not a participant.');
-        if (alive) setMatch(found);
+        if (alive) {
+          setMatch(found);
+          api('/v1/auth/me').then(({ user }) => alive && setCurrentUserId(user?.id || '')).catch(() => {});
+          if (found.status === 'active') {
+            Promise.all([
+              api(`/v1/live/matches/${matchId}/gift-options`),
+              api('/v1/wallet'),
+            ]).then(([options, wallet]) => {
+              if (!alive) return;
+              setGiftOptions(options);
+              setCoinBalance(Number(wallet?.coinBalance ?? 0));
+              if (options.gifts?.length) setSelectedGift(String(options.gifts[0].id));
+            }).catch((e) => alive && setGiftMessage(e.message || 'Could not load LIVE gifts.'));
+          }
+        }
       })
       .catch((e) => alive && setError(e.message));
     return () => { alive = false; };
@@ -147,6 +167,42 @@ export default function LiveMatchRoom() {
     }
   }
 
+  async function sendLiveGift(recipientId) {
+    if (sendingGift || !selectedGift) return;
+    const post = giftOptions.posts.find((item) => item.authorId === recipientId);
+    if (!post) {
+      setGiftMessage('This creator needs an eligible public post before gifts can be sent.');
+      return;
+    }
+    const gift = giftOptions.gifts.find((item) => String(item.id) === String(selectedGift));
+    if (!gift) return;
+    if (coinBalance !== null && coinBalance < Number(gift.coinPrice)) {
+      setGiftMessage('Not enough coins in your wallet.');
+      return;
+    }
+    setSendingGift(true); setGiftMessage('');
+    try {
+      const idempotencyKey = window.crypto?.randomUUID ? window.crypto.randomUUID() : `live-${matchId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await api('/v1/gifts', {
+        method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
+        body: { postId: post.id, giftId: Number(gift.id), liveMatchId: matchId },
+      });
+      const [wallet, score] = await Promise.all([
+        api('/v1/wallet'),
+        api(`/v1/creator/matches/${matchId}/score`, { method: 'POST', body: {} }),
+      ]);
+      setCoinBalance(Number(wallet?.coinBalance ?? 0));
+      setMatch((previous) => previous ? { ...previous, ...(score.match || {}) } : previous);
+      setGiftOptions((previous) => ({ ...previous, match: score.match || previous.match }));
+      setGiftMessage(`Sent ${gift.name} to ${giftOptions.creators.find((creator) => creator.id === recipientId)?.displayName || 'creator'}!`);
+    } catch (e) {
+      setGiftMessage(e.message || 'Gift could not be sent.');
+    } finally {
+      setSendingGift(false);
+    }
+  }
+
   function stopRoom() {
     if (pcRef.current?._rimsocialPollTimer) window.clearInterval(pcRef.current._rimsocialPollTimer);
     pcRef.current?.close();
@@ -171,6 +227,25 @@ export default function LiveMatchRoom() {
         <p className="muted">Match status: {match.status}. Allow camera and microphone access when prompted.</p>
         {match.status === 'active' ? <div className="row"><button disabled={starting || Boolean(pcRef.current)} onClick={startRoom}>{starting ? 'Starting…' : 'Start camera & connect'}</button><button className="ghost" onClick={stopRoom}>Stop camera</button></div> : <p className="notice">The other creator must accept the invitation before the room can start.</p>}
       </section>
+      {match.status === 'active' && <section className="panel live-match-gifts">
+        <h2>Send a LIVE gift</h2>
+        <p className="muted">Gifts deduct coins from your wallet and add their value to this match's verified score.</p>
+        <p><strong>Coins:</strong> {coinBalance === null ? 'Loading…' : coinBalance} · <strong>Score:</strong> {Number(match.hostScore || 0)} – {Number(match.opponentScore || 0)}</p>
+        {giftOptions.gifts.length > 0 ? <>
+          <label htmlFor="live-gift-choice">Choose a gift</label>
+          <select id="live-gift-choice" value={selectedGift} onChange={(event) => setSelectedGift(event.target.value)} disabled={sendingGift}>
+            {giftOptions.gifts.map((gift) => <option key={gift.id} value={gift.id}>{gift.name} — {gift.coinPrice} coins</option>)}
+          </select>
+          <div className="row">
+            {[match.hostId, match.opponentId].filter((id) => id !== currentUserId).map((creatorId) => {
+              const creator = giftOptions.creators.find((item) => item.id === creatorId);
+              return <button key={creatorId} disabled={sendingGift || !selectedGift} onClick={() => sendLiveGift(creatorId)}>{sendingGift ? 'Sending…' : `Gift ${creator?.displayName || creator?.username || 'opponent'}`}</button>;
+            })}
+          </div>
+        </> : <p className="muted">No active gifts are available right now.</p>}
+        {giftMessage && <p role="status" className={giftMessage.startsWith('Sent ') ? 'notice' : 'muted'}>{giftMessage}</p>}
+        <p className="muted">Only gifts sent to a participating creator's eligible public post count toward the match.</p>
+      </section>}
       <p className={turnConfigured ? 'notice' : 'muted'}>{turnConfigured ? 'TURN relay is configured for cross-network connection attempts.' : 'TURN relay is not configured on the server. Video may fail across restrictive mobile networks until TURN_URLS and TURN_SECRET (or TURN_USERNAME and TURN_PASSWORD) are set.'}</p>
       <p className="muted">This room is creator-to-creator WebRTC, not public audience broadcasting. A TURN provider must be deployed and configured before cross-network reliability can be confirmed.</p>
     </>}
