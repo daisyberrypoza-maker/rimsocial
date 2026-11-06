@@ -2544,3 +2544,41 @@ html, body, #root { background: #ffffff; color: #111111; }
 @media (prefers-reduced-motion: reduce) {
   .sc-profile .sc-compact-nav { transition:none; }
 }
+
+
+/* Profile options menu based on the reference sheet, sized for mobile. */
+.sc-options-backdrop {
+  position:fixed; inset:0; z-index:1500; display:flex; flex-direction:column;
+  justify-content:flex-end; padding:0 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background:rgba(0,0,0,.48); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+}
+.sc-options-sheet {
+  width:min(100%,560px); margin:0 auto; overflow:hidden; border-radius:26px;
+  background:#fff; color:#171717; box-shadow:0 12px 40px rgba(0,0,0,.24);
+  animation:sc-sheet-in 220ms cubic-bezier(.2,.8,.2,1) both;
+}
+.sc-option {
+  width:100%; min-height:66px; padding:16px 20px; display:flex; align-items:center;
+  justify-content:space-between; gap:12px; border:0; border-bottom:1px solid #f0f0f0;
+  border-radius:0; background:#fff; color:#171717; text-align:left; font-size:17px;
+}
+.sc-option:active { background:#f6f6f6; }
+.sc-option.danger { color:#e84f70; }
+.sc-option.done {
+  margin-top:12px; border:0; border-radius:22px; min-height:62px; justify-content:center;
+  font-weight:750; font-size:18px;
+}
+.sc-options-sheet .sc-option:last-child { margin-top:12px; }
+.sc-options-sheet .toggle-row { min-height:72px; }
+.sc-switch {
+  width:44px; height:25px; border-radius:20px; background:#c8c8c8; position:relative; flex:none;
+  transition:background 160ms ease;
+}
+.sc-switch::after {
+  content:""; position:absolute; left:3px; top:3px; width:19px; height:19px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.25); transition:transform 160ms ease;
+}
+.sc-switch.on { background:#22aeea; }
+.sc-switch.on::after { transform:translateX(19px); }
+@keyframes sc-sheet-in { from { transform:translateY(18px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .sc-options-sheet { animation:none; } }
