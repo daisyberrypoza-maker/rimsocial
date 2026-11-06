@@ -77,8 +77,8 @@ export default function Login() {
   return (
     <main className="auth-screen">
       <div className="auth-glow auth-glow-one" /><div className="auth-glow auth-glow-two" />
-      <section className="auth-card" aria-label="Clipverse account">
-        <div className="auth-brand-row"><div className="snap-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 5c-6.2 0-10.4 4.4-10.4 11.2 0 2.3.4 4.4.7 6.2-1.3.9-3.1.4-4.5-.4-.9-.5-1.8-.2-2.1.8-.3 1.1.8 2.2 2.5 2.7 1.5.4 2.4.7 3 1.7-1.6 3.7-4.6 5.5-8 6.5-1.1.3-1.2 1.8.1 2.2 1.9.6 4.1.7 5.6 1.9 1 .8 1.3 2.2 2.9 2.4 2.4.3 4.8-1.3 7.5-1.3h5.4c2.7 0 5.1 1.6 7.5 1.3 1.6-.2 1.9-1.6 2.9-2.4 1.5-1.2 3.7-1.3 5.6-1.9 1.3-.4 1.2-1.9.1-2.2-3.4-1-6.4-2.8-8-6.5.6-1 1.5-1.3 3-1.7 1.7-.5 2.8-1.6 2.5-2.7-.3-1-1.2-1.3-2.1-.8-1.4.8-3.2 1.3-4.5.4.3-1.8.7-3.9.7-6.2C34.4 9.4 30.2 5 24 5Z" fill="currentColor"/></svg></div><span className="auth-brand">clipverse</span></div>
+      <section className="auth-card" aria-label="RimSocial account">
+        <div className="auth-brand-row"><div className="snap-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 5c-6.2 0-10.4 4.4-10.4 11.2 0 2.3.4 4.4.7 6.2-1.3.9-3.1.4-4.5-.4-.9-.5-1.8-.2-2.1.8-.3 1.1.8 2.2 2.5 2.7 1.5.4 2.4.7 3 1.7-1.6 3.7-4.6 5.5-8 6.5-1.1.3-1.2 1.8.1 2.2 1.9.6 4.1.7 5.6 1.9 1 .8 1.3 2.2 2.9 2.4 2.4.3 4.8-1.3 7.5-1.3h5.4c2.7 0 5.1 1.6 7.5 1.3 1.6-.2 1.9-1.6 2.9-2.4 1.5-1.2 3.7-1.3 5.6-1.9 1.3-.4 1.2-1.9.1-2.2-3.4-1-6.4-2.8-8-6.5.6-1 1.5-1.3 3-1.7 1.7-.5 2.8-1.6 2.5-2.7-.3-1-1.2-1.3-2.1-.8-1.4.8-3.2 1.3-4.5.4.3-1.8.7-3.9.7-6.2C34.4 9.4 30.2 5 24 5Z" fill="currentColor"/></svg></div><span className="auth-brand">RimSocial</span></div>
         <div className="auth-intro"><p className="auth-eyebrow">YOUR PEOPLE. YOUR MOMENTS.</p><h1>{mode === 'login' ? 'Welcome back' : 'Join the fun'}</h1><p>{mode === 'login' ? 'Sign in to see what your friends are sharing.' : 'Create an account and share your world.'}</p></div>
         <div className="auth-mode-switch" role="tablist" aria-label="Account action"><button type="button" role="tab" aria-selected={mode === 'login'} className={mode === 'login' ? 'selected' : ''} onClick={() => { setMode('login'); setError(''); }}>Log in</button><button type="button" role="tab" aria-selected={mode === 'register'} className={mode === 'register' ? 'selected' : ''} onClick={() => { setMode('register'); setError(''); }}>Sign up</button></div>
         <form className="auth-form" onSubmit={submit}>
@@ -91,7 +91,7 @@ export default function Login() {
         <div className="auth-divider"><span>or continue with</span></div>
         {GOOGLE_CLIENT_ID ? <div className="google-signin-wrap"><div ref={googleButton} className="google-signin-button" /></div> : <button type="button" className="google-unconfigured" onClick={() => setNotice('Google sign-in needs a Google OAuth Web client ID. Set VITE_GOOGLE_CLIENT_ID in frontend/.env.local and GOOGLE_CLIENT_ID in backend/.env, then restart both servers.')}><span className="google-g">G</span><span>Continue with Google</span></button>}
         {notice && <p className="auth-notice" role="status">{notice}</p>}{error && <p className="auth-error" role="alert">{error}</p>}
-        <p className="auth-terms">By continuing, you agree to Clipverse’s Terms and Privacy Policy.</p>
+        <p className="auth-terms">By continuing, you agree to RimSocial’s Terms and Privacy Policy.</p>
       </section>
       <p className="auth-footer">A little more fun, a little more you. <span>●</span></p>
     </main>
