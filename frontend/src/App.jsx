@@ -67,7 +67,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
