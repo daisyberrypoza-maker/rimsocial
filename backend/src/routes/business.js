@@ -215,7 +215,7 @@ router.get('/opportunities/:id', async (req, res, next) => {
     const isParticipant = [item.ownerId, item.assignedUserId].includes(req.user.id);
     const updates = item.lane === 'fix' && isParticipant ? await BusinessWorkUpdate.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'ASC']], limit: 100 }) : [];
     const canSeeOffers = item.ownerId === req.user.id;
-    const offers = canSeeOffers ? await BusinessOffer.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'DESC']], limit: 100 }) : [];
+    const offers = await BusinessOffer.findAll({ where: canSeeOffers ? { opportunityId: item.id } : { opportunityId: item.id, senderId: req.user.id }, order: [['createdAt', 'DESC']], limit: 100 });
     res.json({ opportunity: full, updates, offers });
   } catch (e) { next(e); }
 });
