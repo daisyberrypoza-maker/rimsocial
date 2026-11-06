@@ -227,6 +227,7 @@ const BusinessOpportunity = sequelize.define('BusinessOpportunity', {
   estimatedCostMinor: { type: DataTypes.BIGINT, allowNull: true },
   targetPriceMinor: { type: DataTypes.BIGINT, allowNull: true },
   budgetMinor: { type: DataTypes.BIGINT, allowNull: true },
+  evidenceUrl: { type: DataTypes.STRING(1024), allowNull: true },
   status: { type: DataTypes.ENUM('draft', 'published', 'paused', 'in_progress', 'review', 'completed', 'closed', 'rejected'), allowNull: false, defaultValue: 'published' },
   reviewStatus: { type: DataTypes.ENUM('pending', 'approved', 'rejected'), allowNull: false, defaultValue: 'pending' },
   assignedUserId: { type: DataTypes.UUID, allowNull: true },
