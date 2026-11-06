@@ -107,7 +107,15 @@ export default function Profile() {
   }
 
   async function toggleFollow() {
-    if (!profile) return;
+    async function shareProfile() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: profile.username, url });
+      else { await navigator.clipboard.writeText(url); toast('Profile link copied'); }
+    } catch { /* share cancelled */ }
+  }
+
+  if (!profile) return;
     setBusy(true);
     try {
       const r = profile.isFollowing
@@ -148,7 +156,7 @@ export default function Profile() {
       <div className="snap-hero" aria-hidden="true">
         <div className="snap-cover" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
       </div>
-      <section className="profile-top profile-top-refresh">
+      <section className={`profile-top profile-top-refresh${profile.isMe ? '' : ' is-other'}`}>
         <div className="profile-cover-tools">
           <Avatar user={profile} size={104} ring />
           {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : 'Edit photo'}</button>}
@@ -167,9 +175,10 @@ export default function Profile() {
             <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings"><Icon name="settings" size={19} />Settings</button>
           </div>
         ) : (
-          <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
-            {profile.isFollowing ? 'Following' : '＋ Follow'}
-          </button>
+          <div className="profile-add-row">
+            <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={20} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            <button className="snap-more" onClick={shareProfile} aria-label="More options"><Icon name="chevron-down" size={22} /></button>
+          </div>
         )}
       </section>
       {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
@@ -208,7 +217,7 @@ export default function Profile() {
                   <Avatar user={person} size={56} />
                   <span><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                 </button>
-                <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+                <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Added' : 'Add'}</button>
               </div>
             )}
             {!people.length && <div className="people-empty"><Icon name="users" size={28} /><strong>No {listType} yet</strong><p>People who connect with this account will appear here.</p></div>}
@@ -218,8 +227,8 @@ export default function Profile() {
       </div>}
 
       <nav className="ptabs">
-        <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
+        <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
       </nav>
 
       {tab === 'posts' ? (

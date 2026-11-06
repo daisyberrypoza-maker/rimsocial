@@ -2107,3 +2107,66 @@ html, body, #root { background: #ffffff; color: #111111; }
 .people-sheet .people-sheet-title .icon-button { background: transparent !important; color: #111111 !important; border: 0 !important; width: 40px; height: 40px; }
 .people-sheet .people-sheet-title .icon-button svg { color: #111111 !important; stroke: #111111 !important; }
 .people-sheet .people-tabs button span { font-size: 16px !important; color: inherit !important; font-weight: 600 !important; }
+
+/* =====================================================================
+   Composer: dark, like the Snapchat / Instagram "New reel" screen
+   ===================================================================== */
+.cmp, .cmp .ig-compose-top { background: #000; color: #fff; }
+.cmp .ig-compose-top { border-bottom: 0; }
+.cmp .ig-compose-top h2 { color: #fff; font-size: 18px; font-weight: 700; }
+.cmp .ig-icon-btn { color: #fff; }
+.cmp .ig-share { color: #0095f6; }
+.cmp .ig-share:disabled { color: #555; }
+.cmp-chips { display: flex; gap: 10px; overflow-x: auto; padding: 14px; scrollbar-width: none; }
+.cmp-chips::-webkit-scrollbar { display: none; }
+.cmp-chips button { flex: none; background: #262626; color: #fff; border: 0; border-radius: 12px; padding: 11px 18px; font-size: 15px; font-weight: 600; }
+.cmp-chips button.on { background: #fff; color: #000; }
+.cmp-templates { display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; }
+.cmp-templates button { background: #262626; color: #fff; border: 0; }
+.cmp-recents { display: flex; justify-content: space-between; align-items: center; padding: 6px 14px 10px; font-size: 18px; font-weight: 700; color: #fff; }
+.cmp-recents span { display: inline-flex; align-items: center; gap: 4px; }
+.cmp-select { background: #262626; color: #fff; border: 0; border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 600; }
+.cmp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.cmp-tile { position: relative; aspect-ratio: 1 / 1; background: #1c1c1c; border: 0; border-radius: 0; padding: 0; display: grid; place-items: center; color: #fff; overflow: hidden; }
+.cmp-tile img, .cmp-tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cmp-selected { border: 2px solid #fff; }
+.cmp-modes { display: flex; justify-content: center; gap: 26px; padding: 16px 0 8px; }
+.cmp-modes button { background: none; color: #8e8e8e; border: 0; border-radius: 0; padding: 4px 0; font-size: 14px; font-weight: 700; letter-spacing: .6px; }
+.cmp-modes button.on { color: #fff; box-shadow: inset 0 -2px 0 #fff; }
+.cmp .ig-caption { border-bottom: 1px solid #262626; }
+.cmp .ig-caption textarea { color: #fff; }
+.cmp .ig-caption textarea::placeholder { color: #8e8e8e; }
+.cmp .ig-count, .cmp .ig-note, .cmp .ig-sponsor p { color: #8e8e8e; }
+.cmp .ig-row { border-bottom: 1px solid #262626; color: #fff; }
+.cmp .ig-row input:not([type]), .cmp .ig-row input[type="text"] { color: #8e8e8e; background: transparent; }
+.cmp .ig-toggle { background: #3a3a3a; }
+.cmp .ig-toggle:checked { background: #0095f6; }
+.cmp .ig-choice label { background: #262626; color: #fff; }
+.cmp .ig-choice label.on { background: #fff; color: #000; }
+.cmp .ig-remix { border-color: #262626; color: #fff; }
+.cmp .ig-mentions { border-color: #262626; }
+.cmp .ig-mention { color: #fff; border-color: #262626; background: #111; }
+.cmp .ig-sponsor { border-color: #262626; }
+.cmp .ig-sponsor label { color: #fff; }
+.cmp .ig-sponsor input, .cmp .ig-sponsor select { background: #1c1c1c; color: #fff; border-color: #262626; }
+.cmp .ig-note { padding: 0 14px; }
+
+/* =====================================================================
+   Other-user profile: Snapchat layout (Add, chevron, one-line followers)
+   ===================================================================== */
+.profile-add-row { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.profile-add-row .pill { flex: 1; min-width: 0; margin: 0; height: 46px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 800; }
+.snap-more { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 0; padding: 0; background: rgba(0,0,0,.45); color: #fff; display: grid; place-items: center; }
+.profile-top.is-other .profile-stats-row { justify-content: flex-start; margin: 4px 0 0; }
+.profile-top.is-other .profile-stats-row > div { display: none; }
+.profile-top.is-other .profile-stats-row button:nth-child(2) { display: none; }
+.profile-top.is-other .profile-stats-row button { flex-direction: row; gap: 5px; align-items: baseline; }
+.profile-top.is-other .profile-stats-row strong { font-size: 14px; font-weight: 600; }
+.profile-top.is-other .profile-stats-row span { font-size: 14px; color: rgba(255,255,255,.9); }
+.profile-top.is-other .profile-handle { margin-top: 2px; }
+.profile-top.is-other .profile-name { font-size: 22px; font-weight: 800; }
+.profile-top.is-other .profile-stats-row, .profile-top.is-other .profile-handle { color: rgba(255,255,255,.9); }
+.profile-top.is-other .profile-add-row .pill.ghost { background: rgba(255,255,255,.2); color: #fff; }
+.ptabs button { font-size: 16px; }
+
+.cmp .ig-share, .cmp .ig-icon-btn { background: transparent; }

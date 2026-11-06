@@ -134,10 +134,10 @@ export default function Upload() {
     finally { setBusy(false); }
   }
 
-  return <main className="ig-compose">
+  return <main className="ig-compose cmp">
     <form className="ig-compose-form" onSubmit={submit}>
       <header className="ig-compose-top">
-        <button type="button" className="ig-icon-btn" onClick={() => navigate(-1)} aria-label="Close"><Icon name="x" size={22} /></button>
+        <button type="button" className="ig-icon-btn" onClick={() => navigate(-1)} aria-label="Close"><Icon name="x" size={24} /></button>
         <h2>{asStory ? 'New story' : 'New post'}</h2>
         <button type="submit" className="ig-share" disabled={busy || !file}>{busy ? 'Sharing…' : 'Share'}</button>
       </header>
@@ -148,22 +148,23 @@ export default function Upload() {
         <div className="ig-remix-media">{sourcePost.kind === 'video' ? <video src={mediaUrl(sourcePost.mediaUrl)} controls playsInline /> : <img src={mediaUrl(sourcePost.mediaUrl)} alt="Original post being remixed" />}</div>
       </div>}
 
-      <div className="ig-kind" role="tablist" aria-label="Type of share">
-        <button type="button" role="tab" aria-selected={!asStory} className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>Post</button>
-        <button type="button" role="tab" aria-selected={asStory} className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>Story</button>
+      <div className="cmp-chips" role="tablist" aria-label="Media sources">
+        {['Edits', 'Drafts', 'Templates'].map((tab) => <button type="button" role="tab" key={tab} aria-selected={galleryTab === tab} className={galleryTab === tab ? 'on' : ''} onClick={() => { setGalleryTab(tab); if (tab === 'Drafts') toast('Draft saved on this device'); }}>{tab}</button>)}
       </div>
-
-      <div className="ig-media">
-        {preview ? <>
-          {file?.type.startsWith('video/') ? <video className="ig-media-preview" src={preview} controls playsInline /> : <img className="ig-media-preview" src={preview} alt="Selected post preview" />}
-          <button type="button" className="ig-change-media" onClick={() => document.getElementById('post-media-file')?.click()}>Change</button>
-        </> : <button type="button" className="ig-picker" onClick={() => document.getElementById('post-media-file')?.click()}>
-          <span className="ig-picker-plus">+</span>
-          <strong>Select photo or video</strong>
-          <small>MP4, WebM, JPG, PNG or WebP</small>
-        </button>}
-      </div>
+      {galleryTab === 'Templates' && <div className="cmp-templates">{[{ label: 'Behind the scenes', caption: 'Behind the scenes 🎬 ' }, { label: 'Quick tutorial', caption: 'Here is how I do it: ' }, { label: 'My latest', caption: 'My latest update ✨ ' }].map((item) => <button key={item.label} type="button" className="ghost small" onClick={() => { setDraft({ ...(draft || {}), caption: item.caption, topic, aiLabel, shareToStory }); setGalleryTab('Edits'); }}>{item.label}</button>)}</div>}
+      {galleryTab === 'Drafts' && <p className="ig-note">Your caption and settings are saved on this device. Choose Edits to continue.</p>}
+      {galleryTab === 'Edits' && <>
+        <div className="cmp-recents"><span>Recents <Icon name="chevron-down" size={18} /></span><button type="button" className="cmp-select" onClick={() => document.getElementById('post-media-file')?.click()}>Select</button></div>
+        <div className="cmp-grid">
+          <button type="button" className="cmp-tile cmp-pick" onClick={() => document.getElementById('post-media-file')?.click()} aria-label="Choose a photo or video"><Icon name="camera" size={30} /></button>
+          {preview && <div className="cmp-tile cmp-selected">{file?.type.startsWith('video/') ? <video src={preview} muted playsInline /> : <img src={preview} alt="Selected media" />}</div>}
+        </div>
+      </>}
       <input id="post-media-file" className="hidden" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+      <div className="cmp-modes" role="tablist" aria-label="Share type">
+        <button type="button" role="tab" aria-selected={!asStory} className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>POST</button>
+        <button type="button" role="tab" aria-selected={asStory} className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>STORY</button>
+      </div>
 
       <div className="ig-caption">
         <textarea ref={captionRef} id="post-caption" aria-label={asStory ? 'Story caption' : 'Write a caption'} placeholder={asStory ? 'Add a story caption…' : 'Write a caption… add #hashtags and @mentions'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={handleCaptionChange} rows={4} />
