@@ -196,16 +196,17 @@ export default function Profile() {
           <div className="people-sheet-handle" />
           <div className="people-sheet-title"><div><h3>{profile.username}</h3><small>{listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions"><button className="icon-button" onClick={() => { setListType(''); navigate('/explore'); }} aria-label="Discover people"><Icon name="user-plus" size={21} /></button><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={22} /></button></div></div>
           <div className="people-tabs">
-            <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}>Followers <span>{formatCount(profile.followerCount)}</span></button>
-            <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}>Following <span>{formatCount(profile.followingCount || 0)}</span></button>
+            <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><span>{formatCount(profile.followerCount)}</span> followers</button>
+            <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><span>{formatCount(profile.followingCount || 0)}</span> following</button>
           </div>
           <label className="people-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>
+          <div className="people-sort"><span>Sorted by <strong>Default</strong></span><Icon name="sort" size={22} /></div>
           <div className="people-list">
             {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) =>
               <div className="people-list-row" key={person.id}>
                 <button className="people-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
-                  <Avatar user={person} size={46} />
-                  <span><strong>{person.displayName || person.username}</strong><small>@{person.username}</small></span>
+                  <Avatar user={person} size={56} />
+                  <span><strong>{person.username}</strong><small>@{person.username}</small></span>
                 </button>
                 <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
               </div>

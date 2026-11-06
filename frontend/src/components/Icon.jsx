@@ -2,7 +2,7 @@ import {
   ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, Briefcase, Camera, Check,
   ChevronRight, Compass, Gift, Heart, Home, Link as LinkIcon, Mail, Megaphone,
   MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2, ShieldCheck,
-  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown,
+  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
 } from 'lucide-react';
 
 const ICONS = {
@@ -37,6 +37,7 @@ const ICONS = {
   bell: Bell,
   'user-plus': UserPlus,
   play: Play,
+  sort: ArrowDownUp,
   'chevron-down': ChevronDown,
   refresh: RefreshCw,
   send: Send,
