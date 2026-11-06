@@ -298,7 +298,7 @@ export default function Profile() {
           <button className="sc-option danger" onClick={blockProfile}>Block</button>
           <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); toast('Direct chat is not available yet.'); }}>Chat</button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}>{profile.isFollowing ? 'Remove' : 'Add'}</button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}>{profile.isFollowing ? 'Following' : 'Follow'}</button>
           <button className="sc-option toggle-row" onClick={() => setStoryNotifications((v) => !v)}>Story Notifications <span className={`sc-switch${storyNotifications ? ' on' : ''}`} aria-checked={storyNotifications} role="switch" /></button>
           <button className="sc-option toggle-row" onClick={() => setRecommended((v) => !v)}>Recommended <span className={`sc-switch${recommended ? ' on' : ''}`} aria-checked={recommended} role="switch" /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); if (navigator.share) shareProfile(); else { navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile link copied')).catch(() => toast('Unable to copy profile link')); } }}>Send Profile to… <Icon name="share" size={22} /></button>
