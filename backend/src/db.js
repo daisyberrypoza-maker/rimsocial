@@ -210,7 +210,8 @@ const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
   lastError: { type: DataTypes.STRING(1000), allowNull: true },
 }, { tableName: 'media_cleanup_jobs', indexes: [{ unique: true, fields: ['publicId', 'resourceType'] }, { fields: ['status', 'nextAttemptAt'] }] });
 
-module.exports = {\n  MediaCleanupJob,
+module.exports = {
+  MediaCleanupJob,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport, seedGifts,
 };
