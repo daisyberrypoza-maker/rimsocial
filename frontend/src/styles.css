@@ -854,3 +854,44 @@ input:focus { border-color:#4c5cff; }
 
 /* Composer release pass */
 .upload-gallery-tabs{display:flex;gap:6px;margin:0 0 12px}.upload-gallery-tabs button{flex:1;min-height:40px}.upload-template-grid{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.upload-draft-note{padding:10px 12px;border-radius:12px;background:var(--surface,rgba(128,128,128,.08))}.upload-topic-input{display:block;width:100%;min-width:0;margin:6px 0 14px;padding:12px 14px;border:1px solid var(--border,rgba(128,128,128,.28));border-radius:12px;background:var(--surface,transparent);color:inherit;font:inherit}.composer-options{margin-top:14px}.post-topic{display:inline-flex;margin:4px 0 6px;padding:4px 9px;border-radius:999px;background:rgba(128,128,128,.16);font-size:.82rem}.ai-content-label{position:absolute;z-index:3;top:52px;left:12px;padding:5px 9px;border-radius:7px;background:rgba(20,20,20,.78);color:#fff;font-size:.75rem}
+
+
+/* ---------- Activity / notifications ---------- */
+.activity-page { padding: 0 0 104px; background: var(--bg); }
+.activity-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 8px 16px 0; }
+.activity-heading .page-title { margin: 12px 0 4px; }
+.activity-subtitle { margin: 0 0 10px; color:var(--muted); font-size:13px; }
+.activity-refresh { display:grid; place-items:center; width:40px; height:40px; padding:0; }
+.activity-filters { display:flex; gap:8px; overflow-x:auto; padding:10px 16px 12px; border-bottom:1px solid var(--line); scrollbar-width:none; }
+.activity-filters::-webkit-scrollbar { display:none; }
+.activity-filter { flex:none; background:var(--surface-2); border:1px solid var(--line); color:var(--muted); padding:8px 14px; font-size:13px; }
+.activity-filter.active { background:var(--text); border-color:var(--text); color:var(--bg); }
+.activity-read-row { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; font-size:13px; color:var(--muted); }
+.activity-list { display:flex; flex-direction:column; }
+.activity-item { position:relative; display:flex; align-items:center; gap:11px; width:100%; text-align:left; padding:14px 14px; border-radius:0; color:var(--text); background:var(--bg); border-bottom:1px solid var(--line); font-weight:400; }
+.activity-item.unread { background:color-mix(in srgb, var(--brand) 6%, var(--bg)); }
+.activity-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; font-size:13px; line-height:1.35; }
+.activity-copy strong { font-weight:750; }
+.activity-time { color:var(--muted); font-size:12px; }
+.activity-comment { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+.activity-type-icon { width:25px; height:25px; border:2px solid var(--bg); border-radius:50%; display:grid; place-items:center; color:#fff; margin-left:-23px; margin-top:27px; flex:none; }
+.activity-type-icon.like { background:#ff3158; }
+.activity-type-icon.comment { background:#4b5cff; }
+.activity-type-icon.repost { background:#10a37f; }
+.activity-type-icon.follow { background:#e879f9; }
+.activity-thumb { width:42px; height:54px; border-radius:6px; overflow:hidden; flex:none; background:var(--surface-2); }
+.activity-thumb img,.activity-thumb video { width:100%; height:100%; object-fit:cover; }
+.activity-unread-dot { position:absolute; right:6px; top:10px; width:7px; height:7px; border-radius:50%; background:var(--brand); }
+.activity-empty,.activity-state { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:64px 28px; color:var(--muted); gap:10px; }
+.activity-empty h2 { margin:8px 0 0; color:var(--text); font-size:18px; }
+.activity-empty p { margin:0; max-width:280px; font-size:14px; line-height:1.5; }
+.activity-empty-icon { width:64px; height:64px; border-radius:50%; background:var(--surface-2); display:grid; place-items:center; color:var(--brand); }
+.activity-spinner { width:24px; height:24px; border:3px solid var(--line); border-top-color:var(--brand); border-radius:50%; animation:activity-spin .8s linear infinite; }
+@keyframes activity-spin { to { transform:rotate(360deg); } }
+@media (max-width:380px) {
+ .bottomnav { padding-left:2px; padding-right:2px; }
+ .bottomnav a { min-width:0; flex:1; font-size:9px; }
+ .bottomnav .create span.plus { width:34px; }
+ .activity-item { gap:7px; padding:12px 9px; }
+ .activity-type-icon { margin-left:-19px; }
+}
