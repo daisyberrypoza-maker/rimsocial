@@ -152,11 +152,26 @@ router.post('/matches/:id/score', async (req, res, next) => {
     if (!match) throw httpError(404, 'Match not found');
     if (![match.hostId, match.opponentId].includes(req.user.id)) throw httpError(403, 'You are not in this match');
     if (match.status !== 'active') throw httpError(409, 'Match is not active');
-    // Scores must come from server-verified gifts; clients cannot award themselves points.
-    res.json({ match, message: 'Match scores are server-controlled and will update from verified gifts.' });
+
+    // Reconcile scores from the verified gift ledger, never from client-supplied
+    // values. This repairs missed increments and makes repeated refreshes safe.
+    const where = {
+      creatorId: { [Op.in]: [match.hostId, match.opponentId] },
+      ...(match.startsAt ? { createdAt: { [Op.gte]: match.startsAt } } : {}),
+    };
+    const totals = await GiftTransaction.findAll({
+      where,
+      attributes: ['creatorId', [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('coins')), 0), 'coins']],
+      group: ['creatorId'],
+      raw: true,
+    });
+    const byCreator = new Map(totals.map((row) => [row.creatorId, Number(row.coins) || 0]));
+    const hostScore = byCreator.get(match.hostId) || 0;
+    const opponentScore = byCreator.get(match.opponentId) || 0;
+    await match.update({ hostScore, opponentScore });
+    res.json({ match: { ...match.toJSON(), hostScore, opponentScore }, scoring: 'verified_gift_ledger' });
   } catch (e) { next(e); }
 });
-
 router.post('/matches/:id/end', async (req, res, next) => {
   try {
     const match = await LiveMatch.findByPk(req.params.id);
