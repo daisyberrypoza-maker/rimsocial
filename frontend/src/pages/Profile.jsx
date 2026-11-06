@@ -281,8 +281,8 @@ export default function Profile() {
           <button className="sc-option toggle-row" onClick={() => setRecommended((v) => !v)}>Recommended <span className={`sc-switch${recommended ? ' on' : ''}`} aria-checked={recommended} role="switch" /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); if (navigator.share) shareProfile(); else { navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile link copied')).catch(() => toast('Unable to copy profile link')); } }}>Send Profile to… <Icon name="share" size={22} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
-          <button className="sc-option done" onClick={() => setOptionsOpen(false)}>Done</button>
         </section>
+        <button className="sc-options-done" onClick={() => setOptionsOpen(false)}>Done</button>
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
