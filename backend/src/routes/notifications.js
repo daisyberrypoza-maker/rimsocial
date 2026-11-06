@@ -9,8 +9,8 @@ async function ensureTables() {
     schemaReady = (async () => {
       await sequelize.query(`CREATE TABLE IF NOT EXISTS post_notification_preferences (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        userId BIGINT NOT NULL,
-        creatorId BIGINT NOT NULL,
+        userId CHAR(36) NOT NULL,
+        creatorId CHAR(36) NOT NULL,
         enabled TINYINT(1) NOT NULL DEFAULT 0,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -21,7 +21,7 @@ async function ensureTables() {
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         userId BIGINT NOT NULL,
         creatorId BIGINT NOT NULL,
-        postId BIGINT NOT NULL,
+        postId CHAR(36) NOT NULL,
         kind VARCHAR(16) NOT NULL,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         readAt DATETIME NULL,
