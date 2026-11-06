@@ -106,7 +106,7 @@ Stories are visible for 24 hours after upload, then removed automatically.
 | Method | Path | Body | Notes |
 |---|---|---|---|
 | GET | `/v1/gifts` | | Active gift catalog |
-| POST | `/v1/gifts` | `postId, giftId` + header `Idempotency-Key` | Required header. Retries with the same key never charge twice. |
+| POST | `/v1/gifts` | `postId, giftId` + header `Idempotency-Key`; optional `liveMatchId` for LIVE battle gifts | Required header. Retries with the same key never charge twice. Only explicitly attributed gifts count toward LIVE match scores. |
 | GET | `/v1/wallet` | | `{ coinBalance }` |
 | POST | `/v1/wallet/topup` | `amountMinor` | Web only. Returns a Paystack `authorizationUrl`. |
 | POST | `/v1/webhooks/paystack` | Paystack event | Verified by `x-paystack-signature`. Not called by clients. |
