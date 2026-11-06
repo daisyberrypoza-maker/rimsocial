@@ -30,6 +30,8 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     return res.status(200).end();
   }
   if (event.event !== 'charge.success') return res.status(200).end();
+  // Do not credit coin purchases while sales are disabled, including delayed or replayed charge events.
+  if (!config.webCoinPurchasesEnabled) return res.status(200).end();
 
   try {
     const { reference, amount, metadata, status, currency } = event.data || {};
