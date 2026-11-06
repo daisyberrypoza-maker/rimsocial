@@ -2803,3 +2803,28 @@ html, body, #root { background: #ffffff; color: #111111; }
   .people-sheet .people-follow-btn { min-width:86px !important; height:34px !important; padding:0 12px !important; font-size:13px !important; font-weight:500 !important; }
   .people-sheet .people-empty { padding:28px 18px !important; }
 }
+
+
+/* People lists: align to the top edge and remove the oversized safe-area/header gap. */
+.people-backdrop { position:fixed !important; inset:0 !important; z-index:999 !important; padding:0 !important; margin:0 !important; align-items:stretch !important; justify-content:stretch !important; background:#fff !important; }
+.people-backdrop .people-sheet { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-height:none !important; margin:0 !important; padding:0 0 env(safe-area-inset-bottom,0px) !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; display:flex !important; flex-direction:column !important; overflow:hidden !important; }
+.people-sheet .people-sheet-title { flex:0 0 auto !important; min-height:54px !important; padding:4px 14px !important; margin:0 !important; gap:10px !important; border-bottom:1px solid #e8e8e8 !important; }
+.people-sheet .people-sheet-title h3 { margin:0 !important; font-size:19px !important; font-weight:550 !important; line-height:1.2 !important; }
+.people-sheet .people-tabs { flex:0 0 auto !important; min-height:48px !important; margin:0 !important; padding:0 14px !important; }
+.people-sheet .people-search { flex:0 0 40px !important; margin:10px 14px 4px !important; }
+.people-sheet .people-sort { flex:0 0 auto !important; margin:6px 16px 8px !important; min-height:34px !important; }
+.people-sheet .people-list { flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important; overscroll-behavior:contain; }
+.people-sheet .people-list-row { min-height:62px !important; padding:7px 14px !important; }
+.people-sheet .people-person strong { font-weight:500 !important; }
+.people-sheet .people-person small { font-weight:400 !important; }
+.people-sheet .people-follow-btn { font-weight:500 !important; }
+.people-discovery-heading { padding:8px 16px 2px; margin:0; background:#fff; }
+.people-discovery-heading h1 { margin:0; color:#111; font-size:22px; line-height:1.25; font-weight:600; letter-spacing:-.3px; }
+.people-discovery-heading p { margin:4px 0 0; color:#777; font-size:13px; line-height:1.35; font-weight:400; }
+.ig-explore:has(.people-discovery-heading) .ig-search { margin-top:8px; margin-bottom:4px; height:42px; }
+.ig-explore:has(.people-discovery-heading) .ig-section { padding-top:10px; }
+.ig-explore:has(.people-discovery-heading) .ig-person { min-height:64px; padding-top:7px; padding-bottom:7px; }
+.ig-explore:has(.people-discovery-heading) .ig-person-main { gap:11px; }
+.ig-explore:has(.people-discovery-heading) .ig-person-main strong { font-weight:500; }
+.ig-explore:has(.people-discovery-heading) .ig-section-title { font-size:16px; font-weight:600; }
+.ig-explore:has(.people-discovery-heading) .ig-follow { min-width:86px; border-radius:9px; font-weight:500; }
