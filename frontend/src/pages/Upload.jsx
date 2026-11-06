@@ -54,7 +54,7 @@ export default function Upload() {
       if (!active) return;
       if (!item.allowRemix) { toast('The creator has not allowed remixing this post'); setSourcePost(null); return; }
       setSourcePost(item);
-      setDraft({ caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' });
+      setDraft((current) => ({ ...current, caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' }));
     }).catch((error) => { if (active) toast(error.message); });
     return () => { active = false; };
   }, [remixId, setDraft]);
