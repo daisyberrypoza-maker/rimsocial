@@ -6,6 +6,7 @@ export default function TopBar({ immersive, title }) {
       {immersive
         ? <nav className="segmented"><NavLink to="/" end>For You</NavLink><NavLink to="/following">Following</NavLink></nav>
         : <div className="brand">{title || 'Clipverse'}</div>}
+      <NavLink className="topbar-notifications" to="/notifications" aria-label="Notifications" title="Notifications">♧</NavLink>
     </header>
   );
 }
