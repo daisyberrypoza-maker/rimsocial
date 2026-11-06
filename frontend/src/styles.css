@@ -1758,3 +1758,53 @@ button.ghost { color: var(--text); }
 .coin-checkout { background: var(--brand); color: var(--on-brand); }
 .coin-checkout:disabled { opacity: .5; }
 input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
+
+/* =====================================================================
+   Instagram-style content screens: Activity, Explore, followers lists
+   ===================================================================== */
+/* Activity: flat rows, thin dividers, Instagram-like typography */
+.activity-page { background: var(--bg); }
+.activity-heading { padding: 14px 16px 6px; }
+.activity-heading .page-title { font-size: 22px; font-weight: 800; margin: 0; }
+.activity-subtitle { display: none; }
+.activity-filters { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 10px; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.activity-filters::-webkit-scrollbar { display: none; }
+.activity-filter { flex: none; padding: 6px 14px; border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 600; border: 0; }
+.activity-filter.active { background: var(--text); color: #fff; }
+.activity-read-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: 13px; color: var(--muted); }
+.activity-list { display: flex; flex-direction: column; }
+.activity-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 16px; background: none; border: 0; border-radius: 0; color: var(--text); text-align: left; position: relative; }
+.activity-item:active { background: var(--surface-2); }
+.activity-item.unread { background: color-mix(in srgb, var(--brand) 14%, transparent); }
+.activity-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.35; color: var(--text); }
+.activity-time { font-size: 12px; color: var(--muted); }
+.activity-type-icon { display: none; }
+.activity-thumb { flex: none; width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+.activity-thumb img, .activity-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.activity-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex: none; }
+
+/* Explore: pill search, filter row, 3-column tile grid with small gaps */
+.explore-page { background: var(--bg); }
+.explore-search { margin: 10px 12px 6px; background: var(--surface-2); border-radius: 12px; padding: 0 10px; border: 0; }
+.explore-search input { background: transparent; border: 0; padding: 10px 6px; margin: 0; }
+.explore-search button[type="submit"] { background: none; color: var(--text); padding: 6px 8px; font-size: 13px; }
+.search-filters { display: flex; gap: 8px; overflow-x: auto; padding: 4px 12px 10px; scrollbar-width: none; }
+.search-filters button { flex: none; background: var(--surface-2); color: var(--text); padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 0; }
+.search-filters button.on { background: var(--text); color: #fff; }
+.explore-page .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.explore-page .tile { border-radius: 0; aspect-ratio: 1 / 1.25; }
+.discover-person-row, .person-result { padding: 10px 16px; border-bottom: 0; }
+.discover-follow, .follow-result { background: var(--brand); color: var(--on-brand); border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 700; }
+.discover-follow.following, .follow-result.following { background: var(--surface-2); color: var(--text); }
+
+/* Followers / following sheet: Instagram list rows and pill search */
+.people-sheet { background: var(--bg); color: var(--text); }
+.people-sheet-title h3 { font-size: 16px; font-weight: 800; }
+.people-tabs { border-bottom: 1px solid var(--line); }
+.people-tabs button { background: none; color: var(--muted); border-radius: 0; font-weight: 700; padding: 10px 0; }
+.people-tabs button.active { color: var(--text); box-shadow: inset 0 -2px 0 var(--text); }
+.people-search { background: var(--surface-2); border-radius: 10px; border: 0; margin: 10px 12px; padding: 0 10px; }
+.people-search input { background: transparent; border: 0; }
+.people-list > * { padding: 8px 16px; }
+.people-list button { border-radius: 8px; }
+.people-list .pill, .people-list button.follow-result { border-radius: 8px; }
