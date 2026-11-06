@@ -1516,3 +1516,9 @@ button, .icon-button, .topbar-back, .bottomnav a { -webkit-tap-highlight-color: 
 .icon-button { background:transparent; border:0; border-radius:10px; }
 .icon-button:hover { background:color-mix(in srgb, var(--brand-a) 8%, transparent); }
 .profile-drawer .icon-button { width:40px; height:40px; }
+
+.profile-actions-refresh button { display:flex; align-items:center; justify-content:center; gap:8px; }
+.profile-actions-refresh button svg, .profile-drawer > button svg { flex:none; }
+.comments-sheet, .people-sheet { box-shadow:0 -12px 44px rgba(20,28,55,.14); }
+.post-menu-sheet { border:1px solid var(--line); box-shadow:0 -12px 44px rgba(20,28,55,.14); }
+.ads-sponsors-hero { background:radial-gradient(ellipse at top right, color-mix(in srgb, var(--brand-a) 10%, transparent), transparent 62%), var(--surface); }
