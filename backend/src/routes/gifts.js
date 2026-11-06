@@ -15,8 +15,9 @@ router.post('/gifts', requireAuth, async (req, res, next) => {
   try {
     const key = req.headers['idempotency-key'];
     if (!key) throw httpError(400, 'Idempotency-Key header required');
-    const { postId, giftId } = req.body;
-    const result = await sendGift({ senderId: req.user.id, postId, giftId: Number(giftId), idempotencyKey: key });
+    const { postId, giftId, liveMatchId = null } = req.body;
+    if (liveMatchId !== null && (typeof liveMatchId !== 'string' || liveMatchId.length > 64)) throw httpError(400, 'Invalid LIVE match ID');
+    const result = await sendGift({ senderId: req.user.id, postId, giftId: Number(giftId), liveMatchId, idempotencyKey: key });
     res.status(result.duplicate ? 200 : 201).json(result);
   } catch (e) { next(e); }
 });
