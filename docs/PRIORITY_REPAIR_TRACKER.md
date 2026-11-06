@@ -30,18 +30,19 @@ This is a living release checklist. A branch or pull request is not considered c
 Branch: `fix/reel-composer-remix-priority`
 - [x] Remove duplicate `topic`/`aiLabel` model definitions introduced on the branch.
 - [x] Preserve existing draft fields when the remix source loads; draft store now supports atomic functional updates.
-- [ ] Confirm CI/build after these corrections.
+- [x] Backend syntax checks and frontend production build passed on current tested head (run: https://github.com/daisyberrypoza-maker/rimsocial/actions/runs/42134730388); physical-device testing remains open.
 - [ ] Full media gallery with real media assets, not only tab entry points.
 - [ ] Full multi-clip editing, trimming, cover selection, and rendered template pipeline.
 - [ ] True remix/edit pipeline with source attribution and creator permission checks across the entire flow.
 - [ ] Verify Share to Story, mentions, topic, AI disclosure, draft restore and private/public behavior on a real device.
 
-### Other open pull requests that must be reviewed/consolidated, not blindly merged
-- PR #1: `rimsocial-full-feature-fixes` — open draft; branch is a base for other work and reported non-mergeable.
-- PR #4: `rimsocial-live-match-signaling` into `rimsocial-full-feature-fixes` — open draft and not directly based on `main`; review branch ancestry and merge conflicts before extracting its changes.
-- PR #5: `fix/rimsocial-social-experience` — open draft; likes/follow suggestions/follower lists/repost/post-menu changes; requires current-head CI and authenticated DB tests.
-- PR #8: `rimsocial-composer-and-remix` — open, overlaps composer/remix work; compare against PR #12 and preserve any unique fixes before closing or merging.
-- PR #12: `fix/reel-composer-remix-priority` — open draft; composer changes and fixes above.
+### Pull request audit outcome
+- PR #1, #4 and #5 were closed as superseded after comparing them with current `main`; their older code would overwrite newer social/feed implementations. The useful external-share action identified in PR #1 was ported into PR #14.
+- PR #8 was closed as superseded by PR #12 to avoid competing composer implementations.
+- PR #12: `fix/reel-composer-remix-priority` — open draft; duplicate model fields and draft reset were fixed; current-head CI passed. Full editor/remix rendering and paid ad billing remain open.
+- PR #13: `feature/find-flip-fix-priority` — open draft; FFF backend, migration, UI and validation unit tests; CI passed on the tested head, but live MySQL/two-account integration remains open.
+- PR #14: `fix/post-detail-share-action` — open draft; native share sheet added separately from repost; CI passed. Physical Android verification remains open.
+- PR #15: `fix/payout-webhook-reconciliation` — open draft; atomic payout settlement/reversal handling and transition tests; await current-head CI and Paystack sandbox tests.
 
 ## Monetization and finance
 - [x] Gift eligibility and idempotency safeguards were added in PR #11 (verify merged commit remains in `main`).
