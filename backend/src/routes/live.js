@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const crypto = require('node:crypto');
 const { Op } = require('sequelize');
-const { LiveMatch, LiveSignal } = require('../db');
+const { LiveMatch, LiveSignal, Post, User, Gift } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
@@ -88,6 +88,26 @@ router.post('/matches/:id/signals', async (req, res, next) => {
       payload,
     });
     res.status(201).json({ signal: { id: item.id, kind: item.kind, createdAt: item.createdAt } });
+  } catch (e) { next(e); }
+});
+
+
+router.get('/matches/:id/gift-options', async (req, res, next) => {
+  try {
+    const match = await getParticipantMatch(req.params.id, req.user.id);
+    const creatorIds = [match.hostId, match.opponentId];
+    const [posts, creators, gifts] = await Promise.all([
+      Post.findAll({
+        where: { authorId: { [Op.in]: creatorIds }, status: 'live', isStory: false, visibility: 'public' },
+        attributes: ['id', 'authorId', 'caption', 'createdAt'],
+        order: [['createdAt', 'DESC']],
+        limit: 40,
+      }),
+      User.findAll({ where: { id: { [Op.in]: creatorIds } }, attributes: ['id', 'username', 'displayName'] }),
+      Gift.findAll({ where: { active: true }, attributes: ['id', 'name', 'coinPrice'], order: [['coinPrice', 'ASC']] }),
+    ]);
+    res.set('Cache-Control', 'no-store');
+    res.json({ posts, creators, gifts, match: { id: match.id, hostId: match.hostId, opponentId: match.opponentId, hostScore: match.hostScore, opponentScore: match.opponentScore } });
   } catch (e) { next(e); }
 });
 
