@@ -47,17 +47,17 @@ function profileDTO(profile) {
   return { id: p.id, ownerId: p.ownerId, name: p.name, category: p.category, description: p.description,
     country: p.country, city: p.city, website: p.website || null, verificationStatus: p.verificationStatus, createdAt: p.createdAt };
 }
-function opportunityDTO(item, profile = null, owner = null) {
+function opportunityDTO(item, profile = null, owner = null, viewerId = null) {
   const o = item.toJSON ? item.toJSON() : item;
   const { reviewedBy, reviewNote, ...safe } = o; // Operator-only review notes are never exposed in public DTOs.
-  return { ...safe, askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
+  return { ...safe, reviewNote: viewerId === o.ownerId ? (o.reviewNote || null) : null, askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
     estimatedCostMinor: o.estimatedCostMinor == null ? null : Number(o.estimatedCostMinor),
     targetPriceMinor: o.targetPriceMinor == null ? null : Number(o.targetPriceMinor),
     budgetMinor: o.budgetMinor == null ? null : Number(o.budgetMinor),
     business: profile ? profileDTO(profile) : null,
     owner: owner ? { id: owner.id, username: owner.username, displayName: owner.displayName, avatarUrl: owner.avatarUrl } : null };
 }
-async function enrich(items) {
+async function enrich(items, viewerId = null) {
   if (!items.length) return [];
   const profileIds = [...new Set(items.map((item) => item.businessId).filter(Boolean))];
   const ownerIds = [...new Set(items.map((item) => item.ownerId))];
@@ -67,14 +67,14 @@ async function enrich(items) {
   ]);
   const profileMap = new Map(profiles.map((p) => [p.id, p]));
   const ownerMap = new Map(owners.map((u) => [u.id, u]));
-  return items.map((item) => opportunityDTO(item, profileMap.get(item.businessId), ownerMap.get(item.ownerId)));
+  return items.map((item) => opportunityDTO(item, profileMap.get(item.businessId), ownerMap.get(item.ownerId), viewerId));
 }
 
 // Operator moderation is deliberately separate from normal user authorization.
 router.get('/admin/opportunities', requireOperator, async (req, res, next) => {
   try {
     const items = await BusinessOpportunity.findAll({ where: { reviewStatus: req.query.status === 'rejected' ? 'rejected' : 'pending' }, order: [['createdAt', 'ASC']], limit: 100 });
-    res.json({ items: await enrich(items) });
+    res.json({ items: await enrich(items, req.user.id) });
   } catch (e) { next(e); }
 });
 router.patch('/admin/opportunities/:id/review', requireOperator, async (req, res, next) => {
@@ -211,7 +211,7 @@ router.get('/opportunities/:id', async (req, res, next) => {
   try {
     const item = await BusinessOpportunity.findByPk(req.params.id);
     if (!item || (item.reviewStatus !== 'approved' && item.ownerId !== req.user.id)) throw httpError(404, 'Opportunity not found');
-    const [full] = await enrich([item]);
+    const [full] = await enrich([item], req.user.id);
     const updates = item.lane === 'fix' ? await BusinessWorkUpdate.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'ASC']], limit: 100 }) : [];
     const canSeeOffers = item.ownerId === req.user.id;
     const offers = canSeeOffers ? await BusinessOffer.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'DESC']], limit: 100 }) : [];
