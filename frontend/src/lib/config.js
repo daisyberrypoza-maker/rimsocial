@@ -13,7 +13,7 @@ export function mediaUrl(path) {
 // A public web URL is required for links shared from a native Android/iOS app.
 // Do not share capacitor://localhost links outside the app.
 export function postShareUrl(postId) {
-  const configured = (import.meta.env.VITE_PUBLIC_APP_URL || '').replace(/\\/$/, '');
+  const configured = (import.meta.env.VITE_PUBLIC_APP_URL || '').replace(/\/$/, '');
   const base = configured || (!Capacitor.isNativePlatform() ? window.location.origin : '');
   return base ? base + '/p/' + encodeURIComponent(postId) : null;
 }
