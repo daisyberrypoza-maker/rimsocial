@@ -89,7 +89,6 @@ export default function BusinessHub() {
       toast(result.message || 'Opportunity submitted for review');
       setShowCreate(false); setTab('mine'); setLane(form.lane);
       setForm(blankOpportunity(user?.country || 'NG'));
-      await loadItems();
     } catch (e) { toast(e.message); }
     finally { setBusy(false); }
   }
