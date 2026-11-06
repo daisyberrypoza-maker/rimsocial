@@ -1,5 +1,18 @@
 const router = require('express').Router();
-const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, sequelize } = require('../db');
+
+async function assertPostAuthorNotBlocked(viewerId, authorId) {
+  if (viewerId === authorId) return;
+  const relation = await UserBlock.findOne({
+    where: { [Op.or]: [
+      { blockerId: viewerId, blockedUserId: authorId },
+      { blockerId: authorId, blockedUserId: viewerId },
+    ] },
+    attributes: ['blockerId'],
+  });
+  if (relation) throw httpError(404, 'Post not found');
+}
+const { Op } = require('sequelize');
+const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -62,6 +75,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false }, include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }] });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const liked = Boolean(await PostLike.findOne({ where: { postId: post.id, userId: req.user.id } }));
     const reposted = Boolean(await Repost.findOne({ where: { postId: post.id, userId: req.user.id } }));
     res.json({ ...toPostDTO(post), liked, reposted, visibility: post.visibility });
@@ -100,6 +114,7 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, visibility: 'public' } });
     if (!post) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     await redis.incr(`views:${req.params.id}`);
     res.status(204).end();
   } catch (e) { next(e); }
@@ -136,6 +151,7 @@ router.get('/:id/engagement', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const [liked, reposted] = await Promise.all([
       PostLike.findOne({ where: { postId: post.id, userId: req.user.id } }),
       Repost.findOne({ where: { postId: post.id, userId: req.user.id } }),
@@ -148,6 +164,7 @@ router.post('/:id/like', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     let liked = false;
     await sequelize.transaction(async (t) => {
       const existing = await PostLike.findOne({ where: { postId: post.id, userId: req.user.id }, transaction: t, lock: t.LOCK.UPDATE });
@@ -171,6 +188,7 @@ router.get('/:id/comments', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const items = await PostComment.findAll({ where: { postId: post.id }, include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }], order: [['createdAt', 'ASC']], limit: 200 });
     res.json({ items: items.map((c) => ({ id: c.id, body: c.body, createdAt: c.createdAt, author: c.author ? { id: c.author.id, username: c.author.username, displayName: c.author.displayName, avatarUrl: c.author.avatarUrl } : null, isMine: c.userId === req.user.id })) });
   } catch (e) { next(e); }
@@ -182,6 +200,7 @@ router.post('/:id/comments', requireAuth, async (req, res, next) => {
     if (!body || body.length > 1000) throw httpError(400, 'Comment must contain 1–1000 characters');
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const comment = await PostComment.create({ postId: post.id, userId: req.user.id, body });
     await redis.hincrby(`feed:preferences:${req.user.id}`, post.id, 3).catch(() => {});
     await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
@@ -203,6 +222,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, visibility: 'public' } });
     if (!post) throw httpError(404, 'Post not found or cannot be reposted');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     if (post.authorId === req.user.id) throw httpError(400, 'You cannot repost your own post');
     let reposted = false;
     await sequelize.transaction(async (t) => {
