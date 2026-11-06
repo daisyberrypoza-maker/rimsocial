@@ -61,19 +61,21 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
 // Suggested creators and people to follow back for the Discover screen.
 router.get('/suggestions', requireAuth, async (req, res, next) => {
   try {
-    const [followingRows, followerRows] = await Promise.all([
+    const [followingRows, followerRows, blockRows] = await Promise.all([
       Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true }),
       Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true }),
+      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: req.user.id }, { blockedUserId: req.user.id }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
     ]);
+    const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const followingIds = followingRows.map((row) => row.followeeId);
     const followerIds = followerRows.map((row) => row.followerId);
     const [suggested, followBack] = await Promise.all([
       User.findAll({
-        where: { id: { [Op.notIn]: [req.user.id, ...followingIds] } },
+        where: { id: { [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
         attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 12,
       }),
       followerIds.length ? User.findAll({
-        where: { id: { [Op.in]: followerIds, [Op.notIn]: [req.user.id, ...followingIds] } },
+        where: { id: { [Op.in]: followerIds, [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
         attributes: PUBLIC_ATTRS, limit: 12,
       }) : [],
     ]);
