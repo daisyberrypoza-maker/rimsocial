@@ -27,7 +27,7 @@ const corsOptions = {
     callback(null, allowed);
   },
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Api-Key', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Api-Key', 'X-Requested-With', 'Idempotency-Key'],
   maxAge: 86400,
   optionsSuccessStatus: 204,
 };
@@ -65,6 +65,7 @@ app.use('/v1/users', require('./routes/users'));
 app.use('/v1/search', require('./routes/search'));
 app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
+app.use('/v1/business', require('./routes/business'));
 app.use('/v1/live', require('./routes/live'));
 app.use('/v1/admin', require('./routes/admin'));
 
