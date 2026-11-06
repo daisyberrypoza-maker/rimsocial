@@ -27,7 +27,7 @@ const corsOptions = {
     callback(null, allowed);
   },
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Api-Key', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Api-Key', 'X-Requested-With', 'Idempotency-Key'],
   maxAge: 86400,
   optionsSuccessStatus: 204,
 };
