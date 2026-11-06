@@ -17,6 +17,7 @@ const User = sequelize.define('User', {
   passwordHash: { type: DataTypes.STRING, allowNull: false },
   displayName: { type: DataTypes.STRING(64), allowNull: false },
   avatarUrl: DataTypes.STRING(512),
+  backgroundUrl: DataTypes.STRING(512),
   country: { type: DataTypes.CHAR(2), allowNull: false },
   isCreator: { type: DataTypes.BOOLEAN, defaultValue: false },
   followerCount: { type: DataTypes.INTEGER, defaultValue: 0 },
