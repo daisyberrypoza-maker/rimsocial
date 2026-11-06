@@ -76,4 +76,5 @@ jobs:
           DB_SYNC: "false"
           AUTO_CREATE_DATABASE: "false"
           SERVE_FRONTEND: "false"
+          RUN_BUSINESS_INTEGRATION: "true"
         run: node --test backend/test/business.integration.test.js
