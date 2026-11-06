@@ -69,6 +69,7 @@ app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
 app.use('/v1/business', require('./routes/business'));
 app.use('/v1/live', require('./routes/live'));
+app.use('/v1/broadcasts', require('./routes/broadcasts'));
 app.use('/v1/admin', require('./routes/admin'));
 
 app.use('/v1', (req, res) => res.status(404).json({ error: 'Not found' }));
