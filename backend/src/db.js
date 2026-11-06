@@ -118,7 +118,9 @@ const LedgerEntry = sequelize.define('LedgerEntry', {
   id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
   userId: { type: DataTypes.UUID, allowNull: false },
   kind: { type: DataTypes.STRING(32), allowNull: false },
-  deltaMinor: { type: DataTypes.BIGINT, allowNull: false },
+  // Monetary entries use minor currency units; coin movements use deltaCoins.
+  deltaMinor: { type: DataTypes.BIGINT, allowNull: false, defaultValue: 0 },
+  deltaCoins: { type: DataTypes.BIGINT, allowNull: false, defaultValue: 0 },
   refId: { type: DataTypes.STRING(64), allowNull: true },
 }, { tableName: 'ledger_entries', indexes: [{ unique: true, fields: ['kind', 'refId'] }] });
 
