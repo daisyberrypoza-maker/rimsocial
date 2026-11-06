@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const crypto = require('crypto');
 const { Op } = require('sequelize');
-const { sequelize, User, BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate } = require('../db');
+const { sequelize, User, BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, BusinessFinancialRecord } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
@@ -49,8 +49,14 @@ function profileDTO(profile) {
 }
 function opportunityDTO(item, profile = null, owner = null, viewerId = null) {
   const o = item.toJSON ? item.toJSON() : item;
-  const { reviewedBy, reviewNote, ...safe } = o; // Operator-only review notes are never exposed in public DTOs.
-  return { ...safe, reviewNote: viewerId === o.ownerId ? (o.reviewNote || null) : null, askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
+  const { reviewedBy, reviewNote, actualSalePriceMinor, actualCostMinor, realizedProfitMinor, financialsUpdatedAt, ...safe } = o;
+  const canSeeFinancials = viewerId === o.assignedUserId && o.lane === 'flip';
+  return { ...safe, reviewNote: viewerId === o.ownerId ? (reviewNote || null) : null,
+    actualSalePriceMinor: canSeeFinancials && actualSalePriceMinor != null ? Number(actualSalePriceMinor) : null,
+    actualCostMinor: canSeeFinancials && actualCostMinor != null ? Number(actualCostMinor) : null,
+    realizedProfitMinor: canSeeFinancials && realizedProfitMinor != null ? Number(realizedProfitMinor) : null,
+    financialsUpdatedAt: canSeeFinancials ? financialsUpdatedAt : null,
+    askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
     estimatedCostMinor: o.estimatedCostMinor == null ? null : Number(o.estimatedCostMinor),
     targetPriceMinor: o.targetPriceMinor == null ? null : Number(o.targetPriceMinor),
     budgetMinor: o.budgetMinor == null ? null : Number(o.budgetMinor),
@@ -216,7 +222,10 @@ router.get('/opportunities/:id', async (req, res, next) => {
     const updates = item.lane === 'fix' && isParticipant ? await BusinessWorkUpdate.findAll({ where: { opportunityId: item.id }, order: [['createdAt', 'ASC']], limit: 100 }) : [];
     const canSeeOffers = item.ownerId === req.user.id;
     const offers = await BusinessOffer.findAll({ where: canSeeOffers ? { opportunityId: item.id } : { opportunityId: item.id, senderId: req.user.id }, order: [['createdAt', 'DESC']], limit: 100 });
-    res.json({ opportunity: full, updates, offers });
+    const financialHistory = item.lane === 'flip' && item.assignedUserId === req.user.id
+      ? await BusinessFinancialRecord.findAll({ where: { opportunityId: item.id, authorId: req.user.id }, order: [['createdAt', 'DESC']], limit: 50 })
+      : [];
+    res.json({ opportunity: full, updates, offers, financialHistory });
   } catch (e) { next(e); }
 });
 router.patch('/opportunities/:id', async (req, res, next) => {
@@ -345,6 +354,35 @@ router.post('/offers/:id/complete', async (req, res, next) => {
     res.json({ offer: result.offer, opportunity: opportunityDTO(result.opportunity), message: result.offer.status === 'completed' ? 'Both parties confirmed completion.' : 'Completion confirmation saved; the other party must confirm too.' });
   } catch (e) { next(e); }
 });
+router.patch('/opportunities/:id/financials', async (req, res, next) => {
+  try {
+    const actualSalePriceMinor = money(req.body.actualSalePriceMinor, 'Actual sale price', true);
+    const actualCostMinor = money(req.body.actualCostMinor, 'Actual costs', true);
+    const note = clean(req.body.note, 1000, 'Financial note');
+    const result = await sequelize.transaction(async (transaction) => {
+      const item = await BusinessOpportunity.findByPk(req.params.id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!item) throw httpError(404, 'Opportunity not found');
+      if (item.lane !== 'flip' || item.status !== 'completed') throw httpError(409, 'Financial outcomes can be recorded only after a Flip deal is completed');
+      if (item.assignedUserId !== req.user.id) throw httpError(403, 'Only the buyer/assigned flipper can record realized profit');
+      const completedOffer = await BusinessOffer.findOne({ where: { opportunityId: item.id, status: 'completed' }, order: [['updatedAt', 'DESC']], transaction });
+      if (!completedOffer) throw httpError(409, 'A completed offer is required before recording profit');
+      const purchasePriceMinor = Number(completedOffer.amountMinor);
+      const realizedProfitMinor = actualSalePriceMinor - actualCostMinor - purchasePriceMinor;
+      if (!Number.isSafeInteger(realizedProfitMinor)) throw httpError(400, 'Calculated profit is outside the supported range');
+      const record = await BusinessFinancialRecord.create({
+        opportunityId: item.id, authorId: req.user.id, purchasePriceMinor, actualSalePriceMinor, actualCostMinor, realizedProfitMinor, note,
+      }, { transaction });
+      await item.update({ actualSalePriceMinor, actualCostMinor, realizedProfitMinor, financialsUpdatedAt: new Date() }, { transaction });
+      return { item, record };
+    });
+    res.status(201).json({
+      record: result.record,
+      opportunity: opportunityDTO(result.item, null, null, req.user.id),
+      message: 'Realized profit recorded. This is user-entered financial data, not independently audited.',
+    });
+  } catch (e) { next(e); }
+});
+
 router.post('/opportunities/:id/updates', async (req, res, next) => {
   try {
     const item = await BusinessOpportunity.findByPk(req.params.id);
