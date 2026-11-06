@@ -1511,3 +1511,8 @@ button, .icon-button, .topbar-back, .bottomnav a { -webkit-tap-highlight-color: 
   .upload-refresh { padding:12px; }
   .upload-heading { margin:-12px -12px 12px; padding:10px; }
 }
+
+/* Icon controls stay clean and icon-only, without decorative grey tiles. */
+.icon-button { background:transparent; border:0; border-radius:10px; }
+.icon-button:hover { background:color-mix(in srgb, var(--brand-a) 8%, transparent); }
+.profile-drawer .icon-button { width:40px; height:40px; }
