@@ -63,6 +63,7 @@ app.use('/v1/posts', require('./routes/posts'));
 app.use('/v1/feed', require('./routes/feed'));
 app.use('/v1/stories', require('./routes/stories'));
 app.use('/v1/users', require('./routes/users'));
+app.use('/v1/activity', require('./routes/activity'));
 app.use('/v1/search', require('./routes/search'));
 app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
