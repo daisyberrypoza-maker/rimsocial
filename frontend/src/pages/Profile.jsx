@@ -216,7 +216,7 @@ export default function Profile() {
       </div>}
 
       <nav className="ptabs">
-        <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Posts</button>
+        <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
       </nav>
 

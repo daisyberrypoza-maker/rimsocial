@@ -1912,3 +1912,35 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
 .profile-page .tile-count { left: 6px; right: auto; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; color: #fff; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .profile-watch-action { padding: 10px 14px 0; }
 .profile-watch-action .pill { width: 100%; min-width: 0; border-radius: 10px; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* =====================================================================
+   Reference match: profile header over the cover, restrained yellow
+   ===================================================================== */
+/* Yellow is reserved for the main action only. Other buttons are dark. */
+button { background: #111; color: #fff; }
+button.ghost { background: var(--surface-2); color: var(--text); }
+.pill { background: #111; color: #fff; }
+.upload-submit, .coin-checkout, .people-follow-btn:not(.following), .discover-follow:not(.following) { background: #111; color: #fff; }
+.ig-follow { background: #0095f6; color: #fff; }
+.profile-top .pill, .profile-actions-refresh > button:first-child { background: var(--brand); color: #000; }
+
+/* Profile header laid out like the reference: avatar left, name over the cover */
+.snap-hero { height: 300px; }
+.profile-top.profile-top-refresh { margin-top: -190px; display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: center; padding: 0 16px; color: #fff; }
+.profile-top.profile-top-refresh > * { grid-column: 2; min-width: 0; }
+.profile-top.profile-top-refresh > .profile-cover-tools { grid-column: 1; grid-row: 1 / span 3; }
+.profile-top.profile-top-refresh > .profile-actions-refresh, .profile-top.profile-top-refresh > .pill { grid-column: 1 / -1; }
+.profile-top .profile-name { color: #fff; margin: 0; font-size: 20px; text-align: left; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.profile-top .profile-handle { color: rgba(255,255,255,.85); text-align: left; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.profile-stats-row { color: #fff; margin: 6px 0 0; gap: 14px; }
+.profile-stats-row button, .profile-stats-row > div { color: #fff; }
+.profile-stats-row span { color: rgba(255,255,255,.85); }
+.profile-top .chip { display: none; }
+.profile-top .avatar.ring { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+.profile-top-refresh .profile-cover-tools { position: relative; }
+.profile-top .profile-actions-refresh { margin-top: 12px; }
+.profile-top .pill, .profile-actions-refresh > button:first-child { height: 44px; border-radius: 12px; font-weight: 800; }
+.profile-top .profile-actions-refresh > button.ghost { display: none; }
+.ptabs { margin-top: 12px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+.ptabs button { color: #6b7280; font-weight: 700; }
+.ptabs button.on { color: #111; box-shadow: inset 0 -2px 0 #111; }
