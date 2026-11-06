@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const crypto = require('node:crypto');
 const { Op } = require('sequelize');
 const { LiveMatch, LiveSignal } = require('../db');
 const { requireAuth } = require('../middleware/auth');
@@ -18,6 +19,29 @@ async function getParticipantMatch(matchId, userId) {
 
 // WebRTC signaling relay for creator-to-creator video sessions.
 // This relays connection metadata only; media itself travels through WebRTC.
+// Return ICE configuration only to authenticated participants in an active match.
+// Prefer TURN REST credentials (coturn use-auth-secret) so credentials expire quickly.
+router.get('/matches/:id/ice-servers', async (req, res, next) => {
+  try {
+    await getParticipantMatch(req.params.id, req.user.id);
+    const iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
+    const urls = (config.turnUrls || []).filter((url) => /^turns?:/i.test(url));
+    let turnConfigured = false;
+    if (urls.length && config.turnSecret) {
+      const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60;
+      const username = `${expiresAt}:${req.user.id}`;
+      const credential = crypto.createHmac('sha1', config.turnSecret).update(username).digest('base64');
+      iceServers.push({ urls, username, credential });
+      turnConfigured = true;
+    } else if (urls.length && config.turnUsername && config.turnPassword) {
+      iceServers.push({ urls, username: config.turnUsername, credential: config.turnPassword });
+      turnConfigured = true;
+    }
+    res.set('Cache-Control', 'no-store');
+    res.json({ iceServers, turnConfigured, credentialTtlSeconds: turnConfigured && config.turnSecret ? 3600 : null });
+  } catch (e) { next(e); }
+});
+
 router.get('/matches/:id/signals', async (req, res, next) => {
   try {
     await getParticipantMatch(req.params.id, req.user.id);
