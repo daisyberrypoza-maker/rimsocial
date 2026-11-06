@@ -36,10 +36,18 @@ module.exports = {
   // Uploads
   maxUploadBytes: 100 * 1024 * 1024,
 
-  // Money: all amounts are minor units (kobo / cents)
-  coinPriceMinor: 100, // 1 coin costs NGN 1.00
-  coinValueMinor: 100, // 1 coin represents NGN 1.00 before the creator/platform split
+  // Draft NGN web coin packs. Prices are configuration, not a public price commitment.
+  // All values use kobo; only NGN is enabled until provider/account eligibility is verified.
+  coinPacks: [
+    { id: 'ngn-80', coins: 80, amountMinor: 110000, currency: 'NGN', enabled: true },
+    { id: 'ngn-400', coins: 400, amountMinor: 530000, currency: 'NGN', enabled: true },
+    { id: 'ngn-800', coins: 800, amountMinor: 1040000, currency: 'NGN', enabled: true },
+    { id: 'ngn-4000', coins: 4000, amountMinor: 5000000, currency: 'NGN', enabled: true },
+  ],
+  // Legacy conversion remains only to support payment references created before pack checkout.
+  coinPriceMinor: 100,
+  coinValueMinor: 100,
   creatorGiftShare: 0.5,
   payoutHoldDays: 7,
-  minPayoutMinor: 500000, // NGN 5,000 when currency is NGN
+  minPayoutMinor: 500000,
 };

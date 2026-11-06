@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const config = require('../config');
-const { Gift, Wallet } = require('../db');
+const { Gift, Wallet, User } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { sendGift } = require('../services/wallet');
 const httpError = require('../utils/httpError');
@@ -11,7 +11,6 @@ router.get('/gifts', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Idempotency-Key header is required so retried requests never charge twice
 router.post('/gifts', requireAuth, async (req, res, next) => {
   try {
     const key = req.headers['idempotency-key'];
@@ -29,26 +28,46 @@ router.get('/wallet', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Starts a Paystack payment. Coins are credited only by the webhook, never here.
+router.get('/wallet/packs', requireAuth, (req, res) => {
+  res.json({
+    currency: 'NGN',
+    packs: config.coinPacks.filter((pack) => pack.enabled).map(({ id, coins, amountMinor, currency }) => ({ id, coins, amountMinor, currency })),
+    pricesAreDraft: true,
+  });
+});
+
+// Pack ID is the only client-controlled purchase input; amounts and coin counts are server-owned.
 router.post('/wallet/topup', requireAuth, async (req, res, next) => {
   try {
     if (!config.paystackSecret) throw httpError(503, 'Coin top-ups are temporarily unavailable because the payment provider is not configured');
-    const amountMinor = Number(req.body.amountMinor);
-    if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) throw httpError(400, 'Minimum top-up is 100 minor units');
+    const pack = config.coinPacks.find((item) => item.enabled && item.id === req.body.packId);
+    if (!pack) throw httpError(400, 'Choose a valid coin pack');
     if (req.body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(req.body.email))) throw httpError(400, 'Enter a valid email address');
-    const r = await fetch('https://api.paystack.co/transaction/initialize', {
+
+    const user = await User.findByPk(req.user.id, { attributes: ['id', 'email'] });
+    if (!user) throw httpError(401, 'Account not found');
+    const email = String(req.body.email || user.email || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'A valid email address is required for checkout');
+
+    const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: req.body.email || `${req.user.id}@clipverse.local`,
-        amount: amountMinor,
-        currency: 'NGN',
-        metadata: { userId: req.user.id },
+        email,
+        amount: pack.amountMinor,
+        currency: pack.currency,
+        metadata: { userId: req.user.id, coinPackId: pack.id, coinPackAmountMinor: pack.amountMinor, purpose: 'coin_topup' },
       }),
     });
-    const data = await r.json();
-    if (!data.status) throw httpError(502, 'Payment provider error');
-    res.json({ authorizationUrl: data.data.authorization_url, reference: data.data.reference });
+    const data = await response.json();
+    if (!response.ok || !data.status || !data.data?.authorization_url || !data.data?.reference) {
+      throw httpError(502, 'Payment provider could not initialize checkout');
+    }
+    res.json({
+      authorizationUrl: data.data.authorization_url,
+      reference: data.data.reference,
+      pack: { id: pack.id, coins: pack.coins, amountMinor: pack.amountMinor, currency: pack.currency },
+    });
   } catch (e) { next(e); }
 });
 
