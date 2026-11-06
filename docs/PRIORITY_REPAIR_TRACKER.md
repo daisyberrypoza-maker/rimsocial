@@ -59,7 +59,7 @@ Branch: `fix/reel-composer-remix-priority`
 - [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
 - [x] Paystack webhook signatures are compared safely by bytes; malformed multi-byte headers return unauthorized rather than throwing. Coin-credit failures return 500 for provider retries, and duplicate references remain idempotent. Sandbox verification remains open.
 - [x] Gift creator income is mirrored into `content_earnings` and follows the existing hold/release lifecycle; apply migration `backend/migrations/021-content-earnings.sql` before deployment with `DB_SYNC=false` and verify on a production-like database.
-- [ ] Ledger units are mixed (`gift_out` uses coins while other entries use minor currency units); do not sum ledger rows until units are normalized or a separate unit field is introduced.
+- [x] Ledger units are separated: `deltaMinor` stores fiat minor units and `deltaCoins` stores coin movements. Migration `023-ledger-unit-consistency.sql` backfills historical `gift_out` entries without deleting rows; apply and verify migration before deploying code.
 - [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
 - [x] Creator money settings are environment-configurable (`COIN_PRICE_MINOR`, `COIN_VALUE_MINOR`, `CREATOR_GIFT_SHARE`, `PAYOUT_HOLD_DAYS`, `MIN_PAYOUT_MINOR`) with validated defaults; real pricing choices and Paystack sandbox reconciliation remain open.
