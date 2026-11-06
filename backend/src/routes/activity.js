@@ -29,11 +29,7 @@ router.get('/', async (req, res, next) => {
     const blockedIds = new Set(blocks.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
     const postIds = ownedPosts.map((post) => post.id);
     const mentionPattern = viewer?.username
-      ? new RegExp(`(^|[^a-zA-Z0-9_])@${viewer.username.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\    const blockedIds = new Set(blocks.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
-    const postIds = ownedPosts.map((post) => post.id);
-    if (!postIds.length && !incomingFollows.length) return res.json({ items: [] });
-
-    const [likes, comments, reposts] = postIds.length ? await Promise.all([')}(?=$|[^a-zA-Z0-9_])`, 'i')
+      ? new RegExp('(^|[^a-zA-Z0-9_])@' + viewer.username + '(?=$|[^a-zA-Z0-9_])', 'i')
       : null;
     const mentionCandidates = viewer?.username ? await Post.findAll({
       where: {
@@ -41,14 +37,16 @@ router.get('/', async (req, res, next) => {
         status: 'live',
         isStory: false,
         visibility: 'public',
-        caption: { [Op.like]: `%@${viewer.username}%` },
+        caption: { [Op.like]: '%' + viewer.username + '%' },
       },
       attributes: ['id', 'authorId', 'caption', 'mediaUrl', 'kind', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: 100,
       raw: true,
     }) : [];
-    const mentionedPosts = mentionPattern ? mentionCandidates.filter((post) => mentionPattern.test(post.caption || '') && !blockedIds.has(String(post.authorId))) : [];
+    const mentionedPosts = mentionPattern
+      ? mentionCandidates.filter((post) => mentionPattern.test(post.caption || '') && !blockedIds.has(String(post.authorId)))
+      : [];
     if (!postIds.length && !incomingFollows.length && !mentionedPosts.length) return res.json({ items: [] });
 
     const [likes, comments, reposts] = postIds.length ? await Promise.all([
