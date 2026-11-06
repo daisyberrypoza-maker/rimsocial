@@ -115,6 +115,17 @@ export default function PostCard({ post, active }) {
     const video = videoRef.current;
     if (!video) return;
     if (active) video.play().catch(() => {}); else video.pause();
+    return () => {
+      // Send a single watch-time sample when the viewer leaves this post.
+      const duration = Number(video.duration);
+      const watched = Number(video.currentTime);
+      if (duration > 0 && Number.isFinite(duration) && Number.isFinite(watched)) {
+        api(`/v1/posts/${post.id}/feedback`, {
+          method: 'POST',
+          body: { action: 'watch', watchedSeconds: Math.min(watched, duration), durationSeconds: duration },
+        }).catch(() => {});
+      }
+    };
   }, [active, post.id]);
 
   async function like() {
@@ -222,7 +233,7 @@ export default function PostCard({ post, active }) {
           </select>
         </label>
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
-        <button className="post-menu-item" onClick={() => { setHidden(true); setShowMenu(false); toast("You will see fewer posts like this"); }}>Not interested</button>
+        <button className="post-menu-item" onClick={() => { api(`/v1/posts/${post.id}/feedback`, { method: 'POST', body: { action: 'not_interested' } }).catch(() => {}); setHidden(true); setShowMenu(false); toast("You will see fewer posts like this"); }}>Not interested</button>
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
         <button className="post-menu-item" onClick={sharePost}>Export or send</button>
       </section>
