@@ -18,6 +18,7 @@ import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
 import BusinessHub from './pages/BusinessHub.jsx';
 import Activity from './pages/Activity.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
+import AdsSponsors from './pages/AdsSponsors.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
         <Route path="/business" element={<RequireAuth><BusinessHub /></RequireAuth>} />
+        <Route path="/ads-sponsors" element={<RequireAuth><AdsSponsors /></RequireAuth>} />
         <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -92,6 +94,7 @@ function titleFor(path) {
   if (path.startsWith('/upload')) return 'New post';
   if (path.startsWith('/creator')) return 'Creator Studio';
   if (path.startsWith('/business')) return 'Find, Flip & Fix';
+  if (path.startsWith('/ads-sponsors')) return 'Ads & Sponsors';
   if (path.startsWith('/u/')) return '';
   return 'RimSocial';
 }

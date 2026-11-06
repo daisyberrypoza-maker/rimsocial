@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -30,6 +30,10 @@ export default function Upload() {
   const [aiLabel, setAiLabel] = useState(Boolean(draft.aiLabel));
   const [shareToStory, setShareToStory] = useState(Boolean(draft.shareToStory));
   const [galleryTab, setGalleryTab] = useState('Edits');
+  const [mentionAnchor, setMentionAnchor] = useState(null);
+  const [mentionSuggestions, setMentionSuggestions] = useState([]);
+  const [mentionLoading, setMentionLoading] = useState(false);
+  const captionRef = useRef(null);
 
   useEffect(() => {
     if (!remixId) { setSourcePost(null); return undefined; }
@@ -49,6 +53,40 @@ export default function Upload() {
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+
+  useEffect(() => {
+    if (!mentionAnchor?.query) { setMentionSuggestions([]); return undefined; }
+    let active = true;
+    setMentionLoading(true);
+    api('/v1/search?q=' + encodeURIComponent(mentionAnchor.query) + '&type=people')
+      .then((result) => { if (active) setMentionSuggestions((result.people || []).slice(0, 5)); })
+      .catch(() => { if (active) setMentionSuggestions([]); })
+      .finally(() => { if (active) setMentionLoading(false); });
+    return () => { active = false; };
+  }, [mentionAnchor?.query]);
+
+  function handleCaptionChange(event) {
+    const value = event.target.value;
+    const caret = event.target.selectionStart ?? value.length;
+    setDraft({ ...(draft || {}), caption: value, topic, aiLabel, shareToStory });
+    const match = value.slice(0, caret).match(/(^|\s)@([a-zA-Z0-9_.]{0,30})$/);
+    if (match) setMentionAnchor({ start: caret - match[2].length - 1, end: caret, query: match[2] });
+    else setMentionAnchor(null);
+  }
+
+  function insertMention(person) {
+    const value = String(draft.caption || '');
+    const anchor = mentionAnchor;
+    if (!anchor) return;
+    const next = value.slice(0, anchor.start) + '@' + person.username + ' ' + value.slice(anchor.end);
+    setDraft({ ...(draft || {}), caption: next, topic, aiLabel, shareToStory });
+    setMentionAnchor(null); setMentionSuggestions([]);
+    requestAnimationFrame(() => {
+      const input = captionRef.current;
+      if (input) { const caret = anchor.start + person.username.length + 2; input.focus(); input.setSelectionRange(caret, caret); }
+    });
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -122,7 +160,10 @@ export default function Upload() {
       <label className="upload-label" htmlFor="post-topic">Topic</label>
       <input id="post-topic" className="upload-topic-input" value={topic} maxLength={60} placeholder="Fashion, Comedy, Tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} />
       <label className="upload-label" htmlFor="post-caption">Description</label>
-      <textarea id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={(e) => setDraft({ ...(draft || {}), caption: e.target.value, topic, aiLabel, shareToStory })} rows={4} />
+      <textarea ref={captionRef} id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={handleCaptionChange} rows={4} />
+      {!asStory && mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="mention-suggestions" role="listbox" aria-label="People to mention">
+        {mentionLoading ? <p className="muted">Finding people…</p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="mention-suggestion" onClick={() => insertMention(person)}><span className="mention-suggestion-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.displayName || person.username}</strong><small>@{person.username}</small></span><Icon name="at-sign" size={16} /></button>)}
+      </div>}
       <div className="upload-caption-meta"><span>Use #hashtags to help people discover your post</span><span>{(draft.caption || '').length}/{asStory ? 200 : 500}</span></div>
 
       {!asStory && <fieldset className="upload-privacy">

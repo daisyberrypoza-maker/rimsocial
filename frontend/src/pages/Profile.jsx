@@ -177,6 +177,7 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}>＋ Create post or story</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/explore'); }}>⌕ Find friends & creators</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}>✦ Creator Studio · earnings & cashout</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}>▣ Ads & Sponsors</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}>Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}>Following</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
