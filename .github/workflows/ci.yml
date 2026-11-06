@@ -1,4 +1,4 @@
-name: ClipVerse CI
+name: RimSocial CI
 
 on:
   push:
