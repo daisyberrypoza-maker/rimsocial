@@ -11,11 +11,13 @@ import ShareOptions from './ShareOptions.jsx';
 
 const countedViews = new Set();
 
-function Caption({ text, onHashtag }) {
-  return <p>{String(text || '').split(/(#[a-zA-Z0-9_]+)/g).map((part, i) =>
+function Caption({ text, onHashtag, onMention }) {
+  return <p>{String(text || '').split(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_.]+)/g).map((part, i) =>
     /^#[a-zA-Z0-9_]+$/.test(part)
       ? <button key={i} type="button" className="hashtag-inline" onClick={() => onHashtag(part.slice(1))}>{part}</button>
-      : <span key={i}>{part}</span>
+      : /^@[a-zA-Z0-9_.]+$/.test(part)
+        ? <button key={i} type="button" className="mention-inline" onClick={() => onMention(part.slice(1))}>{part}</button>
+        : <span key={i}>{part}</span>
   )}</p>;
 }
 
@@ -207,7 +209,7 @@ export default function PostCard({ post, active }) {
     <div className="info">
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
       {post.topic && <div className="post-topic">{post.topic}</div>}
-      {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
+      {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored ? <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
