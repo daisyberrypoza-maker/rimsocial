@@ -22,6 +22,7 @@ This is a living release checklist. A branch or pull request is not considered c
 - [x] Backend syntax checks, backend unit tests, frontend production build and authenticated API lifecycle tests against an ephemeral MySQL service passed on PR #18's tested head (run: https://github.com/daisyberrypoza-maker/rimsocial/actions/runs/42137634775).
 - [x] Two-account integration coverage for profile moderation, approved discovery, idempotent offers, Fix evidence privacy, both completion confirmations, and Flip realized-profit privacy/calculation.
 - [ ] Apply migration 019 to the real deployment database and verify it without deleting existing records.
+- [x] Offer rules: withdrawal now uses the same row lock as accept/reject (a withdrawal can no longer overwrite an accepted offer), and one person can hold only one pending offer per listing (checked under a listing lock). Covered by two new assertions in the MySQL integration test.
 - [ ] Add concurrent-offer acceptance stress test and run on the production-like database.
 - [ ] Payment-provider checkout, signed webhook verification, refunds, dispute handling, and reconciled settlement. Current workflow intentionally does not collect or hold money; accepted offers are not proof of payment.
 - [ ] Audit logs, abuse/rate-limit policy, and operational escalation process for disputed deals.
@@ -56,6 +57,7 @@ Branch: `fix/reel-composer-remix-priority`
 - [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
 - [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
+- [x] Money settings (coin price, coin value, creator gift share, payout hold days, minimum payout) can be set from the environment (`COIN_PRICE_MINOR`, `COIN_VALUE_MINOR`, `CREATOR_GIFT_SHARE`, `PAYOUT_HOLD_DAYS`, `MIN_PAYOUT_MINOR`). Defaults equal the old hard-coded values, invalid values stop the server at startup, and changes apply only to new transactions. Choosing the actual pricing and share is a business decision for the owner.
 - [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook transitions are unit-tested, but provider sandbox tests remain.
 - [ ] End-to-end wallet/ledger reconciliation and invariant tests for concurrent coin spend, gifts, earnings holds, and payouts.
 - [ ] Android in-app purchases must use Google Play Billing; do not enable Paystack coin checkout inside the Android app.
@@ -71,6 +73,7 @@ Branch: `fix/reel-composer-remix-priority`
 
 ## LIVE and notifications
 - [ ] Current WebRTC signaling is not the same as a production public audience broadcast. Validate host-to-host match, then implement/verify viewer broadcast architecture, TURN/media infrastructure, reconnect, room capacity, moderation and live end-state.
+- [x] LIVE match invitations expire after `MATCH_INVITE_TTL_HOURS` (default 24) so an unanswered invite cannot lock a creator out, and creators who blocked each other cannot invite each other. Re-inviting the same creator right after a rejection is still allowed; add a cooldown or rate limit if it is abused.
 - [ ] Verify live scoring/gifting is server-authoritative and cannot be forged by clients.
 - [ ] Push notification delivery, opt-in, retries, token lifecycle, and notification preferences.
 - [ ] Test live and creator interactions on physical Android devices and poor/mobile networks.

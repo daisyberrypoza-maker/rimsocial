@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { parseEconomics } = require('./lib/economics');
 
 const num = (v, fallback) => (v === undefined || v === '' ? fallback : Number(v));
 
@@ -36,10 +37,10 @@ module.exports = {
   // Uploads
   maxUploadBytes: 100 * 1024 * 1024,
 
-  // Money: all amounts are minor units (kobo / cents)
-  coinPriceMinor: 100, // 1 coin costs NGN 1.00
-  coinValueMinor: 100, // 1 coin represents NGN 1.00 before the creator/platform split
-  creatorGiftShare: 0.5,
-  payoutHoldDays: 7,
-  minPayoutMinor: 500000, // NGN 5,000 when currency is NGN
+  // Money: all amounts are minor units (kobo / cents). Defaults match the original values;
+  // override with COIN_PRICE_MINOR, COIN_VALUE_MINOR, CREATOR_GIFT_SHARE, PAYOUT_HOLD_DAYS, MIN_PAYOUT_MINOR.
+  ...parseEconomics(process.env),
+
+  // LIVE matches: an unanswered invitation expires after this many hours
+  matchInviteTtlHours: num(process.env.MATCH_INVITE_TTL_HOURS, 24),
 };
