@@ -119,19 +119,37 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const followingIds = followingRows.map((row) => row.followeeId);
     const followerIds = followerRows.map((row) => row.followerId);
-    const [suggested, followBack] = await Promise.all([
-      User.findAll({
-        where: { id: { [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
-        attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 12,
-      }),
+    const excludedIds = [...new Set([req.user.id, ...followingIds, ...blockedIds])];
+
+    // Recommend second-degree connections first, ranked by shared follows.
+    const mutualRows = followingIds.length ? await Follow.findAll({
+      where: { followerId: { [Op.in]: followingIds }, followeeId: { [Op.notIn]: excludedIds } },
+      attributes: ['followeeId'], raw: true,
+    }) : [];
+    const mutualCounts = new Map();
+    for (const row of mutualRows) mutualCounts.set(row.followeeId, (mutualCounts.get(row.followeeId) || 0) + 1);
+    const mutualIds = [...mutualCounts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
+    const mutualPeople = mutualIds.length ? await User.findAll({
+      where: { id: { [Op.in]: mutualIds } }, attributes: PUBLIC_ATTRS,
+    }) : [];
+    const peopleById = new Map(mutualPeople.map((person) => [person.id, person]));
+    const friendOfFriends = mutualIds.map((id) => {
+      const person = peopleById.get(id);
+      return person ? { ...person.toJSON(), mutualCount: mutualCounts.get(id) || 0 } : null;
+    }).filter(Boolean);
+
+    const [popular, followBackRows] = await Promise.all([
+      User.findAll({ where: { id: { [Op.notIn]: excludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
       followerIds.length ? User.findAll({
-        where: { id: { [Op.in]: followerIds, [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
-        attributes: PUBLIC_ATTRS, limit: 12,
+        where: { id: { [Op.in]: followerIds, [Op.notIn]: excludedIds] } },
+        attributes: PUBLIC_ATTRS, limit: 24,
       }) : [],
     ]);
+    const seen = new Set(friendOfFriends.map((person) => person.id));
+    const suggested = [...friendOfFriends, ...popular.filter((person) => !seen.has(person.id))].slice(0, 24);
     res.json({
       suggested: await withFollowState(suggested, req.user.id),
-      followBack: await withFollowState(followBack, req.user.id),
+      followBack: await withFollowState(followBackRows, req.user.id),
     });
   } catch (e) { next(e); }
 });
