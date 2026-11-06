@@ -1099,3 +1099,51 @@ body { overflow:hidden; }
   .auth-step-intro { margin-bottom:18px !important; }
   .auth-progress { margin-bottom:20px !important; }
 }
+
+
+/* Snapchat-style AUTH: WHITE CANVAS, BLACK TYPE, SNAP YELLOW ACCENTS */
+.auth-screen {
+  background:#ffffff !important;
+  color:#111111 !important;
+  color-scheme:light !important;
+}
+.auth-card {
+  background:#ffffff !important;
+  color:#111111 !important;
+}
+.auth-screen .auth-intro h1,
+.auth-screen .auth-brand,
+.auth-screen .auth-form label { color:#111111 !important; }
+.auth-screen .auth-eyebrow { color:#686868 !important; }
+.auth-screen .auth-intro > p:last-child,
+.auth-screen .auth-step-description { color:#555555 !important; }
+.auth-screen .auth-step-meta { color:#686868 !important; }
+.auth-screen .auth-step-meta .auth-back {
+  background:#f2f2f2 !important; color:#111111 !important; border:0 !important;
+}
+.auth-screen .auth-step-meta .auth-cancel { color:#111111 !important; }
+.auth-screen .auth-progress { background:#ededed !important; }
+.auth-screen .auth-progress span { background:#FFFC00 !important; }
+.auth-screen .auth-form input,
+.auth-screen .auth-form select {
+  background:#f5f5f5 !important; color:#111111 !important;
+  border:1px solid #dedede !important;
+}
+.auth-screen .auth-form input::placeholder { color:#777777 !important; opacity:1; }
+.auth-screen .auth-form input:focus,
+.auth-screen .auth-form select:focus {
+  border-color:#c7c400 !important; outline:2px solid rgba(255,252,0,.32) !important;
+}
+.auth-screen .auth-primary {
+  background:#FFFC00 !important; color:#111111 !important;
+}
+.auth-screen .auth-mode-switch { background:#f1f1f1 !important; }
+.auth-screen .auth-mode-switch button { color:#444444 !important; }
+.auth-screen .auth-mode-switch button.selected { background:#FFFC00 !important; color:#111111 !important; }
+.auth-screen .auth-divider { color:#777777 !important; }
+.auth-screen .google-unconfigured { background:#ffffff !important; color:#111111 !important; border:1px solid #d8d8d8 !important; }
+.auth-screen .auth-terms,
+.auth-screen .auth-step-footnote { color:#737373 !important; }
+.auth-screen .auth-error { color:#c5223b !important; }
+.auth-screen .auth-notice { color:#655f00 !important; }
+.auth-screen .snap-mark { background:#FFFC00 !important; color:#111111 !important; }
