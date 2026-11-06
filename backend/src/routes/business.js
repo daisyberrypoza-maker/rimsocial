@@ -363,3 +363,4 @@ router.post('/opportunities/:id/updates', async (req, res, next) => {
 });
 
 module.exports = router;
+module.exports.testHelpers = { clean, money, httpsUrl, LANES, CURRENCIES };
