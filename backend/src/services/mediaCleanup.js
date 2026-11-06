@@ -56,7 +56,18 @@ async function requestAssetCleanup(publicId, resourceType = 'image', reason = 'c
       if (await isAssetReferenced(publicId, excluded)) return { shared: true };
     } catch (error) {
       console.error('Could not check media references before cleanup:', error.message);
-      return { done: false, queued: false, error };
+      // Do not delete while reference status is unknown. Persist a delayed job if possible so the
+      // worker can re-check references when the database is healthy.
+      try {
+        const [job] = await MediaCleanupJob.findOrCreate({
+          where: { publicId, resourceType },
+          defaults: { publicId, resourceType, reason, status: 'pending', attempts: 1, nextAttemptAt: new Date(Date.now() + 60 * 1000), lastError: String(error.message || 'Reference check failed').slice(0, 1000) },
+        });
+        return { done: false, queued: true, job };
+      } catch (queueError) {
+        console.error('Could not queue media cleanup while reference status is unknown:', queueError.message);
+        return { done: false, queued: false, error };
+      }
     }
   }
 
@@ -129,4 +140,4 @@ async function processPendingMediaCleanup(limit = 50) {
   return jobs.length;
 }
 
-module.exports = { isAssetReferenced, requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup };
+module.exports = { isAssetReferenced, requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup, localUploadPath };
