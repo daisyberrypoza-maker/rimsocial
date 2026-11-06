@@ -61,19 +61,21 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
 // Suggested creators and people to follow back for the Discover screen.
 router.get('/suggestions', requireAuth, async (req, res, next) => {
   try {
-    const [followingRows, followerRows] = await Promise.all([
+    const [followingRows, followerRows, blockRows] = await Promise.all([
       Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true }),
       Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true }),
+      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: req.user.id }, { blockedUserId: req.user.id }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
     ]);
+    const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const followingIds = followingRows.map((row) => row.followeeId);
     const followerIds = followerRows.map((row) => row.followerId);
     const [suggested, followBack] = await Promise.all([
       User.findAll({
-        where: { id: { [Op.notIn]: [req.user.id, ...followingIds] } },
+        where: { id: { [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
         attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 12,
       }),
       followerIds.length ? User.findAll({
-        where: { id: { [Op.in]: followerIds, [Op.notIn]: [req.user.id, ...followingIds] } },
+        where: { id: { [Op.in]: followerIds, [Op.notIn]: [req.user.id, ...followingIds, ...blockedIds] } },
         attributes: PUBLIC_ATTRS, limit: 12,
       }) : [],
     ]);
@@ -138,7 +140,14 @@ router.post('/:id/block', requireAuth, async (req, res, next) => {
     if (req.params.id === req.user.id) throw httpError(400, 'You cannot block yourself');
     const target = await User.findByPk(req.params.id, { attributes: ['id'] });
     if (!target) throw httpError(404, 'User not found');
-    await UserBlock.findOrCreate({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
+    await sequelize.transaction(async (t) => {
+      await UserBlock.findOrCreate({ where: { blockerId: req.user.id, blockedUserId: req.params.id }, transaction: t });
+      // Blocking ends any existing follow relationship in either direction.
+      const removedOutgoing = await Follow.destroy({ where: { followerId: req.user.id, followeeId: req.params.id }, transaction: t });
+      const removedIncoming = await Follow.destroy({ where: { followerId: req.params.id, followeeId: req.user.id }, transaction: t });
+      if (removedOutgoing) await User.decrement('followerCount', { by: removedOutgoing, where: { id: req.params.id }, transaction: t });
+      if (removedIncoming) await User.decrement('followerCount', { by: removedIncoming, where: { id: req.user.id }, transaction: t });
+    });
     res.json({ blocked: true });
   } catch (e) { next(e); }
 });
@@ -156,6 +165,11 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
     if (followeeId === req.user.id) throw httpError(400, 'You cannot follow yourself');
     const target = await User.findByPk(followeeId, { attributes: ['id'] });
     if (!target) throw httpError(404, 'User not found');
+    const blocked = await UserBlock.findOne({ where: { [Op.or]: [
+      { blockerId: req.user.id, blockedUserId: followeeId },
+      { blockerId: followeeId, blockedUserId: req.user.id },
+    ] } });
+    if (blocked) throw httpError(403, 'You cannot follow an account involved in a block relationship');
 
     await sequelize.transaction(async (t) => {
       const [, created] = await Follow.findOrCreate({
