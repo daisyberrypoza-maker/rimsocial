@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const crypto = require('crypto');
+const { signatureMatches } = require('../lib/signature');
 const { sequelize, Payout, PayoutProfile, EarningsWallet, LedgerEntry, User } = require('../db');
 const config = require('../config');
 const httpError = require('../utils/httpError');
@@ -7,7 +7,7 @@ const httpError = require('../utils/httpError');
 function requireOperator(req, res, next) {
   const supplied = String(req.headers['x-admin-api-key'] || '');
   const expected = String(config.adminApiKey || '');
-  if (expected.length < 32 || /replace|change-this|paste-output/i.test(expected) || supplied.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
+  if (expected.length < 32 || /replace|change-this|paste-output/i.test(expected) || !signatureMatches(supplied, expected)) {
     return res.status(401).json({ error: 'Operator authorization required' });
   }
   next();
