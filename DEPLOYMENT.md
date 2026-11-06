@@ -39,3 +39,16 @@ A creator must opt in with “Allow others to remix this post.” The API checks
 ## Release gate
 
 A successful CI build proves syntax and compilation only. Before production, test account creation/login, CORS from the real hosted frontend and Android/iOS origins, media upload/deletion against Cloudinary, story expiry, coin webhook idempotency, gift ledger accounting, payout success/failure webhooks, moderation/report workflows, backups/restore, and rate limits/abuse controls.
+
+## Database migrations
+
+Back up the production database and confirm the backup restores **before** running any migration. Apply the SQL files in `backend/migrations/` in numeric order, skipping any already applied, and note which one is the last you ran:
+
+- `019-find-flip-fix.sql`
+- `020-media-cleanup-jobs.sql`
+- `021-content-earnings.sql`
+- `022-live-match-gift-attribution.sql`
+- `023-ledger-unit-consistency.sql`
+- `024-public-live-broadcasts.sql`
+
+With `DB_SYNC=false` the app does not create or alter tables, so a missing migration shows up as runtime errors on the related features. After migrating, check the readiness endpoint and run the backend tests against the migrated schema. Keep the backup until the release has been verified; rolling back means restoring it, so decide the rollback point before you start.

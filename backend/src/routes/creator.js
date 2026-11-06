@@ -141,6 +141,14 @@ router.post('/matches/:id/respond', async (req, res, next) => {
       throw httpError(409, 'This invitation has expired');
     }
     const accept = req.body.accept === true;
+    if (accept) {
+      // A block placed after the invite was sent must still stop the match.
+      const blocked = await UserBlock.findOne({ where: { [Op.or]: [{ blockerId: match.hostId, blockedUserId: match.opponentId }, { blockerId: match.opponentId, blockedUserId: match.hostId }] } });
+      if (blocked) {
+        await match.update({ status: 'cancelled' });
+        throw httpError(409, 'This invitation is no longer available');
+      }
+    }
     await match.update(accept ? { status: 'active', startsAt: new Date() } : { status: 'cancelled' });
     res.json({ match });
   } catch (e) { next(e); }
