@@ -2,6 +2,7 @@ const { sequelize, Wallet, Gift, Post, User, EarningsWallet, GiftTransaction, Le
 const config = require('../config');
 const { Op } = require('sequelize');
 const httpError = require('../utils/httpError');
+const { assertNotBlocked } = require('../lib/blocks');
 
 async function sendGift({ senderId, postId, giftId, idempotencyKey, liveMatchId = null }) {
   // Fast path: a retry of a completed gift returns the original result
@@ -20,6 +21,7 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey, liveMatchId 
       const post = await Post.findOne({ where: { id: postId, status: 'live', isStory: false, visibility: 'public' }, transaction: t });
       if (!post) throw httpError(404, 'Public post not found');
       if (post.authorId === senderId) throw httpError(400, 'You cannot gift your own post');
+      await assertNotBlocked(senderId, post.authorId, 'Public post not found');
       const creator = await User.findByPk(post.authorId, { attributes: ['id', 'isCreator'], transaction: t });
       if (!creator?.isCreator) throw httpError(409, 'This account has not enabled creator monetization');
 
