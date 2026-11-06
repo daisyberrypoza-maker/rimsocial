@@ -2961,3 +2961,23 @@ html, body, #root { background: #ffffff; color: #111111; }
 .activity-heading .page-title { font-weight:600 !important; }
 .activity-empty h2 { font-weight:600 !important; }
 .activity-page .activity-item { background:#fff !important; }
+
+
+/* Avatar and profile-list alignment corrections */
+.sc-ring-item::before, .sc-ring-item::after, .sc-ring::before, .sc-ring::after { content:none !important; display:none !important; }
+.sc-ring-item { min-height:94px; height:auto; }
+.sc-ring, .sc-ring.none { width:72px; height:72px; border-radius:50%; overflow:visible; box-shadow:none !important; }
+.sc-ring.none .sc-avatar.own {
+  width:64px !important; height:64px !important; min-width:64px;
+  border-radius:50% !important; overflow:hidden !important;
+  box-shadow:none !important; border:1px solid #e5e7eb !important;
+}
+.sc-avatar { border-radius:50% !important; overflow:hidden !important; box-shadow:none !important; }
+.sc-stats { gap:8px 18px !important; align-items:center !important; }
+.sc-stats > * { background:transparent !important; border-radius:0 !important; padding:0 !important; height:auto !important; font-size:14px !important; }
+.sc-stats strong { font-weight:600 !important; }
+.sc-profile .sc-hero { overflow:hidden !important; }
+.sc-profile .sc-hero-bg { inset:0 !important; z-index:-1 !important; }
+.sc-profile .sc-hero-shade { z-index:-1 !important; }
+.sc-profile .sc-add { min-width:112px; justify-content:center; }
+.sc-profile .sc-seg-row { gap:10px !important; }
