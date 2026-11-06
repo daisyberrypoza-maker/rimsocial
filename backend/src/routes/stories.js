@@ -6,6 +6,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
+const { assertNotBlocked } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup } = require('../services/mediaCleanup');
 
@@ -17,6 +18,7 @@ router.get('/rail', requireAuth, async (req, res, next) => {
 // GET /v1/stories/users/:userId  -> active stories for one creator
 router.get('/users/:userId', requireAuth, async (req, res, next) => {
   try {
+    await assertNotBlocked(req.user.id, req.params.userId, 'User not found');
     res.json({ items: await stories.getUserStories(req.params.userId, req.user.id) });
   } catch (e) { next(e); }
 });
@@ -56,6 +58,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       include: [{ model: require('../db').User, as: 'author', attributes: ['username'] }],
     });
     if (!original) throw httpError(404, 'Story not found or expired');
+    await assertNotBlocked(req.user.id, original.authorId, 'Story not found or expired');
     if (original.authorId === req.user.id) throw httpError(400, 'This is your own story');
     const story = await Post.create({
       authorId: req.user.id,
@@ -77,9 +80,10 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
   try {
     const story = await Post.findOne({
       where: { id: req.params.id, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
-      attributes: ['id'],
+      attributes: ['id', 'authorId'],
     });
     if (!story) throw httpError(404, 'Story not found or expired');
+    await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
     const [, created] = await StoryView.findOrCreate({
       where: { storyId: story.id, viewerId: req.user.id },
     });
