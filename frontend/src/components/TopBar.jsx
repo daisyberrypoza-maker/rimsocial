@@ -25,7 +25,7 @@ export default function TopBar({ immersive, title }) {
   const [busy, setBusy] = useState(false);
 
   function buyCoins() {
-    if (isNative) return toast('Android coin purchases are disabled until Google Play Billing is integrated and verified.');
+    if (isNative) return toast('In-app coin purchases are disabled until the correct native store billing is integrated and verified.');
     setShowCoinSheet(true);
   }
 
