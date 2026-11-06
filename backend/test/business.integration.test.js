@@ -149,4 +149,49 @@ test('Find Flip Fix profile review, approved discovery, idempotent offers, priva
   assert.equal(ownerConfirm.status, 200);
   assert.equal(ownerConfirm.data.offer.status, 'completed');
   assert.equal(ownerConfirm.data.opportunity.status, 'completed');
+
+  const flip = await call('/v1/business/opportunities', {
+    method: 'POST', as: 'owner',
+    body: {
+      lane: 'flip', title: 'Resell refurbished equipment', description: 'Buy, repair and resell used equipment.',
+      category: 'equipment', country: 'NG', city: 'Warri', currency: 'NGN',
+      askingPriceMinor: 500000, estimatedCostMinor: 100000, targetPriceMinor: 900000,
+    },
+  });
+  assert.equal(flip.status, 201);
+  const flipId = flip.data.opportunity.id;
+  const flipApproved = await call('/v1/business/admin/opportunities/' + flipId + '/review', {
+    method: 'PATCH', admin: true, body: { decision: 'approve' },
+  });
+  assert.equal(flipApproved.status, 200);
+  const flipOffer = await call('/v1/business/opportunities/' + flipId + '/offers', {
+    method: 'POST', as: 'professional', body: { amountMinor: 450000, message: 'I will purchase and resell this equipment.' },
+  });
+  assert.equal(flipOffer.status, 201);
+  const flipAccepted = await call('/v1/business/offers/' + flipOffer.data.offer.id + '/respond', {
+    method: 'POST', as: 'owner', body: { decision: 'accept' },
+  });
+  assert.equal(flipAccepted.status, 200);
+  const flipProviderConfirm = await call('/v1/business/offers/' + flipOffer.data.offer.id + '/complete', { method: 'POST', as: 'professional', body: {} });
+  assert.equal(flipProviderConfirm.status, 200);
+  const flipOwnerConfirm = await call('/v1/business/offers/' + flipOffer.data.offer.id + '/complete', { method: 'POST', as: 'owner', body: {} });
+  assert.equal(flipOwnerConfirm.data.opportunity.status, 'completed');
+
+  const forbiddenFinancials = await call('/v1/business/opportunities/' + flipId + '/financials', {
+    method: 'PATCH', as: 'owner', body: { actualSalePriceMinor: 800000, actualCostMinor: 120000 },
+  });
+  assert.equal(forbiddenFinancials.status, 403);
+  const financials = await call('/v1/business/opportunities/' + flipId + '/financials', {
+    method: 'PATCH', as: 'professional',
+    body: { actualSalePriceMinor: 800000, actualCostMinor: 120000, note: 'Sold after repairs.' },
+  });
+  assert.equal(financials.status, 201);
+  assert.equal(financials.data.record.purchasePriceMinor, 450000);
+  assert.equal(financials.data.opportunity.realizedProfitMinor, 230000);
+
+  const ownerFlipDetail = await call('/v1/business/opportunities/' + flipId, { as: 'owner' });
+  assert.equal(ownerFlipDetail.data.opportunity.realizedProfitMinor, null);
+  const flipperDetail = await call('/v1/business/opportunities/' + flipId, { as: 'professional' });
+  assert.equal(flipperDetail.data.opportunity.realizedProfitMinor, 230000);
+  assert.equal(flipperDetail.data.financialHistory.length, 1);
 });
