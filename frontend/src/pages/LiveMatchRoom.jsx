@@ -20,6 +20,7 @@ export default function LiveMatchRoom() {
   const remoteVideo = useRef(null);
   const pcRef = useRef(null);
   const streamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
   const seenRef = useRef(new Set());
   const cursorRef = useRef('1970-01-01T00:00:00.000Z');
   const cursorIdRef = useRef('');
@@ -69,9 +70,37 @@ export default function LiveMatchRoom() {
     }
   }
 
+  function attachRemoteTrack(event) {
+    // Some WebViews deliver ontrack without event.streams[0]. Build a stream
+    // from individual tracks in that case instead of leaving the viewer black.
+    let stream = event.streams?.[0];
+    if (stream) {
+      remoteStreamRef.current = stream;
+    } else {
+      if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream();
+      stream = remoteStreamRef.current;
+      if (event.track && !stream.getTracks().some((track) => track.id === event.track.id)) {
+        stream.addTrack(event.track);
+      }
+    }
+    const video = remoteVideo.current;
+    if (!video) return;
+    if (video.srcObject !== stream) video.srcObject = stream;
+    video.play?.().catch((e) => {
+      console.warn('Remote video autoplay was blocked; user interaction may be required.', e);
+      setRoomState('Video received — tap the video to play');
+    });
+    setRoomState('Connected to your match opponent');
+  }
+
   async function startRoom() {
-    if (!match || match.status !== 'active' || starting) return;
+    if (!match || match.status !== 'active' || starting || pcRef.current) return;
     setStarting(true); setError('');
+    seenRef.current = new Set();
+    cursorRef.current = '1970-01-01T00:00:00.000Z';
+    cursorIdRef.current = '';
+    pendingCandidatesRef.current = [];
+    remoteStreamRef.current = null;
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
         throw new Error('This device or WebView does not support WebRTC camera access.');
@@ -80,7 +109,10 @@ export default function LiveMatchRoom() {
       setTurnConfigured(Boolean(iceConfig.turnConfigured));
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: 'user' } });
       streamRef.current = stream;
-      if (localVideo.current) localVideo.current.srcObject = stream;
+      if (localVideo.current) {
+        localVideo.current.srcObject = stream;
+        localVideo.current.play?.().catch(() => {});
+      }
 
       const pc = new RTCPeerConnection({
         iceServers: iceConfig.iceServers?.length ? iceConfig.iceServers : [{ urls: ['stun:stun.l.google.com:19302'] }],
@@ -88,15 +120,16 @@ export default function LiveMatchRoom() {
       });
       pcRef.current = pc;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-      pc.ontrack = (event) => {
-        if (remoteVideo.current) remoteVideo.current.srcObject = event.streams[0];
-        setRoomState('Connected to your match opponent');
-      };
+      pc.ontrack = attachRemoteTrack;
       pc.onicecandidate = (event) => {
         if (event.candidate) sendSignal('candidate', event.candidate.toJSON()).catch((e) => setError(e.message));
       };
       pc.onconnectionstatechange = () => {
-        setRoomState(pc.connectionState === 'connected' ? 'Video connected' : `Connection: ${pc.connectionState}`);
+        if (pc.connectionState === 'connected') setRoomState('Video connected');
+        else if (pc.connectionState === 'failed') setRoomState('Connection failed — check TURN server and network');
+        else if (pc.connectionState === 'disconnected') setRoomState('Connection interrupted — attempting to recover');
+        else if (pc.connectionState === 'connecting') setRoomState('Connecting…');
+        else if (pc.connectionState === 'closed') setRoomState('Disconnected');
       };
 
       if (match.hostId === (await api('/v1/auth/me')).user.id) {
@@ -121,9 +154,8 @@ export default function LiveMatchRoom() {
               }
               continue;
             }
-            // Do not advance the cursor or mark a signal as seen until its
-            // handling succeeds. Otherwise a transient SDP/API error could
-            // permanently skip the offer/answer and leave both creators stuck.
+            // Advance the cursor only after processing succeeds, so a transient
+            // SDP/API error cannot silently discard the offer or answer.
             if (signal.kind === 'offer' && pc.signalingState === 'stable') {
               await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
               await flushCandidates(pc);
@@ -146,22 +178,23 @@ export default function LiveMatchRoom() {
           }
         } catch (e) {
           if (e.status === 409) setError('This match is no longer active.');
-          else setError(e.message);
+          else setError(e.message || 'Signaling temporarily failed; retrying…');
         } finally {
           pollInProgress = false;
         }
       };
-      await poll();
       const timer = window.setInterval(poll, 1200);
-      pc.addEventListener('connectionstatechange', () => {
-        if (['failed', 'closed'].includes(pc.connectionState)) window.clearInterval(timer);
-      });
       pc._rimsocialPollTimer = timer;
-      setRoomState('Waiting for opponent video…');
+      await poll();
+      if (pcRef.current === pc && pc.connectionState !== 'connected') setRoomState('Waiting for opponent video…');
     } catch (e) {
       setError(e.message || 'Could not start the LIVE room.');
+      if (pcRef.current?._rimsocialPollTimer) window.clearInterval(pcRef.current._rimsocialPollTimer);
+      pcRef.current?.close();
+      pcRef.current = null;
       if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+      if (localVideo.current) localVideo.current.srcObject = null;
     } finally {
       setStarting(false);
     }
@@ -209,6 +242,11 @@ export default function LiveMatchRoom() {
     pcRef.current = null;
     if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    remoteStreamRef.current = null;
+    pendingCandidatesRef.current = [];
+    seenRef.current = new Set();
+    cursorRef.current = '1970-01-01T00:00:00.000Z';
+    cursorIdRef.current = '';
     if (localVideo.current) localVideo.current.srcObject = null;
     if (remoteVideo.current) remoteVideo.current.srcObject = null;
     setRoomState('Disconnected');
@@ -220,7 +258,7 @@ export default function LiveMatchRoom() {
     {!match ? <p className="muted">Loading match…</p> : <>
       <section className="live-room-videos">
         <article><video ref={localVideo} autoPlay muted playsInline/><span>You</span></article>
-        <article><video ref={remoteVideo} autoPlay playsInline/><span>Opponent</span></article>
+        <article><video ref={remoteVideo} autoPlay playsInline onClick={() => remoteVideo.current?.play?.().catch(() => {})}/><span>Opponent</span></article>
       </section>
       <section className="panel">
         <h2>{roomState}</h2>
