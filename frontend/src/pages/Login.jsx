@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadAccount } from '../account.js';
+import Icon from '../components/Icon.jsx';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const COUNTRY_CODES = `AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW`.split(' ');
@@ -116,7 +117,7 @@ export default function Login() {
           </>
         ) : (
           <>
-            <div className="auth-step-meta"><button type="button" className="auth-back" onClick={() => { if (registerStep === 0) { setMode('login'); } else { setRegisterStep((step) => step - 1); } setError(''); }} aria-label="Go back">←</button><span>STEP {registerStep + 1} OF {registerSteps.length}</span><button type="button" className="auth-cancel" onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
+            <div className="auth-step-meta"><button type="button" className="auth-back" onClick={() => { if (registerStep === 0) { setMode('login'); } else { setRegisterStep((step) => step - 1); } setError(''); }} aria-label="Go back"><Icon name="arrow-left" size={32} strokeWidth={2.5} /></button><span>STEP {registerStep + 1} OF {registerSteps.length}</span><button type="button" className="auth-cancel" onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
             <div className="auth-progress" aria-label={`Step ${registerStep + 1} of ${registerSteps.length}`}><span style={{ width: `${((registerStep + 1) / registerSteps.length) * 100}%` }} /></div>
             <div className="auth-intro auth-step-intro"><p className="auth-eyebrow">LET’S GET YOU SET UP</p><h1>{currentStep.title}</h1><p className="auth-step-description">{currentStep.subtitle}</p></div>
             <form className="auth-form auth-step-form" onSubmit={handleSubmit}>
