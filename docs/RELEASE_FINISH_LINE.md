@@ -21,6 +21,9 @@ RimSocial is complete for release only when every **release-blocking** item belo
 
 ## Gate 3 — LIVE and creator monetization
 
+- [ ] Web coin purchases are disabled by default; only enable `ENABLE_WEB_COIN_PURCHASES=true` after published prices, verified Paystack settlement/webhook idempotency, refunds/reversals and ledger reconciliation pass. Draft prices must not be sold to users.
+- [ ] Google Play Billing is implemented and tested for Android digital coin purchases, or Android purchases remain disabled. Paystack web checkout is not a substitute for Play Billing where Google Play policy requires it.
+
 - [ ] Real audience live broadcast and reconnect behavior are verified, not just signaling or a two-host peer connection; camera/microphone permissions, viewer playback, chat, match score, and gift attribution are tested on physical devices and mobile networks.
 - [ ] Coin purchase, gift spend, creator earnings holds, payout request, webhook settlement/reversal and ledger reconciliation pass integration tests. Android coin purchases must use Google Play Billing.
 - [ ] Features without configured media, payment, push, or payout providers remain visibly disabled instead of showing simulated success.
