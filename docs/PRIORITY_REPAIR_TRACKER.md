@@ -18,7 +18,7 @@ This is a living release checklist. A branch or pull request is not considered c
 - [x] HTTPS-only evidence/website links and public discovery restricted to approved listings.
 - [x] React Business workspace and navigation entry.
 - [x] Additive production SQL migration: `backend/migrations/019-find-flip-fix.sql`.
-- [ ] CI/build results on this feature branch.
+- [x] Backend syntax checks, backend unit tests, and frontend production build passed on the tested PR #13 head (run: https://github.com/daisyberrypoza-maker/rimsocial/actions/runs/42135575987). Re-run CI after any subsequent branch update.
 - [ ] Live MySQL migration and authenticated API integration tests.
 - [ ] Two-account end-to-end tests for offers, Fix evidence, both completion confirmations, and concurrent offer acceptance.
 - [ ] Payment-provider checkout, signed webhook verification, refunds, dispute handling, and reconciled settlement. Current workflow intentionally does not collect or hold money; accepted offers are not proof of payment.
@@ -46,7 +46,7 @@ Branch: `fix/reel-composer-remix-priority`
 ## Monetization and finance
 - [x] Gift eligibility and idempotency safeguards were added in PR #11 (verify merged commit remains in `main`).
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
-- [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation.
+- [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook state transitions are covered by unit tests in PR #15, but provider sandbox tests remain.
 - [ ] End-to-end wallet/ledger reconciliation and invariant tests for concurrent coin spend, gifts, earnings holds, and payouts.
 - [ ] Android in-app purchases must use Google Play Billing; do not enable Paystack coin checkout inside the Android app.
 - [ ] Advertiser marketplace: advertiser onboarding, campaign creation, targeting, budget/debit ledger, impressions/click tracking, billing, invoices, fraud controls, reporting and ad review. Sponsored-post disclosure alone is not a paid ads marketplace.
