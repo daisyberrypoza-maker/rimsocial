@@ -62,7 +62,7 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey, liveMatchId 
       }, { transaction: t });
 
       await LedgerEntry.bulkCreate([
-        { userId: senderId, kind: 'gift_out', deltaMinor: -coins, refId: tx.id },
+        { userId: senderId, kind: 'gift_out', deltaMinor: 0, deltaCoins: -coins, refId: tx.id },
         { userId: post.authorId, kind: 'gift_in', deltaMinor: creatorMinor, refId: tx.id },
       ], { transaction: t });
 
