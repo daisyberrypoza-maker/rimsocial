@@ -67,6 +67,27 @@ export default function Profile() {
     } catch (e) { toast(e.message); setListType(''); }
   }
 
+  async function openBlockedPeople() {
+    setDrawerOpen(false);
+    setListType('blocked');
+    setPeopleQuery('');
+    try {
+      const data = await api('/v1/users/blocked');
+      setPeople(data.items || []);
+    } catch (e) { toast(e.message); setListType(''); }
+  }
+
+  async function unblockPerson(person) {
+    if (peopleBusy[person.id]) return;
+    setPeopleBusy((current) => ({ ...current, [person.id]: true }));
+    try {
+      await api(`/v1/users/${person.id}/block`, { method: 'DELETE' });
+      setPeople((current) => current.filter((item) => item.id !== person.id));
+      toast(`@${person.username} unblocked`);
+    } catch (e) { toast(e.message); }
+    finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
+  }
+
   async function toggleListFollow(person) {
     if (peopleBusy[person.id]) return;
     setPeopleBusy((current) => ({ ...current, [person.id]: true }));
@@ -261,6 +282,7 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}><Icon name="megaphone" size={21} />Ads & Sponsors</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}><Icon name="user-plus" size={21} />Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users" size={21} />Following</button>
+          <button onClick={openBlockedPeople}><Icon name="shield" size={21} />Blocked accounts</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
           <button onClick={() => document.getElementById('profile-cover-file')?.click()} disabled={coverBusy}><Icon name="image" size={21} />{coverBusy ? 'Uploading cover…' : 'Change profile background'}</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
@@ -289,11 +311,11 @@ export default function Profile() {
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
         <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <div className="people-sheet-handle" />
-          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{profile.username}</h3><small>{listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions"><button className="icon-button" onClick={() => { setListType(''); navigate('/explore'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button></div></div>
-          <div className="people-tabs">
+          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{listType === 'blocked' ? 'Blocked accounts' : profile.username}</h3><small>{listType === 'blocked' ? `${people.length} blocked ${people.length === 1 ? 'account' : 'accounts'}` : listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions">{listType !== 'blocked' && <button className="icon-button" onClick={() => { setListType(''); navigate('/explore'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button>}</div></div>
+          {listType !== 'blocked' && <div className="people-tabs">
             <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><span>{formatCount(profile.followerCount)}</span> followers</button>
             <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><span>{formatCount(profile.followingCount || 0)}</span> following</button>
-          </div>
+          </div>}
           <label className="people-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>
           <div className="people-sort"><span>Sorted by <strong>Default</strong></span><Icon name="sort" size={22} /></div>
           <div className="people-list">
@@ -303,10 +325,12 @@ export default function Profile() {
                   <Avatar user={person} size={56} />
                   <span><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                 </button>
-                <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Added' : 'Add'}</button>
+                {listType === 'blocked'
+                  ? <button className="people-follow-btn" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
+                  : <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Added' : 'Add'}</button>}
               </div>
             )}
-            {!people.length && <div className="people-empty"><Icon name="users" size={28} /><strong>No {listType} yet</strong><p>People who connect with this account will appear here.</p></div>}
+            {!people.length && <div className="people-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here. You can unblock them any time.' : 'People who connect with this account will appear here.'}</p></div>}
             {people.length > 0 && !people.some((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())) && <p className="muted center">No people match that search.</p>}
           </div>
         </section>
