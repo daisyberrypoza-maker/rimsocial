@@ -8,7 +8,7 @@ const httpError = require('../utils/httpError');
 
 const sign = (u) => jwt.sign({ id: u.id, country: u.country }, config.jwtSecret, { expiresIn: '30d' });
 const publicUser = (u) => ({
-  id: u.id, username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl, country: u.country,
+  id: u.id, username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl, coverUrl: u.coverUrl, country: u.country,
 });
 
 router.post('/register', async (req, res, next) => {
