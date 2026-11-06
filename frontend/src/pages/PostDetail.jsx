@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { mediaUrl } from '../lib/config.js';
+import { mediaUrl, postShareUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
@@ -58,7 +58,10 @@ export default function PostDetail() {
     finally { setBusy(false); }
   }
 
-  function shareExternally() { setShowShare(true); }
+  function shareExternally() {
+    if (!postShareUrl(postId)) return toast('External sharing needs VITE_PUBLIC_APP_URL set to the public RimSocial website.');
+    setShowShare(true);
+  }
 
   async function submitComment(e) {
     e.preventDefault();
@@ -94,6 +97,6 @@ export default function PostDetail() {
       </div>
       <div className="post-detail-stats"><span>{formatCount(post.viewCount)} views</span><span>{formatCount(post.repostCount || 0)} reposts</span></div>
     </article>
-    {showShare && <ShareOptions url={new URL(`/p/${post.id}`, window.location.origin).toString()} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
+    {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
   </main>;
 }
