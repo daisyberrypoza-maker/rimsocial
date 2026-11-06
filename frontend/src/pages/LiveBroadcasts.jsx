@@ -129,12 +129,23 @@ export default function LiveBroadcasts() {
     event.preventDefault();
     if (!title.trim()) { setError('Add a title before going LIVE.'); return; }
     setBusy(true); setError('');
+    let createdBroadcastId = null;
     try {
       const data = await api('/v1/broadcasts', { method: 'POST', body: { title: title.trim() } });
+      createdBroadcastId = data.broadcast?.id || null;
       setTitle('');
       await refresh();
       await connectToBroadcast(data.broadcast, true);
-    } catch (e) { setError(e.message || 'Could not start LIVE'); setBusy(false); }
+    } catch (e) {
+      // If the session was created but camera permission/connection failed, end it
+      // server-side so it does not remain visible as a ghost LIVE broadcast.
+      if (createdBroadcastId) {
+        await api(`/v1/broadcasts/${createdBroadcastId}/end`, { method: 'POST', body: {} }).catch(() => {});
+        await refresh();
+      }
+      setError(e.message || 'Could not start LIVE');
+      setBusy(false);
+    }
   };
 
   const endBroadcast = async () => {
