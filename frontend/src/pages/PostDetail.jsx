@@ -6,6 +6,7 @@ import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
+import ShareOptions from '../components/ShareOptions.jsx';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -18,6 +19,7 @@ export default function PostDetail() {
   const [liked, setLiked] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -56,18 +58,7 @@ export default function PostDetail() {
     finally { setBusy(false); }
   }
 
-  async function shareExternally() {
-    const url = new URL(`/p/${postId}`, window.location.origin).toString();
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'RimSocial post', text: post?.caption || 'View this post on RimSocial', url });
-      } else {
-        window.prompt('Share this post URL', url);
-      }
-    } catch (error) {
-      if (error?.name !== 'AbortError') toast('Could not open the share sheet');
-    }
-  }
+  function shareExternally() { setShowShare(true); }
 
   async function submitComment(e) {
     e.preventDefault();
@@ -103,5 +94,6 @@ export default function PostDetail() {
       </div>
       <div className="post-detail-stats"><span>{formatCount(post.viewCount)} views</span><span>{formatCount(post.repostCount || 0)} reposts</span></div>
     </article>
+    {showShare && <ShareOptions url={new URL(`/p/${post.id}`, window.location.origin).toString()} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
   </main>;
 }
