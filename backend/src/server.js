@@ -7,6 +7,7 @@ const config = require('./config');
 const { sequelize, seedGifts, Post, StoryView } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
+const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
 
 const app = express();
 const frontendDist = path.resolve(__dirname, '../../frontend/dist');
@@ -138,25 +139,65 @@ async function start() {
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   await seedGifts();
   const purgeExpiredStories = async () => {
-    const expired = await Post.findAll({ where: { isStory: true, expiresAt: { [Op.lt]: new Date() } }, attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind'], limit: 500 });
+    const expired = await Post.findAll({
+      where: { isStory: true, status: 'live', expiresAt: { [Op.lt]: new Date() } },
+      attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind'],
+      order: [['expiresAt', 'ASC']],
+      limit: 500,
+    });
     if (!expired.length) return;
     const ids = expired.map((story) => story.id);
-    await StoryView.destroy({ where: { storyId: ids } });
-    await Post.destroy({ where: { id: ids } });
+    const cleanupByAsset = new Map();
+    const cleanedIds = [];
     for (const story of expired) {
       const publicId = story.mediaPublicId || cloudinary.publicIdFromUrl(story.mediaUrl);
+      let result;
       if (publicId) {
-        const where = story.mediaPublicId ? { mediaPublicId: publicId, status: 'live' } : { mediaUrl: story.mediaUrl, status: 'live' };
-        if (!(await Post.count({ where }))) {
-          try { await cloudinary.deleteAsset(publicId, story.kind === 'video' ? 'video' : 'image'); }
-          catch (error) { console.error('Expired story media cleanup failed:', publicId, error.message); }
+        const resourceType = story.kind === 'video' ? 'video' : 'image';
+        const key = resourceType + ':' + publicId;
+        if (!cleanupByAsset.has(key)) {
+          cleanupByAsset.set(key, await requestAssetCleanup(publicId, resourceType, 'expired_story', { excludePostIds: ids }));
         }
+        result = cleanupByAsset.get(key);
+      } else {
+        result = await cleanupLocalUpload(story.mediaUrl, ids);
       }
+      if (result.shared || result.queued || result.done) cleanedIds.push(story.id);
+    }
+    if (cleanedIds.length) {
+      await StoryView.destroy({ where: { storyId: cleanedIds } });
+      await Post.destroy({ where: { id: cleanedIds } });
     }
   };
+
+  const purgeRemovedMedia = async () => {
+    const removed = await Post.findAll({
+      where: {
+        status: 'removed',
+        [Op.or]: [
+          { mediaPublicId: { [Op.ne]: null } },
+          { mediaUrl: { [Op.like]: '%res.cloudinary.com/%' } },
+          { mediaUrl: { [Op.like]: '/uploads/%' } },
+        ],
+      },
+      attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind', 'thumbUrl'],
+      order: [['updatedAt', 'ASC']],
+      limit: 100,
+    });
+    for (const post of removed) {
+      try { await cleanupRemovedPostMedia(post); }
+      catch (error) { console.error('Removed media cleanup retry failed:', error.message); }
+    }
+  };
+
+  const runMediaCleanup = async () => {
+    await purgeExpiredStories();
+    await purgeRemovedMedia();
+    await processPendingMediaCleanup();
+  };
   app.listen(config.port, () => console.log(`Clipverse API on http://localhost:${config.port}`));
-  Promise.resolve().then(purgeExpiredStories).catch((e) => console.error('Initial story cleanup failed:', e.message));
-  setInterval(() => purgeExpiredStories().catch((e) => console.error('Story cleanup failed:', e.message)), 10 * 60 * 1000).unref();
+  Promise.resolve().then(runMediaCleanup).catch((e) => console.error('Initial media cleanup failed:', e.message));
+  setInterval(() => runMediaCleanup().catch((e) => console.error('Media cleanup failed:', e.message)), 10 * 60 * 1000).unref();
 }
 
 start().catch((e) => { console.error('Startup failed:', e); process.exit(1); });
