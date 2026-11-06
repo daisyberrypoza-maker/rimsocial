@@ -2007,3 +2007,6 @@ input:focus { box-shadow: none; border-color: #111; }
 .coin-pack.selected, .coin-checkout { border-color: #111; }
 .coin-checkout { background: #111; color: #fff; }
 .coin-pack-price { color: #111; }
+
+/* Watch button is not a Follow action: keep it dark */
+.profile-watch-action .pill { background: #111; color: #fff; }
