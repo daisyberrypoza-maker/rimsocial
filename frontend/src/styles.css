@@ -839,3 +839,5 @@ input:focus { border-color:#4c5cff; }
   .business-card-footer > div { width: 100%; justify-content: flex-start; }
   .business-detail { border-radius: 18px 18px 0 0; }
 }
+
+.business-review-note { background: #fff7e6; border: 1px solid #f3d19c; color: #744210; padding: 9px 10px; border-radius: 10px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
