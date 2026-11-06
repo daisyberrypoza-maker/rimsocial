@@ -17,6 +17,7 @@ export default function Explore() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const peopleMode = searchParams.get('people') === '1';
+  const searchMode = searchParams.get('search') === '1';
   const cached = useAppStore((s) => s.feeds[KEY]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
@@ -115,12 +116,15 @@ export default function Explore() {
     <div className="ig-explore" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
       {peopleMode && <header className="people-discovery-heading"><h1>Find people</h1><p>Friends, followers and creators you may know</p></header>}
-      <form className="ig-search" onSubmit={search} role="search">
-        <Icon name="search" size={18} />
-        <input aria-label="Search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
-        {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
-      </form>
-      {(query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
+      {searchMode ? <div className="rim-search-head">
+        <button type="button" className="rim-search-back" aria-label="Back" onClick={() => navigate(peopleMode ? '/explore?people=1' : '/explore')}><Icon name="arrow-left" size={23} /></button>
+        <form className="ig-search" onSubmit={search} role="search">
+          <Icon name="search" size={19} />
+          <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
+          {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
+        </form>
+      </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/explore?people=1&search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
+      {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('comedy')}>Comedy</button>
@@ -134,7 +138,7 @@ export default function Explore() {
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
           </div>)}
         </section>}
-        {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3><div className="ig-grid">{results.posts.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div></section>}
+        {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3>{results.posts.map((p) => <button key={p.id} className="rim-search-post" onClick={() => navigate(`/p/${p.id}`)}><span className="rim-search-post-thumb">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</span><span className="rim-search-post-copy"><strong>@{p.author?.username || 'creator'}</strong><small>{p.caption || 'Post'} · {formatCount(p.viewCount)} views</small></span></button>)}</section>}
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
         {recommendations.followBack.length > 0 && <section className="ig-section">
@@ -153,12 +157,13 @@ export default function Explore() {
         </section>}
         {peopleMode && !recommendations.suggested.length && !recommendations.followBack.length && <p className="ig-empty">Search for people by name or username.</p>}
         {!peopleMode && <>
-          <div className="xp-title">Explore</div>
-          <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
+          {!searchMode && <div className="xp-title">Explore</div>}
+          {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
             <span className="xp-media">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
             <span className="xp-author">@{p.author?.username || 'creator'}</span>
-          </button>)}</div>
-          <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
+          </button>)}</div>}
+          {!searchMode && <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && !searchMode && <p className="ig-empty">Nothing to explore yet.</p>}
+          {searchMode && !query.trim() && <p className="rim-search-hint">Search for people, posts or hashtags</p>}
         </>}
       </>}
     </div>
