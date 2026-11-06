@@ -13,8 +13,8 @@ test('local media cleanup only accepts app-relative upload URLs', () => {
 });
 
 test('local upload cleanup confines path resolution to the upload directory', () => {
-  const target = localUploadPath('/uploads/../../.env');
+  assert.equal(localUploadPath('/uploads/../../.env'), null);
+  const target = localUploadPath('/uploads/valid-file.jpg');
   assert.ok(target);
-  assert.equal(path.basename(target), '.env');
   assert.equal(path.dirname(target), path.resolve('uploads'));
 });
