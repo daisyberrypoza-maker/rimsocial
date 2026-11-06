@@ -16,7 +16,7 @@ export default function Upload() {
   const setStoryRail = useAppStore((s) => s.setStoryRail);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
-  const [asStory, setAsStory] = useState(false);
+  const [asStory, setAsStory] = useState(searchParams.get('story') === '1');
   const [allowRemix, setAllowRemix] = useState(false);
   const [sourcePost, setSourcePost] = useState(null);
   const [visibility, setVisibility] = useState('public');
