@@ -92,6 +92,7 @@ export default function App() {
 function titleFor(path) {
   if (path.startsWith('/explore')) return 'Explore';
   if (path.startsWith('/activity')) return 'Activity';
+  if (path.startsWith('/stories')) return 'Stories';
   if (path.startsWith('/live')) return 'LIVE';
   if (path.startsWith('/upload')) return 'New post';
   if (path.startsWith('/creator')) return 'Creator Studio';
