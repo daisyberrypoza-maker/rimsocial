@@ -32,7 +32,10 @@ router.get('/wallet', requireAuth, async (req, res, next) => {
 router.get('/wallet/packs', requireAuth, (req, res) => {
   res.json({
     currency: 'NGN',
-    packs: config.coinPacks.filter((pack) => pack.enabled).map(({ id, coins, amountMinor, currency }) => ({ id, coins, amountMinor, currency })),
+    packs: config.webCoinPurchasesEnabled
+      ? config.coinPacks.filter((pack) => pack.enabled).map(({ id, coins, amountMinor, currency }) => ({ id, coins, amountMinor, currency }))
+      : [],
+    purchasesEnabled: config.webCoinPurchasesEnabled,
     pricesAreDraft: true,
   });
 });
@@ -40,6 +43,7 @@ router.get('/wallet/packs', requireAuth, (req, res) => {
 // Pack ID is the only client-controlled purchase input; amounts and coin counts are server-owned.
 router.post('/wallet/topup', requireAuth, async (req, res, next) => {
   try {
+    if (!config.webCoinPurchasesEnabled) throw httpError(503, 'Coin purchases are disabled until prices, payment reconciliation, and platform requirements are verified');
     if (!config.paystackSecret) throw httpError(503, 'Coin top-ups are temporarily unavailable because the payment provider is not configured');
     const pack = config.coinPacks.find((item) => item.enabled && item.id === req.body.packId);
     if (!pack) throw httpError(400, 'Choose a valid coin pack');

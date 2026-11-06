@@ -10,7 +10,7 @@ RimSocial is complete for release only when every **release-blocking** item belo
 
 - [ ] GitHub Actions runs on pull requests and pushes to `main`; backend syntax, backend tests, frontend production build and MySQL integration test are green on the latest `main` commit.
 - [ ] The latest ledger regression tests run successfully; migration 023 is validated against MySQL.
-- [ ] Resolve the one remaining open draft PR #12: either finish and test the complete intended scope, or close it and record the omitted features as explicitly out of scope. Do not leave a half-implemented draft silently hanging.
+- [ ] Review the current open PR list at release time; merge only after CI and relevant tests pass. Do not treat historical/closed PRs as open blockers.
 - [ ] Review current open PRs and release blockers as one consolidated pass; no stale/conflicting PR should be merged simply to reduce the open count.
 
 ## Gate 2 — Core social user journeys
@@ -20,6 +20,9 @@ RimSocial is complete for release only when every **release-blocking** item belo
 - [ ] Confirm existing UI and data are preserved; do not replace the app with a demo or a new scaffold.
 
 ## Gate 3 — LIVE and creator monetization
+
+- [ ] Web coin purchases are disabled by default; only enable `ENABLE_WEB_COIN_PURCHASES=true` after published prices, verified Paystack settlement/webhook idempotency, refunds/reversals and ledger reconciliation pass. Draft prices must not be sold to users.
+- [ ] Google Play Billing is implemented and tested for Android digital coin purchases, or Android purchases remain disabled. Paystack web checkout is not a substitute for Play Billing where Google Play policy requires it.
 
 - [ ] Real audience live broadcast and reconnect behavior are verified, not just signaling or a two-host peer connection; camera/microphone permissions, viewer playback, chat, match score, and gift attribution are tested on physical devices and mobile networks.
 - [ ] Coin purchase, gift spend, creator earnings holds, payout request, webhook settlement/reversal and ledger reconciliation pass integration tests. Android coin purchases must use Google Play Billing.
@@ -38,6 +41,10 @@ RimSocial is complete for release only when every **release-blocking** item belo
 - Valid provider credentials/configuration for Cloudinary, TURN/media broadcast, payment/payout webhooks, and push notifications where those features are enabled.
 - A physical Android device for camera, microphone, notification, billing and mobile-network checks.
 - Owner action to rotate provider secrets and complete any Play Console setup requiring account authorization.
+
+## Current release decision — 2026-11-06
+
+**Decision: NO-GO for production release.** The repository alone does not prove physical Android testing, Google Play Billing, production migration/backup validation, payment refund/reversal reconciliation, or live provider readiness. The current code CI can pass while these external release gates remain open. Keep Android coin purchases disabled until Google Play Billing is implemented and tested; keep web coin sales disabled until final prices and payment settlement/reversal reconciliation are verified.
 
 ## Final sign-off
 

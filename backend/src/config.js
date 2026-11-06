@@ -15,6 +15,8 @@ module.exports = {
   },
   redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
   paystackSecret: process.env.PAYSTACK_SECRET || '',
+  // Fail closed until real pricing, payment reconciliation, and platform policy are verified.
+  webCoinPurchasesEnabled: process.env.ENABLE_WEB_COIN_PURCHASES === 'true',
   // TURN relay; TURN_SECRET enables short-lived coturn REST credentials.
   turnUrls: (process.env.TURN_URLS || '').split(',').map((url) => url.trim()).filter(Boolean),
   // LiveKit SFU for public creator broadcasts; secrets stay server-side.
