@@ -1897,3 +1897,7 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
 .ig-sponsor label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--text); }
 .ig-sponsor input, .ig-sponsor select { margin: 0; }
 .ig-note { margin: 14px; font-size: 13px; color: var(--muted); }
+
+/* Red-team fix: toggles must not inherit the global input padding/width */
+.ig-toggle { padding: 0; border: 0; width: 44px; height: 26px; }
+.ig-choice { position: relative; }
