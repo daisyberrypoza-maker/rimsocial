@@ -112,7 +112,8 @@ Operator review API:
 - At startup the backend creates the configured database if missing, then Sequelize creates missing tables and indexes. The MySQL account must have permission to create the database. For production, use a dedicated least-privilege account and reviewed migrations rather than `sync()` schema changes.
 - Creator Studio is available at `/creator`. It shows held and available earnings, gift/post counts, payout history, creator activation and a basic creator-match invitation flow. Withdrawal requests are blocked until a verified payout profile/recipient exists; do not bypass this guard or treat a client-side payment success as proof of payment.
 - Paystack secret keys must exist only in `backend/.env`; never use `VITE_*` for a secret. If any real key was previously shared, rotate it in the provider dashboard. Use HTTPS, rate limiting, provider-side webhook verification, reconciliation and manual payout review before launch.
-- The match flow currently handles invitations and match state only. It is not a live-video provider and does not implement realtime battle scoring. Scores must be derived server-side from verified gifts/events, not accepted from a browser.
+- LIVE matches use authenticated WebRTC signaling for creator-to-creator video. This is not public-audience broadcasting; configure `TURN_URLS` and `TURN_SECRET` (or fixed TURN credentials) for relay support. A TURN server must be provisioned separately.
+- Battle scores are reconciled server-side only from gifts explicitly attributed to that exact match through `liveMatchId`. Ordinary feed gifts and historical gifts without match attribution do not count toward battle scores. The current live-room UI still needs a gift control that submits `liveMatchId` to make this end-to-end.
 - WhatsApp sharing uses a user-initiated `wa.me` share link. Automatic WhatsApp messaging requires an approved WhatsApp Business Platform integration and user opt-in.
 
 
@@ -133,3 +134,8 @@ Before deploying the media cleanup queue with `DB_SYNC=false`, apply `backend/mi
 - The cleanup worker checks current live content before deleting an asset, so reused/shared media is not removed while another post, story, or avatar still references it.
 
 Do not manually delete `media_cleanup_jobs` records while their status is `pending`; they are the durable retry queue.
+
+
+## LIVE match gift attribution migration
+
+Before deploying the LIVE battle gift-attribution changes with `DB_SYNC=false`, apply `backend/migrations/022-live-match-gift-attribution.sql` to the production MySQL database. This adds a nullable match reference to gift transactions; existing financial records are preserved and existing gifts without a match reference are not retroactively counted in battle scores.
