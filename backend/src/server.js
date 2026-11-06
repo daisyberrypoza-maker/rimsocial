@@ -71,6 +71,11 @@ async function start() {
   if (!payoutColumns.providerTransferCode) {
     await qi.addColumn('payouts', 'providerTransferCode', { type: require('sequelize').DataTypes.STRING(128), allowNull: true });
   }
+  // Additive profile background upgrade. Preserve existing accounts and content.
+  const userColumns = await qi.describeTable('users');
+  if (!userColumns.backgroundUrl) {
+    await qi.addColumn('users', 'backgroundUrl', { type: require('sequelize').DataTypes.STRING(512), allowNull: true });
+  }
   // Additive social-feature upgrade for existing installations. Never drop user content.
   const postColumns = await qi.describeTable('posts');
   if (!postColumns.repostCount) {
