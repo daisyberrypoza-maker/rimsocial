@@ -2,6 +2,7 @@ const { Op, Post, User, Follow, StoryView } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
+const { blockedUserIds } = require('../lib/blocks');
 
 const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl'];
 
@@ -17,13 +18,17 @@ async function viewedSet(viewerId, storyIds) {
 // Result is cached in Redis for a short time, so refreshes do not hit MySQL each time.
 async function getStoryRail(viewerId) {
   const key = `stories:rail:${viewerId}`;
+  const blocked = await blockedUserIds(viewerId);
   const cached = await redis.get(key);
-  if (cached) return JSON.parse(cached);
+  if (cached) {
+    const hit = JSON.parse(cached);
+    return { ...hit, items: (hit.items || []).filter((item) => !blocked.has(item.user?.id)) };
+  }
 
   const follows = await Follow.findAll({
     where: { followerId: viewerId }, attributes: ['followeeId'], raw: true,
   });
-  const authorIds = [viewerId, ...follows.map((f) => f.followeeId)];
+  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id))];
 
   const stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: authorIds, expiresAt: { [Op.gt]: new Date() } },
