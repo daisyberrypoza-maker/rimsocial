@@ -56,6 +56,19 @@ export default function PostDetail() {
     finally { setBusy(false); }
   }
 
+  async function shareExternally() {
+    const url = new URL(`/p/${postId}`, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'RimSocial post', text: post?.caption || 'View this post on RimSocial', url });
+      } else {
+        window.prompt('Share this post URL', url);
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') toast('Could not open the share sheet');
+    }
+  }
+
   async function submitComment(e) {
     e.preventDefault();
     if (!comment.trim() || commentBusy) return;
@@ -73,7 +86,7 @@ export default function PostDetail() {
   const username = post.author?.username || 'creator';
   const src = mediaUrl(post.mediaUrl);
   return <main className="page post-detail-page">
-    <div className="post-detail-toolbar"><button className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button><strong>Post</strong><button className="ghost" onClick={toggleRepost} disabled={busy} aria-pressed={reposted}><Icon name="repeat" size={18} /> {reposted ? 'Reposted' : 'Repost'}</button></div>
+    <div className="post-detail-toolbar"><button className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button><strong>Post</strong><div className="post-detail-toolbar-actions"><button className="ghost small" onClick={shareExternally}><Icon name="share" size={18} /> Share</button><button className="ghost small" onClick={toggleRepost} disabled={busy} aria-pressed={reposted}><Icon name="repeat" size={18} /> {reposted ? 'Reposted' : 'Repost'}</button></div></div>
     <article className="post-detail-card">
       <button className="post-detail-author" onClick={() => navigate(`/u/${username}`)}><Avatar user={post.author} size={44} /><span><strong>{post.author?.displayName || username}</strong><small>@{username}</small></span><Icon name="chevron" size={20} /></button>
       <div className="post-detail-media">{post.kind === 'video' ? <video src={src} poster={mediaUrl(post.thumbUrl) || undefined} controls playsInline preload="metadata" /> : <img src={src} alt={post.caption || 'Shared post'} />}</div>
