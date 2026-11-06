@@ -48,7 +48,7 @@ async function recordUploadNotifications(creatorId, postId, kind = 'post') {
      FROM post_notification_preferences p
      WHERE p.creatorId = ? AND p.enabled = 1 AND p.userId <> ?
        AND EXISTS (
-         SELECT 1 FROM Follows f
+         SELECT 1 FROM follows f
          WHERE f.followerId = p.userId AND f.followeeId = p.creatorId
        )`,
     { replacements: [postId, kind, creatorId, creatorId] }
@@ -99,7 +99,7 @@ router.get('/', requireAuth, async (req, res, next) => {
       `SELECT n.id, n.kind, n.postId, n.createdAt, n.readAt,
         u.id AS creatorId, u.username, u.displayName, u.avatarUrl
        FROM post_notifications n
-       JOIN Users u ON u.id = n.creatorId
+       JOIN users u ON u.id = n.creatorId
        WHERE n.userId = ?
        ORDER BY n.createdAt DESC LIMIT 100`,
       { replacements: [req.user.id] }
