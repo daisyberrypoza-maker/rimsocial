@@ -47,8 +47,9 @@ Branch: `fix/reel-composer-remix-priority`
 - PR #15: payout webhook settlement/reversal fix — merged into `main`; Paystack sandbox verification remains open.
 - PR #16: old media cleanup branch — superseded by PR #19.
 - PR #17: self-declared sponsored-post guard — merged into `main`.
-- PR #18: `feature/find-flip-fix-priority-v2` — open draft; FFF workflow, realized profit history, and ephemeral-MySQL integration tests passed CI on the tested head. Real payment integration and production migration remain open.
-- PR #19: `fix/cloudinary-orphan-cleanup-v2` — open draft; retryable media cleanup queue and migration; awaiting current-head CI and Cloudinary credential tests.
+- PR #18: Find/Flip/Fix — merged into `main`; CI passed, including ephemeral-MySQL lifecycle tests. Real payment integration and production migration remain open.
+- PR #19: `fix/cloudinary-orphan-cleanup-v2` — superseded by PR #20.
+- PR #20: `fix/cloudinary-orphan-cleanup-v3` — active media cleanup PR; initial current-head CI passed, but real Cloudinary failure/retry tests and production migration remain open.
 
 ## Monetization and finance
 - [x] Gift eligibility and idempotency safeguards were added in PR #11.
@@ -62,7 +63,8 @@ Branch: `fix/reel-composer-remix-priority`
 
 ## Media, privacy, moderation
 - [x] PR #9 introduced Cloudinary-backed media and story expiry cleanup (verify merged commit and current code).
-- [ ] PR #19 adds a durable media cleanup queue, orphan-upload cleanup and retry/backoff; current-head CI and real Cloudinary failure/retry tests are still required.
+- [x] PR #20 adds a durable media cleanup queue, orphan-upload cleanup, shared-reference checks and retry/backoff; syntax/unit/frontend build and MySQL integration CI passed on the tested head.
+- [ ] Exercise Cloudinary upload failure, delete failure, shared media, avatar replacement and retry behavior with configured credentials before production deployment.
 - [ ] Confirm all public-profile and feed visibility rules with anonymous, follower, non-follower, blocked and private-account scenarios.
 - [ ] Confirm reporting is persisted and reviewable; moderation queue, user appeals, enforcement history and operator UI still need verification.
 - [ ] Add rate limits/abuse controls for uploads, comments, follows, reports, offers, live signaling and payment endpoints.
@@ -75,7 +77,7 @@ Branch: `fix/reel-composer-remix-priority`
 
 ## Production and release safety
 - [x] PR #10 added API-only mode, explicit CORS, `/health`, database-backed `/ready`, and production sync safeguards (verify merged commit remains in `main`).
-- [ ] Current-head frontend production build and backend syntax/tests for every candidate branch.
+- [x] Current-head frontend production build and backend syntax/unit tests passed for the tested PR #20 head; re-run after any subsequent branch changes.
 - [ ] Production schema migrations applied and verified before release; `DB_SYNC=false` and `AUTO_CREATE_DATABASE=false`.
 - [ ] Verify secrets are server-only, rotate any exposed credentials, validate JWT/CORS/rate limits, and audit admin-key handling.
 - [ ] Android Capacitor sync/build, install and smoke test on physical device, including login, uploads, profiles, likes, follows, reposts, stories, creator tools, and Find/Flip/Fix.
