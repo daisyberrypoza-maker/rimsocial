@@ -166,6 +166,23 @@ const LiveSignal = sequelize.define('LiveSignal', {
   payload: { type: DataTypes.JSON, allowNull: false },
 }, { tableName: 'live_signals', indexes: [{ fields: ['matchId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
+const LiveBroadcast = sequelize.define('LiveBroadcast', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  hostId: { type: DataTypes.UUID, allowNull: false },
+  title: { type: DataTypes.STRING(120), allowNull: false },
+  status: { type: DataTypes.ENUM('live', 'ended'), allowNull: false, defaultValue: 'live' },
+  viewerCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  startedAt: { type: DataTypes.DATE, allowNull: false },
+  endedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'live_broadcasts', timestamps: true, indexes: [{ fields: ['status', 'startedAt'] }, { fields: ['hostId', 'status'] }] });
+
+const LiveBroadcastMessage = sequelize.define('LiveBroadcastMessage', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  broadcastId: { type: DataTypes.UUID, allowNull: false },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.STRING(500), allowNull: false },
+}, { tableName: 'live_broadcast_messages', indexes: [{ fields: ['broadcastId', 'createdAt'] }, { fields: ['userId', 'createdAt'] }] });
+
 const UserBlock = sequelize.define('UserBlock', {
   blockerId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
   blockedUserId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
@@ -295,6 +312,6 @@ module.exports = {
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, PostReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };
