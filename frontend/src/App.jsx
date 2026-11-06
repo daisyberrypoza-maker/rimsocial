@@ -20,6 +20,7 @@ import Activity from './pages/Activity.jsx';
 import Stories from './pages/Stories.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
+import ExploreWatch from './pages/ExploreWatch.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -61,16 +62,18 @@ export default function App() {
 
   const profileWatch = location.pathname.split('/').length === 4 && location.pathname.startsWith('/u/') && location.pathname.endsWith('/watch');
   const immersive = IMMERSIVE_PATHS.includes(location.pathname) || profileWatch;
+  const exploreWatch = location.pathname.startsWith('/explore/watch/');
   const showChrome = Boolean(token) && location.pathname !== '/login';
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && !profileWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
+        <Route path="/explore/watch/:postId" element={<RequireAuth><ExploreWatch /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
         <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
         <Route path="/live" element={<RequireAuth><LiveBroadcasts /></RequireAuth>} />
@@ -83,7 +86,7 @@ export default function App() {
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && <BottomNav />}
+      {showChrome && !profileWatch && !exploreWatch && <BottomNav />}
       <Toast />
     </div>
   );
