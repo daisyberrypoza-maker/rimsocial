@@ -10,7 +10,7 @@ RimSocial is complete for release only when every **release-blocking** item belo
 
 - [ ] GitHub Actions runs on pull requests and pushes to `main`; backend syntax, backend tests, frontend production build and MySQL integration test are green on the latest `main` commit.
 - [ ] The latest ledger regression tests run successfully; migration 023 is validated against MySQL.
-- [ ] Resolve the one remaining open draft PR #12: either finish and test the complete intended scope, or close it and record the omitted features as explicitly out of scope. Do not leave a half-implemented draft silently hanging.
+- [ ] Review the current open PR list at release time; merge only after CI and relevant tests pass. Do not treat historical/closed PRs as open blockers.
 - [ ] Review current open PRs and release blockers as one consolidated pass; no stale/conflicting PR should be merged simply to reduce the open count.
 
 ## Gate 2 — Core social user journeys
