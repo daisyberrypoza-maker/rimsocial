@@ -26,6 +26,9 @@ This is a living release checklist. A branch or pull request is not considered c
 - [ ] Payment-provider checkout, signed webhook verification, refunds, dispute handling, and reconciled settlement. Current workflow intentionally does not collect or hold money; accepted offers are not proof of payment.
 - [ ] Audit logs, abuse/rate-limit policy, and operational escalation process for disputed deals.
 
+### Feed
+- [x] Discover pagination: the `rank:<n>` cursor never matched (double-escaped regex), so every page returned the first posts. Fixed and unit-tested.
+
 ## Social interaction and composer
 
 ### Pending composer PR #12
@@ -56,6 +59,9 @@ Branch: `fix/reel-composer-remix-priority`
 - [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
 - [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
+- [x] Paystack webhook hardening: the signature check no longer throws on multi-byte header values (one unauthenticated request could previously crash the API process), coin-credit errors return 500 so Paystack retries (credits stay idempotent), and unhandled rejections are logged. Unit-tested and probed against the real router; Paystack sandbox verification remains open.
+- [x] Gift income is mirrored into `content_earnings` (pending, then released with the 7-day hold) so Creator Studio shows earnings by source. Balances and ledger entries are unchanged. Apply `backend/migrations/021-content-earnings.sql` before deploying with `DB_SYNC=false`; verify on a production-like database.
+- [ ] Ledger units are mixed: `gift_out` is recorded in coins while other entries are in minor currency units, so ledger rows cannot simply be summed. Decide on one unit (or a separate column) before building reconciliation.
 - [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook transitions are unit-tested, but provider sandbox tests remain.
 - [ ] End-to-end wallet/ledger reconciliation and invariant tests for concurrent coin spend, gifts, earnings holds, and payouts.
 - [ ] Android in-app purchases must use Google Play Billing; do not enable Paystack coin checkout inside the Android app.
@@ -79,7 +85,7 @@ Branch: `fix/reel-composer-remix-priority`
 - [x] PR #10 added API-only mode, explicit CORS, `/health`, database-backed `/ready`, and production sync safeguards (verify merged commit remains in `main`).
 - [x] Current-head frontend production build and backend syntax/unit tests passed for the tested PR #20 head; re-run after any subsequent branch changes.
 - [ ] Production schema migrations applied and verified before release; `DB_SYNC=false` and `AUTO_CREATE_DATABASE=false`.
-- [ ] Verify secrets are server-only, rotate any exposed credentials, validate JWT/CORS/rate limits, and audit admin-key handling.
+- [ ] Verify secrets are server-only, rotate any exposed credentials, validate JWT/CORS/rate limits, and audit admin-key handling. `clipverse.zip` contained a committed `backend/.env` (JWT secret, DB password, Paystack test key, admin key); it was removed from the tree but remains in git history, so rotate all of those values and consider purging history.
 - [ ] Android Capacitor sync/build, install and smoke test on physical device, including login, uploads, profiles, likes, follows, reposts, stories, creator tools, and Find/Flip/Fix.
 - [ ] Independent frontend/backend deployment test with correct `VITE_API_URL`, HTTPS, CORS preflight, `/health` and `/ready`.
 - [ ] Backup/restore drill, structured logs/monitoring, error reporting, privacy/data retention and incident runbook.
