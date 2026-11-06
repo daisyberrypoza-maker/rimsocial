@@ -9,6 +9,7 @@ import { mediaUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
+import CoinSheet from '../components/CoinSheet.jsx';
 
 export default function Profile() {
   const { username = 'me' } = useParams();
@@ -28,6 +29,7 @@ export default function Profile() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showCoins, setShowCoins] = useState(false);
   const [listType, setListType] = useState('');
   const [people, setPeople] = useState([]);
   const [peopleQuery, setPeopleQuery] = useState('');
@@ -224,11 +226,14 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users" size={21} />Following</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
+          <button onClick={() => { setDrawerOpen(false); setShowCoins(true); }}><Icon name="gift" size={21} />Get coins</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase" size={21} />Business hub</button>
           <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
         </aside>
       </div>}
+
+      {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
         <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
