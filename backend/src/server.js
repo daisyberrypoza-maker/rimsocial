@@ -9,6 +9,10 @@ const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
 
+// Express 4 does not catch rejected promises from async handlers. Log them instead of
+// letting a single bad request terminate the whole API process (Node 20 exits by default).
+process.on('unhandledRejection', (reason) => { console.error('Unhandled rejection:', reason); });
+
 const app = express();
 const frontendDist = path.resolve(__dirname, '../../frontend/dist');
 const corsOptions = {

@@ -14,4 +14,11 @@ function decodeCursor(value) {
   }
 }
 
-module.exports = { encodeCursor, decodeCursor };
+// Discover pages by rank position, cursor looks like "rank:20". Anything else starts at 0.
+function parseRankCursor(value) {
+  const match = /^rank:(\d+)$/.exec(String(value || ''));
+  const offset = match ? Number(match[1]) : 0;
+  return Number.isSafeInteger(offset) ? offset : 0;
+}
+
+module.exports = { encodeCursor, decodeCursor, parseRankCursor };

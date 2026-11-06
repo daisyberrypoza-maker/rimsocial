@@ -4,13 +4,14 @@ const express = require('express');
 const config = require('../config');
 const { sequelize, Wallet, LedgerEntry, Payout, EarningsWallet } = require('../db');
 const { settlePayoutTransfer } = require('../services/payoutSettlement');
+const { signatureMatches } = require('../lib/signature');
 
 // Must receive the raw body to verify the signature
 router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
   if (!config.paystackSecret || !Buffer.isBuffer(req.body)) return res.status(503).end();
   const sig = req.headers['x-paystack-signature'] || '';
   const expected = crypto.createHmac('sha512', config.paystackSecret).update(req.body).digest('hex');
-  if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  if (!signatureMatches(sig, expected)) {
     return res.status(401).end();
   }
 
@@ -32,29 +33,35 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
   }
   if (event.event !== 'charge.success') return res.status(200).end();
 
-  const { reference, amount, metadata, status, currency } = event.data || {};
-  if (status !== 'success' || !reference || !Number.isSafeInteger(Number(amount)) || Number(amount) <= 0 || !metadata || !metadata.userId) return res.status(200).end();
-  const { User } = require('../db');
-  if (!(await User.findByPk(metadata.userId, { attributes: ['id'] }))) return res.status(200).end();
-  // Coin pricing is configured in NGN minor units. Never convert another
-  // currency using the NGN price, which would mis-credit a wallet.
-  if (currency !== 'NGN') return res.status(200).end();
-  const coins = Math.floor(Number(amount) / config.coinPriceMinor);
-  if (!Number.isSafeInteger(coins) || coins < 1) return res.status(200).end();
-
   try {
-    await sequelize.transaction(async (t) => {
-      // Unique (kind, refId) index blocks a second credit for the same payment
-      await LedgerEntry.create({
-        userId: metadata.userId, kind: 'coin_purchase', deltaMinor: amount, refId: reference,
-      }, { transaction: t });
-      await Wallet.findOrCreate({ where: { userId: metadata.userId }, defaults: { userId: metadata.userId }, transaction: t });
-      await Wallet.increment('coinBalance', { by: coins, where: { userId: metadata.userId }, transaction: t });
-    });
-  } catch (e) {
-    if (e.name !== 'SequelizeUniqueConstraintError') throw e; // already credited: fine
+    const { reference, amount, metadata, status, currency } = event.data || {};
+    if (status !== 'success' || !reference || !Number.isSafeInteger(Number(amount)) || Number(amount) <= 0 || !metadata || !metadata.userId) return res.status(200).end();
+    const { User } = require('../db');
+    if (!(await User.findByPk(metadata.userId, { attributes: ['id'] }))) return res.status(200).end();
+    // Coin pricing is configured in NGN minor units. Never convert another
+    // currency using the NGN price, which would mis-credit a wallet.
+    if (currency !== 'NGN') return res.status(200).end();
+    const coins = Math.floor(Number(amount) / config.coinPriceMinor);
+    if (!Number.isSafeInteger(coins) || coins < 1) return res.status(200).end();
+
+    try {
+      await sequelize.transaction(async (t) => {
+        // Unique (kind, refId) index blocks a second credit for the same payment
+        await LedgerEntry.create({
+          userId: metadata.userId, kind: 'coin_purchase', deltaMinor: amount, refId: reference,
+        }, { transaction: t });
+        await Wallet.findOrCreate({ where: { userId: metadata.userId }, defaults: { userId: metadata.userId }, transaction: t });
+        await Wallet.increment('coinBalance', { by: coins, where: { userId: metadata.userId }, transaction: t });
+      });
+    } catch (e) {
+      if (e.name !== 'SequelizeUniqueConstraintError') throw e; // already credited: fine
+    }
+    return res.status(200).end();
+  } catch (error) {
+    // Return 500 so Paystack retries. Credits are idempotent, so a retry cannot double-credit.
+    console.error('Coin credit webhook failed:', error.message);
+    return res.status(500).end();
   }
-  res.status(200).end();
 });
 
 module.exports = router;
