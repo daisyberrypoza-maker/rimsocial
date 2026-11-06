@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const config = require('../config');
 const redis = require('../redis');
 const {
-  sequelize, Post, StoryView, GiftTransaction, EarningsWallet, LedgerEntry, Payout, seedGifts,
+  sequelize, Post, StoryView, GiftTransaction, EarningsWallet, LedgerEntry, Payout, ContentEarning, seedGifts,
 } = require('../db');
 
 // Move view counts from Redis to MySQL, one key at a time
@@ -76,6 +76,10 @@ async function releaseHolds() {
       await LedgerEntry.create({
         userId: tx.creatorId, kind: 'release', deltaMinor: tx.creatorMinor, refId: tx.id,
       }, { transaction: t });
+      await ContentEarning.update(
+        { status: 'released' },
+        { where: { reference: `gift:${tx.id}`, status: 'pending' }, transaction: t },
+      );
     });
   }
 }
