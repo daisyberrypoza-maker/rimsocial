@@ -1,4 +1,4 @@
-const { sequelize, Wallet, Gift, Post, User, EarningsWallet, GiftTransaction, LedgerEntry, LiveMatch } = require('../db');
+const { sequelize, Wallet, Gift, Post, User, EarningsWallet, GiftTransaction, LedgerEntry, LiveMatch, ContentEarning } = require('../db');
 const config = require('../config');
 const { Op } = require('sequelize');
 const httpError = require('../utils/httpError');
@@ -58,6 +58,17 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
         { userId: senderId, kind: 'gift_out', deltaMinor: -coins, refId: tx.id },
         { userId: post.authorId, kind: 'gift_in', deltaMinor: creatorMinor, refId: tx.id },
       ], { transaction: t });
+
+      // Creator Studio source reporting is backed by the same atomic gift transaction.
+      await ContentEarning.create({
+        creatorId: post.authorId,
+        postId: post.id,
+        source: 'gift',
+        amountMinor: creatorMinor,
+        currency: 'NGN',
+        status: 'pending',
+        reference: `gift:${tx.id}`,
+      }, { transaction: t });
 
       return { id: tx.id, duplicate: false };
     });
