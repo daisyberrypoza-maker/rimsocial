@@ -39,6 +39,7 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
+    if (!liveKitReady()) throw httpError(503, 'Public LIVE media provider is not configured. Set LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET when configuring deployment.');
     const title = String(req.body.title || '').trim().slice(0, 120);
     if (!title) throw httpError(400, 'Add a title before going LIVE');
     const existing = await LiveBroadcast.findOne({ where: { hostId: req.user.id, status: 'live' } });
