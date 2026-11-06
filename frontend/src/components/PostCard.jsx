@@ -87,6 +87,7 @@ export default function PostCard({ post, active }) {
   const videoRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
+  const pressTimer = useRef(null);
   const [reposted, setReposted] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
@@ -190,7 +191,23 @@ export default function PostCard({ post, active }) {
 
   if (hidden) return null;
 
-  return <article className="post" data-id={post.id}>
+  function cancelPress() { clearTimeout(pressTimer.current); pressTimer.current = null; }
+  function startPress(event) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.target.closest('button,a,input,textarea,select,label,video')) return;
+    cancelPress();
+    pressTimer.current = setTimeout(() => {
+      pressTimer.current = null;
+      if (navigator.vibrate) navigator.vibrate(12);
+      setShowMenu(true);
+    }, 450);
+  }
+  function longPressContext(event) {
+    if (event.target.closest('button,a,input,textarea,select,label,video')) return;
+    event.preventDefault();
+    setShowMenu(true);
+  }
+  return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
     {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
       : <img src={src} alt="" loading="lazy" />}
     <div className="shade" />
@@ -241,7 +258,8 @@ export default function PostCard({ post, active }) {
           </select>
         </label>
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
-        <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Not interested</button>
+        <button className="post-menu-item" onClick={() => { setShowMenu(false); setShowRepostSheet(true); }}><Icon name="repeat" size={18} /> {reposted ? 'Undo repost' : 'Repost'}</button>
+        <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Hide post</button>
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
         <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
       </section>
