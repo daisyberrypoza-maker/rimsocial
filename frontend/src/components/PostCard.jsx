@@ -237,7 +237,7 @@ export default function PostCard({ post, active }) {
           </select>
         </label>
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
-        <button className="post-menu-item" onClick={() => { api(`/v1/posts/${post.id}/feedback`, { method: 'POST', body: { action: 'not_interested' } }).catch(() => {}); setHidden(true); setShowMenu(false); toast("You will see fewer posts like this"); }}>Not interested</button>
+        <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Not interested</button>
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
         <button className="post-menu-item" onClick={sharePost}>Export or send</button>
       </section>
