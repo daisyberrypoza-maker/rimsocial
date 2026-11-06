@@ -177,10 +177,12 @@ export default function Profile() {
             <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings">My Account</button>
           </div>
         ) : (
-          <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
-            {profile.isFollowing ? 'Following' : '＋ Follow'}
-          </button>
-          {profile.isFollowing && <button className={`profile-notification-button${postNotifications ? ' is-on' : ''}`} type="button" onClick={togglePostNotifications} disabled={notificationBusy} aria-pressed={postNotifications} aria-label={postNotifications ? 'Turn off post and story notifications' : 'Turn on post and story notifications'} title={postNotifications ? 'Notifications on' : 'Notify me when this creator posts'}>{postNotifications ? '🔔' : '♧'} <span>{postNotifications ? 'Notifications on' : 'Notify me'}</span></button>}
+          <>
+            <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
+              {profile.isFollowing ? 'Following' : '＋ Follow'}
+            </button>
+            {profile.isFollowing && <button className={`profile-notification-button${postNotifications ? ' is-on' : ''}`} type="button" onClick={togglePostNotifications} disabled={notificationBusy} aria-pressed={postNotifications} aria-label={postNotifications ? 'Turn off post and story notifications' : 'Turn on post and story notifications'} title={postNotifications ? 'Notifications on' : 'Notify me when this creator posts'}>{postNotifications ? '🔔' : '♧'} <span>{postNotifications ? 'Notifications on' : 'Notify me'}</span></button>}
+          </>
         )}
       </section>
       {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
