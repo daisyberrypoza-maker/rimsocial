@@ -137,6 +137,25 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
 });
 
 // GET /v1/users/:username
+// GET /v1/users/blocked — accounts blocked by the authenticated user.
+router.get('/blocked', requireAuth, async (req, res, next) => {
+  try {
+    const rows = await UserBlock.findAll({
+      where: { blockerId: req.user.id },
+      attributes: ['blockedUserId'],
+      raw: true,
+    });
+    const ids = rows.map((row) => row.blockedUserId);
+    if (!ids.length) return res.json({ items: [] });
+    const users = await User.findAll({
+      where: { id: { [Op.in]: ids } },
+      attributes: PUBLIC_ATTRS,
+      order: [['username', 'ASC']],
+    });
+    res.json({ items: users });
+  } catch (e) { next(e); }
+});
+
 router.get('/:username', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
