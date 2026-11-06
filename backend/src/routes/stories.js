@@ -32,7 +32,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
-    await notificationRoutes.recordUploadNotifications(req.user.id, story.id, 'story');
+    await notificationRoutes.recordUploadNotifications(req.user.id, story.id, 'story').catch((error) => console.error('Story notification fan-out failed:', error));
     res.status(201).json(toPostDTO(story));
   } catch (e) { next(e); }
 });
