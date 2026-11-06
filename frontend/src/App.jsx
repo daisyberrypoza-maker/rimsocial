@@ -13,6 +13,7 @@ import Upload from './pages/Upload.jsx';
 import Profile from './pages/Profile.jsx';
 import CreatorStudio from './pages/CreatorStudio.jsx';
 import PostDetail from './pages/PostDetail.jsx';
+import Notifications from './pages/Notifications.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
