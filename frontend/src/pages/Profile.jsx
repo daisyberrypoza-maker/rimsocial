@@ -174,14 +174,16 @@ export default function Profile() {
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
           <div className="drawer-head"><h3>Profile & settings</h3><button className="ghost small" onClick={() => setDrawerOpen(false)}>✕</button></div>
-          <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}>＋ Create post or story</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/explore'); }}>⌕ Find friends & creators</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}>✦ Creator Studio · earnings & cashout</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}>▣ Ads & Sponsors</button>
-          <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}>Followers</button>
-          <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}>Following</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}><Icon name="plus-square" size={21} />Create post or story</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/explore'); }}><Icon name="users" size={21} />Find friends & creators</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}><Icon name="chart-no-axes-combined" size={21} />Creator Studio · earnings & cashout</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}><Icon name="megaphone" size={21} />Ads & Sponsors</button>
+          <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}><Icon name="user-round-check" size={21} />Followers</button>
+          <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users-round" size={21} />Following</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
-          <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="radio-tower" size={21} />LIVE broadcasts</button>
+          <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase-business" size={21} />Business hub</button>
+          <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="log-out" size={21} />Log out</button>
         </aside>
       </div>}
 
