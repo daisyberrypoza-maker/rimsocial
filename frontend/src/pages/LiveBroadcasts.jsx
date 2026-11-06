@@ -15,6 +15,8 @@ export default function LiveBroadcasts() {
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const chatTailRef = useRef(null);
+  const remoteMediaRef = useRef(null);
+  const localTracksRef = useRef([]);
 
   const refresh = useCallback(async () => {
     try { const data = await api('/v1/broadcasts'); setItems(data.items || []); }
@@ -41,14 +43,21 @@ export default function LiveBroadcasts() {
     if (!room || !selected) return undefined;
     let live = true;
     const attachSubscribed = (track) => {
-      if (!live || track.kind !== 'video') return;
-      if (videoRef.current) track.attach(videoRef.current);
+      if (!live) return;
+      if (track.kind === 'video' && videoRef.current) {
+        track.attach(videoRef.current);
+      } else if (track.kind === 'audio' && remoteMediaRef.current) {
+        const element = track.attach();
+        element.autoplay = true;
+        remoteMediaRef.current.appendChild(element);
+        element.play?.().catch(() => {});
+      }
     };
     room.remoteParticipants.forEach((participant) => participant.trackPublications.forEach((publication) => {
       if (publication.track) attachSubscribed(publication.track);
     }));
-    room.on(window.__RimLiveKitRoomEvent?.TrackSubscribed || 'trackSubscribed', attachSubscribed);
-    room.on(window.__RimLiveKitRoomEvent?.TrackUnsubscribed || 'trackUnsubscribed', (track) => track.detach());
+    room.on('trackSubscribed', attachSubscribed);
+    room.on('trackUnsubscribed', (track) => track.detach().forEach((element) => element.remove()));
     return () => { live = false; room.removeAllListeners(); };
   }, [room, selected]);
 
@@ -64,14 +73,16 @@ export default function LiveBroadcasts() {
     const current = roomRef.current;
     roomRef.current = null;
     if (current) { try { current.disconnect(); } catch {} }
-    localTracks.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+    localTracksRef.current.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+    localTracksRef.current = [];
     setLocalTracks([]);
     setRoom(null);
   }, [localTracks]);
 
   useEffect(() => () => {
     if (roomRef.current) roomRef.current.disconnect();
-    localTracks.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+    localTracksRef.current.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+    localTracksRef.current = [];
   }, []); // unmount cleanup
 
   const connectToBroadcast = async (broadcast, host) => {
@@ -89,6 +100,7 @@ export default function LiveBroadcasts() {
         for (const track of tracks) await nextRoom.localParticipant.publishTrack(track);
       }
       roomRef.current = nextRoom;
+      localTracksRef.current = tracks;
       setLocalTracks(tracks);
       setSelected(broadcast);
       setRole(host ? 'host' : 'viewer');
@@ -154,6 +166,7 @@ export default function LiveBroadcasts() {
             <div className="live-video-wrap">
               <span className="live-video-label">{role === 'host' ? 'YOU ARE LIVE' : 'LIVE'}</span>
               <video ref={videoRef} autoPlay playsInline muted={role === 'host'} />
+              <div ref={remoteMediaRef} className="live-remote-audio" aria-hidden="true" />
             </div>
             <div className="live-room-actions">
               {role === 'host' ? <button className="live-primary" type="button" onClick={endBroadcast} disabled={busy}>{busy ? 'Ending…' : 'End LIVE'}</button> : <button type="button" onClick={exitViewer} disabled={busy}>Leave LIVE</button>}
