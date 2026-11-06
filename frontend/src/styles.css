@@ -1341,3 +1341,21 @@ button.icon-button .icon-vector {
   fill: none !important;
   stroke: currentColor;
 }
+
+
+/* Authentication password visibility controls and compact step header. */
+.auth-password-field { position:relative; display:flex; align-items:center; width:100%; }
+.auth-screen .auth-password-field > input { width:100%; padding-right:54px !important; }
+.auth-screen .auth-password-field > .password-toggle {
+  position:absolute; right:8px; top:50%; transform:translateY(-50%); z-index:2;
+  display:grid; place-items:center; width:40px; height:40px; min-width:40px; min-height:40px;
+  padding:0; margin:0; border:0 !important; border-radius:0 !important;
+  background:transparent !important; background-color:transparent !important; box-shadow:none !important;
+  color:#555 !important; cursor:pointer;
+}
+.auth-screen .auth-password-field > .password-toggle:hover,
+.auth-screen .auth-password-field > .password-toggle:active { background:transparent !important; box-shadow:none !important; }
+.auth-screen .auth-password-field > .password-toggle .icon-vector { width:22px; height:22px; stroke:currentColor; fill:none; }
+.auth-screen .auth-step-meta { letter-spacing:normal; }
+.auth-screen .auth-step-meta .auth-cancel { font-size:15px !important; font-weight:650; letter-spacing:normal !important; padding:8px 4px; min-width:56px; }
+.auth-screen .auth-step-meta > span[aria-hidden="true"] { flex:1; }
