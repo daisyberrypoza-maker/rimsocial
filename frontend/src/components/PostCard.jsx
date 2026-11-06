@@ -120,11 +120,11 @@ export default function PostCard({ post, active }) {
       const duration = Number(video.duration);
       const watched = Number(video.currentTime);
       if (duration > 0 && Number.isFinite(duration) && Number.isFinite(watched)) {
-        api(`/v1/posts/${post.id}/feedback`, {
+        api('/v1/feed/feedback', {
           method: 'POST',
           body: watched < 2
-            ? { action: 'skip', watchedSeconds: watched }
-            : { action: 'watch', watchedSeconds: Math.min(watched, duration), durationSeconds: duration },
+            ? { postId: post.id, event: 'skipped' }
+            : { postId: post.id, event: 'watch', watchMs: Math.min(watched, duration) * 1000, durationMs: duration * 1000 },
         }).catch(() => {});
       }
     };
@@ -136,6 +136,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/posts/${post.id}/like`, { method: 'POST' });
       setLikes(r.likeCount); setLiked(Boolean(r.liked));
+      if (r.liked) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'liked' } }).catch(() => {});
     } catch (err) { toast(err.message); }
     finally { setLikeBusy(false); }
   }
@@ -178,6 +179,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/posts/${post.id}/repost`, { method: 'POST' });
       setReposted(Boolean(r.reposted)); setRepostCount(r.repostCount);
+      if (r.reposted) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'shared' } }).catch(() => {});
       toast(r.reposted ? 'Post reposted to your profile' : 'Repost removed');
       return true;
     } catch (err) { toast(err.message); return false; }
