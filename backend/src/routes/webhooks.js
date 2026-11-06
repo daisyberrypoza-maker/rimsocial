@@ -52,7 +52,8 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
   }
     if (!Number.isSafeInteger(coins) || coins < 1) return res.status(200).end();
 
-    await sequelize.transaction(async (t) => {
+    try {
+      await sequelize.transaction(async (t) => {
       await LedgerEntry.create({
         userId: metadata.userId, kind: 'coin_purchase', deltaMinor: amount, refId: reference,
       }, { transaction: t });
