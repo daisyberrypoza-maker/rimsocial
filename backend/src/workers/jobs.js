@@ -122,6 +122,11 @@ async function main() {
     if (n) console.log(`Purged ${n} expired stories`);
   }, 10 * 60 * 1000, 'purgeExpiredStories');
   every(releaseHolds, 60 * 60 * 1000, 'releaseHolds');
+  // Automatically convert released creator balances above the configured threshold
+  // into auditable pending payouts. Transfers still require the verified operator flow.
+  every(createPayouts, 60 * 60 * 1000, 'createPayouts');
+  // Run once on startup as well, so a restart does not delay eligible payouts by an hour.
+  Promise.resolve().then(createPayouts).catch((e) => console.error('createPayouts startup run failed:', e));
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
