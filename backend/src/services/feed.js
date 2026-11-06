@@ -55,9 +55,9 @@ async function getDiscoverPage({ userId, cursor, limit }) {
         order: [['createdAt', 'DESC']], limit: 500, raw: true,
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
-      UserBlock.findAll({ where: { blockerId: userId }, attributes: ['blockedUserId'], raw: true }),
+      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
     ]);
-    const blocked = new Set(blocks.map((b) => b.blockedUserId));
+    const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
     const now = Date.now();
@@ -110,9 +110,9 @@ async function getFollowingPage({ userId, cursor, limit }) {
 
   const [rows, blockedRows] = await Promise.all([
     hydrate(page.map((e) => e.id)),
-    UserBlock.findAll({ where: { blockerId: userId }, attributes: ['blockedUserId'], raw: true }),
+    UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
   ]);
-  const blockedIds = new Set(blockedRows.map((row) => row.blockedUserId));
+  const blockedIds = new Set(blockedRows.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
   const visibleRows = rows.filter((post) => !blockedIds.has(post.authorId));
   const last = page[page.length - 1];
   return {
