@@ -120,12 +120,24 @@ test('Find Flip Fix profile review, approved discovery, idempotent offers, priva
   assert.equal(replay.data.offer.id, offer.data.offer.id);
   assert.equal(replay.data.replayed, true);
 
+  // A second pending offer from the same person on this listing must be rejected.
+  const stacked = await call('/v1/business/opportunities/' + opportunityId + '/offers', {
+    method: 'POST', as: 'professional', headers: { 'Idempotency-Key': 'business-offer-test-key-2' }, body: { amountMinor: 170000 },
+  });
+  assert.equal(stacked.status, 409);
+
   const accepted = await call('/v1/business/offers/' + offer.data.offer.id + '/respond', {
     method: 'POST', as: 'owner', body: { decision: 'accept' },
   });
   assert.equal(accepted.status, 200);
   assert.equal(accepted.data.opportunity.status, 'in_progress');
   assert.equal(accepted.data.opportunity.assignedUserId, professional.id);
+
+  // Once accepted, a stale sender withdrawal cannot overwrite the accepted state.
+  const lateWithdraw = await call('/v1/business/offers/' + offer.data.offer.id + '/withdraw', {
+    method: 'POST', as: 'professional', body: {},
+  });
+  assert.equal(lateWithdraw.status, 409);
 
   const progress = await call('/v1/business/opportunities/' + opportunityId + '/updates', {
     method: 'POST', as: 'professional', body: { kind: 'progress', body: 'Matched 80% of invoices to stock records.' },
