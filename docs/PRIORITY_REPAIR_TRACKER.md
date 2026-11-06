@@ -4,7 +4,7 @@ Last reviewed: 2026-11-06
 Repository: `daisyberrypoza-maker/rimsocial`
 Default branch: `main`
 
-This is a living release checklist. A branch or pull request is not considered complete until its changes are reviewed, CI passes on the current head, API/database behavior is tested, and mobile/device flows are checked where relevant.
+This is a living repair log. The single release exit criteria and consolidated sign-off are in [RELEASE_FINISH_LINE.md](./RELEASE_FINISH_LINE.md). A branch or pull request is not considered complete until its changes are reviewed, CI passes on the current head, API/database behavior is tested, and mobile/device flows are checked where relevant. Do not treat each small PR as the finish line.
 
 ## Current priority work
 
