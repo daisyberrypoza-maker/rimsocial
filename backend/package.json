@@ -7,9 +7,12 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "worker": "node src/workers/jobs.js",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js",
+    "test": "node --test"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
