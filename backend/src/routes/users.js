@@ -141,7 +141,7 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     const [popular, followBackRows] = await Promise.all([
       User.findAll({ where: { id: { [Op.notIn]: excludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
       followerIds.length ? User.findAll({
-        where: { id: { [Op.in]: followerIds, [Op.notIn]: excludedIds] } },
+        where: { id: { [Op.in]: followerIds, [Op.notIn]: excludedIds } },
         attributes: PUBLIC_ATTRS, limit: 24,
       }) : [],
     ]);
