@@ -3,7 +3,7 @@ const config = require('../config');
 const { Op } = require('sequelize');
 const httpError = require('../utils/httpError');
 
-async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
+async function sendGift({ senderId, postId, giftId, idempotencyKey, liveMatchId = null }) {
   // Fast path: a retry of a completed gift returns the original result
   const existing = await GiftTransaction.findOne({ where: { idempotencyKey } });
   if (existing) {
@@ -32,13 +32,24 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
       await wallet.decrement('coinBalance', { by: coins, transaction: t });
       await post.increment('giftCoins', { by: coins, transaction: t });
 
-      // Verified gifts contribute to an active creator battle. The client cannot
-      // directly set scores, so only this server-side ledger path changes them.
-      const match = await LiveMatch.findOne({
-        where: { status: 'active', [Op.or]: [{ hostId: post.authorId }, { opponentId: post.authorId }] },
-        transaction: t, lock: t.LOCK.UPDATE,
-      });
-      if (match) {
+      // Only gifts explicitly attached to this active match count toward its
+      // battle score. Ordinary feed/post gifts must never inflate LIVE scores.
+      let match = null;
+      if (liveMatchId) {
+        match = await LiveMatch.findOne({
+          where: {
+            id: liveMatchId,
+            status: 'active',
+            [Op.or]: [{ hostId: post.authorId }, { opponentId: post.authorId }],
+          },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+        if (!match) throw httpError(409, 'This LIVE match is not active for this creator');
+        if (![match.hostId, match.opponentId].includes(senderId)) {
+          // Gifts in a creator battle are sent by viewers, not either participant.
+          // The caller's identity is not required to be a participant.
+        }
         if (match.hostId === post.authorId) await match.increment('hostScore', { by: coins, transaction: t });
         else await match.increment('opponentScore', { by: coins, transaction: t });
       }
@@ -51,7 +62,7 @@ async function sendGift({ senderId, postId, giftId, idempotencyKey }) {
       await earnings.increment('heldMinor', { by: creatorMinor, transaction: t });
 
       const tx = await GiftTransaction.create({
-        senderId, creatorId: post.authorId, postId, giftId, coins, creatorMinor, idempotencyKey,
+        senderId, creatorId: post.authorId, postId, liveMatchId, giftId, coins, creatorMinor, idempotencyKey,
       }, { transaction: t });
 
       await LedgerEntry.bulkCreate([
