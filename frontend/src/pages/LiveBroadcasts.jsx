@@ -56,9 +56,14 @@ export default function LiveBroadcasts() {
     room.remoteParticipants.forEach((participant) => participant.trackPublications.forEach((publication) => {
       if (publication.track) attachSubscribed(publication.track);
     }));
+    const detachUnsubscribed = (track) => track.detach().forEach((element) => element.remove());
     room.on('trackSubscribed', attachSubscribed);
-    room.on('trackUnsubscribed', (track) => track.detach().forEach((element) => element.remove()));
-    return () => { live = false; room.removeAllListeners(); };
+    room.on('trackUnsubscribed', detachUnsubscribed);
+    return () => {
+      live = false;
+      room.off('trackSubscribed', attachSubscribed);
+      room.off('trackUnsubscribed', detachUnsubscribed);
+    };
   }, [room, selected]);
 
   useEffect(() => {
@@ -107,6 +112,15 @@ export default function LiveBroadcasts() {
       setRoom(nextRoom);
       setMessages([]);
     } catch (e) {
+      // A failed camera permission or room connection must not leave a ghost LIVE
+      // session or camera/microphone tracks running in the background.
+      const failedRoom = roomRef.current;
+      roomRef.current = null;
+      if (failedRoom) { try { failedRoom.disconnect(); } catch {} }
+      localTracksRef.current.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+      localTracksRef.current = [];
+      setLocalTracks([]);
+      setRoom(null);
       setError(e.message || 'Could not connect to LIVE. Check camera permission and provider configuration.');
     } finally { setBusy(false); }
   };
@@ -115,12 +129,23 @@ export default function LiveBroadcasts() {
     event.preventDefault();
     if (!title.trim()) { setError('Add a title before going LIVE.'); return; }
     setBusy(true); setError('');
+    let createdBroadcastId = null;
     try {
       const data = await api('/v1/broadcasts', { method: 'POST', body: { title: title.trim() } });
+      createdBroadcastId = data.broadcast?.id || null;
       setTitle('');
       await refresh();
       await connectToBroadcast(data.broadcast, true);
-    } catch (e) { setError(e.message || 'Could not start LIVE'); setBusy(false); }
+    } catch (e) {
+      // If the session was created but camera permission/connection failed, end it
+      // server-side so it does not remain visible as a ghost LIVE broadcast.
+      if (createdBroadcastId) {
+        await api(`/v1/broadcasts/${createdBroadcastId}/end`, { method: 'POST', body: {} }).catch(() => {});
+        await refresh();
+      }
+      setError(e.message || 'Could not start LIVE');
+      setBusy(false);
+    }
   };
 
   const endBroadcast = async () => {
