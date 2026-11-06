@@ -246,7 +246,7 @@ export default function Profile() {
           </div>
         ) : (
           <div className="sc-add-row">
-            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Following' : 'Follow'}</button>
             <button className="sc-circle sc-more-down" aria-label="More options" onClick={shareProfile}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
@@ -327,7 +327,7 @@ export default function Profile() {
                 </button>
                 {listType === 'blocked'
                   ? <button className="people-follow-btn" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
-                  : <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Added' : 'Add'}</button>}
+                  : <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>}
               </div>
             )}
             {!people.length && <div className="people-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here. You can unblock them any time.' : 'People who connect with this account will appear here.'}</p></div>}
