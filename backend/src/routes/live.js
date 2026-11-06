@@ -81,6 +81,25 @@ router.post('/matches/:id/signals', async (req, res, next) => {
     if (Buffer.byteLength(JSON.stringify(payload), 'utf8') > 16 * 1024) {
       throw httpError(413, 'Signal payload is too large');
     }
+
+    // Accept only the WebRTC fields consumed by the client. The payload-size
+    // cap alone is not enough: arbitrary JSON can otherwise be persisted.
+    if (kind === 'offer' || kind === 'answer') {
+      if (payload.type !== kind || typeof payload.sdp !== 'string' || !payload.sdp.trim() || payload.sdp.length > 12 * 1024) {
+        throw httpError(400, 'Offer/answer must include a valid SDP description');
+      }
+    } else if (typeof payload.candidate !== 'string' || !payload.candidate.trim() || payload.candidate.length > 4096) {
+      throw httpError(400, 'ICE candidate payload is invalid');
+    }
+
+    // Limit signaling writes per participant and match to reduce database
+    // flooding while allowing normal ICE candidate bursts during connection.
+    const windowStart = new Date(Date.now() - 60 * 1000);
+    const recentSignals = await LiveSignal.count({
+      where: { matchId: req.params.id, senderId: req.user.id, createdAt: { [Op.gte]: windowStart } },
+    });
+    if (recentSignals >= 120) throw httpError(429, 'Too many LIVE signaling updates. Wait a moment and retry.');
+
     const item = await LiveSignal.create({
       matchId: req.params.id,
       senderId: req.user.id,
