@@ -151,7 +151,11 @@ export default function Explore() {
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        <div className="ig-grid">{items.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div>
+        <div className="xp-title">Explore</div>
+        <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
+          <span className="xp-media">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
+          <span className="xp-author">@{p.author?.username || 'creator'}</span>
+        </button>)}</div>
         <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
       </>}
     </div>

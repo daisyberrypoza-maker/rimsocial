@@ -2173,3 +2173,15 @@ html, body, #root { background: #ffffff; color: #111111; }
 /* Followers and Following counts stay tappable on other profiles */
 .profile-top.is-other .profile-stats-row { gap: 14px; }
 .profile-top.is-other .profile-stats-row button { display: inline-flex; }
+
+/* =====================================================================
+   Explore: TikTok-style two-column cards; tap opens the vertical feed
+   ===================================================================== */
+.xp-title { font-size: 20px; font-weight: 700; padding: 14px 16px 10px; color: #111; }
+.xp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; padding: 0 12px 24px; }
+.xp-card { background: none; border: 0; padding: 0; text-align: left; color: #111; border-radius: 0; display: flex; flex-direction: column; min-width: 0; }
+.xp-media { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; background: #e9e9e9; }
+.xp-media img, .xp-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.xp-views { position: absolute; left: 8px; bottom: 8px; display: inline-flex; align-items: center; gap: 3px; color: #fff; font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.55); }
+.xp-author { display: block; margin-top: 6px; font-size: 13px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xp-watch .profile-watch-back { position: fixed; }
