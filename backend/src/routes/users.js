@@ -37,6 +37,18 @@ async function withFollowState(people, viewerId) {
   }));
 }
 
+async function assertNotBlocked(viewerId, targetId) {
+  if (viewerId === targetId) return;
+  const relation = await UserBlock.findOne({
+    where: { [Op.or]: [
+      { blockerId: viewerId, blockedUserId: targetId },
+      { blockerId: targetId, blockedUserId: viewerId },
+    ] },
+    attributes: ['blockerId'],
+  });
+  if (relation) throw httpError(404, 'User not found');
+}
+
 // "me" means the logged-in user; anything else is a username
 async function resolveUser(req, ref, attributes) {
   if (ref === 'me') return User.findByPk(req.user.id, { attributes });
@@ -102,6 +114,7 @@ router.get('/:username', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
     if (!user) throw httpError(404, 'User not found');
+    await assertNotBlocked(req.user.id, user.id);
     const [postCount, follow, followingCount] = await Promise.all([
       Post.count({ where: { authorId: user.id, status: 'live', isStory: false } }),
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
@@ -116,6 +129,7 @@ router.get('/:username/posts', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
+    await assertNotBlocked(req.user.id, user.id);
     res.json(await feed.pagePosts({
       where: { authorId: user.id, status: 'live', isStory: false, ...(user.id === req.user.id ? {} : { visibility: 'public' }) },
       cursor: req.query.cursor,
