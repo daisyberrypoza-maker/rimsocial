@@ -2325,4 +2325,4 @@ html, body, #root { background: #ffffff; color: #111111; }
 .sc-pill { height:38px; padding:0 16px; border:0 !important; border-radius:999px; background:#efefef !important; color:#111 !important; font-size:15px; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
 
 /* ===== Login: Snapchat yellow primary button, no black ===== */
-.auth-screen .auth-primary, .auth-primary { background:#fffc00 !important; color:#111 !important; border:0 !important; }
+.auth-screen .auth-primary, .auth-primary { background:#efefef !important; color:#111 !important; border:0 !important; }
