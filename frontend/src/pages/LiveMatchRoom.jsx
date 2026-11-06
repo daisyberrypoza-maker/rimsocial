@@ -86,20 +86,24 @@ export default function LiveMatchRoom() {
       }
       setRoomState('Connecting…');
 
+      let pollInProgress = false;
       const poll = async () => {
-        if (!pcRef.current || pcRef.current !== pc || pc.signalingState === 'closed') return;
+        if (pollInProgress || !pcRef.current || pcRef.current !== pc || pc.signalingState === 'closed') return;
+        pollInProgress = true;
         try {
           const { items } = await api(`/v1/live/matches/${matchId}/signals?since=${encodeURIComponent(cursorRef.current)}&afterId=${encodeURIComponent(cursorIdRef.current)}`);
           for (const signal of items || []) {
-            if (seenRef.current.has(signal.id)) continue;
-            seenRef.current.add(signal.id);
-            if (signal.createdAt) {
-              const signalTime = new Date(signal.createdAt).toISOString();
-              if (signalTime > cursorRef.current || (signalTime === cursorRef.current && signal.id > cursorIdRef.current)) {
+            const signalTime = signal.createdAt ? new Date(signal.createdAt).toISOString() : null;
+            if (seenRef.current.has(signal.id)) {
+              if (signalTime && (signalTime > cursorRef.current || (signalTime === cursorRef.current && signal.id > cursorIdRef.current))) {
                 cursorRef.current = signalTime;
                 cursorIdRef.current = signal.id;
               }
+              continue;
             }
+            // Do not advance the cursor or mark a signal as seen until its
+            // handling succeeds. Otherwise a transient SDP/API error could
+            // permanently skip the offer/answer and leave both creators stuck.
             if (signal.kind === 'offer' && pc.signalingState === 'stable') {
               await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
               await flushCandidates(pc);
@@ -114,10 +118,17 @@ export default function LiveMatchRoom() {
                 try { await pc.addIceCandidate(new RTCIceCandidate(signal.payload)); } catch (e) { console.warn('Ignoring ICE candidate', e); }
               } else pendingCandidatesRef.current.push(signal.payload);
             }
+            seenRef.current.add(signal.id);
+            if (signalTime && (signalTime > cursorRef.current || (signalTime === cursorRef.current && signal.id > cursorIdRef.current))) {
+              cursorRef.current = signalTime;
+              cursorIdRef.current = signal.id;
+            }
           }
         } catch (e) {
           if (e.status === 409) setError('This match is no longer active.');
           else setError(e.message);
+        } finally {
+          pollInProgress = false;
         }
       };
       await poll();
