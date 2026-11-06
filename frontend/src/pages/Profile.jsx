@@ -107,14 +107,6 @@ export default function Profile() {
   }
 
   async function toggleFollow() {
-    async function shareProfile() {
-    const url = window.location.href;
-    try {
-      if (navigator.share) await navigator.share({ title: profile.username, url });
-      else { await navigator.clipboard.writeText(url); toast('Profile link copied'); }
-    } catch { /* share cancelled */ }
-  }
-
   if (!profile) return;
     setBusy(true);
     try {
@@ -145,6 +137,14 @@ export default function Profile() {
     try { await loadPage(feedKey, `/v1/users/${username}/posts`); }
     catch (e) { toast(e.message); }
     finally { setLoadingMore(false); }
+  }
+
+  async function shareProfile() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: profile.username, url });
+      else { await navigator.clipboard.writeText(url); toast('Profile link copied'); }
+    } catch { /* share cancelled */ }
   }
 
   if (!profile) return <div className="page profile-page"><p className="muted center">Loading…</p></div>;
