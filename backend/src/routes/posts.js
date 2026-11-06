@@ -7,8 +7,11 @@ const redis = require('../redis');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const cloudinary = require('../services/cloudinary');
+const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
 
 router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
+  let uploadedAsset = null;
+  let postPersisted = false;
   try {
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const visibility = req.body.visibility === 'private' ? 'private' : 'public';
@@ -30,6 +33,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
     const asset = await cloudinary.uploadFile(req.file);
+    uploadedAsset = asset;
     const post = await Post.create({
       authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: asset.url, mediaPublicId: asset.publicId,
       caption: String(req.body.caption || '').slice(0, 500), visibility, allowRemix, sourcePostId,
@@ -38,12 +42,18 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       sponsorCta: isSponsored ? (sponsorCta || 'Shop Now') : null,
       sponsorUrl: isSponsored ? sponsorUrl : null,
     });
+    postPersisted = true;
     if (visibility === 'public') {
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
       await feed.fanOutPost(post, followers.map((f) => f.followerId));
     }
     res.status(201).json(toPostDTO(post));
-  } catch (e) { next(e); }
+  } catch (e) {
+    if (uploadedAsset?.publicId && !postPersisted) {
+      await requestAssetCleanup(uploadedAsset.publicId, uploadedAsset.resourceType || (req.file?.mimetype?.startsWith('video/') ? 'video' : 'image'), 'orphan_post_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan post upload cleanup failed:', cleanupError.message));
+    }
+    next(e);
+  }
 });
 
 router.get('/:id', requireAuth, async (req, res, next) => {
@@ -61,15 +71,11 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     const post = await Post.findOne({ where: { id: req.params.id, authorId: req.user.id } });
     if (!post) throw httpError(404, 'Post not found');
     await post.update({ status: 'removed' });
-    if (post.mediaPublicId) {
-      const remaining = await Post.count({ where: { mediaPublicId: post.mediaPublicId, status: 'live' } });
-      if (!remaining) await cloudinary.deleteAsset(post.mediaPublicId, post.kind === 'video' ? 'video' : 'image');
-    } else {
-      const legacyId = cloudinary.publicIdFromUrl(post.mediaUrl);
-      if (legacyId) {
-        const remaining = await Post.count({ where: { mediaUrl: post.mediaUrl, status: 'live' } });
-        if (!remaining) await cloudinary.deleteAsset(legacyId, post.kind === 'video' ? 'video' : 'image');
-      }
+    try {
+      // Remove the post from public feeds immediately; retain a durable cleanup job if Cloudinary is unavailable.
+      await cleanupRemovedPostMedia(post);
+    } catch (cleanupError) {
+      console.error('Removed post media cleanup deferred:', cleanupError.message);
     }
     res.status(204).end();
   } catch (e) { next(e); }
