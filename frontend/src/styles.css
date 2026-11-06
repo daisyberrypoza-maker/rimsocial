@@ -2783,3 +2783,23 @@ html, body, #root { background: #ffffff; color: #111111; }
 .people-list-row .people-person strong { font-weight:600 !important; }
 .people-list-row .people-person small { font-weight:400 !important; }
 .people-follow-btn { font-weight:500 !important; }
+
+
+/* Compact mobile followers/following layout. */
+@media (max-width: 599px) {
+  .people-backdrop .people-sheet { padding:0 !important; padding-bottom:env(safe-area-inset-bottom,0px) !important; }
+  .people-sheet .people-sheet-title { min-height:52px !important; padding:6px 14px !important; gap:10px !important; border-bottom:1px solid #ededed; }
+  .people-sheet .people-sheet-title .icon-button { width:38px !important; height:38px !important; margin:0 !important; }
+  .people-sheet .people-sheet-title h3 { margin:0 !important; font-size:19px !important; font-weight:600 !important; line-height:1.2 !important; text-align:left !important; }
+  .people-sheet .people-tabs { margin:0 !important; padding:0 14px !important; gap:24px !important; min-height:48px !important; align-items:stretch !important; }
+  .people-sheet .people-tabs button { min-height:48px !important; padding:0 0 2px !important; font-size:15px !important; font-weight:500 !important; }
+  .people-sheet .people-tabs button.active { font-weight:600 !important; }
+  .people-sheet .people-search { margin:10px 14px 6px !important; height:40px !important; min-height:40px !important; flex-shrink:0 !important; }
+  .people-sort { padding:8px 16px 4px !important; font-size:14px !important; }
+  .people-sheet .people-list-row { min-height:64px !important; padding:8px 14px !important; gap:10px !important; }
+  .people-sheet .people-person { gap:10px !important; }
+  .people-sheet .people-person strong { font-size:14px !important; font-weight:500 !important; }
+  .people-sheet .people-person small { font-size:13px !important; }
+  .people-sheet .people-follow-btn { min-width:86px !important; height:34px !important; padding:0 12px !important; font-size:13px !important; font-weight:500 !important; }
+  .people-sheet .people-empty { padding:28px 18px !important; }
+}
