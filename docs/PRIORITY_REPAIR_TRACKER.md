@@ -57,6 +57,9 @@ Branch: `fix/reel-composer-remix-priority`
 ## Monetization and finance
 - [x] Gift eligibility and idempotency safeguards were added in PR #11.
 - [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
+- [x] Paystack webhook signatures are compared safely by bytes; malformed multi-byte headers return unauthorized rather than throwing. Coin-credit failures return 500 for provider retries, and duplicate references remain idempotent. Sandbox verification remains open.
+- [x] Gift creator income is mirrored into `content_earnings` and follows the existing hold/release lifecycle; apply migration `backend/migrations/021-content-earnings.sql` before deployment with `DB_SYNC=false` and verify on a production-like database.
+- [ ] Ledger units are mixed (`gift_out` uses coins while other entries use minor currency units); do not sum ledger rows until units are normalized or a separate unit field is introduced.
 - [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
 - [x] Creator money settings are environment-configurable (`COIN_PRICE_MINOR`, `COIN_VALUE_MINOR`, `CREATOR_GIFT_SHARE`, `PAYOUT_HOLD_DAYS`, `MIN_PAYOUT_MINOR`) with validated defaults; real pricing choices and Paystack sandbox reconciliation remain open.
@@ -84,7 +87,7 @@ Branch: `fix/reel-composer-remix-priority`
 - [x] PR #10 added API-only mode, explicit CORS, `/health`, database-backed `/ready`, and production sync safeguards (verify merged commit remains in `main`).
 - [x] Current-head frontend production build and backend syntax/unit tests passed for the tested PR #20 head; re-run after any subsequent branch changes.
 - [ ] Production schema migrations applied and verified before release; `DB_SYNC=false` and `AUTO_CREATE_DATABASE=false`.
-- [ ] Verify secrets are server-only, rotate any exposed credentials, validate JWT/CORS/rate limits, and audit admin-key handling.
+- [ ] Verify secrets are server-only, rotate any exposed credentials, validate JWT/CORS/rate limits, and audit admin-key handling. A committed `clipverse.zip` contained a backend `.env` with JWT, database, Paystack test and admin credentials; removal from the current tree does not purge Git history. Rotate these values and consider history cleanup.
 - [ ] Android Capacitor sync/build, install and smoke test on physical device, including login, uploads, profiles, likes, follows, reposts, stories, creator tools, and Find/Flip/Fix.
 - [ ] Independent frontend/backend deployment test with correct `VITE_API_URL`, HTTPS, CORS preflight, `/health` and `/ready`.
 - [ ] Backup/restore drill, structured logs/monitoring, error reporting, privacy/data retention and incident runbook.
