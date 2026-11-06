@@ -120,13 +120,13 @@ export default function LiveBroadcasts() {
         <button style={styles.button} disabled={busy || Boolean(active)}>{busy ? 'Connecting…' : 'Go LIVE'}</button>
       </form>
     </section>
-    {active && <section style={styles.panel}>
+    <section style={{ ...styles.panel, display: active ? 'block' : 'none' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', marginBottom: 10 }}>
         <div><strong>{active.title || 'Live broadcast'}</strong><div style={{ opacity: .7, fontSize: 13 }}>{role === 'host' ? 'HOST' : 'VIEWER'} · {message}</div></div>
         <button style={styles.secondary} onClick={endBroadcast} disabled={busy}>{role === 'host' ? 'End LIVE' : 'Leave'}</button>
       </div>
       <div ref={videoArea} onClick={(e) => e.currentTarget.querySelectorAll('video').forEach((v) => v.play().catch(() => {}))} style={{ minHeight: 260, aspectRatio: '9 / 16', maxHeight: '70vh', background: '#050505', borderRadius: 12, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
-    </section>}
+    </section>
     <section>
       <h2 style={{ fontSize: 18 }}>Creators live now</h2>
       {!items.length ? <p style={{ opacity: .7 }}>No public broadcasts are live right now.</p> : items.map((item) => <article key={item.id} style={{ ...styles.panel, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
