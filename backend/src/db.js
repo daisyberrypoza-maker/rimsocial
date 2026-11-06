@@ -291,7 +291,16 @@ const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
   lastError: { type: DataTypes.STRING(1000), allowNull: true },
 }, { tableName: 'media_cleanup_jobs', indexes: [{ unique: true, fields: ['publicId', 'resourceType'] }, { fields: ['status', 'nextAttemptAt'] }] });
 
+const LiveBroadcast = sequelize.define('LiveBroadcast', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  hostId: { type: DataTypes.UUID, allowNull: false },
+  title: { type: DataTypes.STRING(120), allowNull: false, defaultValue: '' },
+  status: { type: DataTypes.ENUM('live', 'ended'), allowNull: false, defaultValue: 'live' },
+  endedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'live_broadcasts', indexes: [{ fields: ['status', 'createdAt'] }, { fields: ['hostId', 'status'] }] });
+
 module.exports = {
+  LiveBroadcast,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
