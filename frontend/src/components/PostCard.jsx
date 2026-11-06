@@ -3,18 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
-import { mediaUrl } from '../lib/config.js';
+import { mediaUrl, postShareUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
+import ShareOptions from './ShareOptions.jsx';
 
 const countedViews = new Set();
 
-function Caption({ text, onHashtag }) {
-  return <p>{String(text || '').split(/(#[a-zA-Z0-9_]+)/g).map((part, i) =>
+function Caption({ text, onHashtag, onMention }) {
+  return <p>{String(text || '').split(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_.]+)/g).map((part, i) =>
     /^#[a-zA-Z0-9_]+$/.test(part)
       ? <button key={i} type="button" className="hashtag-inline" onClick={() => onHashtag(part.slice(1))}>{part}</button>
-      : <span key={i}>{part}</span>
+      : /^@[a-zA-Z0-9_.]+$/.test(part)
+        ? <button key={i} type="button" className="mention-inline" onClick={() => onMention(part.slice(1))}>{part}</button>
+        : <span key={i}>{part}</span>
   )}</p>;
 }
 
@@ -90,6 +93,7 @@ export default function PostCard({ post, active }) {
   const [showGifts, setShowGifts] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [reportReason, setReportReason] = useState('Spam or misleading');
   const [reporting, setReporting] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -142,18 +146,16 @@ export default function PostCard({ post, active }) {
   }
 
   async function copyPostLink() {
-    const url = `${window.location.origin}/p/${post.id}`;
+    const url = postShareUrl(post.id);
+    if (!url) return toast('External sharing needs VITE_PUBLIC_APP_URL set to the public RimSocial website.');
     try { await navigator.clipboard.writeText(url); toast('Post link copied'); setShowMenu(false); }
     catch { toast(url); }
   }
 
-  async function sharePost() {
-    const url = `${window.location.origin}/p/${post.id}`;
-    try {
-      if (navigator.share) await navigator.share({ title: `Post by @${username}`, url });
-      else await navigator.clipboard.writeText(url);
-      setShowMenu(false);
-    } catch { /* Share sheet dismissed. */ }
+  function sharePost() {
+    if (!postShareUrl(post.id)) return toast('External sharing needs VITE_PUBLIC_APP_URL set to the public RimSocial website.');
+    setShowMenu(false);
+    setShowShare(true);
   }
 
   async function blockCreator() {
@@ -209,7 +211,7 @@ export default function PostCard({ post, active }) {
     <div className="info">
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
       {post.topic && <div className="post-topic">{post.topic}</div>}
-      {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
+      {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored ? <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
@@ -241,9 +243,10 @@ export default function PostCard({ post, active }) {
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
         <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Not interested</button>
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
-        <button className="post-menu-item" onClick={sharePost}>Export or send</button>
+        <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
       </section>
     </div>}
+    {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
   </article>;
