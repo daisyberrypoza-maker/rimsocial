@@ -7,6 +7,8 @@ on:
       - rimsocial-full-feature-fixes
       - clipverse-production-fixes-2026-11-05
       - clipverse-social-experience-2026-11-05
+      - 'feature/**'
+      - 'fix/**'
   pull_request:
     branches:
       - main
@@ -36,3 +38,45 @@ jobs:
         run: npm ci --prefix frontend
       - name: Build frontend
         run: npm run build --prefix frontend
+
+  business-integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test-password
+          MYSQL_DATABASE: rimsocial_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+      - name: Run Find Flip Fix MySQL integration test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: rimsocial-ci-only-jwt-secret-000000000000000000000000
+          ADMIN_API_KEY: rimsocial-ci-only-admin-key-000000000000000000000000
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: rimsocial_test
+          DB_USER: root
+          DB_PASS: test-password
+          DB_SYNC: "false"
+          AUTO_CREATE_DATABASE: "false"
+          SERVE_FRONTEND: "false"
+          RUN_BUSINESS_INTEGRATION: "true"
+        run: node --test backend/test/business.integration.test.js

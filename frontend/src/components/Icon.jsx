@@ -14,6 +14,7 @@ const PATHS = {
   users: 'M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6',
   compass: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM15.5 8.5l-2 5-5 2 2-5z',
   wallet: 'M3 6.5A2.5 2.5 0 0 1 5.5 4H20v16H5.5A2.5 2.5 0 0 1 3 17.5zM3 7h17M16 13h4',
+  briefcase: 'M3 7h18v14H3zM8 7V4h8v3M3 12h18M10 12v2h4v-2',
 };
 
 export default function Icon({ name, size = 26 }) {

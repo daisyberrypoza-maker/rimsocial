@@ -15,6 +15,7 @@ import ProfileFeed from './pages/ProfileFeed.jsx';
 import CreatorStudio from './pages/CreatorStudio.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
+import BusinessHub from './pages/BusinessHub.jsx';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/business" element={<RequireAuth><BusinessHub /></RequireAuth>} />
         <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -83,6 +85,7 @@ function titleFor(path) {
   if (path.startsWith('/explore')) return 'Explore';
   if (path.startsWith('/upload')) return 'New post';
   if (path.startsWith('/creator')) return 'Creator Studio';
+  if (path.startsWith('/business')) return 'Find, Flip & Fix';
   if (path.startsWith('/u/')) return '';
   return 'Clipverse';
 }
