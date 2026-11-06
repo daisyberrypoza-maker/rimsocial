@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const { Op } = require('sequelize');
 const { LiveMatch, LiveSignal } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const config = require('../config');
 const httpError = require('../utils/httpError');
 
 router.use(requireAuth);
