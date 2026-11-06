@@ -1,4 +1,5 @@
 name: Deploy RimSocial website to GitHub Pages
+# Redeploy the latest main-branch frontend whenever this workflow changes.
 
 on:
   push:
