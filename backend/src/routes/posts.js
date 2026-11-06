@@ -103,6 +103,33 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Record watch-time and explicit feedback for the personalized Discover feed.
+router.post('/:id/feedback', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, visibility: 'public' } });
+    if (!post) throw httpError(404, 'Post not found');
+    const action = String(req.body?.action || 'watch');
+    const watchedSeconds = Number(req.body?.watchedSeconds);
+    const durationSeconds = Number(req.body?.durationSeconds);
+    let delta = 0;
+    if (action === 'not_interested') delta = -18;
+    else if (action === 'skip') delta = -Math.min(8, Math.max(1, Number.isFinite(watchedSeconds) ? 8 - watchedSeconds : 6));
+    else if (action === 'watch') {
+      if (!Number.isFinite(watchedSeconds) || watchedSeconds < 0 || watchedSeconds > 3600
+        || !Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 3600) {
+        throw httpError(400, 'Provide valid watchedSeconds and durationSeconds');
+      }
+      const completion = Math.min(1, watchedSeconds / durationSeconds);
+      delta = Math.round(Math.min(12, watchedSeconds * 0.4) + completion * 8);
+      if (completion >= 0.9) delta += 4;
+    } else throw httpError(400, 'Action must be watch, skip, or not_interested');
+    const key = `feed:preferences:${req.user.id}`;
+    await redis.hincrby(key, post.id, delta);
+    await redis.expire(key, 60 * 60 * 24 * 90);
+    res.json({ recorded: true });
+  } catch (e) { next(e); }
+});
+
 router.get('/:id/engagement', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
