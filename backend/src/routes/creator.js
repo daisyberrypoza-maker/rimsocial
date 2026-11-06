@@ -156,8 +156,8 @@ router.post('/matches/:id/score', async (req, res, next) => {
     // Reconcile scores from the verified gift ledger, never from client-supplied
     // values. This repairs missed increments and makes repeated refreshes safe.
     const where = {
+      liveMatchId: match.id,
       creatorId: { [Op.in]: [match.hostId, match.opponentId] },
-      ...(match.startsAt ? { createdAt: { [Op.gte]: match.startsAt } } : {}),
     };
     const totals = await GiftTransaction.findAll({
       where,
