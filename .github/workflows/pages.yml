@@ -37,7 +37,7 @@ jobs:
       - name: Build frontend
         run: npm run build --workspace=clipverse-frontend
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://clipverse-backend-production.up.railway.app' }}
 
       - name: Verify frontend build output
         run: test -s frontend/dist/index.html && test -d frontend/dist/assets
