@@ -122,7 +122,7 @@ export default function Upload() {
       <label className="upload-label" htmlFor="post-topic">Topic</label>
       <input id="post-topic" className="upload-topic-input" value={topic} maxLength={60} placeholder="Fashion, Comedy, Tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} />
       <label className="upload-label" htmlFor="post-caption">Description</label>
-      <textarea id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={(e) => setDraft({ caption: e.target.value })} rows={4} />
+      <textarea id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={(e) => setDraft({ ...(draft || {}), caption: e.target.value, topic, aiLabel, shareToStory })} rows={4} />
       <div className="upload-caption-meta"><span>Use #hashtags to help people discover your post</span><span>{(draft.caption || '').length}/{asStory ? 200 : 500}</span></div>
 
       {!asStory && <fieldset className="upload-privacy">
