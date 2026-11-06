@@ -122,7 +122,9 @@ export default function PostCard({ post, active }) {
       if (duration > 0 && Number.isFinite(duration) && Number.isFinite(watched)) {
         api(`/v1/posts/${post.id}/feedback`, {
           method: 'POST',
-          body: { action: 'watch', watchedSeconds: Math.min(watched, duration), durationSeconds: duration },
+          body: watched < 2
+            ? { action: 'skip', watchedSeconds: watched }
+            : { action: 'watch', watchedSeconds: Math.min(watched, duration), durationSeconds: duration },
         }).catch(() => {});
       }
     };
