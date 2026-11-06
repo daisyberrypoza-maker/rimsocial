@@ -59,6 +59,7 @@ async function getDiscoverPage({ userId, cursor, limit }) {
     ]);
     const blocked = new Set(blocks.map((b) => b.blockedUserId));
     const followed = new Set(follows.map((f) => f.followeeId));
+    const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
     const now = Date.now();
     ids = candidates.filter((p) => !blocked.has(p.authorId)).map((p) => {
       const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
@@ -68,7 +69,11 @@ async function getDiscoverPage({ userId, cursor, limit }) {
         + (Number(p.repostCount) || 0) * 3
         + Math.log1p(Number(p.giftCoins) || 0) * 1.5;
       const community = followed.has(p.authorId) ? 5 : 0;
-      return { id: p.id, score: freshness + engagement + community, createdAt: new Date(p.createdAt).getTime() };
+      // Per-viewer feedback makes recommendations adapt to real behavior.
+      // Positive values come from watch duration/completion; negative values from skips
+      // and explicit "not interested" feedback.
+      const personal = Number(preferenceScores[p.id]) || 0;
+      return { id: p.id, score: freshness + engagement + community + personal, createdAt: new Date(p.createdAt).getTime() };
     }).sort((a, b) => b.score - a.score || b.createdAt - a.createdAt).map((p) => p.id);
     await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
   }
