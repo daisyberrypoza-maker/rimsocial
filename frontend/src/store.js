@@ -33,7 +33,7 @@ export const useAppStore = create(
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
       setStoryRail: (storyRail) => set({ storyRail }),
-      setUploadDraft: (uploadDraft) => set({ uploadDraft }),
+      setUploadDraft: (uploadDraft) => set((s) => ({ uploadDraft: typeof uploadDraft === 'function' ? uploadDraft(s.uploadDraft) : uploadDraft })),
     }),
     {
       name: 'clipverse-app',
