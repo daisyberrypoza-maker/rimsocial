@@ -1220,3 +1220,38 @@ img, video, canvas, iframe { max-width:100%; }
   .bottomnav { left:50%; right:auto; width:min(760px,100%); transform:translateX(-50%); }
   .auth-card { max-width:480px; }
 }
+
+
+/* Clean, background-free vector icons with mobile-first visibility. */
+.icon-vector {
+  display: inline-block;
+  flex: 0 0 auto;
+  color: currentColor;
+  background: transparent !important;
+  fill: none;
+  stroke: currentColor;
+  overflow: visible;
+  vertical-align: middle;
+}
+button .icon-vector, a .icon-vector { pointer-events: none; }
+.bottomnav a svg.icon-vector {
+  width: clamp(23px, 6.2vw, 27px);
+  height: clamp(23px, 6.2vw, 27px);
+  min-width: 23px;
+  min-height: 23px;
+  background: transparent !important;
+}
+.bottomnav a {
+  min-height: 48px;
+}
+.bottomnav .create .plus {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.icon-button, .topbar-back {
+  background: transparent;
+}
+.icon-button .icon-vector, .topbar-back .icon-vector {
+  width: 25px;
+  height: 25px;
+}
