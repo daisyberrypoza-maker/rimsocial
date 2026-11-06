@@ -6,6 +6,7 @@ const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const cloudinary = require('../services/cloudinary');
+const { requestAssetCleanup } = require('../services/mediaCleanup');
 
 const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'];
 
@@ -39,9 +40,20 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
     if (!user) throw httpError(404, 'User not found');
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/avatars');
     const oldAvatar = user.avatarUrl;
-    await user.update({ avatarUrl: asset.url });
+    try {
+      await user.update({ avatarUrl: asset.url });
+    } catch (updateError) {
+      if (asset.publicId) {
+        await requestAssetCleanup(asset.publicId, asset.resourceType || 'image', 'orphan_avatar_upload', { knownUnreferenced: true })
+          .catch((cleanupError) => console.error('Orphan avatar cleanup failed:', cleanupError.message));
+      }
+      throw updateError;
+    }
     const oldId = cloudinary.publicIdFromUrl(oldAvatar);
-    if (oldId) await cloudinary.deleteAsset(oldId, 'image').catch((e) => console.error('Old avatar cleanup failed:', e.message));
+    if (oldId && oldId !== asset.publicId) {
+      await requestAssetCleanup(oldId, 'image', 'avatar_replaced')
+        .catch((cleanupError) => console.error('Old avatar cleanup queue failed:', cleanupError.message));
+    }
     res.json({ avatarUrl: user.avatarUrl });
   } catch (e) { next(e); }
 });
