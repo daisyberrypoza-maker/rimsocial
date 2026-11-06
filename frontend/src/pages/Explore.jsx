@@ -16,6 +16,7 @@ const STALE_AFTER_MS = 60 * 1000;
 export default function Explore() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const peopleMode = searchParams.get('people') === '1';
   const cached = useAppStore((s) => s.feeds[KEY]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
@@ -113,6 +114,7 @@ export default function Explore() {
   return (
     <div className="ig-explore" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
+      {peopleMode && <header className="people-discovery-heading"><h1>Find people</h1><p>Friends, followers and creators you may know</p></header>}
       <form className="ig-search" onSubmit={search} role="search">
         <Icon name="search" size={18} />
         <input aria-label="Search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
@@ -136,18 +138,28 @@ export default function Explore() {
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
         {recommendations.followBack.length > 0 && <section className="ig-section">
-          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3><button type="button" className="ig-link" onClick={() => navigate('/explore?q=')}>See all</button></div>
+          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/explore?people=1')}>See all</button>}</div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        <div className="xp-title">Explore</div>
-        <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
-          <span className="xp-media">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
-          <span className="xp-author">@{p.author?.username || 'creator'}</span>
-        </button>)}</div>
-        <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
+        {peopleMode && recommendations.suggested.length > 0 && <section className="ig-section">
+          <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3></div>
+          {recommendations.suggested.map((person) => <div className="ig-person" key={person.id}>
+            <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={48} /><span><strong>{person.username}</strong><small>{person.mutualCount ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'} · ` : ''}${person.displayName || 'Suggested creator'}</small></span></button>
+            <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+          </div>)}
+        </section>}
+        {peopleMode && !recommendations.suggested.length && !recommendations.followBack.length && <p className="ig-empty">Search for people by name or username.</p>}
+        {!peopleMode && <>
+          <div className="xp-title">Explore</div>
+          <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
+            <span className="xp-media">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
+            <span className="xp-author">@{p.author?.username || 'creator'}</span>
+          </button>)}</div>
+          <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
+        </>}
       </>}
     </div>
   );
