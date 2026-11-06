@@ -8,7 +8,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup } = require('../services/mediaCleanup');
 
-const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'];
+const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'country', 'followerCount'];
 
 // Resolve whether the currently authenticated viewer follows each person in a list.
 async function excludeBlockedPeople(people, viewerId) {
@@ -80,6 +80,33 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
     res.json({ avatarUrl: user.avatarUrl });
   } catch (e) { next(e); }
 });
+ 
+// Upload or replace the authenticated user's profile cover image.
+router.post('/me/cover', requireAuth, upload.single('media'), async (req, res, next) => {
+  try {
+    if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP cover image');
+    const user = await User.findByPk(req.user.id);
+    if (!user) throw httpError(404, 'User not found');
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/covers');
+    const oldCover = user.coverUrl;
+    try {
+      await user.update({ coverUrl: asset.url });
+    } catch (updateError) {
+      if (asset.publicId) {
+        await requestAssetCleanup(asset.publicId, asset.resourceType || 'image', 'orphan_cover_upload', { knownUnreferenced: true })
+          .catch((cleanupError) => console.error('Orphan cover cleanup failed:', cleanupError.message));
+      }
+      throw updateError;
+    }
+    const oldId = cloudinary.publicIdFromUrl(oldCover);
+    if (oldId && oldId !== asset.publicId) {
+      await requestAssetCleanup(oldId, 'image', 'cover_replaced')
+        .catch((cleanupError) => console.error('Old cover cleanup queue failed:', cleanupError.message));
+    }
+    res.json({ coverUrl: user.coverUrl });
+  } catch (e) { next(e); }
+});
+
 
 // Suggested creators and people to follow back for the Discover screen.
 router.get('/suggestions', requireAuth, async (req, res, next) => {
