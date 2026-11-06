@@ -85,3 +85,18 @@ CREATE TABLE IF NOT EXISTS business_work_updates (
   INDEX idx_business_work_updates_opportunity (opportunityId, createdAt),
   INDEX idx_business_work_updates_author (authorId, createdAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS business_financial_records (
+  id CHAR(36) NOT NULL PRIMARY KEY,
+  opportunityId CHAR(36) NOT NULL,
+  authorId CHAR(36) NOT NULL,
+  purchasePriceMinor BIGINT NOT NULL,
+  actualSalePriceMinor BIGINT NOT NULL,
+  actualCostMinor BIGINT NOT NULL,
+  realizedProfitMinor BIGINT NOT NULL,
+  note VARCHAR(1000) NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  INDEX idx_business_financial_records_opportunity (opportunityId, createdAt),
+  INDEX idx_business_financial_records_author (authorId, createdAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
