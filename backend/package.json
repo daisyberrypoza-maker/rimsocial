@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "worker": "node src/workers/jobs.js",
-    "check": "node --check src/server.js",
+    "check": "node --check src/server.js && node --check src/routes/broadcasts.js && node --check src/db.js && node --check src/config.js",
     "test": "node --test"
   },
   "engines": {
