@@ -17,6 +17,7 @@ import PostDetail from './pages/PostDetail.jsx';
 import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
 import BusinessHub from './pages/BusinessHub.jsx';
 import Activity from './pages/Activity.jsx';
+import Stories from './pages/Stories.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
+        <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
         <Route path="/live" element={<RequireAuth><LiveBroadcasts /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
