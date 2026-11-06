@@ -32,7 +32,7 @@ async function withFollowState(people, viewerId) {
   });
   const followedIds = new Set(follows.map((row) => row.followeeId));
   return people.map((person) => ({
-    ...person.toJSON(),
+    ...(typeof person.toJSON === 'function' ? person.toJSON() : person),
     isFollowing: followedIds.has(person.id),
   }));
 }
