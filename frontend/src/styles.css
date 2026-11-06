@@ -616,3 +616,9 @@ input:focus, select:focus { border-color: var(--brand-a); }
   .profile-stats-row { gap:21px; }
   .profile-actions-refresh button { min-height:40px; font-size:13px; }
 }
+
+
+/* Per-creator upload notification control */
+.profile-notification-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:0 14px; border:1px solid var(--line); border-radius:999px; background:var(--surface, #fff); color:var(--text, #111); font:inherit; font-size:14px; font-weight:500; white-space:nowrap; }
+.profile-notification-button.is-on { border-color:var(--brand, #5b5ce2); color:var(--brand, #5b5ce2); background:var(--surface, #fff); }
+.profile-notification-button:disabled { opacity:.6; }
