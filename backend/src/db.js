@@ -199,7 +199,67 @@ async function seedGifts() {
   ]);
 }
 
+// Find, Flip & Fix: additive marketplace/workflow tables. Existing social and wallet data is untouched.
+const BusinessProfile = sequelize.define('BusinessProfile', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  ownerId: { type: DataTypes.UUID, allowNull: false },
+  name: { type: DataTypes.STRING(120), allowNull: false },
+  category: { type: DataTypes.STRING(80), allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
+  country: { type: DataTypes.CHAR(2), allowNull: false, defaultValue: 'NG' },
+  city: { type: DataTypes.STRING(100), allowNull: false },
+  website: { type: DataTypes.STRING(512), allowNull: true },
+  verificationStatus: { type: DataTypes.ENUM('pending', 'verified', 'rejected'), allowNull: false, defaultValue: 'pending' },
+}, { tableName: 'business_profiles', indexes: [{ fields: ['ownerId', 'createdAt'] }, { fields: ['country', 'city', 'category'] }, { fields: ['verificationStatus'] }] });
+
+const BusinessOpportunity = sequelize.define('BusinessOpportunity', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  ownerId: { type: DataTypes.UUID, allowNull: false },
+  businessId: { type: DataTypes.UUID, allowNull: true },
+  lane: { type: DataTypes.ENUM('find', 'flip', 'fix'), allowNull: false },
+  title: { type: DataTypes.STRING(140), allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
+  category: { type: DataTypes.STRING(80), allowNull: false },
+  country: { type: DataTypes.CHAR(2), allowNull: false, defaultValue: 'NG' },
+  city: { type: DataTypes.STRING(100), allowNull: false },
+  currency: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'NGN' },
+  askingPriceMinor: { type: DataTypes.BIGINT, allowNull: true },
+  estimatedCostMinor: { type: DataTypes.BIGINT, allowNull: true },
+  targetPriceMinor: { type: DataTypes.BIGINT, allowNull: true },
+  budgetMinor: { type: DataTypes.BIGINT, allowNull: true },
+  status: { type: DataTypes.ENUM('draft', 'published', 'paused', 'in_progress', 'review', 'completed', 'closed', 'rejected'), allowNull: false, defaultValue: 'published' },
+  reviewStatus: { type: DataTypes.ENUM('pending', 'approved', 'rejected'), allowNull: false, defaultValue: 'pending' },
+  assignedUserId: { type: DataTypes.UUID, allowNull: true },
+  reviewedBy: { type: DataTypes.STRING(190), allowNull: true },
+  reviewedAt: { type: DataTypes.DATE, allowNull: true },
+  reviewNote: { type: DataTypes.STRING(500), allowNull: true },
+  completedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'business_opportunities', indexes: [{ fields: ['lane', 'reviewStatus', 'status', 'createdAt'] }, { fields: ['ownerId', 'status'] }, { fields: ['country', 'city', 'category'] }, { fields: ['assignedUserId', 'status'] }] });
+
+const BusinessOffer = sequelize.define('BusinessOffer', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  opportunityId: { type: DataTypes.UUID, allowNull: false },
+  senderId: { type: DataTypes.UUID, allowNull: false },
+  recipientId: { type: DataTypes.UUID, allowNull: false },
+  amountMinor: { type: DataTypes.BIGINT, allowNull: false },
+  currency: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'NGN' },
+  message: { type: DataTypes.STRING(1000), allowNull: false, defaultValue: '' },
+  status: { type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'withdrawn', 'completed', 'disputed'), allowNull: false, defaultValue: 'pending' },
+  idempotencyKey: { type: DataTypes.STRING(100), allowNull: true, unique: true },
+  senderCompletedAt: { type: DataTypes.DATE, allowNull: true },
+  recipientCompletedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'business_offers', indexes: [{ fields: ['opportunityId', 'status', 'createdAt'] }, { fields: ['senderId', 'status'] }, { fields: ['recipientId', 'status'] }] });
+
+const BusinessWorkUpdate = sequelize.define('BusinessWorkUpdate', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  opportunityId: { type: DataTypes.UUID, allowNull: false },
+  authorId: { type: DataTypes.UUID, allowNull: false },
+  kind: { type: DataTypes.ENUM('progress', 'blocker', 'completion'), allowNull: false, defaultValue: 'progress' },
+  body: { type: DataTypes.STRING(2000), allowNull: false },
+  evidenceUrl: { type: DataTypes.STRING(1024), allowNull: true },
+}, { tableName: 'business_work_updates', indexes: [{ fields: ['opportunityId', 'createdAt'] }, { fields: ['authorId', 'createdAt'] }] });
+
 module.exports = {
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport, seedGifts,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport,\n  BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };
