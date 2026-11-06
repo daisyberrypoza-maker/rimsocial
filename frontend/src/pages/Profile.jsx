@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -30,6 +31,10 @@ export default function Profile() {
   const [listType, setListType] = useState('');
   const [people, setPeople] = useState([]);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [showCoinSheet, setShowCoinSheet] = useState(false);
+  const [coinAmount, setCoinAmount] = useState(1000);
+  const [receiptEmail, setReceiptEmail] = useState('');
+  const [coinBusy, setCoinBusy] = useState(false);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -96,6 +101,17 @@ export default function Profile() {
     finally { setDeleting(null); }
   }
 
+  async function checkoutCoins() {
+    if (Capacitor.isNativePlatform()) return toast('Android coin purchases require Google Play Billing setup before checkout can be enabled.');
+    if (!Number.isSafeInteger(Number(coinAmount)) || Number(coinAmount) < 100) return toast('Choose a valid coin package amount.');
+    setCoinBusy(true);
+    try {
+      const data = await api('/v1/wallet/topup', { method: 'POST', body: { amountMinor: Number(coinAmount) * 100, ...(receiptEmail.trim() ? { email: receiptEmail.trim() } : {}) } });
+      window.location.href = data.authorizationUrl;
+    } catch (err) { toast(err.message); }
+    finally { setCoinBusy(false); }
+  }
+
   async function loadMore() {
     setLoadingMore(true);
     try { await loadPage(feedKey, `/v1/users/${username}/posts`); }
@@ -110,22 +126,32 @@ export default function Profile() {
   return (
     <div className="page">
       <section className="profile-top profile-top-refresh">
-        <div className="profile-cover-tools">
-          <Avatar user={profile} size={104} ring />
-          {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : 'Edit photo'}</button>}
+        <div className="profile-hero-toolbar">
+          <button className="profile-icon-button" onClick={() => navigate(-1)} aria-label="Go back">‹</button>
+          <button className="profile-share-button" onClick={() => { const url = window.location.href; if (navigator.share) navigator.share({ title: profile.displayName, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast('Profile link copied'); } }}>↗ <span>Share</span></button>
+          {profile.isMe && <button className="profile-icon-button" onClick={() => setDrawerOpen(true)} aria-label="Profile settings">⚙</button>}
         </div>
-        <h2 className="profile-name">{profile.displayName}</h2>
-        <div className="profile-handle">@{profile.username}</div>
+        <div className="profile-cover-art" aria-hidden="true" />
+        <div className="profile-identity-row">
+          <div className="profile-cover-tools">
+            <Avatar user={profile} size={76} ring />
+            {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : '✎'}</button>}
+          </div>
+          <div className="profile-identity-copy">
+            <h2 className="profile-name">{profile.displayName}</h2>
+            <div className="profile-handle">@{profile.username}</div>
+          </div>
+        </div>
         <div className="profile-stats-row">
           <button onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount)}</strong><span>Followers</span></button>
           <button onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
           <div><strong>{formatCount(profile.postCount || 0)}</strong><span>Posts</span></div>
         </div>
-        <span className="chip">{profile.country}</span>
+        {profile.country && <span className="chip">{profile.country}</span>}
         {profile.isMe ? (
           <div className="profile-actions profile-actions-refresh">
             <button onClick={() => navigate('/upload')}>＋ Create</button>
-            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings">☰ Settings</button>
+            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings">My Account</button>
           </div>
         ) : (
           <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
@@ -140,12 +166,24 @@ export default function Profile() {
           <div className="drawer-head"><h3>Profile & settings</h3><button className="ghost small" onClick={() => setDrawerOpen(false)}>✕</button></div>
           <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}>＋ Create post or story</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/explore'); }}>⌕ Find friends & creators</button>
+          <button onClick={() => { setDrawerOpen(false); setShowCoinSheet(true); }}>◉ Get coins</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}>✦ Creator Studio · earnings & cashout</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}>Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}>Following</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}>Log out</button>
         </aside>
+      </div>}
+
+      {showCoinSheet && <div className="sheet-backdrop coin-backdrop" onClick={() => setShowCoinSheet(false)}>
+        <section className="sheet coin-sheet" role="dialog" aria-label="Buy coins" onClick={(e) => e.stopPropagation()}>
+          <div className="comments-heading"><h3>Get coins</h3><button className="ghost small" onClick={() => setShowCoinSheet(false)} aria-label="Close">✕</button></div>
+          <p className="muted">Use coins to send gifts and support your favourite creators.</p>
+          <div className="coin-pack-grid">{[{ amount: 500, label: 'Starter', bonus: 'Try gifting' }, { amount: 1000, label: 'Popular', bonus: 'Great for gifts' }, { amount: 2500, label: 'Creator fan', bonus: 'More to share' }, { amount: 5000, label: 'Big supporter', bonus: 'Support creators' }].map((pack) => <button type="button" key={pack.amount} className={Number(coinAmount) === pack.amount ? 'coin-pack selected' : 'coin-pack'} onClick={() => setCoinAmount(pack.amount)}><span className="coin-pack-amount">◉ {pack.amount.toLocaleString()}</span><strong>{pack.label}</strong><small>{pack.bonus}</small><span className="coin-pack-price">₦{pack.amount.toLocaleString()}</span></button>)}</div>
+          <label className="coin-email-label">Receipt email (optional)<input type="email" value={receiptEmail} onChange={(e) => setReceiptEmail(e.target.value)} placeholder="you@example.com" /></label>
+          <p className="muted">Secure checkout is provided by Paystack. Coins are credited after payment confirmation.</p>
+          <button className="coin-checkout" disabled={coinBusy} onClick={checkoutCoins}>{coinBusy ? 'Opening secure checkout…' : `Continue · ₦${Number(coinAmount).toLocaleString()}`}</button>
+        </section>
       </div>}
 
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
