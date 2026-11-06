@@ -1808,3 +1808,7 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
 .people-list > * { padding: 8px 16px; }
 .people-list button { border-radius: 8px; }
 .people-list .pill, .people-list button.follow-result { border-radius: 8px; }
+
+/* Red-team fix: buttons on dark video overlays keep white text */
+.view-profile, .rail-btn, .story-bubble, .coins { color: #fff; }
+.rail-btn.on { color: var(--brand-a); }
