@@ -841,3 +841,7 @@ input:focus { border-color:#4c5cff; }
 }
 
 .business-review-note { background: #fff7e6; border: 1px solid #f3d19c; color: #744210; padding: 9px 10px; border-radius: 10px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+
+.business-profit-summary { display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 10px 0; }
+.business-profit-summary > span, .business-profit-summary > small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.business-profit-summary > strong { font-size: 23px; overflow-wrap: anywhere; }
