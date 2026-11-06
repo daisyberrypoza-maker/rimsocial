@@ -139,3 +139,13 @@ Do not manually delete `media_cleanup_jobs` records while their status is `pendi
 ## LIVE match gift attribution migration
 
 Before deploying the LIVE battle gift-attribution changes with `DB_SYNC=false`, apply `backend/migrations/022-live-match-gift-attribution.sql` to the production MySQL database. This adds a nullable match reference to gift transactions; existing financial records are preserved and existing gifts without a match reference are not retroactively counted in battle scores.
+
+
+## Public LIVE broadcasting
+
+RimSocial public LIVE uses LiveKit as the media SFU. The host publishes camera/microphone tracks; audience members join as subscribe-only participants. Audience chat is stored in MySQL and rate-limited per user.
+
+1. Configure `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` in the backend environment. Never expose the API secret to the frontend.
+2. Apply `backend/migrations/024-public-live-broadcasts.sql` before production deployment. Development databases with `DB_SYNC=true` create the Sequelize models automatically.
+3. Build and deploy the backend and frontend together. The web client loads the LiveKit browser SDK at runtime; the browser/device must be able to reach the configured LiveKit URL.
+4. Verify camera/microphone permissions, viewer playback, reconnect behavior, chat moderation/rate limits, and ending broadcasts on web and physical Android devices during the final project test pass.
