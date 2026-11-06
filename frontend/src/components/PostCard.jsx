@@ -7,6 +7,7 @@ import { mediaUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
+import ShareOptions from './ShareOptions.jsx';
 
 const countedViews = new Set();
 
@@ -90,6 +91,7 @@ export default function PostCard({ post, active }) {
   const [showGifts, setShowGifts] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [reportReason, setReportReason] = useState('Spam or misleading');
   const [reporting, setReporting] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -147,13 +149,9 @@ export default function PostCard({ post, active }) {
     catch { toast(url); }
   }
 
-  async function sharePost() {
-    const url = `${window.location.origin}/p/${post.id}`;
-    try {
-      if (navigator.share) await navigator.share({ title: `Post by @${username}`, url });
-      else await navigator.clipboard.writeText(url);
-      setShowMenu(false);
-    } catch { /* Share sheet dismissed. */ }
+  function sharePost() {
+    setShowMenu(false);
+    setShowShare(true);
   }
 
   async function blockCreator() {
@@ -241,9 +239,10 @@ export default function PostCard({ post, active }) {
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
         <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Not interested</button>
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
-        <button className="post-menu-item" onClick={sharePost}>Export or send</button>
+        <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
       </section>
     </div>}
+    {showShare && <ShareOptions url={new URL(`/p/${post.id}`, window.location.origin).toString()} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
   </article>;
