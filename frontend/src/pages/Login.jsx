@@ -118,7 +118,7 @@ export default function Login() {
           <>
             <div className="auth-step-meta"><button type="button" className="auth-back" onClick={() => { if (registerStep === 0) { setMode('login'); } else { setRegisterStep((step) => step - 1); } setError(''); }} aria-label="Go back">←</button><span>STEP {registerStep + 1} OF {registerSteps.length}</span><button type="button" className="auth-cancel" onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
             <div className="auth-progress" aria-label={`Step ${registerStep + 1} of ${registerSteps.length}`}><span style={{ width: `${((registerStep + 1) / registerSteps.length) * 100}%` }} /></div>
-            <div className="auth-intro auth-step-intro"><p className="auth-eyebrow">LET’S GET YOU SET UP</p><h1>{currentStep.title}</h1><p>{currentStep.subtitle}</p></div>
+            <div className="auth-intro auth-step-intro"><p className="auth-eyebrow">LET’S GET YOU SET UP</p><h1>{currentStep.title}</h1><p className="auth-step-description">{currentStep.subtitle}</p></div>
             <form className="auth-form auth-step-form" onSubmit={handleSubmit}>
               {registerStep === 0 && <label>Display name<input autoFocus autoComplete="name" placeholder="Your name" value={form.displayName} onChange={field('displayName')} required maxLength={64} /></label>}
               {registerStep === 1 && <label>Email address<input autoFocus type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={field('email')} required /></label>}
