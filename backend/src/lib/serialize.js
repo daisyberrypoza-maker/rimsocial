@@ -7,6 +7,8 @@ function toPostDTO(post) {
     mediaUrl: p.mediaUrl,
     thumbUrl: p.thumbUrl || null,
     caption: p.caption || '',
+    topic: p.topic || null,
+    aiLabel: Boolean(p.aiLabel),
     viewCount: Number(p.viewCount) || 0,
     likeCount: Number(p.likeCount) || 0,
     repostCount: Number(p.repostCount) || 0,
