@@ -103,3 +103,16 @@ Session, last screen, cached feeds and scroll position, gifts, coin balance, and
 
 Pending creator withdrawals can be reviewed through `GET /v1/admin/payouts` with the `x-admin-api-key` header, then submitted to Paystack through `POST /v1/admin/payouts/:id/transfer`. If Paystack returns `requiresOtp: true`, the trusted operator can submit the one-time code to `POST /v1/admin/payouts/:id/otp`. Keep `ADMIN_API_KEY` private and use it only from a trusted server-side operator tool, never from the frontend. Signed Paystack transfer webhooks settle successful payouts or return failed amounts to the creator wallet. Configure the Paystack webhook URL as `/v1/webhooks/paystack`, and test transfer events using Paystack test mode before production.
 # rimsocial
+
+## Cloudinary media cleanup and retries
+
+Before deploying the media cleanup queue with `DB_SYNC=false`, apply `backend/migrations/020-media-cleanup-jobs.sql` to the production MySQL database.
+
+- Failed post/story uploads are immediately scheduled for deletion if the database write fails.
+- Replaced avatars are queued for deletion only when no current post/story/avatar references the asset.
+- Removing a post hides it immediately; if Cloudinary is unavailable, cleanup is persisted and retried with backoff.
+- Expired stories are removed from the database only after their asset is deleted, found to be shared by other live content, or durably queued for retry.
+- The server processes due cleanup jobs and retries removed media approximately every ten minutes. If Cloudinary credentials or the cleanup table are missing, the server logs the failure and retains a reference where possible instead of pretending cleanup succeeded.
+- The cleanup worker checks current live content before deleting an asset, so reused/shared media is not removed while another post, story, or avatar still references it.
+
+Do not manually delete `media_cleanup_jobs` records while their status is `pending`; they are the durable retry queue.
