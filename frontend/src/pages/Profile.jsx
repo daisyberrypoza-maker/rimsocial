@@ -139,12 +139,15 @@ export default function Profile() {
     finally { setLoadingMore(false); }
   }
 
-  if (!profile) return <div className="page"><p className="muted center">Loading…</p></div>;
+  if (!profile) return <div className="page profile-page"><p className="muted center">Loading…</p></div>;
 
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
-    <div className="page">
+    <div className="page profile-page">
+      <div className="snap-hero" aria-hidden="true">
+        <div className="snap-cover" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
+      </div>
       <section className="profile-top profile-top-refresh">
         <div className="profile-cover-tools">
           <Avatar user={profile} size={104} ring />
@@ -219,7 +222,7 @@ export default function Profile() {
 
       {tab === 'posts' ? (
         <>
-          {posts.length > 0 && <div className="profile-watch-action"><button className="pill" onClick={() => navigate(`/u/${username}/watch`)}>▶ Watch posts like For You</button></div>}
+          {posts.length > 0 && <div className="profile-watch-action"><button className="pill" onClick={() => navigate(`/u/${username}/watch`)}><Icon name="play" size={16} />Watch posts like For You</button></div>}
           <div className="grid">
             {posts.map((p) => (
               <div key={p.id} className="tile profile-post-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
@@ -228,7 +231,7 @@ export default function Profile() {
                   : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
                 <span className="tile-shade" />
                 {p.caption && <span className="tile-title">{p.caption}</span>}
-                <span className="tile-count">{formatCount(p.viewCount)}</span>
+                <span className="tile-count"><Icon name="play" size={12} />{formatCount(p.viewCount)}</span>
                 {profile.isMe && <button className="tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
               </div>
             ))}

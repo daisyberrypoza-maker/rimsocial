@@ -1711,26 +1711,6 @@ button.ghost { color: var(--text); }
 .brand { background: none; -webkit-text-fill-color: var(--text); color: var(--text); font-weight: 900; letter-spacing: -.3px; }
 .brand::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: var(--brand); vertical-align: middle; }
 
-.app .bottomnav {
-  height: auto; background: var(--nav-bg); border-top: 0; box-shadow: none;
-  padding: 6px 6px calc(env(safe-area-inset-bottom, 0px) + 6px);
-  justify-content: space-between; align-items: flex-end;
-}
-.app .bottomnav a {
-  flex: 1; min-width: 0; min-height: 46px; justify-content: center; gap: 3px;
-  color: var(--nav-muted); font-size: 10px; font-weight: 600; background: none; border-radius: 0;
-}
-.app .bottomnav a span:not(.plus) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.app .bottomnav a svg { width: 24px; height: 24px; stroke-width: 2; }
-.app .bottomnav a.active { color: #ffffff; }
-.app .bottomnav a.active svg { stroke-width: 2.4; }
-.app .bottomnav .create { flex: 0 0 auto; min-height: 0; padding: 0 6px; }
-.app .bottomnav .create span.plus {
-  width: 52px; height: 34px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--brand); color: var(--on-brand); box-shadow: none;
-}
-.app .bottomnav .create span.plus svg { color: var(--on-brand); stroke-width: 2.8; }
-
 /* Profile settings drawer: Business and Ads are reached only from here */
 .profile-drawer button { color: var(--text); background: none; border-radius: 12px; }
 .profile-drawer button:hover { background: var(--surface-2); }
@@ -1901,3 +1881,34 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
 /* Red-team fix: toggles must not inherit the global input padding/width */
 .ig-toggle { padding: 0; border: 0; width: 44px; height: 26px; }
 .ig-choice { position: relative; }
+
+/* =====================================================================
+   Other-user profile: Snapchat-style cover, avatar ring and actions
+   Full-screen mobile layout; no horizontal scroll.
+   ===================================================================== */
+.profile-page { padding-bottom: 96px; max-width: 100%; overflow-x: hidden; background: var(--bg); }
+.snap-hero { position: relative; height: 230px; overflow: hidden; background: linear-gradient(160deg, #ffe600, #111); }
+.snap-cover { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(18px) brightness(.75); transform: scale(1.15); }
+.snap-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.65)); }
+.snap-hero-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; }
+.snap-round { width: 40px; height: 40px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; }
+.snap-round svg { width: 20px; height: 20px; }
+.profile-top.profile-top-refresh { margin-top: -62px; position: relative; z-index: 2; padding: 0 16px 14px; text-align: left; background: transparent; }
+.profile-top .avatar.ring { --ring: linear-gradient(135deg, #fffc00, #ff5c8a); }
+.profile-top .profile-name { color: var(--text); font-size: 20px; font-weight: 800; margin: 8px 0 0; }
+.profile-top .profile-handle { color: var(--muted); font-size: 14px; }
+.profile-stats-row { justify-content: flex-start; gap: 22px; margin: 12px 0 0; }
+.profile-stats-row strong { font-size: 16px; }
+.profile-top .chip { margin-top: 8px; }
+.profile-actions-refresh { margin-top: 14px; justify-content: stretch; display: flex; gap: 8px; }
+.profile-actions-refresh > button { flex: 1 1 auto; min-width: 0; height: 44px; border-radius: 10px; }
+.profile-top .pill { width: 100%; min-width: 0; height: 44px; border-radius: 10px; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.snap-round.dark-round { background: var(--surface-2); color: var(--text); }
+.ptabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); margin-top: 14px; position: sticky; top: 0; z-index: 3; background: var(--bg); }
+.ptabs button { background: none; color: var(--muted); border: 0; border-radius: 0; padding: 12px 0; font-weight: 700; font-size: 14px; }
+.ptabs button.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--text); }
+.profile-page .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.profile-page .tile { border-radius: 0; aspect-ratio: 1 / 1.3; }
+.profile-page .tile-count { left: 6px; right: auto; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; color: #fff; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.profile-watch-action { padding: 10px 14px 0; }
+.profile-watch-action .pill { width: 100%; min-width: 0; border-radius: 10px; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; }
