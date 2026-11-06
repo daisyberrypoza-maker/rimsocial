@@ -23,8 +23,10 @@ async function isAssetReferenced(publicId, excludePostIds = []) {
 
 function localUploadPath(mediaUrl) {
   if (!mediaUrl || typeof mediaUrl !== 'string') return null;
-  let pathname;
-  try { pathname = new URL(mediaUrl, 'http://rimsocial.local').pathname; } catch { return null; }
+  let parsed;
+  try { parsed = new URL(mediaUrl, 'http://rimsocial.local'); } catch { return null; }
+  if (parsed.origin !== 'http://rimsocial.local') return null;
+  const pathname = parsed.pathname;
   if (!pathname.startsWith('/uploads/')) return null;
   const filename = path.basename(decodeURIComponent(pathname));
   if (!filename || filename === '.' || filename === '..') return null;
