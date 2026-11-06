@@ -106,6 +106,7 @@ const GiftTransaction = sequelize.define('GiftTransaction', {
   senderId: { type: DataTypes.UUID, allowNull: false },
   creatorId: { type: DataTypes.UUID, allowNull: false },
   postId: { type: DataTypes.UUID, allowNull: false },
+  liveMatchId: { type: DataTypes.UUID, allowNull: true },
   giftId: { type: DataTypes.INTEGER, allowNull: false },
   coins: { type: DataTypes.INTEGER, allowNull: false },
   creatorMinor: { type: DataTypes.BIGINT, allowNull: false },
