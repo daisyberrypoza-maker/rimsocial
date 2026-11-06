@@ -1,0 +1,18 @@
+{
+  "name": "rimsocial",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=frontend",
+    "start": "npm start --workspace=backend",
+    "test": "npm test --workspace=backend",
+    "check": "npm run check --workspace=backend"
+  }
+}
