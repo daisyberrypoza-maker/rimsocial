@@ -35,6 +35,8 @@ export default function Profile() {
   const [coinAmount, setCoinAmount] = useState(1000);
   const [receiptEmail, setReceiptEmail] = useState('');
   const [coinBusy, setCoinBusy] = useState(false);
+  const [postNotifications, setPostNotifications] = useState(false);
+  const [notificationBusy, setNotificationBusy] = useState(false);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -43,6 +45,27 @@ export default function Profile() {
     loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => toast(e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
+
+  useEffect(() => {
+    if (!profile || profile.isMe || !profile.isFollowing) { setPostNotifications(false); return; }
+    let active = true;
+    api(`/v1/notifications/preferences/${profile.id}`)
+      .then((data) => { if (active) setPostNotifications(Boolean(data.enabled)); })
+      .catch(() => { if (active) setPostNotifications(false); });
+    return () => { active = false; };
+  }, [profile?.id, profile?.isMe, profile?.isFollowing]);
+
+  async function togglePostNotifications() {
+    if (!profile || !profile.isFollowing || notificationBusy) return;
+    const next = !postNotifications;
+    setNotificationBusy(true);
+    try {
+      const result = await api(`/v1/notifications/preferences/${profile.id}`, { method: 'PUT', body: { enabled: next } });
+      setPostNotifications(Boolean(result.enabled));
+      toast(result.enabled ? 'Post and story notifications enabled' : 'Post and story notifications turned off');
+    } catch (e) { toast(e.message); }
+    finally { setNotificationBusy(false); }
+  }
 
   useEffect(() => {
     if (tab !== 'stories' || !profile) return;
@@ -157,6 +180,7 @@ export default function Profile() {
           <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}>
             {profile.isFollowing ? 'Following' : '＋ Follow'}
           </button>
+          {profile.isFollowing && <button className={`profile-notification-button${postNotifications ? ' is-on' : ''}`} type="button" onClick={togglePostNotifications} disabled={notificationBusy} aria-pressed={postNotifications} aria-label={postNotifications ? 'Turn off post and story notifications' : 'Turn on post and story notifications'} title={postNotifications ? 'Notifications on' : 'Notify me when this creator posts'}>{postNotifications ? '🔔' : '♧'} <span>{postNotifications ? 'Notifications on' : 'Notify me'}</span></button>}
         )}
       </section>
       {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
