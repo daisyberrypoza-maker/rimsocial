@@ -32,6 +32,7 @@ export default function BusinessHub() {
   const [updateEvidence, setUpdateEvidence] = useState('');
   const [adminKey, setAdminKey] = useState('');
   const [adminItems, setAdminItems] = useState([]);
+  const [adminProfiles, setAdminProfiles] = useState([]);
   const [adminOpen, setAdminOpen] = useState(false);
 
   async function loadItems() {
@@ -137,8 +138,11 @@ export default function BusinessHub() {
     if (!adminKey.trim()) return toast('Enter the operator API key');
     setBusy(true);
     try {
-      const r = await api('/v1/business/admin/opportunities?status=pending', { headers: { 'X-Admin-Api-Key': adminKey } });
-      setAdminItems(r.items || []); setAdminOpen(true);
+      const [r, p] = await Promise.all([
+        api('/v1/business/admin/opportunities?status=pending', { headers: { 'X-Admin-Api-Key': adminKey } }),
+        api('/v1/business/admin/profiles?status=pending', { headers: { 'X-Admin-Api-Key': adminKey } }),
+      ]);
+      setAdminItems(r.items || []); setAdminProfiles(p.items || []); setAdminOpen(true);
     } catch (e) { toast(e.message); }
     finally { setBusy(false); }
   }
@@ -148,6 +152,15 @@ export default function BusinessHub() {
       await api('/v1/business/admin/opportunities/' + encodeURIComponent(id) + '/review', { method: 'PATCH', headers: { 'X-Admin-Api-Key': adminKey }, body: { decision } });
       setAdminItems((current) => current.filter((item) => item.id !== id));
       toast('Review saved');
+    } catch (e) { toast(e.message); }
+    finally { setBusy(false); }
+  }
+  async function reviewProfile(id, decision) {
+    setBusy(true);
+    try {
+      await api('/v1/business/admin/profiles/' + encodeURIComponent(id) + '/review', { method: 'PATCH', headers: { 'X-Admin-Api-Key': adminKey }, body: { decision } });
+      setAdminProfiles((current) => current.filter((item) => item.id !== id));
+      toast('Business profile review saved');
     } catch (e) { toast(e.message); }
     finally { setBusy(false); }
   }
@@ -226,7 +239,7 @@ export default function BusinessHub() {
         </>}
       </section>
     </div>}
-    <details className="panel business-admin-tools"><summary>Operator moderation (restricted)</summary><p className="muted">Use only over HTTPS with the operator key. The key stays in this page's memory and is not saved. Never paste the key into posts or chat.</p><label>Operator API key<input type="password" autoComplete="off" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} /></label><button className="ghost small" disabled={busy} onClick={loadAdminQueue}>Load pending listings</button>{adminOpen && <div>{adminItems.length === 0 ? <p className="muted">No pending listings in this queue.</p> : adminItems.map((item) => <article className="business-admin-item" key={item.id}><strong>{item.title}</strong><p className="muted">{item.lane} · {item.city} · owner {item.ownerId}</p><p>{item.description}</p>{item.evidenceUrl && <a href={item.evidenceUrl} target="_blank" rel="noreferrer">Review evidence</a>}<div><button disabled={busy} onClick={() => reviewOpportunity(item.id, 'approve')}>Approve</button><button className="ghost small" disabled={busy} onClick={() => reviewOpportunity(item.id, 'reject')}>Reject</button></div></article>)}</div>}</details>
+    <details className="panel business-admin-tools"><summary>Operator moderation (restricted)</summary><p className="muted">Use only over HTTPS with the operator key. The key stays in this page's memory and is not saved. Never paste the key into posts or chat.</p><label>Operator API key<input type="password" autoComplete="off" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} /></label><button className="ghost small" disabled={busy} onClick={loadAdminQueue}>Load pending listings</button>{adminOpen && <div><h3>Opportunity review ({adminItems.length})</h3>{adminItems.length === 0 ? <p className="muted">No pending opportunities.</p> : adminItems.map((item) => <article className="business-admin-item" key={item.id}><strong>{item.title}</strong><p className="muted">{item.lane} · {item.city} · owner {item.ownerId}</p><p>{item.description}</p>{item.evidenceUrl && <a href={item.evidenceUrl} target="_blank" rel="noreferrer">Review evidence</a>}<div><button disabled={busy} onClick={() => reviewOpportunity(item.id, 'approve')}>Approve</button><button className="ghost small" disabled={busy} onClick={() => reviewOpportunity(item.id, 'reject')}>Reject</button></div></article>)}<h3>Business profile review ({adminProfiles.length})</h3>{adminProfiles.length === 0 ? <p className="muted">No pending business profiles.</p> : adminProfiles.map((profile) => <article className="business-admin-item" key={profile.id}><strong>{profile.name}</strong><p className="muted">{profile.category} · {profile.city}, {profile.country} · owner {profile.ownerId}</p><p>{profile.description}</p>{profile.website && <a href={profile.website} target="_blank" rel="noreferrer">Open website</a>}<div><button disabled={busy} onClick={() => reviewProfile(profile.id, 'approve')}>Verify profile</button><button className="ghost small" disabled={busy} onClick={() => reviewProfile(profile.id, 'reject')}>Reject</button></div></article>)}</div>}</details>
   </main>;
 }
 
