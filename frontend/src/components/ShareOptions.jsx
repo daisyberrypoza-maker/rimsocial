@@ -1,4 +1,5 @@
 import Icon from './Icon.jsx';
+import { toast } from '../toast.js';
 
 const TARGETS = [
   { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', url: (u, t) => `https://wa.me/?text=${encodeURIComponent(t + ' ' + u)}` },
@@ -13,7 +14,7 @@ export default function ShareOptions({ url, title = 'RimSocial post', text = '',
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
-      window.dispatchEvent(new CustomEvent('rimsocial:toast', { detail: 'Post link copied' }));
+      toast('Post link copied');
     } catch {
       window.prompt('Copy this post link', url);
     }
@@ -23,7 +24,7 @@ export default function ShareOptions({ url, title = 'RimSocial post', text = '',
       if (navigator.share) await navigator.share({ title, text, url });
       else await copy();
     } catch (error) {
-      if (error?.name !== 'AbortError') window.dispatchEvent(new CustomEvent('rimsocial:toast', { detail: 'Could not open sharing options' }));
+      if (error?.name !== 'AbortError') toast('Could not open sharing options');
     }
   }
   return <div className="sheet-backdrop share-backdrop" onClick={onClose}>
