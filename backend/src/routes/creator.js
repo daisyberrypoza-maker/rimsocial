@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
-const { sequelize, User, Post, EarningsWallet, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning } = require('../db');
+const { sequelize, User, Post, EarningsWallet, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, ContentEarning, UserBlock } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
+const { inviteCutoff, isInviteExpired } = require('../lib/matchInvites');
 
 router.use(requireAuth);
 
@@ -94,7 +95,17 @@ router.get('/discover', async (req, res, next) => {
 
 router.get('/matches', async (req, res, next) => {
   try {
-    const items = await LiveMatch.findAll({ where: { status: { [Op.in]: ['pending', 'active'] }, [Op.or]: [{ hostId: req.user.id }, { opponentId: req.user.id }] }, order: [['createdAt', 'DESC']], limit: 20 });
+    // Unanswered invitations past their expiry are not shown as pending
+    const cutoff = inviteCutoff(new Date(), config.matchInviteTtlHours);
+    const items = await LiveMatch.findAll({
+      where: {
+        [Op.and]: [
+          { [Op.or]: [{ status: 'active' }, { status: 'pending', createdAt: { [Op.gt]: cutoff } }] },
+          { [Op.or]: [{ hostId: req.user.id }, { opponentId: req.user.id }] },
+        ],
+      },
+      order: [['createdAt', 'DESC']], limit: 20,
+    });
     res.json({ items });
   } catch (e) { next(e); }
 });
@@ -107,6 +118,11 @@ router.post('/matches', async (req, res, next) => {
     if (!opponent || !opponent.isCreator) throw httpError(404, 'Creator not found');
     const mine = await User.findByPk(req.user.id, { attributes: ['isCreator'] });
     if (!mine?.isCreator) throw httpError(403, 'Apply as a creator before starting a match');
+    // Either side having blocked the other means no invitation (the reason is not revealed)
+    const blocked = await UserBlock.findOne({ where: { [Op.or]: [{ blockerId: opponentId, blockedUserId: req.user.id }, { blockerId: req.user.id, blockedUserId: opponentId }] } });
+    if (blocked) throw httpError(403, 'This creator is not available for a match');
+    // Clear out unanswered invitations first, so a stale invite never locks a creator out
+    await LiveMatch.update({ status: 'cancelled' }, { where: { status: 'pending', createdAt: { [Op.lte]: inviteCutoff(new Date(), config.matchInviteTtlHours) } } });
     const existing = await LiveMatch.findOne({ where: { status: { [Op.in]: ['pending', 'active'] }, [Op.or]: [{ hostId: req.user.id }, { opponentId: req.user.id }, { hostId: opponentId }, { opponentId: opponentId }] } });
     if (existing) throw httpError(409, 'One of these creators already has an active match');
     const match = await LiveMatch.create({ hostId: req.user.id, opponentId, status: 'pending' });
@@ -120,6 +136,10 @@ router.post('/matches/:id/respond', async (req, res, next) => {
     if (!match) throw httpError(404, 'Match not found');
     if (match.opponentId !== req.user.id) throw httpError(403, 'Only the invited creator can respond');
     if (match.status !== 'pending') throw httpError(409, 'This match is no longer pending');
+    if (isInviteExpired(match, new Date(), config.matchInviteTtlHours)) {
+      await match.update({ status: 'cancelled' });
+      throw httpError(409, 'This invitation has expired');
+    }
     const accept = req.body.accept === true;
     await match.update(accept ? { status: 'active', startsAt: new Date() } : { status: 'cancelled' });
     res.json({ match });
