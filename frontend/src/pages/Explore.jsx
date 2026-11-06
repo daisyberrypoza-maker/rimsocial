@@ -118,9 +118,11 @@ export default function Explore() {
         <input aria-label="Search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
         {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
       </form>
-      <div className="ig-filters" role="tablist" aria-label="Search type">
-        {['all', 'people', 'posts', 'hashtags'].map((t) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{t === 'all' ? 'Top' : t === 'people' ? 'Accounts' : t === 'posts' ? 'Videos & posts' : 'Tags'}</button>)}
-      </div>
+      {(query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
+        {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{label}</button>)}
+        <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
+        <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('comedy')}>Comedy</button>
+      </div>}
 
       {results ? <>
         {results.people?.length > 0 && <section className="ig-section">
@@ -149,7 +151,6 @@ export default function Explore() {
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        <div className="ig-tags" aria-label="Popular tags"><button onClick={() => searchHashtag('fyp')}>#fyp</button><button onClick={() => searchHashtag('trending')}>#trending</button><button onClick={() => searchHashtag('comedy')}>#comedy</button><button onClick={() => searchHashtag('music')}>#music</button></div>
         <div className="ig-grid">{items.map((p) => <button key={p.id} className="ig-tile" onClick={() => navigate(`/p/${p.id}`)}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="ig-tile-views">▶ {formatCount(p.viewCount)}</span></button>)}</div>
         <div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}
       </>}
