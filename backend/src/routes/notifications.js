@@ -19,8 +19,8 @@ async function ensureTables() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
       await sequelize.query(`CREATE TABLE IF NOT EXISTS post_notifications (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        userId BIGINT NOT NULL,
-        creatorId BIGINT NOT NULL,
+        userId CHAR(36) NOT NULL,
+        creatorId CHAR(36) NOT NULL,
         postId CHAR(36) NOT NULL,
         kind VARCHAR(16) NOT NULL,
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
