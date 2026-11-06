@@ -275,7 +275,19 @@ const BusinessFinancialRecord = sequelize.define('BusinessFinancialRecord', {
   note: { type: DataTypes.STRING(1000), allowNull: true },
 }, { tableName: 'business_financial_records', indexes: [{ fields: ['opportunityId', 'createdAt'] }, { fields: ['authorId', 'createdAt'] }] });
 
+const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  publicId: { type: DataTypes.STRING(255), allowNull: false },
+  resourceType: { type: DataTypes.ENUM('image', 'video', 'raw'), allowNull: false, defaultValue: 'image' },
+  reason: { type: DataTypes.STRING(100), allowNull: false, defaultValue: 'cleanup' },
+  status: { type: DataTypes.ENUM('pending', 'completed', 'cancelled'), allowNull: false, defaultValue: 'pending' },
+  attempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  nextAttemptAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  lastError: { type: DataTypes.STRING(1000), allowNull: true },
+}, { tableName: 'media_cleanup_jobs', indexes: [{ unique: true, fields: ['publicId', 'resourceType'] }, { fields: ['status', 'nextAttemptAt'] }] });
+
 module.exports = {
+  MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport,
