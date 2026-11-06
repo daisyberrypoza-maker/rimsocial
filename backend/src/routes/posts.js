@@ -158,6 +158,8 @@ router.post('/:id/like', requireAuth, async (req, res, next) => {
         liked = true;
       }
     });
+    await redis.hincrby(`feed:preferences:${req.user.id}`, post.id, liked ? 4 : -4).catch(() => {});
+    await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
     const fresh = await Post.findByPk(post.id, { attributes: ['likeCount'] });
     res.json({ likeCount: Math.max(0, Number(fresh.likeCount)), liked });
   } catch (e) { next(e); }
@@ -179,6 +181,8 @@ router.post('/:id/comments', requireAuth, async (req, res, next) => {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     const comment = await PostComment.create({ postId: post.id, userId: req.user.id, body });
+    await redis.hincrby(`feed:preferences:${req.user.id}`, post.id, 3).catch(() => {});
+    await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
     const author = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
     res.status(201).json({ id: comment.id, body: comment.body, createdAt: comment.createdAt, author, isMine: true });
   } catch (e) { next(e); }
@@ -207,6 +211,8 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
         await post.decrement('repostCount', { by: 1, transaction: t });
       }
     });
+    await redis.hincrby(`feed:preferences:${req.user.id}`, post.id, reposted ? 5 : -5).catch(() => {});
+    await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
     if (reposted) {
       // Distribute the original post into the reposter's followers feed, as a real repost action.
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
