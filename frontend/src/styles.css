@@ -1522,3 +1522,63 @@ button, .icon-button, .topbar-back, .bottomnav a { -webkit-tap-highlight-color: 
 .comments-sheet, .people-sheet { box-shadow:0 -12px 44px rgba(20,28,55,.14); }
 .post-menu-sheet { border:1px solid var(--line); box-shadow:0 -12px 44px rgba(20,28,55,.14); }
 .ads-sponsors-hero { background:radial-gradient(ellipse at top right, color-mix(in srgb, var(--brand-a) 10%, transparent), transparent 62%), var(--surface); }
+
+
+/* Stories destination and viewer — aligned with RimSocial's blue-and-white identity */
+.bottomnav { background:#fff; border-top:1px solid #e5e7eb; box-shadow:0 -4px 18px rgba(20,30,60,.05); }
+.bottomnav a { color:#6b7280; }
+.bottomnav a.active { color:#4b5cff; }
+.bottomnav .create .plus { color:#fff; background:#4b5cff; }
+.stories-page { max-width:900px; margin:0 auto; padding:20px 16px calc(var(--nav-height, 66px) + 28px); min-height:calc(100dvh - 70px); }
+.stories-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:0 0 24px; }
+.stories-heading h1 { margin:0; font-size:clamp(23px,5vw,30px); line-height:1.2; color:var(--text); }
+.stories-heading p { margin:6px 0 0; color:var(--muted); font-size:13px; }
+.stories-add { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:0; border-radius:12px; padding:11px 14px; color:#fff; background:var(--brand-a); font-weight:700; white-space:nowrap; }
+.stories-rail-section { display:flex; align-items:flex-start; gap:16px; overflow-x:auto; padding:5px 2px 18px; border-bottom:1px solid var(--line); scrollbar-width:none; }
+.stories-rail-section::-webkit-scrollbar { display:none; }
+.story-bubble { flex:0 0 76px; width:76px; display:flex; flex-direction:column; align-items:center; gap:8px; border:0; background:transparent; padding:0; color:var(--text); cursor:pointer; }
+.story-bubble > span:last-child { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; text-align:center; }
+.story-avatar { width:68px; height:68px; display:grid; place-items:center; border-radius:50%; padding:3px; background:#e5e7eb; }
+.story-avatar.unseen { background:conic-gradient(from 20deg,#4b5cff,#7c3aed,#2d8cff,#4b5cff); }
+.story-avatar.seen { background:#d1d5db; }
+.story-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; border:3px solid #fff; }
+.story-avatar > span { width:100%; height:100%; display:grid; place-items:center; border:3px solid #fff; border-radius:50%; background:#eef1ff; color:#4b5cff; font-size:24px; font-weight:750; }
+.own-story-avatar { background:#eef1ff; color:#4b5cff; border:1px solid #dfe4ff; }
+.own-story-avatar svg { width:27px; height:27px; }
+.stories-state { padding:18px 4px; font-size:13px; }
+.stories-empty { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; width:100%; padding:34px 16px 26px; color:var(--text); }
+.stories-empty-icon { display:grid; place-items:center; width:64px; height:64px; border-radius:50%; background:#eef1ff; color:#4b5cff; }
+.stories-empty strong { font-size:17px; }
+.stories-empty p { max-width:300px; margin:0; color:var(--muted); font-size:13px; line-height:1.5; }
+.stories-empty .primary { margin-top:5px; border:0; border-radius:11px; padding:11px 16px; background:var(--brand-a); color:#fff; font-weight:700; }
+.story-viewer-backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(10,12,20,.82); }
+.story-viewer { position:relative; display:flex; flex-direction:column; width:min(430px,100%); height:min(790px,calc(100dvh - 32px)); min-height:360px; overflow:hidden; border-radius:20px; background:#101114; color:#fff; box-shadow:0 24px 80px rgba(0,0,0,.35); }
+.story-viewer-close { position:absolute; z-index:5; top:12px; right:12px; display:grid; place-items:center; width:38px; height:38px; border:0; border-radius:50%; background:rgba(0,0,0,.35); color:#fff; }
+.story-progress { position:absolute; z-index:4; top:10px; left:12px; right:56px; display:flex; gap:4px; }
+.story-progress span { flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); }
+.story-progress span.done { background:#fff; }
+.story-viewer-author { position:absolute; z-index:4; top:25px; left:14px; right:58px; display:flex; align-items:center; gap:8px; min-height:34px; text-shadow:0 1px 4px #000; }
+.story-viewer-author img,.story-author-initial { width:32px; height:32px; flex:0 0 32px; border-radius:50%; object-fit:cover; }
+.story-author-initial { display:grid; place-items:center; background:#eef1ff; color:#4b5cff; font-weight:800; text-shadow:none; }
+.story-viewer-author strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.story-viewer-author small { font-size:11px; color:rgba(255,255,255,.8); }
+.story-media { position:relative; display:flex; flex:1; align-items:center; justify-content:center; min-height:0; background:#08090c; }
+.story-media > img,.story-media > video { width:100%; height:100%; max-height:100%; object-fit:contain; }
+.story-caption { position:absolute; left:14px; right:14px; bottom:14px; z-index:3; margin:0; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,.45); color:#fff; font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
+.story-hit { position:absolute; top:65px; bottom:0; width:34%; border:0; background:transparent; }
+.story-hit-prev { left:0; }
+.story-hit-next { right:0; width:66%; }
+.story-viewer-footer { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:0 14px; background:#101114; color:#d1d5db; font-size:12px; }
+.story-viewer-footer button { display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:#fff; font-weight:700; padding:8px 0 8px 12px; }
+.story-viewer-loading { display:grid; flex:1; place-items:center; color:#fff; }
+@media (max-width:480px) {
+  .stories-page { padding:16px 12px calc(var(--nav-height, 66px) + 22px); }
+  .stories-heading { align-items:flex-start; margin-bottom:18px; }
+  .stories-heading p { max-width:220px; line-height:1.45; }
+  .stories-add { padding:10px 11px; font-size:12px; }
+  .stories-rail-section { gap:12px; }
+  .story-bubble { flex-basis:68px; width:68px; }
+  .story-avatar { width:62px; height:62px; }
+  .story-viewer-backdrop { padding:0; }
+  .story-viewer { width:100%; height:100dvh; min-height:0; border-radius:0; }
+}
