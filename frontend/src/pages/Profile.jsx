@@ -152,35 +152,65 @@ export default function Profile() {
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
-    <div className="page profile-page">
-      <div className="snap-hero" aria-hidden="true">
-        <div className="snap-cover" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
-      </div>
-      <section className={`profile-top profile-top-refresh${profile.isMe ? '' : ' is-other'}`}>
-        <div className="profile-cover-tools">
-          <Avatar user={profile} size={104} ring />
-          {profile.isMe && <button className="avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : 'Edit photo'}</button>}
+    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`}>
+      <header className="sc-hero">
+        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
+        <span className="sc-hero-shade" aria-hidden="true" />
+        <div className="sc-hero-top">
+          <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
+          <div className="sc-hero-actions">
+            {profile.isMe ? (
+              <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
+            ) : (
+              <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+            )}
+            {profile.isMe
+              ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
+              : <button className="sc-circle" aria-label="More options" onClick={shareProfile}><span className="sc-dots" aria-hidden="true">•••</span></button>}
+          </div>
         </div>
-        <h2 className="profile-name">{profile.displayName}</h2>
-        <div className="profile-handle">@{profile.username}</div>
-        <div className="profile-stats-row">
-          <button onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount)}</strong><span>Followers</span></button>
-          <button onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
-          <div><strong>{formatCount(profile.postCount || 0)}</strong><span>Posts</span></div>
+        <div className="sc-hero-id">
+          <div className="sc-hero-avatar">
+            <Avatar user={profile} size={96} ring />
+            {profile.isMe && <button className="sc-avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
+          </div>
+          <div className="sc-hero-text">
+            <h2 className="sc-name">{profile.displayName || profile.username}</h2>
+            <p className="sc-handle">@{profile.username}{!profile.isMe && <> · {formatCount(profile.followerCount)} Followers</>}</p>
+          </div>
         </div>
-        <span className="chip">{profile.country}</span>
         {profile.isMe ? (
-          <div className="profile-actions profile-actions-refresh">
-            <button onClick={() => navigate('/upload')}><Icon name="plus" size={19} />Create</button>
-            <button className="ghost" onClick={() => setDrawerOpen(true)} aria-label="Open profile settings"><Icon name="settings" size={19} />Settings</button>
+          <div className="sc-seg-row">
+            <button className="sc-seg on">My Account</button>
+            <button className="sc-seg" onClick={() => navigate('/u/' + profile.username)}>Public Profile</button>
           </div>
         ) : (
-          <div className="profile-add-row">
-            <button className={`pill ${profile.isFollowing ? 'ghost' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={20} />{profile.isFollowing ? 'Added' : 'Add'}</button>
-            <button className="snap-more" onClick={shareProfile} aria-label="More options"><Icon name="chevron-down" size={22} /></button>
+          <div className="sc-add-row">
+            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            <button className="sc-circle sc-more-down" aria-label="More options" onClick={shareProfile}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
+      </header>
+      <section className="sc-stats" aria-label="Profile stats">
+        <button onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount)}</strong> Followers</button>
+        <button onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong> Following</button>
+        <span><strong>{formatCount(profile.postCount || 0)}</strong> Posts</span>
+        {profile.country && <span className="sc-country">{profile.country}</span>}
       </section>
+      {profile.isMe && (
+        <section className="sc-post-to" aria-label="Post to">
+          <div className="sc-post-head"><h3>Post to…</h3><button className="sc-pill" onClick={() => navigate('/upload?story=1')}><Icon name="plus" size={16} />New Story</button></div>
+          <button className="sc-row" onClick={() => navigate('/upload')}>
+            <span className="sc-row-icon sc-row-red"><Icon name="play" size={20} /></span>
+            <span className="sc-row-copy"><strong>Spotlight</strong><small>Reach people who follow you and beyond</small></span>
+          </button>
+          <button className="sc-row" onClick={() => navigate('/upload?story=1')}>
+            <span className="sc-row-icon"><Icon name="camera" size={22} /></span>
+            <span className="sc-row-copy"><strong>My Story</strong><small>Just for friends · 24 hours</small></span>
+            <span className="sc-row-more" aria-hidden="true">•••</span>
+          </button>
+        </section>
+      )}
       {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
@@ -226,31 +256,29 @@ export default function Profile() {
         </section>
       </div>}
 
-      <nav className="ptabs">
-        <button className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
-        <button className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
+      <nav className="sc-tabs" role="tablist">
+        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
       </nav>
 
       {tab === 'posts' ? (
         <>
-          {posts.length > 0 && <div className="profile-watch-action"><button className="pill" onClick={() => navigate(`/u/${username}/watch`)}><Icon name="play" size={16} />Watch posts like For You</button></div>}
-          <div className="grid">
+          {posts.length > 0 && <div className="sc-watch"><button className="sc-pill" onClick={() => navigate(`/u/${username}/watch`)}><Icon name="play" size={16} />Watch like For You</button></div>}
+          <div className="sc-grid">
             {posts.map((p) => (
-              <div key={p.id} className="tile profile-post-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
+              <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
-                <span className="tile-shade" />
-                {p.caption && <span className="tile-title">{p.caption}</span>}
-                <span className="tile-count"><Icon name="play" size={12} />{formatCount(p.viewCount)}</span>
-                {profile.isMe && <button className="tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
+                <span className="sc-tile-count"><Icon name="play" size={11} />{formatCount(p.viewCount)}</span>
+                {profile.isMe && <button className="sc-tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
               </div>
             ))}
           </div>
-          {!posts.length && <p className="muted center">No posts yet.</p>}
+          {!posts.length && <p className="sc-empty-note">No posts yet.</p>}
           {nextCursor && (
-            <div className="load-more">
-              <button className="ghost" onClick={loadMore} disabled={loadingMore}>
+            <div className="sc-more">
+              <button className="sc-pill" onClick={loadMore} disabled={loadingMore}>
                 {loadingMore ? 'Loading…' : 'Load more'}
               </button>
             </div>
@@ -258,18 +286,17 @@ export default function Profile() {
         </>
       ) : (
         <>
-          <div className="grid">
+          <div className="sc-grid">
             {stories.map((s, i) => (
-              <button key={s.id} className="tile" onClick={() => setViewing(i)}>
+              <button key={s.id} className="sc-tile" onClick={() => setViewing(i)}>
                 {s.kind === 'video'
                   ? <video src={mediaUrl(s.mediaUrl)} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(s.mediaUrl)} alt="" loading="lazy" />}
-                <span className="tile-shade" />
-                <span className="tile-count">{hoursLeft(s)}h left</span>
+                <span className="sc-tile-count">{hoursLeft(s)}h left</span>
               </button>
             ))}
           </div>
-          {!stories.length && <p className="muted center">No active stories. Stories disappear after 24 hours.</p>}
+          {!stories.length && <p className="sc-empty-note">No active stories. Stories disappear after 24 hours.</p>}
           {viewing !== false && stories.length > 0 && (
             <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
           )}

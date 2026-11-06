@@ -6,16 +6,6 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 
-function Dots() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="5" cy="12" r="2" fill="currentColor" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-      <circle cx="19" cy="12" r="2" fill="currentColor" />
-    </svg>
-  );
-}
-
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
 }
@@ -110,16 +100,10 @@ export default function Stories() {
         <button className="sc-top-icon sc-top-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
           <Avatar user={me || {}} />
         </button>
-        <button className="sc-top-icon" aria-label="Search" onClick={() => navigate('/explore')}><Icon name="search" size={22} /></button>
-        <h1>Stories</h1>
+        <span className="sc-top-spacer" />
         <button className="sc-top-icon" aria-label="Notifications" onClick={() => navigate('/activity')}>
           <Icon name="bell" size={22} />
         </button>
-        <button className="sc-top-icon sc-badged" aria-label="Add friends" onClick={() => navigate('/explore')}>
-          <Icon name="user-plus" size={22} />
-          <span className="sc-badge">5</span>
-        </button>
-        <button className="sc-top-icon" aria-label="More" onClick={() => navigate('/explore')}><Dots /></button>
       </header>
 
       <section className="sc-section" aria-label="Friends">

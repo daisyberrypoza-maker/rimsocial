@@ -64,7 +64,7 @@ export default function Login() {
         cancel_on_tap_outside: true,
       });
       googleButton.current.innerHTML = '';
-      window.google.accounts.id.renderButton(googleButton.current, { theme: 'filled_black', size: 'large', shape: 'pill', text: mode === 'register' ? 'signup_with' : 'continue_with', width: Math.min(340, googleButton.current.clientWidth || 340), logo_alignment: 'left' });
+      window.google.accounts.id.renderButton(googleButton.current, { theme: 'outline', size: 'large', shape: 'pill', text: mode === 'register' ? 'signup_with' : 'continue_with', width: Math.min(340, googleButton.current.clientWidth || 340), logo_alignment: 'left' });
     };
     if (window.google?.accounts?.id) renderGoogleButton();
     else {
