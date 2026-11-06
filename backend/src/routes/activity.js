@@ -10,7 +10,8 @@ router.use(requireAuth);
 router.get('/', async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const [ownedPosts, incomingFollows, blocks] = await Promise.all([
+    const [viewer, ownedPosts, incomingFollows, blocks] = await Promise.all([
+      User.findByPk(userId, { attributes: ['username'], raw: true }),
       Post.findAll({
         where: { authorId: userId, status: 'live', isStory: false },
         attributes: ['id', 'caption', 'mediaUrl', 'kind', 'createdAt'],
@@ -27,7 +28,26 @@ router.get('/', async (req, res, next) => {
     ]);
     const blockedIds = new Set(blocks.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
     const postIds = ownedPosts.map((post) => post.id);
-    if (!postIds.length && !incomingFollows.length) return res.json({ items: [] });
+    const mentionPattern = viewer?.username
+      ? new RegExp('(^|[^a-zA-Z0-9_])@' + viewer.username + '(?=$|[^a-zA-Z0-9_])', 'i')
+      : null;
+    const mentionCandidates = viewer?.username ? await Post.findAll({
+      where: {
+        authorId: { [Op.ne]: userId },
+        status: 'live',
+        isStory: false,
+        visibility: 'public',
+        caption: { [Op.like]: '%' + viewer.username + '%' },
+      },
+      attributes: ['id', 'authorId', 'caption', 'mediaUrl', 'kind', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 100,
+      raw: true,
+    }) : [];
+    const mentionedPosts = mentionPattern
+      ? mentionCandidates.filter((post) => mentionPattern.test(post.caption || '') && !blockedIds.has(String(post.authorId)))
+      : [];
+    if (!postIds.length && !incomingFollows.length && !mentionedPosts.length) return res.json({ items: [] });
 
     const [likes, comments, reposts] = postIds.length ? await Promise.all([
       PostLike.findAll({ where: { postId: postIds, userId: { [Op.ne]: userId } }, order: [['createdAt', 'DESC']], limit: 100, raw: true }),
@@ -36,8 +56,10 @@ router.get('/', async (req, res, next) => {
     ]) : [[], [], []];
 
     const postById = new Map(ownedPosts.map((post) => [String(post.id), post]));
+    for (const post of mentionedPosts) postById.set(String(post.id), post);
     const actors = new Set([
       ...incomingFollows.map((row) => String(row.followerId)),
+      ...mentionedPosts.map((post) => String(post.authorId)),
       ...likes.map((row) => String(row.userId)),
       ...comments.map((row) => String(row.userId)),
       ...reposts.map((row) => String(row.userId)),
@@ -69,6 +91,7 @@ router.get('/', async (req, res, next) => {
     for (const row of likes) push('like', row.userId, row.createdAt, row.postId);
     for (const row of comments) push('comment', row.userId, row.createdAt, row.postId, row.body);
     for (const row of reposts) push('repost', row.userId, row.createdAt, row.postId);
+    for (const post of mentionedPosts) push('mention', post.authorId, post.createdAt, post.id);
 
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json({ items: items.slice(0, 100) });
