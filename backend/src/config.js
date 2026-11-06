@@ -17,6 +17,10 @@ module.exports = {
   paystackSecret: process.env.PAYSTACK_SECRET || '',
   // TURN relay; TURN_SECRET enables short-lived coturn REST credentials.
   turnUrls: (process.env.TURN_URLS || '').split(',').map((url) => url.trim()).filter(Boolean),
+  // LiveKit SFU for public creator broadcasts; secrets stay server-side.
+  livekitUrl: process.env.LIVEKIT_URL || '',
+  livekitApiKey: process.env.LIVEKIT_API_KEY || '',
+  livekitApiSecret: process.env.LIVEKIT_API_SECRET || '',
   turnSecret: process.env.TURN_SECRET || '',
   turnUsername: process.env.TURN_USERNAME || '',
   turnPassword: process.env.TURN_PASSWORD || '',
