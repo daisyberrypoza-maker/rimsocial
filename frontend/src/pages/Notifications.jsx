@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
 import Avatar from '../components/Avatar.jsx';
+import Icon from '../components/Icon.jsx';
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function Notifications() {
             </button>
           ))}
         </div>
-      ) : <div className="notifications-empty"><span aria-hidden="true">♧</span><h2>You're all caught up</h2><p>When creators you follow publish posts or stories, their updates will appear here if you enable notifications on their profile.</p></div>}
+      ) : <div className="notifications-empty"><span aria-hidden="true"><Icon name="bell" size={30} /></span><h2>You're all caught up</h2><p>When creators you follow publish posts or stories, their updates will appear here if you enable notifications on their profile.</p></div>}
     </main>
   );
 }
