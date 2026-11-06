@@ -78,6 +78,7 @@ export default function App() {
 }
 
 function titleFor(path) {
+  if (path.startsWith('/notifications')) return 'Notifications';
   if (path.startsWith('/explore')) return 'Explore';
   if (path.startsWith('/upload')) return 'New post';
   if (path.startsWith('/creator')) return 'Creator Studio';
