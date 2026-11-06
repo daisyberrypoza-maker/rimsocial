@@ -14,6 +14,7 @@ This is a living release checklist. A branch or pull request is not considered c
 - [x] Three lanes: Find, Flip, Fix; money represented in integer minor units.
 - [x] Operator-only moderation APIs for business profiles and opportunities using `ADMIN_API_KEY`.
 - [x] Offers with recipient-only accept/reject, sender withdrawal, idempotency key support, and transaction-protected acceptance.
+- [x] Offer concurrency guards: only one pending offer per sender/listing; withdrawal is row-locked against acceptance. Added MySQL integration assertions; production-like concurrency stress test remains open.
 - [x] Fix work progress/blocker/completion updates and two-party completion confirmation.
 - [x] HTTPS-only evidence/website links and public discovery restricted to approved listings.
 - [x] React Business workspace and navigation entry.
@@ -50,12 +51,15 @@ Branch: `fix/reel-composer-remix-priority`
 - PR #18: Find/Flip/Fix — merged into `main`; CI passed, including ephemeral-MySQL lifecycle tests. Real payment integration and production migration remain open.
 - PR #19: `fix/cloudinary-orphan-cleanup-v2` — superseded by PR #20.
 - PR #20: `fix/cloudinary-orphan-cleanup-v3` — active media cleanup PR; initial current-head CI passed, but real Cloudinary failure/retry tests and production migration remain open.
+- PR #21: its safe Discover cursor, webhook signature/error handling, content-earnings migration, and gift-earnings mirroring are already on `main`; do not merge its stale branch wholesale because it also proposes a process-wide unhandled-rejection listener and includes the `clipverse.zip` secret-bearing archive in its diff. Rotate exposed credentials and review Git history separately.
+- PR #22: its economics configuration, LIVE invitation expiry/block checks, and offer locking are already on `main`. Its two business-offer regression assertions are being ported to the current integration test; keep the stale conflicting branch out of `main`.
 
 ## Monetization and finance
 - [x] Gift eligibility and idempotency safeguards were added in PR #11.
 - [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
 - [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
+- [x] Creator money settings are environment-configurable (`COIN_PRICE_MINOR`, `COIN_VALUE_MINOR`, `CREATOR_GIFT_SHARE`, `PAYOUT_HOLD_DAYS`, `MIN_PAYOUT_MINOR`) with validated defaults; real pricing choices and Paystack sandbox reconciliation remain open.
 - [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook transitions are unit-tested, but provider sandbox tests remain.
 - [ ] End-to-end wallet/ledger reconciliation and invariant tests for concurrent coin spend, gifts, earnings holds, and payouts.
 - [ ] Android in-app purchases must use Google Play Billing; do not enable Paystack coin checkout inside the Android app.
@@ -71,6 +75,7 @@ Branch: `fix/reel-composer-remix-priority`
 
 ## LIVE and notifications
 - [ ] Current WebRTC signaling is not the same as a production public audience broadcast. Validate host-to-host match, then implement/verify viewer broadcast architecture, TURN/media infrastructure, reconnect, room capacity, moderation and live end-state.
+- [x] LIVE match invitations expire after `MATCH_INVITE_TTL_HOURS` (default 24); creators who blocked each other cannot invite each other. Re-invite cooldown/rate-limit remains open.
 - [ ] Verify live scoring/gifting is server-authoritative and cannot be forged by clients.
 - [ ] Push notification delivery, opt-in, retries, token lifecycle, and notification preferences.
 - [ ] Test live and creator interactions on physical Android devices and poor/mobile networks.
