@@ -622,3 +622,21 @@ input:focus, select:focus { border-color: var(--brand-a); }
 .profile-notification-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:0 14px; border:1px solid var(--line); border-radius:999px; background:var(--surface, #fff); color:var(--text, #111); font:inherit; font-size:14px; font-weight:500; white-space:nowrap; }
 .profile-notification-button.is-on { border-color:var(--brand, #5b5ce2); color:var(--brand, #5b5ce2); background:var(--surface, #fff); }
 .profile-notification-button:disabled { opacity:.6; }
+
+
+/* Creator post/story notification inbox */
+.topbar-notifications { flex:none; display:grid; place-items:center; width:40px; height:40px; border-radius:50%; color:var(--text, #111); font-size:24px; text-decoration:none; background:transparent; }
+.topbar-notifications.active { color:var(--brand, #5b5ce2); }
+.notifications-page { padding:16px 0 104px; background:var(--bg); }
+.notifications-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 16px; }
+.notifications-heading h1 { margin:0; font-size:24px; font-weight:650; }
+.notifications-subtitle { margin:6px 16px 18px; }
+.notification-list { border-top:1px solid var(--line); }
+.notification-item { display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; text-align:left; border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--text, #111); }
+.notification-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:5px; font-size:15px; font-weight:400; }
+.notification-copy small { color:var(--muted); font-size:12px; }
+.notification-chevron { color:var(--muted); font-size:26px; }
+.notifications-empty { max-width:360px; margin:100px auto 0; padding:0 22px; text-align:center; }
+.notifications-empty > span { display:inline-grid; place-items:center; width:64px; height:64px; border-radius:50%; background:var(--surface, #f3f3f3); color:var(--text, #111); font-size:32px; }
+.notifications-empty h2 { font-size:19px; font-weight:600; margin:16px 0 8px; }
+.notifications-empty p { color:var(--muted); line-height:1.5; margin:0; }
