@@ -22,6 +22,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   async function finishSession(data) {
@@ -109,22 +110,22 @@ export default function Login() {
             </div>
             <form className="auth-form" onSubmit={submit}>
               <label>Username<input autoComplete="username" placeholder="Your username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} /></label>
-              <label>Password<input type="password" autoComplete="current-password" placeholder="Your password" value={form.password} onChange={field('password')} required minLength={8} /></label>
-              <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Log in'} <span aria-hidden="true">→</span></button>
+              <label>Password<div className="auth-password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Your password" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>
+              <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Log in'}</button>
             </form>
             <div className="auth-divider"><span>or continue with</span></div>
             {GOOGLE_CLIENT_ID ? <div className="google-signin-wrap"><div ref={googleButton} className="google-signin-button" /></div> : <button type="button" className="google-unconfigured" onClick={() => setNotice('Google sign-in needs a Google OAuth Web client ID. Set VITE_GOOGLE_CLIENT_ID in frontend/.env.local and GOOGLE_CLIENT_ID in backend/.env, then restart both servers.')}><span className="google-g">G</span><span>Continue with Google</span></button>}
           </>
         ) : (
           <>
-            <div className="auth-step-meta"><button type="button" className="auth-back" onClick={() => { if (registerStep === 0) { setMode('login'); } else { setRegisterStep((step) => step - 1); } setError(''); }} aria-label="Go back"><Icon name="arrow-left" size={32} strokeWidth={2.5} /></button><span>STEP {registerStep + 1} OF {registerSteps.length}</span><button type="button" className="auth-cancel" onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
+            <div className="auth-step-meta"><button type="button" className="auth-back" onClick={() => { if (registerStep === 0) { setMode('login'); } else { setRegisterStep((step) => step - 1); } setError(''); }} aria-label="Go back"><Icon name="arrow-left" size={32} strokeWidth={2.5} /></button><span aria-hidden="true"></span><button type="button" className="auth-cancel" onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
             <div className="auth-progress" aria-label={`Step ${registerStep + 1} of ${registerSteps.length}`}><span style={{ width: `${((registerStep + 1) / registerSteps.length) * 100}%` }} /></div>
             <div className="auth-intro auth-step-intro"><p className="auth-eyebrow">LET’S GET YOU SET UP</p><h1>{currentStep.title}</h1><p className="auth-step-description">{currentStep.subtitle}</p></div>
             <form className="auth-form auth-step-form" onSubmit={handleSubmit}>
               {registerStep === 0 && <label>Display name<input autoFocus autoComplete="name" placeholder="Your name" value={form.displayName} onChange={field('displayName')} required maxLength={64} /></label>}
               {registerStep === 1 && <label>Email address<input autoFocus type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={field('email')} required /></label>}
               {registerStep === 2 && <label>Username<input autoFocus autoComplete="username" placeholder="Choose a username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} pattern="[A-Za-z0-9._]+" title="Use letters, numbers, dots or underscores." /></label>}
-              {registerStep === 3 && <label>Password<input autoFocus type="password" autoComplete="new-password" placeholder="At least 8 characters" value={form.password} onChange={field('password')} required minLength={8} /></label>}
+              {registerStep === 3 && <label>Password<div className="auth-password-field"><input autoFocus type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="At least 8 characters" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>}
               {registerStep === 4 && <label>Country<select autoFocus value={form.country} onChange={field('country')} required>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>}
               <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : registerStep === registerSteps.length - 1 ? 'Create account' : 'Continue'} <span aria-hidden="true">→</span></button>
             </form>
