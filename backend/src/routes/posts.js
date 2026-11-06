@@ -13,6 +13,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const visibility = req.body.visibility === 'private' ? 'private' : 'public';
     const isSponsored = req.body.isSponsored === 'true';
+    if (isSponsored) throw httpError(403, 'Sponsored posts must be created through an approved, funded advertiser campaign. Self-declared sponsored posts are disabled.');
     const allowRemix = req.body.allowRemix === 'true';
     const sourcePostId = String(req.body.sourcePostId || '').trim() || null;
     if (sourcePostId) {
