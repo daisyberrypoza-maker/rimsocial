@@ -37,6 +37,10 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [coverBusy, setCoverBusy] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [storyNotifications, setStoryNotifications] = useState(false);
+  const [recommended, setRecommended] = useState(true);
   const [compactHeader, setCompactHeader] = useState(false);
 
   useEffect(() => {
@@ -109,6 +113,34 @@ export default function Profile() {
     finally { setAvatarBusy(false); }
   }
 
+  async function uploadCover(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('Choose a JPG, PNG or WebP image');
+    const form = new FormData();
+    form.append('media', file);
+    setCoverBusy(true);
+    try {
+      const result = await api('/v1/users/me/cover', { method: 'POST', body: form });
+      setProfile(username, { user: { ...profile, coverUrl: result.coverUrl } });
+      setDrawerOpen(false);
+      toast('Profile cover updated');
+    } catch (e) { toast(e.message); }
+    finally { setCoverBusy(false); }
+  }
+
+  async function blockProfile() {
+    if (!window.confirm(`Block @${profile.username}? They will no longer be able to interact with you.`)) return;
+    try {
+      await api(`/v1/users/${profile.id}/block`, { method: 'POST' });
+      setOptionsOpen(false);
+      toast(`@${profile.username} blocked`);
+      navigate('/explore', { replace: true });
+    } catch (e) { toast(e.message); }
+  }
+
+
   async function toggleFollow() {
   if (!profile) return;
     setBusy(true);
@@ -161,7 +193,7 @@ export default function Profile() {
         <span className="sc-compact-name">{profile.displayName || profile.username}</span>
       </div>
       <header className="sc-hero">
-        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
+        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: (profile.coverUrl || profile.avatarUrl) ? `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` : undefined }} />
         <span className="sc-hero-shade" aria-hidden="true" />
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
@@ -173,7 +205,7 @@ export default function Profile() {
             )}
             {profile.isMe
               ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
-              : <button className="sc-circle" aria-label="More options" onClick={shareProfile}><span className="sc-dots" aria-hidden="true">•••</span></button>}
+              : <button className="sc-circle" aria-label="More options" onClick={() => setOptionsOpen(true)}><span className="sc-dots" aria-hidden="true">•••</span></button>}
           </div>
         </div>
         <div className="sc-hero-id">
@@ -209,7 +241,7 @@ export default function Profile() {
           <div className="sc-post-head"><h3>Post to…</h3><button className="sc-pill" onClick={() => navigate('/upload?story=1')}><Icon name="plus" size={16} />New Story</button></div>
           <button className="sc-row" onClick={() => navigate('/upload')}>
             <span className="sc-row-icon sc-row-red"><Icon name="play" size={20} /></span>
-            <span className="sc-row-copy"><strong>Spotlight</strong><small>Reach people who follow you and beyond</small></span>
+            <span className="sc-row-copy"><strong>Rimlight</strong><small>Reach people who follow you and beyond</small></span>
           </button>
           <button className="sc-row" onClick={() => navigate('/upload?story=1')}>
             <span className="sc-row-icon"><Icon name="camera" size={22} /></span>
@@ -218,7 +250,7 @@ export default function Profile() {
           </button>
         </section>
       )}
-      {profile.isMe && <input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />}
+      {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
@@ -230,6 +262,7 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}><Icon name="user-plus" size={21} />Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users" size={21} />Following</button>
           <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
+          <button onClick={() => document.getElementById('profile-cover-file')?.click()} disabled={coverBusy}><Icon name="image" size={21} />{coverBusy ? 'Uploading cover…' : 'Change profile background'}</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
           <button onClick={() => { setDrawerOpen(false); setShowCoins(true); }}><Icon name="gift" size={21} />Get coins</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase" size={21} />Business hub</button>
@@ -238,7 +271,20 @@ export default function Profile() {
         </aside>
       </div>}
 
-      {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
+      {optionsOpen && !profile.isMe && <div className="sc-options-backdrop" onClick={() => setOptionsOpen(false)}>
+        <section className="sc-options-sheet" role="dialog" aria-label={`Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
+          <button className="sc-option danger" onClick={blockProfile}>Block</button>
+          <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); toast('Direct chat is not available yet.'); }}>Chat</button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}>{profile.isFollowing ? 'Remove' : 'Add'}</button>
+          <button className="sc-option toggle-row" onClick={() => setStoryNotifications((v) => !v)}>Story Notifications <span className={`sc-switch${storyNotifications ? ' on' : ''}`} aria-checked={storyNotifications} role="switch" /></button>
+          <button className="sc-option toggle-row" onClick={() => setRecommended((v) => !v)}>Recommended <span className={`sc-switch${recommended ? ' on' : ''}`} aria-checked={recommended} role="switch" /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); if (navigator.share) shareProfile(); else { navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile link copied')).catch(() => toast('Unable to copy profile link')); } }}>Send Profile to… <Icon name="share" size={22} /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
+          <button className="sc-option done" onClick={() => setOptionsOpen(false)}>Done</button>
+        </section>
+      </div>}
+            {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
         <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
@@ -268,7 +314,7 @@ export default function Profile() {
 
       <nav className="sc-tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Rimlight</button>
       </nav>
 
       {tab === 'posts' ? (
