@@ -192,6 +192,7 @@ export default function PostCard({ post, active }) {
     {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
       : <img src={src} alt="" loading="lazy" />}
     <div className="shade" />
+    {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
       <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
@@ -207,6 +208,7 @@ export default function PostCard({ post, active }) {
     </aside>
     <div className="info">
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
+      {post.topic && <div className="post-topic">{post.topic}</div>}
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
       {post.isSponsored ? <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
