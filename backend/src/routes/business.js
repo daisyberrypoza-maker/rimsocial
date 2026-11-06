@@ -49,7 +49,8 @@ function profileDTO(profile) {
 }
 function opportunityDTO(item, profile = null, owner = null) {
   const o = item.toJSON ? item.toJSON() : item;
-  const { reviewedBy, reviewNote, ...safe } = o; // Operator-only review notes are never exposed in public DTOs.\n  return { ...safe, askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
+  const { reviewedBy, reviewNote, ...safe } = o; // Operator-only review notes are never exposed in public DTOs.
+  return { ...safe, askingPriceMinor: o.askingPriceMinor == null ? null : Number(o.askingPriceMinor),
     estimatedCostMinor: o.estimatedCostMinor == null ? null : Number(o.estimatedCostMinor),
     targetPriceMinor: o.targetPriceMinor == null ? null : Number(o.targetPriceMinor),
     budgetMinor: o.budgetMinor == null ? null : Number(o.budgetMinor),
