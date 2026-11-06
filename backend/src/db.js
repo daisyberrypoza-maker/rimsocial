@@ -299,6 +299,8 @@ const LiveBroadcast = sequelize.define('LiveBroadcast', {
   endedAt: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'live_broadcasts', indexes: [{ fields: ['status', 'createdAt'] }, { fields: ['hostId', 'status'] }] });
 
+LiveBroadcast.belongsTo(User, { as: 'host', foreignKey: 'hostId' });
+
 module.exports = {
   LiveBroadcast,
   MediaCleanupJob,
