@@ -6,6 +6,7 @@ const feed = require('../services/feed');
 const redis = require('../redis');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
+const notificationRoutes = require('./notifications');
 
 router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
   try {
@@ -15,6 +16,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (visibility === 'public') {
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
       await feed.fanOutPost(post, followers.map((f) => f.followerId));
+      await notificationRoutes.recordUploadNotifications(req.user.id, post.id, 'post');
     }
     res.status(201).json(toPostDTO(post));
   } catch (e) { next(e); }
