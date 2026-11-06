@@ -146,7 +146,8 @@ export default function PostCard({ post, active }) {
   }
 
   async function copyPostLink() {
-    const url = `${window.location.origin}/p/${post.id}`;
+    const url = postShareUrl(post.id);
+    if (!url) return toast('External sharing needs VITE_PUBLIC_APP_URL set to the public RimSocial website.');
     try { await navigator.clipboard.writeText(url); toast('Post link copied'); setShowMenu(false); }
     catch { toast(url); }
   }
