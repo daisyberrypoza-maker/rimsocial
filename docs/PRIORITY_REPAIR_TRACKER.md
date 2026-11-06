@@ -18,9 +18,11 @@ This is a living release checklist. A branch or pull request is not considered c
 - [x] HTTPS-only evidence/website links and public discovery restricted to approved listings.
 - [x] React Business workspace and navigation entry.
 - [x] Additive production SQL migration: `backend/migrations/019-find-flip-fix.sql`.
-- [x] Backend syntax checks, backend unit tests, and frontend production build passed on the tested PR #13 head (run: https://github.com/daisyberrypoza-maker/rimsocial/actions/runs/42135575987). Re-run CI after any subsequent branch update.
-- [ ] Live MySQL migration and authenticated API integration tests.
-- [ ] Two-account end-to-end tests for offers, Fix evidence, both completion confirmations, and concurrent offer acceptance.
+- [x] Flip realized-profit calculation from completed accepted purchase price, actual sale price and additional costs; append-only outcome history and buyer-only financial visibility.
+- [x] Backend syntax checks, backend unit tests, frontend production build and authenticated API lifecycle tests against an ephemeral MySQL service passed on PR #18's tested head (run: https://github.com/daisyberrypoza-maker/rimsocial/actions/runs/42137634775).
+- [x] Two-account integration coverage for profile moderation, approved discovery, idempotent offers, Fix evidence privacy, both completion confirmations, and Flip realized-profit privacy/calculation.
+- [ ] Apply migration 019 to the real deployment database and verify it without deleting existing records.
+- [ ] Add concurrent-offer acceptance stress test and run on the production-like database.
 - [ ] Payment-provider checkout, signed webhook verification, refunds, dispute handling, and reconciled settlement. Current workflow intentionally does not collect or hold money; accepted offers are not proof of payment.
 - [ ] Audit logs, abuse/rate-limit policy, and operational escalation process for disputed deals.
 
@@ -37,24 +39,30 @@ Branch: `fix/reel-composer-remix-priority`
 - [ ] Verify Share to Story, mentions, topic, AI disclosure, draft restore and private/public behavior on a real device.
 
 ### Pull request audit outcome
-- PR #1, #4 and #5 were closed as superseded after comparing them with current `main`; their older code would overwrite newer social/feed implementations. The useful external-share action identified in PR #1 was ported into PR #14.
+- PR #1, #4 and #5 were closed as superseded after comparing them with current `main`; their older code would overwrite newer social/feed implementations. The useful external-share action from PR #1 was ported into PR #14.
 - PR #8 was closed as superseded by PR #12 to avoid competing composer implementations.
-- PR #12: `fix/reel-composer-remix-priority` — open draft; duplicate model fields and draft reset were fixed; current-head CI passed. Full editor/remix rendering and paid ad billing remain open.
-- PR #13: `feature/find-flip-fix-priority` — open draft; FFF backend, migration, UI and validation unit tests; CI passed on the tested head, but live MySQL/two-account integration remains open.
-- PR #14: `fix/post-detail-share-action` — open draft; native share sheet added separately from repost; CI passed. Physical Android verification remains open.
-- PR #15: `fix/payout-webhook-reconciliation` — open draft; atomic payout settlement/reversal handling and transition tests; await current-head CI and Paystack sandbox tests.
+- PR #12: `fix/reel-composer-remix-priority` — open draft; duplicate model fields and draft reset are fixed and CI passed. Full media editing/rendered remix and paid-ad billing remain open.
+- PR #13: `feature/find-flip-fix-priority` — closed as superseded by PR #18.
+- PR #14: native external share sheet — merged into `main`; physical Android verification remains open.
+- PR #15: payout webhook settlement/reversal fix — merged into `main`; Paystack sandbox verification remains open.
+- PR #16: old media cleanup branch — superseded by PR #19.
+- PR #17: self-declared sponsored-post guard — merged into `main`.
+- PR #18: `feature/find-flip-fix-priority-v2` — open draft; FFF workflow, realized profit history, and ephemeral-MySQL integration tests passed CI on the tested head. Real payment integration and production migration remain open.
+- PR #19: `fix/cloudinary-orphan-cleanup-v2` — open draft; retryable media cleanup queue and migration; awaiting current-head CI and Cloudinary credential tests.
 
 ## Monetization and finance
-- [x] Gift eligibility and idempotency safeguards were added in PR #11 (verify merged commit remains in `main`).
+- [x] Gift eligibility and idempotency safeguards were added in PR #11.
+- [x] Payout success/failure/reversal settlement now uses atomic status transitions and retry-safe ledger entries (PR #15 merged; Paystack sandbox verification remains open).
+- [x] Self-declared sponsored posts are blocked unless created through an approved, funded campaign (PR #17 merged). This is a safety gate, not an advertiser marketplace.
 - [x] Creator payout requests require verified payout destination; payout transfer waits for provider webhook confirmation.
-- [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook state transitions are covered by unit tests in PR #15, but provider sandbox tests remain.
+- [ ] Paystack test-mode integration tests: checkout initialization, signed webhook verification, duplicate/replayed webhook handling, failed/cancelled payments, refunds, and settlement reconciliation. Payout webhook transitions are unit-tested, but provider sandbox tests remain.
 - [ ] End-to-end wallet/ledger reconciliation and invariant tests for concurrent coin spend, gifts, earnings holds, and payouts.
 - [ ] Android in-app purchases must use Google Play Billing; do not enable Paystack coin checkout inside the Android app.
 - [ ] Advertiser marketplace: advertiser onboarding, campaign creation, targeting, budget/debit ledger, impressions/click tracking, billing, invoices, fraud controls, reporting and ad review. Sponsored-post disclosure alone is not a paid ads marketplace.
 
 ## Media, privacy, moderation
 - [x] PR #9 introduced Cloudinary-backed media and story expiry cleanup (verify merged commit and current code).
-- [ ] Test Cloudinary failures, shared asset references, deleted/expired story cleanup, avatar replacement, orphaned uploads, retry/backoff and scheduled cleanup against real Cloudinary credentials.
+- [ ] PR #19 adds a durable media cleanup queue, orphan-upload cleanup and retry/backoff; current-head CI and real Cloudinary failure/retry tests are still required.
 - [ ] Confirm all public-profile and feed visibility rules with anonymous, follower, non-follower, blocked and private-account scenarios.
 - [ ] Confirm reporting is persisted and reviewable; moderation queue, user appeals, enforcement history and operator UI still need verification.
 - [ ] Add rate limits/abuse controls for uploads, comments, follows, reports, offers, live signaling and payment endpoints.
