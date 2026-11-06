@@ -138,7 +138,14 @@ router.post('/:id/block', requireAuth, async (req, res, next) => {
     if (req.params.id === req.user.id) throw httpError(400, 'You cannot block yourself');
     const target = await User.findByPk(req.params.id, { attributes: ['id'] });
     if (!target) throw httpError(404, 'User not found');
-    await UserBlock.findOrCreate({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
+    await sequelize.transaction(async (t) => {
+      await UserBlock.findOrCreate({ where: { blockerId: req.user.id, blockedUserId: req.params.id }, transaction: t });
+      // Blocking ends any existing follow relationship in either direction.
+      const removedOutgoing = await Follow.destroy({ where: { followerId: req.user.id, followeeId: req.params.id }, transaction: t });
+      const removedIncoming = await Follow.destroy({ where: { followerId: req.params.id, followeeId: req.user.id }, transaction: t });
+      if (removedOutgoing) await User.decrement('followerCount', { by: removedOutgoing, where: { id: req.params.id }, transaction: t });
+      if (removedIncoming) await User.decrement('followerCount', { by: removedIncoming, where: { id: req.user.id }, transaction: t });
+    });
     res.json({ blocked: true });
   } catch (e) { next(e); }
 });
@@ -156,6 +163,11 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
     if (followeeId === req.user.id) throw httpError(400, 'You cannot follow yourself');
     const target = await User.findByPk(followeeId, { attributes: ['id'] });
     if (!target) throw httpError(404, 'User not found');
+    const blocked = await UserBlock.findOne({ where: { [Op.or]: [
+      { blockerId: req.user.id, blockedUserId: followeeId },
+      { blockerId: followeeId, blockedUserId: req.user.id },
+    ] } });
+    if (blocked) throw httpError(403, 'You cannot follow an account involved in a block relationship');
 
     await sequelize.transaction(async (t) => {
       const [, created] = await Follow.findOrCreate({
