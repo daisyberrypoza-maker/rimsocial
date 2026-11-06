@@ -70,7 +70,7 @@ export default function Upload() {
     const value = event.target.value;
     const caret = event.target.selectionStart ?? value.length;
     setDraft({ ...(draft || {}), caption: value, topic, aiLabel, shareToStory });
-    const match = value.slice(0, caret).match(/(^|\\s)@([a-zA-Z0-9_.]{0,30})$/);
+    const match = value.slice(0, caret).match(/(^|\s)@([a-zA-Z0-9_.]{0,30})$/);
     if (match) setMentionAnchor({ start: caret - match[2].length - 1, end: caret, query: match[2] });
     else setMentionAnchor(null);
   }
