@@ -1582,3 +1582,113 @@ button, .icon-button, .topbar-back, .bottomnav a { -webkit-tap-highlight-color: 
   .story-viewer-backdrop { padding:0; }
   .story-viewer { width:100%; height:100dvh; min-height:0; border-radius:0; }
 }
+
+
+/* RimSocial frontend consistency pass — keep the original blue/white identity.
+   These overrides intentionally normalize older Snapchat-yellow/dark experiments
+   without changing the existing page structure or product features. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f3f5f9;
+  --line: #e4e8f0;
+  --text: #171b26;
+  --muted: #697386;
+  --brand-a: #4c5cff;
+  --brand-b: #4c5cff;
+  --brand: #4c5cff;
+  --danger: #e5485d;
+  color-scheme: light;
+}
+html, body, #root, .app { background: #fff; color: #171b26; }
+button, input, select, textarea { font-family: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid #4c5cff;
+  outline-offset: 3px;
+}
+.topbar:not(.overlay) { background:#fff; color:#171b26; border-bottom:1px solid #e8ebf2; }
+.topbar .brand { background:none; color:#4c5cff; -webkit-text-fill-color:#4c5cff; }
+.topbar-title { color:#171b26; }
+.topbar-back, .icon-button { background:transparent; color:#171b26; }
+.coins { background:#f3f5f9; color:#171b26; }
+.coins .dot { background:#4c5cff; }
+.bottomnav {
+  background:rgba(255,255,255,.98);
+  border-top:1px solid #e4e8f0;
+  box-shadow:0 -5px 18px rgba(20,32,60,.045);
+  padding:8px 7px calc(env(safe-area-inset-bottom,0px) + 7px);
+  backdrop-filter:blur(14px);
+}
+.bottomnav a { color:#7b8495; font-size:11px; font-weight:600; gap:4px; min-height:44px; justify-content:center; }
+.bottomnav a.active { color:#4c5cff; }
+.bottomnav a svg { width:24px; height:24px; stroke-width:2.1; }
+.bottomnav .create span.plus { width:43px; height:32px; border-radius:11px; background:#4c5cff; color:#fff; }
+.bottomnav .create span.plus svg { width:25px; height:25px; }
+.page { background:#fff; color:#171b26; }
+.page-title { font-size:22px; font-weight:750; letter-spacing:-.35px; }
+button.ghost { background:#f3f5f9; color:#171b26; border-color:#e4e8f0; }
+input, select, textarea { background:#f7f8fb; color:#171b26; border-color:#e1e5ed; }
+input:focus, textarea:focus, select:focus { border-color:#4c5cff; }
+.panel { border-color:#e6eaf2; border-radius:16px; box-shadow:0 3px 16px rgba(24,38,75,.035); }
+.profile-top { background:#fff; }
+.profile-name, .profile-stats-row button, .profile-stats-row div { color:#171b26; }
+.ptabs button.on { color:#4c5cff; box-shadow:inset 0 -2px 0 #4c5cff; }
+.profile-actions button { border-radius:11px; }
+.explore-search { background:#f3f5f9; border:1px solid #edf0f5; border-radius:16px; }
+.search-filters button { background:#f3f5f9; color:#4b5568; border-radius:11px; }
+.search-filters button.on { background:#4c5cff; border-color:#4c5cff; color:#fff; }
+.hashtag-chips button { background:#eef1ff; color:#4c5cff; }
+.discover-follow, .follow-result, .explore-search button[type=submit] { background:#4c5cff; color:#fff; }
+.discover-follow.following, .follow-result.following { background:#f0f2f7; color:#30384a; }
+.upload-kind button.on { background:#4c5cff; color:#fff; }
+.upload-submit { background:#4c5cff; color:#fff; }
+.upload-picker { background:#f7f8fc; border-color:#cbd3e3; }
+.upload-privacy label.selected { border-color:#4c5cff; background:#f5f6ff; }
+.stories-page { padding-top:8px; }
+.stories-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px 16px; }
+.stories-heading h1 { margin:0; font-size:24px; letter-spacing:-.5px; }
+.stories-heading p { margin:5px 0 0; color:#697386; font-size:13px; line-height:1.4; }
+.stories-add { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:none; background:#4c5cff; color:#fff; padding:10px 13px; border-radius:12px; font-size:13px; }
+.stories-rail-section { display:flex; align-items:flex-start; gap:14px; overflow-x:auto; padding:8px 16px 20px; scrollbar-width:none; }
+.stories-rail-section::-webkit-scrollbar { display:none; }
+.story-bubble { flex:none; display:flex; flex-direction:column; align-items:center; gap:7px; min-width:66px; max-width:76px; padding:0; background:transparent; color:#30384a; font-size:11px; font-weight:600; }
+.story-avatar { width:62px; height:62px; border-radius:50%; padding:3px; display:grid; place-items:center; background:#e2e7f0; color:#4c5cff; overflow:hidden; }
+.story-avatar.unseen { background:conic-gradient(from 20deg,#4c5cff,#7790ff,#4c5cff); }
+.story-avatar.seen { background:#dce1eb; }
+.story-avatar img { width:100%; height:100%; object-fit:cover; border:2px solid #fff; border-radius:50%; }
+.own-story-avatar { background:#eef1ff; border:1px solid #dce2ff; }
+.story-bubble-name { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stories-empty { display:flex; flex-direction:column; align-items:center; text-align:center; gap:9px; padding:28px 18px 30px; margin:6px 16px; border:1px solid #e8ebf3; border-radius:18px; background:#fbfcff; min-width:calc(100% - 32px); }
+.stories-empty p { max-width:280px; margin:0; color:#697386; font-size:13px; line-height:1.5; }
+.stories-empty-icon { display:grid; place-items:center; width:54px; height:54px; border-radius:50%; background:#eef1ff; color:#4c5cff; }
+.stories-empty .primary { background:#4c5cff; color:#fff; }
+.story-viewer-backdrop { background:rgba(13,20,38,.72); backdrop-filter:blur(5px); }
+.story-viewer { background:#fff; color:#171b26; border-radius:22px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,.25); }
+.story-viewer-close { color:#fff; background:rgba(15,20,32,.5); }
+.story-viewer-footer { background:#fff; color:#697386; border-top:1px solid #edf0f5; }
+.story-viewer-footer button { background:#eef1ff; color:#4c5cff; }
+.story-progress span { background:rgba(255,255,255,.4); }
+.story-progress span.done { background:#fff; }
+.auth-screen { background:#f3f6ff; color:#171b26; }
+.auth-glow-one { background:#dce4ff; }
+.auth-glow-two { background:#cbd6ff; }
+.snap-mark { background:#4c5cff; color:#fff; }
+.auth-brand { color:#171b26; }
+.auth-intro h1 { color:#171b26; }
+.auth-intro p:last-child, .auth-intro .auth-eyebrow { color:#697386; }
+.auth-mode-switch button.selected { background:#4c5cff; color:#fff; }
+.auth-primary { background:#4c5cff; color:#fff; }
+.creator-hero { background:linear-gradient(135deg,#f3f6ff,#ffffff 72%); color:#171b26; }
+.creator-hero p { color:#697386; }
+.creator-hero h1 { color:#171b26; }
+.studio-stats article { box-shadow:0 3px 14px rgba(24,38,75,.035); }
+.cashout-balance { background:linear-gradient(140deg,#4c5cff,#3444dc); color:#fff; }
+.sponsor-cta { background:#4c5cff; color:#fff; }
+@media (max-width:600px) {
+  .stories-heading { align-items:flex-start; padding:12px 14px 14px; }
+  .stories-heading h1 { font-size:22px; }
+  .stories-add { padding:9px 10px; font-size:12px; }
+  .story-avatar { width:58px; height:58px; }
+  .bottomnav a { min-width:0; flex:1; }
+  .bottomnav a span { white-space:nowrap; }
+}
