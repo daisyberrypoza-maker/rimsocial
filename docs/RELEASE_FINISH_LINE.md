@@ -42,6 +42,10 @@ RimSocial is complete for release only when every **release-blocking** item belo
 - A physical Android device for camera, microphone, notification, billing and mobile-network checks.
 - Owner action to rotate provider secrets and complete any Play Console setup requiring account authorization.
 
+## Current release decision — 2026-11-06
+
+**Decision: NO-GO for production release.** The repository alone does not prove physical Android testing, Google Play Billing, production migration/backup validation, payment refund/reversal reconciliation, or live provider readiness. The current code CI can pass while these external release gates remain open. Keep Android coin purchases disabled until Google Play Billing is implemented and tested; keep web coin sales disabled until final prices and payment settlement/reversal reconciliation are verified.
+
 ## Final sign-off
 
 - [ ] Latest `main` commit SHA recorded here.
