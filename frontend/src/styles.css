@@ -1305,3 +1305,39 @@ button .icon-vector, a .icon-vector { pointer-events: none; }
   width: 25px;
   height: 25px;
 }
+
+
+/* ClipVerse native-style icon buttons: never render grey/filled icon tiles. */
+button.auth-back,
+button.topbar-back,
+button.icon-button,
+.auth-screen button.auth-back,
+.auth-screen .auth-step-meta button.auth-back,
+.topbar button.topbar-back,
+.bottomnav .create .plus {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline-offset: 3px;
+}
+button.auth-back:hover,
+button.auth-back:active,
+button.topbar-back:hover,
+button.topbar-back:active,
+button.icon-button:hover,
+button.icon-button:active,
+.bottomnav .create .plus:hover,
+.bottomnav .create .plus:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+button.auth-back .icon-vector,
+button.topbar-back .icon-vector,
+button.icon-button .icon-vector {
+  background: transparent !important;
+  fill: none !important;
+  stroke: currentColor;
+}
