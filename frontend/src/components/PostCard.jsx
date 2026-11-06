@@ -136,7 +136,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/posts/${post.id}/like`, { method: 'POST' });
       setLikes(r.likeCount); setLiked(Boolean(r.liked));
-      if (r.liked) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'liked' } }).catch(() => {});
+      // The like endpoint already updates the recommendation score; do not score this twice.
     } catch (err) { toast(err.message); }
     finally { setLikeBusy(false); }
   }
@@ -179,7 +179,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/posts/${post.id}/repost`, { method: 'POST' });
       setReposted(Boolean(r.reposted)); setRepostCount(r.repostCount);
-      if (r.reposted) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'shared' } }).catch(() => {});
+      // The repost endpoint already updates the recommendation score; do not score this twice.
       toast(r.reposted ? 'Post reposted to your profile' : 'Repost removed');
       return true;
     } catch (err) { toast(err.message); return false; }
