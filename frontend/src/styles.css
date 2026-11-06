@@ -2095,3 +2095,15 @@ html, body, #root { background: #ffffff; color: #111111; }
 .people-sheet .people-person small { color: #8e8e8e !important; }
 .people-sheet .people-follow-btn:not(.following) { background: #fffc00 !important; color: #000 !important; }
 .people-sheet .people-follow-btn.following { background: #efefef !important; color: #111 !important; }
+
+/* Header order and tab text on one line (Instagram) */
+.people-sheet .people-sheet-title { display: flex; align-items: center; gap: 4px; }
+.people-sheet .people-sheet-title > div:nth-child(2) { flex: 1; min-width: 0; }
+.people-sheet .people-title-actions .icon-button:first-child { display: inline-grid; }
+.people-sheet .people-sheet-title .icon-button { flex: none; }
+.people-sheet .people-tabs button { display: inline-flex; flex-direction: row; align-items: baseline; gap: 5px; }
+
+/* Followers header icons and tab counts must be visible (override older dark rules) */
+.people-sheet .people-sheet-title .icon-button { background: transparent !important; color: #111111 !important; border: 0 !important; width: 40px; height: 40px; }
+.people-sheet .people-sheet-title .icon-button svg { color: #111111 !important; stroke: #111111 !important; }
+.people-sheet .people-tabs button span { font-size: 16px !important; color: inherit !important; font-weight: 600 !important; }

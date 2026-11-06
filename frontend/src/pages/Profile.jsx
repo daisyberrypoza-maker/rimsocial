@@ -194,7 +194,7 @@ export default function Profile() {
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
         <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <div className="people-sheet-handle" />
-          <div className="people-sheet-title"><div><h3>{profile.username}</h3><small>{listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions"><button className="icon-button" onClick={() => { setListType(''); navigate('/explore'); }} aria-label="Discover people"><Icon name="user-plus" size={21} /></button><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={22} /></button></div></div>
+          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{profile.username}</h3><small>{listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions"><button className="icon-button" onClick={() => { setListType(''); navigate('/explore'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button></div></div>
           <div className="people-tabs">
             <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><span>{formatCount(profile.followerCount)}</span> followers</button>
             <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><span>{formatCount(profile.followingCount || 0)}</span> following</button>
@@ -206,7 +206,7 @@ export default function Profile() {
               <div className="people-list-row" key={person.id}>
                 <button className="people-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
                   <Avatar user={person} size={56} />
-                  <span><strong>{person.username}</strong><small>@{person.username}</small></span>
+                  <span><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                 </button>
                 <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
               </div>
