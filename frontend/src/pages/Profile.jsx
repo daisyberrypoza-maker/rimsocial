@@ -37,6 +37,7 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [compactHeader, setCompactHeader] = useState(false);
 
   useEffect(() => {
     api(`/v1/users/${username}`)
@@ -154,7 +155,11 @@ export default function Profile() {
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
-    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`}>
+    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactHeader(e.currentTarget.scrollTop > 155)}>
+      <div className={`sc-compact-nav${compactHeader ? ' visible' : ''}`} aria-hidden={!compactHeader}>
+        <button className="sc-compact-back" aria-label="Back" onClick={() => navigate(-1)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+        <span className="sc-compact-name">{profile.displayName || profile.username}</span>
+      </div>
       <header className="sc-hero">
         <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.avatarUrl ? `url(${mediaUrl(profile.avatarUrl)})` : undefined }} />
         <span className="sc-hero-shade" aria-hidden="true" />
