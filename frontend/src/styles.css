@@ -2039,3 +2039,26 @@ input, select, textarea { font-size: 16px; } /* 16px stops iOS/Android zoom on f
   .ig-grid { grid-template-columns: repeat(3, 1fr); }
   .ig-suggest-card { width: 136px; }
 }
+
+/* =====================================================================
+   Light theme for every screen (Instagram-style). Video feed stays black.
+   Overrides older dark-theme variables defined earlier in this file.
+   ===================================================================== */
+:root, :root[data-theme], :root:not([data-theme="dark"]) {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #efefef;
+  --line: #dbdbdb;
+  --text: #111111;
+  --muted: #8e8e8e;
+  color-scheme: light;
+}
+html, body, #root { background: #ffffff; color: #111111; }
+.topbar { background: #ffffff; color: #111111; border-bottom: 1px solid #dbdbdb; }
+.topbar.overlay { background: linear-gradient(rgba(0,0,0,.65), transparent); color: #fff; border: 0; }
+.bottomnav { background: #ffffff; color: #111111; }
+.page, .ig-explore, .ig-compose, .activity-page, .people-sheet, .profile-drawer { background: #ffffff; color: #111111; }
+.ig-search { background: #efefef; color: #8e8e8e; }
+.ig-search input { color: #111111; }
+.ig-caption textarea, .ig-row input { color: #111111; }
+.ptabs { background: #ffffff; }
