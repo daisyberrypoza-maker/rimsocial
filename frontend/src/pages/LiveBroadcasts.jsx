@@ -56,9 +56,14 @@ export default function LiveBroadcasts() {
     room.remoteParticipants.forEach((participant) => participant.trackPublications.forEach((publication) => {
       if (publication.track) attachSubscribed(publication.track);
     }));
+    const detachUnsubscribed = (track) => track.detach().forEach((element) => element.remove());
     room.on('trackSubscribed', attachSubscribed);
-    room.on('trackUnsubscribed', (track) => track.detach().forEach((element) => element.remove()));
-    return () => { live = false; room.removeAllListeners(); };
+    room.on('trackUnsubscribed', detachUnsubscribed);
+    return () => {
+      live = false;
+      room.off('trackSubscribed', attachSubscribed);
+      room.off('trackUnsubscribed', detachUnsubscribed);
+    };
   }, [room, selected]);
 
   useEffect(() => {
@@ -107,6 +112,15 @@ export default function LiveBroadcasts() {
       setRoom(nextRoom);
       setMessages([]);
     } catch (e) {
+      // A failed camera permission or room connection must not leave a ghost LIVE
+      // session or camera/microphone tracks running in the background.
+      const failedRoom = roomRef.current;
+      roomRef.current = null;
+      if (failedRoom) { try { failedRoom.disconnect(); } catch {} }
+      localTracksRef.current.forEach((track) => { try { track.stop(); track.detach(); } catch {} });
+      localTracksRef.current = [];
+      setLocalTracks([]);
+      setRoom(null);
       setError(e.message || 'Could not connect to LIVE. Check camera permission and provider configuration.');
     } finally { setBusy(false); }
   };
