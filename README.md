@@ -88,6 +88,23 @@ Session, last screen, cached feeds and scroll position, gifts, coin balance, and
 - Moderation tools and an admin panel.
 
 
+## Find, Flip & Fix business workflows
+
+The signed-in Business tab exposes three workflows: **Find** approved opportunities, **Flip** by making/accepting offers, and **Fix** by assigning a professional, posting progress/blocker updates, submitting completion evidence, and requiring both parties to confirm completion.
+
+- Business profiles and opportunity listings start as **pending review**. Public discovery only returns operator-approved opportunities. Review endpoints are protected by `ADMIN_API_KEY` through the `X-Admin-Api-Key` header.
+- API routes are under `/v1/business`. The frontend uses the configured `VITE_API_URL`, so the feature works with independently hosted frontend/backend deployments when CORS is configured.
+- Money is represented in integer minor units (for example, ₦1,000.00 = `100000` NGN minor units). Do not send decimal currency values to the API.
+- **Important:** this workflow currently records offers and completion confirmations only. It does not collect, escrow, verify, refund, or transfer money. Do not describe an accepted offer as a paid transaction. Paystack checkout/webhook/settlement integration and dispute-resolution operations remain a release blocker before real-money deals.
+- HTTPS evidence links are optional. A link is not independently verified just because it was submitted. Operator approval is a moderation state, not a guarantee of business performance or investment returns.
+- Development uses the existing additive Sequelize table creation when `DB_SYNC=true`. Production uses `DB_SYNC=false`; apply `backend/migrations/019-find-flip-fix.sql` to the configured MySQL database before deploying the new API. The SQL is additive and does not delete existing records.
+
+Operator review API:
+- `GET /v1/business/admin/opportunities?status=pending`
+- `PATCH /v1/business/admin/opportunities/:id/review` with `{ "decision": "approve" }` or `{ "decision": "reject", "note": "..." }`
+- `GET /v1/business/admin/profiles?status=pending`
+- `PATCH /v1/business/admin/profiles/:id/review` with `{ "decision": "approve" }` or `{ "decision": "reject" }`
+
 ## Creator monetization and database bootstrap
 
 - Copy `backend/.env.example` to `backend/.env` and set a strong random `JWT_SECRET`, the real MySQL username/password, and a Paystack **test** secret while developing.
