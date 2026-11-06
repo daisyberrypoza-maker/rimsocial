@@ -1,8 +1,8 @@
 import {
-  ArrowLeft, ArrowRight, AtSign, Bell, Bookmark, BriefcaseBusiness, Camera, Check,
+  ArrowLeft, ArrowRight, AtSign, Bell, Bookmark, Briefcase, Camera, Check,
   ChevronRight, Compass, Gift, Heart, Home, Link as LinkIcon, Mail, Megaphone,
   MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2, ShieldCheck,
-  UserRound, UserRoundPlus, Users, Video, Wallet, X, Repeat2, CircleHelp,
+  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp,
 } from 'lucide-react';
 
 const ICONS = {
@@ -31,9 +31,9 @@ const ICONS = {
   video: Video,
   compass: Compass,
   wallet: Wallet,
-  briefcase: BriefcaseBusiness,
+  briefcase: Briefcase,
   bell: Bell,
-  'user-plus': UserRoundPlus,
+  'user-plus': UserPlus,
   refresh: RefreshCw,
   send: Send,
   'at-sign': AtSign,
