@@ -2688,3 +2688,98 @@ html, body, #root { background: #ffffff; color: #111111; }
 }
 .sc-options-backdrop .sc-switch { background:#c9c9c9; }
 .sc-options-backdrop .sc-switch.on { background:#22aeea; }
+
+
+/* Final plain, light profile menus: no decorative backdrop, no card fills, softer type. */
+.profile-drawer-backdrop {
+  background:transparent !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.profile-drawer {
+  background:#fff !important;
+  color:#171717 !important;
+  box-shadow:-8px 0 20px rgba(0,0,0,.05) !important;
+}
+.profile-drawer .drawer-head h3 {
+  font-weight:600 !important;
+  letter-spacing:-.35px;
+}
+.profile-drawer > button,
+.profile-drawer button:not(.drawer-danger):not(.icon-button) {
+  background:transparent !important;
+  color:#171717 !important;
+  border:0 !important;
+  border-bottom:1px solid #ededed !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  line-height:1.35;
+  min-height:58px;
+  padding:14px 8px !important;
+}
+.profile-drawer > button:hover,
+.profile-drawer button:not(.drawer-danger):not(.icon-button):active {
+  background:#fafafa !important;
+}
+.profile-drawer .icon-button {
+  background:transparent !important;
+  border:1px solid #e7e7e7 !important;
+  color:#171717 !important;
+  box-shadow:none !important;
+}
+.profile-drawer > button.drawer-danger {
+  background:transparent !important;
+  color:#d94a5e !important;
+  border:0 !important;
+  border-top:1px solid #ededed !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  font-weight:500 !important;
+}
+.sc-options-backdrop {
+  background:transparent !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  padding:8px 16px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.sc-options-sheet {
+  background:#fff !important;
+  color:#171717 !important;
+  border:1px solid #ededed !important;
+  border-radius:18px !important;
+  box-shadow:none !important;
+  animation:sc-sheet-in 180ms ease-out both;
+}
+.sc-options-backdrop .sc-options-sheet .sc-option {
+  min-height:58px !important;
+  padding:14px 18px !important;
+  background:#fff !important;
+  color:#171717 !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  letter-spacing:0 !important;
+  border-bottom:1px solid #eeeeee !important;
+  box-shadow:none !important;
+}
+.sc-options-backdrop .sc-options-sheet .sc-option.danger {
+  color:#d94a5e !important;
+  font-weight:500 !important;
+}
+.sc-options-backdrop .sc-options-sheet .sc-option:active { background:#fafafa !important; }
+.sc-options-backdrop .sc-options-done {
+  min-height:54px !important;
+  background:#fff !important;
+  color:#171717 !important;
+  border:1px solid #ededed !important;
+  border-radius:18px !important;
+  box-shadow:none !important;
+  font-size:16px !important;
+  font-weight:600 !important;
+}
+.sc-options-backdrop .sc-switch { box-shadow:none !important; }
+.people-sheet-title h3 { font-weight:600 !important; }
+.people-list-row .people-person strong { font-weight:600 !important; }
+.people-list-row .people-person small { font-weight:400 !important; }
+.people-follow-btn { font-weight:500 !important; }
