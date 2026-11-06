@@ -7,6 +7,7 @@ export default function BottomNav() {
       <NavLink to="/" end><Icon name="home" size={22} /><span>Home</span></NavLink>
       <NavLink to="/explore"><Icon name="compass" size={22} /><span>Explore</span></NavLink>
       <NavLink to="/activity"><Icon name="bell" size={22} /><span>Activity</span></NavLink>
+      <NavLink to="/live"><Icon name="video" size={22} /><span>LIVE</span></NavLink>
       <NavLink to="/upload" className="create" aria-label="New post"><span className="plus"><Icon name="plus" size={22} /></span></NavLink>
       <NavLink to="/following"><Icon name="users" size={22} /><span>Following</span></NavLink>
       <NavLink to="/business"><Icon name="briefcase" size={20} /><span>Business</span></NavLink>
