@@ -1,15 +1,16 @@
 :root {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f1f2f4;
-  --line: #e5e7eb;
-  --text: #17191f;
-  --muted: #6b7280;
-  --brand-a: #4b5cff;
-  --brand-b: #4b5cff;
-  --danger: #ff3158;
-  --brand: #4b5cff;
-  color-scheme: light;
+  /* Clipverse2 design tokens — preserve the original visual identity */
+  --bg: #0a0a10;
+  --surface: #15151f;
+  --surface-2: #1d1d2a;
+  --line: #262636;
+  --text: #f6f6fa;
+  --muted: #9a9ab0;
+  --brand-a: #ff4d7d;
+  --brand-b: #ff9a3c;
+  --danger: #ff5c6c;
+  --brand: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -18,7 +19,7 @@ html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(-
 body { overflow: hidden; }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
-button { border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; color: #111; background: var(--brand); font-weight: 700; }
+button { border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; color: #fff; background: var(--brand); font-weight: 700; }
 button:disabled { opacity: .5; cursor: default; }
 button.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
 button.small { padding: 6px 12px; font-size: 13px; }
