@@ -1,7 +1,7 @@
 const { Op, Post, User, Follow, UserBlock } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
-const { encodeCursor, decodeCursor } = require('../lib/cursor');
+const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
 
 const authorInclude = (extra = {}) => ({
@@ -43,8 +43,7 @@ async function pagePosts({ where, include = [authorInclude()], cursor, limit }) 
 // Discover: newest public posts in the viewer's country. First page is cached briefly.
 async function getDiscoverPage({ userId, cursor, limit }) {
   const n = clampLimit(limit);
-  const parsed = /^rank:(\\d+)$/.exec(String(cursor || ''));
-  const offset = parsed ? Number(parsed[1]) : 0;
+  const offset = parseRankCursor(cursor);
   const cacheKey = `feed:discover:ranked:${userId}`;
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
