@@ -26,6 +26,10 @@ export default function Upload() {
   const [sponsorCta, setSponsorCta] = useState('Shop Now');
   const [sponsorUrl, setSponsorUrl] = useState('');
   const [busy, setBusy] = useState(false);
+  const [topic, setTopic] = useState(draft.topic || '');
+  const [aiLabel, setAiLabel] = useState(Boolean(draft.aiLabel));
+  const [shareToStory, setShareToStory] = useState(Boolean(draft.shareToStory));
+  const [galleryTab, setGalleryTab] = useState('Edits');
 
   useEffect(() => {
     if (!remixId) { setSourcePost(null); return undefined; }
@@ -34,7 +38,7 @@ export default function Upload() {
       if (!active) return;
       if (!item.allowRemix) { toast('The creator has not allowed remixing this post'); setSourcePost(null); return; }
       setSourcePost(item);
-      setDraft({ caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' });
+      setDraft((current) => ({ ...current, caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' }));
     }).catch((error) => { if (active) toast(error.message); });
     return () => { active = false; };
   }, [remixId, setDraft]);
@@ -53,6 +57,8 @@ export default function Upload() {
     const fd = new FormData();
     fd.append('media', file);
     fd.append('caption', draft.caption || '');
+    fd.append('topic', topic.trim());
+    fd.append('aiLabel', String(aiLabel));
     fd.append('allowRemix', String(!asStory && allowRemix));
     if (sourcePost) fd.append('sourcePostId', sourcePost.id);
     if (!asStory) fd.append('visibility', visibility);
@@ -68,7 +74,15 @@ export default function Upload() {
     setBusy(true);
     try {
       await api(asStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
-      setDraft({ caption: '' });
+      if (!asStory && shareToStory) {
+        const storyFd = new FormData();
+        storyFd.append('media', file);
+        storyFd.append('caption', (draft.caption || '').slice(0, 200));
+        try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
+        catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
+      }
+      setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
+      setTopic(''); setAiLabel(false); setShareToStory(false);
       setFile(null);
       setSourcePost(null);
       if (asStory) setStoryRail({ items: [], updatedAt: 0 });
@@ -89,6 +103,9 @@ export default function Upload() {
         <div><h2>{asStory ? 'New public story' : 'Create a post'}</h2><p className="muted">Share a moment with your community</p></div>
       </header>
       {sourcePost && <div className="panel remix-source-card"><strong>Remixing @{sourcePost.author?.username || 'creator'}</strong><p className="muted">Your new post will credit the original creator.</p><div className="remix-source-media">{sourcePost.kind === 'video' ? <video src={mediaUrl(sourcePost.mediaUrl)} controls playsInline /> : <img src={mediaUrl(sourcePost.mediaUrl)} alt="Original post being remixed" />}</div></div>}
+      <nav className="seg upload-gallery-tabs" aria-label="Composer sections">{['Edits', 'Drafts', 'Templates'].map((tab) => <button key={tab} type="button" className={galleryTab === tab ? 'on' : ''} onClick={() => { setGalleryTab(tab); if (tab === 'Drafts') { setDraft({ ...(draft || {}), caption: draft.caption || '', topic, aiLabel, shareToStory }); toast('Draft saved on this device'); } }}>{tab}</button>)}</nav>
+      {galleryTab === 'Templates' && <div className="upload-template-grid">{[{ label: 'Behind the scenes', caption: 'Behind the scenes 🎬 ' }, { label: 'Quick tutorial', caption: 'Here is how I do it: ' }, { label: 'My latest', caption: 'My latest update ✨ ' }].map((item) => <button key={item.label} type="button" className="ghost small" onClick={() => { setDraft({ ...(draft || {}), caption: item.caption, topic, aiLabel, shareToStory }); setGalleryTab('Edits'); }}>{item.label}</button>)}</div>}
+      {galleryTab === 'Drafts' && <p className="muted upload-draft-note">Your caption and composer settings are saved on this device. Choose Edits to continue creating.</p>}
       <div className="seg upload-kind">
         <button type="button" className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>Post / Reel</button>
         <button type="button" className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>Story · 24h</button>
@@ -102,6 +119,8 @@ export default function Upload() {
       </button>}
       <input id="post-media-file" className="hidden" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
 
+      <label className="upload-label" htmlFor="post-topic">Topic</label>
+      <input id="post-topic" className="upload-topic-input" value={topic} maxLength={60} placeholder="Fashion, Comedy, Tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} />
       <label className="upload-label" htmlFor="post-caption">Description</label>
       <textarea id="post-caption" className="upload-caption" placeholder={asStory ? 'Add a story caption…' : 'Add a description, #hashtags and @mentions…'} maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={(e) => setDraft({ caption: e.target.value })} rows={4} />
       <div className="upload-caption-meta"><span>Use #hashtags to help people discover your post</span><span>{(draft.caption || '').length}/{asStory ? 200 : 500}</span></div>
@@ -123,6 +142,10 @@ export default function Upload() {
           <label>Call-to-action label<select value={sponsorCta} onChange={(e) => setSponsorCta(e.target.value)}><option>Shop Now</option><option>Learn More</option><option>Sign Up</option><option>Contact Us</option><option>Download</option></select></label>
           <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
         </div>}
+      </fieldset>}
+      {!asStory && <fieldset className="upload-privacy composer-options"><legend>More sharing options</legend>
+        <label className={shareToStory ? 'selected' : ''}><input type="checkbox" checked={shareToStory} onChange={(e) => { setShareToStory(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: e.target.checked }); }} /><span><strong>Share to Story</strong><small>Also publish this media as a public 24-hour Story.</small></span></label>
+        <label className={aiLabel ? 'selected' : ''}><input type="checkbox" checked={aiLabel} onChange={(e) => { setAiLabel(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel: e.target.checked, shareToStory }); }} /><span><strong>AI-generated or AI-altered</strong><small>Disclose realistic media generated or materially altered by AI.</small></span></label>
       </fieldset>}
       {!asStory && <fieldset className="upload-privacy remix-permission"><legend>Remix permissions</legend><label className={allowRemix ? 'selected' : ''}><input type="checkbox" checked={allowRemix} onChange={(e) => setAllowRemix(e.target.checked)} /><span><strong>Allow others to remix this post</strong><small>Other creators can use this post as the source for a new, attributed post.</small></span></label></fieldset>}
       {asStory && <p className="upload-public-note">🌎 Stories are public and expire after 24 hours.</p>}
