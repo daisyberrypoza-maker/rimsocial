@@ -264,7 +264,19 @@ const BusinessWorkUpdate = sequelize.define('BusinessWorkUpdate', {
   evidenceUrl: { type: DataTypes.STRING(1024), allowNull: true },
 }, { tableName: 'business_work_updates', indexes: [{ fields: ['opportunityId', 'createdAt'] }, { fields: ['authorId', 'createdAt'] }] });
 
+const BusinessFinancialRecord = sequelize.define('BusinessFinancialRecord', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  opportunityId: { type: DataTypes.UUID, allowNull: false },
+  authorId: { type: DataTypes.UUID, allowNull: false },
+  purchasePriceMinor: { type: DataTypes.BIGINT, allowNull: false },
+  actualSalePriceMinor: { type: DataTypes.BIGINT, allowNull: false },
+  actualCostMinor: { type: DataTypes.BIGINT, allowNull: false },
+  realizedProfitMinor: { type: DataTypes.BIGINT, allowNull: false },
+  note: { type: DataTypes.STRING(1000), allowNull: true },
+}, { tableName: 'business_financial_records', indexes: [{ fields: ['opportunityId', 'createdAt'] }, { fields: ['authorId', 'createdAt'] }] });
+
 module.exports = {
+  BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, ContentEarning, UserBlock, PostReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
