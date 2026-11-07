@@ -224,7 +224,7 @@ export default function Profile() {
         <span className="sc-compact-name">{profile.displayName || profile.username}</span>
       </div>
       <header className="sc-hero">
-        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.coverUrl ? `url(${mediaUrl(profile.coverUrl)})` : undefined }} />
+        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.coverUrl ? `url(${mediaUrl(profile.coverUrl)})` : 'linear-gradient(180deg, #252525 0%, #181818 70%, #050505 100%)' }} />
         <span className="sc-hero-shade" aria-hidden="true" />
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
@@ -243,7 +243,7 @@ export default function Profile() {
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
             <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={96} ring />
+              <Avatar user={profile} size={100} ring />
             </button>
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
