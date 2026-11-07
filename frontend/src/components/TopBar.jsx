@@ -41,7 +41,7 @@ export default function TopBar({ immersive, title }) {
     return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}`}>
       <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={34} /></button>
       <nav className="reels-tabs" aria-label="Rimlight sections"><NavLink to="/" end>Rimlight</NavLink><NavLink to="/following">Following</NavLink><NavLink to="/live">LIVE</NavLink></nav>
-      <button className="reels-icon" onClick={() => navigate('/explore')} aria-label="Search and filters"><Icon name="sliders" size={32} /></button>
+      <button className="reels-icon" onClick={() => navigate('/algorithm')} aria-label="Your algorithm"><Icon name="sliders" size={32} /></button>
     </header>;
   }
   return <header className={`topbar ${immersive ? 'overlay' : ''}`}>

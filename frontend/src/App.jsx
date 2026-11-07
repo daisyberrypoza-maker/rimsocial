@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
 import BottomNav from './components/BottomNav.jsx';
+import Algorithm from './pages/Algorithm.jsx';
 import Toast from './components/Toast.jsx';
 import Login from './pages/Login.jsx';
 import Feed from './pages/Feed.jsx';
@@ -68,7 +69,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
         <Route path="/recommended" element={<RequireAuth><Recommended /></RequireAuth>} />
         <Route path="/live" element={<RequireAuth><LiveBroadcasts /></RequireAuth>} />
+        <Route path="/algorithm" element={<RequireAuth><Algorithm /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
@@ -93,7 +95,7 @@ export default function App() {
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && location.pathname !== '/recommended' && <BottomNav />}
+      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && <BottomNav />}
       <Toast />
     </div>
   );

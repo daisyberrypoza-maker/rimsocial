@@ -4002,3 +4002,18 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* LIVE header: no menu; Rimlight tab; search finds who is live. */
 .topbar.live-top .live-top-spacer { display:block; width:40px; }
 .live-page .live-search { display:block; width:calc(100% - 20px); margin:0 10px 10px; box-sizing:border-box; background:#f3f3f5; color:#111; border:1px solid #e2e2e6; border-radius:10px; padding:10px 12px; font-size:15px; }
+
+/* Your algorithm page: dark, reference layout. */
+.algo-page { min-height:100dvh; background:#0e1013; color:#fff; padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 40px; box-sizing:border-box; }
+.algo-head { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; margin-bottom:22px; }
+.algo-head h1 { margin:0; text-align:center; font-size:20px; font-weight:700; }
+.algo-page button.algo-icon { width:40px !important; height:40px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; display:grid; place-items:center; box-shadow:none !important; }
+.algo-summary { font-size:24px; line-height:1.3; font-weight:700; margin:0 0 30px; }
+.algo-section { margin-bottom:34px; }
+.algo-section h2 { font-size:17px; font-weight:700; margin:0; }
+.algo-hint { font-size:14px; color:#9a9ea6; margin:4px 0 14px; }
+.algo-chips { display:flex; flex-wrap:wrap; gap:10px; }
+.algo-page button.algo-chip { border-radius:999px !important; padding:11px 18px !important; font-size:15px !important; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+.algo-page button.algo-chip.filled { background:#2a2d33 !important; color:#fff !important; border:0 !important; }
+.algo-page button.algo-chip.outline { background:transparent !important; color:#fff !important; border:1px solid #3c3f46 !important; }
+.algo-plus { font-size:18px; line-height:1; font-weight:400; }
