@@ -3938,3 +3938,8 @@ html, body, #root { min-height:100%; }
 .bottomnav.bottomnav-dark { background:#111214 !important; border-top-color:#252629 !important; }
 .bottomnav.bottomnav-dark a { color:#9a9aa1 !important; }
 .bottomnav.bottomnav-dark a.active { color:#fff !important; }
+
+/* Centre the plus in the Add post button regardless of the generic bottom-bar svg and span rules. */
+.bottomnav .add-btn { display:flex !important; align-items:center; justify-content:center; }
+.bottomnav .add-btn .add-face { display:flex !important; align-items:center; justify-content:center; padding:0 !important; margin:0 !important; line-height:0; box-sizing:border-box; }
+.bottomnav .add-btn .add-face svg { display:block !important; flex:none; margin:0 !important; padding:0 !important; position:static !important; transform:none !important; }
