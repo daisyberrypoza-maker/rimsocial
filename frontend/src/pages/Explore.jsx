@@ -8,6 +8,7 @@ import { mediaUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
+import { goBack } from '../lib/goBack.js';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -116,9 +117,9 @@ export default function Explore() {
   return (
     <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
-      {peopleMode && !searchMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
+      {peopleMode && !searchMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
       {searchMode ? <div className="rim-search-head">
-        <button type="button" className="rim-search-back" aria-label="Back" onClick={() => navigate(peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
+        <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
           <Icon name="search" size={19} />
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />

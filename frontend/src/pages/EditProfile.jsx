@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
+import { goBack } from '../lib/goBack.js';
 
 // Edit the owner's profile details: name, bio, website and city.
 export default function EditProfile() {
@@ -43,7 +44,7 @@ export default function EditProfile() {
   return (
     <main className="pe-page">
       <header className="pe-top">
-        <button type="button" className="pe-back" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
+        <button type="button" className="pe-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
         <h1>Edit profile</h1>
       </header>
       <form className="pe-form" onSubmit={save}>

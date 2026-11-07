@@ -5,6 +5,7 @@ import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import Icon from '../components/Icon.jsx';
 import Avatar from '../components/Avatar.jsx';
+import { goBack } from '../lib/goBack.js';
 
 export default function AdsSponsors() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function AdsSponsors() {
 
   return <main className="page ads-sponsors-page">
     <header className="ads-sponsors-hero">
-      <div className="ads-sponsors-backrow"><button className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button><span>CREATOR TOOLS</span></div>
+      <div className="ads-sponsors-backrow"><button className="icon-button" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button><span>CREATOR TOOLS</span></div>
       <h1>Ads &amp; Sponsors</h1>
       <p>Manage sponsored posts and keep paid partnerships clearly disclosed to your audience.</p>
       <button className="ads-create-button" onClick={() => navigate('/upload')}><Icon name="plus" size={18} /> Create sponsored post</button>

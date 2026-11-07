@@ -6,6 +6,7 @@ import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
+import { goBack } from '../lib/goBack.js';
 
 export default function Upload() {
   const navigate = useNavigate();
@@ -161,7 +162,7 @@ export default function Upload() {
   return <main className="ig-compose cmp">
     <form className="ig-compose-form" onSubmit={submit}>
       <header className="ig-compose-top">
-        <button type="button" className="ig-icon-btn" onClick={() => navigate(-1)} aria-label="Close"><Icon name="x" size={24} /></button>
+        <button type="button" className="ig-icon-btn" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={24} /></button>
         <h2>{asStory ? 'New story' : 'New post'}</h2>
         <button type="submit" className="ig-share" disabled={busy || trimming || !file}>{busy ? 'Sharing…' : trimming ? 'Trimming…' : 'Share'}</button>
       </header>

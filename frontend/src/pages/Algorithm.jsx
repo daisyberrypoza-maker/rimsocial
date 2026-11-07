@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { goBack } from '../lib/goBack.js';
 
 // "Your algorithm": topics the viewer wants more or less of. Stored on this device only.
 const KEY = 'rimsocial.algorithm';
@@ -53,7 +54,7 @@ export default function Algorithm() {
   return (
     <main className="algo-page">
       <header className="algo-head">
-        <button type="button" className="algo-icon" onClick={() => navigate(-1)} aria-label="Back">
+        <button type="button" className="algo-icon" onClick={() => goBack(navigate)} aria-label="Back">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         </button>
         <h1>Your algorithm</h1>

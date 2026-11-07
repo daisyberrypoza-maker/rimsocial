@@ -10,6 +10,7 @@ import ShareOptions from '../components/ShareOptions.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
 import ActionSheet from '../components/ActionSheet.jsx';
+import { goBack } from '../lib/goBack.js';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -75,7 +76,7 @@ export default function PostDetail() {
     try {
       await api(`/v1/posts/${encodeURIComponent(postId)}`, { method: 'DELETE' });
       toast('Post deleted');
-      navigate(-1);
+      goBack(navigate);
     } catch (e) { toast(e.message); }
   }
 
@@ -91,7 +92,7 @@ export default function PostDetail() {
   }
 
   if (loading) return <main className="rv-page"><p className="rv-state">Loading…</p></main>;
-  if (!post) return <main className="rv-page"><button className="rv-back" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button><p className="rv-state">This post is unavailable or has been deleted.</p></main>;
+  if (!post) return <main className="rv-page"><button className="rv-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button><p className="rv-state">This post is unavailable or has been deleted.</p></main>;
 
   const username = post.author?.username || 'creator';
   const src = mediaUrl(post.mediaUrl);
@@ -102,7 +103,7 @@ export default function PostDetail() {
 
   return <main className={`rv-page ${showComments ? 'sheet-open' : ''}`}>
     <header className="rv-top">
-      <button className="rv-icon" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button>
+      <button className="rv-icon" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button>
       <strong className="rv-title">Reels</strong>
       <button className="rv-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={28} /></button>
     </header>
