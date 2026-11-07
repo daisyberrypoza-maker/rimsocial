@@ -310,7 +310,17 @@ const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
   lastError: { type: DataTypes.STRING(1000), allowNull: true },
 }, { tableName: 'media_cleanup_jobs', indexes: [{ unique: true, fields: ['publicId', 'resourceType'] }, { fields: ['status', 'nextAttemptAt'] }] });
 
+// Direct messages between two accounts. Read state is stored per message (readAt).
+const DirectMessage = sequelize.define('DirectMessage', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  senderId: { type: DataTypes.UUID, allowNull: false },
+  recipientId: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.STRING(2000), allowNull: false },
+  readAt: DataTypes.DATE,
+}, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
+
 module.exports = {
+  DirectMessage,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
