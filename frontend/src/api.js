@@ -25,9 +25,11 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
   try {
     res = await fetch(`${API_BASE}${path}`, { method, headers: h, body });
   } catch {
+    useAppStore.getState().setOffline(true);
     const target = `${API_BASE || window.location.origin}${path}`;
     throw new ApiError(`Cannot reach RimSocial API at ${target}. Check that the backend is online and the API URL is correct.`, 0);
   }
+  useAppStore.getState().setOffline(false);
   const data = res.status === 204 ? null : await res.json().catch(() => null);
 
   // Expired session: clear it so the router sends the user to /login

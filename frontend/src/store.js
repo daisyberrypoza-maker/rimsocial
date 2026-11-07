@@ -34,6 +34,8 @@ export const useAppStore = create(
       lastPath: '/',
       feeds: {},        // { discover, following, explore, 'u:<username>': { items, nextCursor, activeIndex, updatedAt } }
       profiles: {},     // { [username | 'me']: { user, updatedAt } }
+      offline: false,   // not saved: set from real network results
+      setOffline: (offline) => set((s) => (s.offline === offline ? s : { offline })),
       storyRail: EMPTY_STORIES,
       storyCache: loadStoryCache(),   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
       uploadDraft: { caption: '' },
