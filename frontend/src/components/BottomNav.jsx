@@ -10,7 +10,7 @@ function ChatIcon() {
   return <svg {...ICON_PROPS}><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /></svg>;
 }
 function ExploreIcon() {
-  return <svg {...ICON_PROPS}><circle cx="12" cy="12" r="5.5" /><path d="M3 14.5c2.6 2.6 13 1.2 16.5-3.4" /></svg>;
+  return <svg {...ICON_PROPS}><circle cx="12" cy="12" r="9.5" /><path d="M15.8 8.2l-2.2 5.4-5.4 2.2 2.2-5.4z" /></svg>;
 }
 function StoriesIcon() {
   return <svg {...ICON_PROPS}><rect x="4" y="4" width="6.5" height="16" rx="2" /><rect x="13.5" y="7" width="6.5" height="13" rx="2" /></svg>;
