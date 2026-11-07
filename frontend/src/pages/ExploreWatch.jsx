@@ -6,7 +6,7 @@ import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
 
 const KEY = 'explore';
-const PATH = '/v1/feed/discover';
+const PATH = '/v1/feed/explore';
 
 // Vertical feed of Explore posts, starting at the post that was tapped.
 export default function ExploreWatch() {
