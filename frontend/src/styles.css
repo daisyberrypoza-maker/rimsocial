@@ -4147,3 +4147,50 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Build id, so you can tell which version the device is running. */
 .algo-build { text-align:center; color:#6b6f78; font-size:12px; margin:28px 0 0; }
+
+/* ---- Rimlight redesigned in Snapchat Spotlight style. Yellow: #FFFC00. ---- */
+:root { --snap-yellow:#FFFC00; }
+.reels-top { grid-template-columns:42px 1fr auto !important; gap:8px !important; padding-left:12px !important; padding-right:12px !important; background:transparent !important; }
+.reels-top .reels-tabs { gap:16px !important; }
+.reels-top .reels-tabs a { font-size:16px !important; font-weight:700 !important; color:rgba(255,255,255,.65) !important; text-shadow:0 1px 4px rgba(0,0,0,.6) !important; padding:4px 0; }
+.reels-top .reels-tabs a.active { color:#fff !important; border-bottom:3px solid var(--snap-yellow); }
+.topbar.reels-top button.snap-circle { width:42px !important; height:42px !important; border-radius:50% !important; background:rgba(30,30,30,.85) !important; border:0 !important; display:grid; place-items:center; padding:0 !important; color:#fff !important; box-shadow:none !important; overflow:hidden; }
+.topbar.reels-top button.snap-circle .avatar { width:34px; height:34px; }
+.reels-top .snap-right { display:flex; gap:10px; justify-content:flex-end; }
+.topbar.reels-top button.snap-square { width:42px !important; height:42px !important; border-radius:12px !important; background:transparent !important; border:2px solid #fff !important; color:#fff !important; display:grid; place-items:center; padding:0 !important; box-shadow:none !important; }
+
+.post .rail { right:10px; bottom:150px; gap:20px; }
+.post .snap-avatar { position:relative; width:48px; height:48px; margin-bottom:6px; }
+.post .rail-avatar { width:48px; height:48px; }
+.post .snap-follow { position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); width:24px; height:24px; border-radius:50%; background:var(--snap-yellow) !important; color:#000 !important; border:0 !important; font-size:18px; font-weight:800; line-height:1; padding:0 !important; display:grid; place-items:center; box-shadow:0 0 0 2px #000; }
+.post .rail-btn { font-size:14px !important; font-weight:700 !important; color:#fff !important; gap:4px !important; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+.post .rail-btn svg { width:28px !important; height:28px !important; stroke:#fff; stroke-width:1.9 !important; }
+.post .rail-btn.repost-btn svg { stroke:var(--snap-yellow) !important; }
+.post .rail-btn.repost-btn.reposted { color:var(--snap-yellow) !important; }
+.post .rail-btn.liked svg { fill:#fff; stroke:#fff; }
+
+.post .post-topic, .post .author-row, .post .meta-row { display:none !important; }
+.post .info { left:14px !important; right:84px !important; bottom:86px !important; }
+.post .snap-repost-pill { display:inline-flex; align-items:center; gap:6px; background:rgba(30,30,30,.85); color:#fff; font-size:13px; font-weight:700; padding:6px 12px; border-radius:999px; margin-bottom:12px; }
+.post .snap-title { display:flex; align-items:center; gap:6px; font-size:20px; font-weight:800; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.5); }
+.post .snap-sound { font-size:15px; color:#fff; margin:6px 0 8px; font-weight:500; text-shadow:0 1px 4px rgba(0,0,0,.5); }
+.post .info .caption, .post .info .caption-text { color:#fff !important; font-size:15px; text-shadow:0 1px 4px rgba(0,0,0,.5); }
+
+/* Comments sheet: dark, Snapchat style. */
+.rv-sheet, .rv-sheet-backdrop .rv-sheet { background:#000 !important; color:#fff !important; border-radius:22px 22px 0 0 !important; }
+.rv-sheet .rv-sheet-head { display:flex !important; justify-content:center; align-items:center; border-bottom:0 !important; padding:8px 16px 12px !important; }
+.rv-sheet .rv-sheet-head strong { color:#fff !important; font-size:18px !important; font-weight:800 !important; }
+.rv-sheet .rv-comments { padding:4px 16px 8px !important; }
+.rv-sheet .rv-comment { gap:12px !important; padding:12px 0 !important; border:0 !important; }
+.rv-sheet .rv-comment-body p { color:#fff !important; font-size:15px !important; font-weight:500 !important; line-height:1.35 !important; margin:4px 0 0 !important; }
+.rv-sheet .rv-name-line { display:flex; align-items:center; gap:6px; font-size:14px; }
+.rv-sheet .rv-name { color:#fff !important; font-size:14px !important; font-weight:800 !important; }
+.rv-sheet .rv-time { color:#8e8e93 !important; font-size:14px; }
+.rv-sheet .rv-comment-body .rv-delete { color:#8e8e93 !important; font-size:13px; font-weight:600; margin-top:6px; padding:0 !important; background:none !important; border:0 !important; }
+.rv-sheet .rv-empty { color:#8e8e93 !important; }
+.rv-sheet .rv-emojis { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-top:1px solid #1c1c1e; }
+.rv-sheet .rv-emojis button { font-size:28px; line-height:1; background:none !important; border:0 !important; padding:0 !important; border-radius:0 !important; color:inherit !important; }
+.rv-sheet .rv-compose { background:#000 !important; border-top:0 !important; padding:6px 12px calc(env(safe-area-inset-bottom,0px) + 10px) !important; }
+.rv-sheet .rv-compose input { background:#1c1c1e !important; border:0 !important; color:#fff !important; border-radius:999px !important; padding:10px 16px !important; }
+.rv-sheet .rv-compose input::placeholder { color:#8e8e93; }
+.rv-sheet-backdrop .rv-compose > button[type="submit"] { color:var(--snap-yellow) !important; font-weight:800 !important; }

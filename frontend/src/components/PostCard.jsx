@@ -98,25 +98,26 @@ function CommentsSheet({ post, onClose }) {
     } catch (e) { toast(e.message); }
   }
   const username = post.author?.username || 'creator';
+  const emojis = ['❤️', '😍', '😂', '😭', '🔥', '🙏', '😊'];
   return <div className="rv-sheet-backdrop" onClick={onClose}>
     <section className="rv-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
       <div className="rv-handle" aria-hidden="true" />
-      <header className="rv-sheet-head">
-        <span className="rv-spacer" aria-hidden="true" />
-        <strong>Comments</strong>
-        <button className="rv-icon" onClick={onClose} aria-label="Close comments"><Icon name="x" size={22} /></button>
-      </header>
+      <header className="rv-sheet-head"><strong>Comments</strong></header>
       <div className="rv-comments">
         {loading ? <p className="rv-empty">Loading comments…</p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
-          <Avatar user={item.author} size={36} />
+          <Avatar user={item.author} size={40} />
           <div className="rv-comment-body">
-            <p><strong>{item.author?.username || 'user'}</strong> {item.body}</p>
-            <small>{timeAgo(item.createdAt)}{item.isMine ? ' · ' : ''}{item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}</small>
+            <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {timeAgo(item.createdAt)}</span></div>
+            <p>{item.body}</p>
+            {item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}
           </div>
         </div>) : <p className="rv-empty">No comments yet.<br />Start the conversation.</p>}
       </div>
+      <div className="rv-emojis" role="group" aria-label="Quick reactions">
+        {emojis.map((emoji) => <button type="button" key={emoji} onClick={() => setBody((current) => current + emoji)} aria-label={`Add ${emoji}`}>{emoji}</button>)}
+      </div>
       <form className="rv-compose" onSubmit={submit}>
-        <Avatar user={me || {}} size={30} />
+        <Avatar user={me || {}} size={36} />
         <input aria-label="Add a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder="Add a comment…" />
         {body.trim() && <button type="submit" disabled={sending}>{sending ? '…' : 'Post'}</button>}
       </form>
@@ -359,33 +360,29 @@ export default function PostCard({ post, active }) {
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
-      <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
+      <div className="snap-avatar">
+        <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={44} /></button>
+        {!isOwnPost && !post.isSponsored && !following && post.author?.id !== viewerId && <button className="snap-follow" onClick={followAuthor} disabled={followBusy} aria-label={`Follow @${username}`}>+</button>}
+      </div>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
-      <button className={`rail-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
-        <Icon name="repeat" />{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
+      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" />{post.commentCount > 0 && <span>{formatCount(post.commentCount)}</span>}</button>
+      <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
+        <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
       </button>
-      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /></button>
       <button className="rail-btn" onClick={copyPostLink} aria-label="Share post"><Icon name="send" /></button>
-      {!isOwnPost && <button className="rail-btn" onClick={() => setShowGifts(true)} aria-label="Send a gift"><Icon name="gift" /></button>}
       {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
     </aside>
     <div className="info">
-      {post.topic && <div className="post-topic"><Icon name="map-pin" size={14} /> {post.topic}</div>}
-      <div className="author-row">
-        <button className="author-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={32} ring /></button>
-        <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
-        {post.author?.isCreator && <Icon name="badge-check" size={15} />}
-        {!post.isSponsored && !following && post.author?.id !== viewerId && <button className="view-profile" onClick={followAuthor} disabled={followBusy}>Follow</button>}
-      </div>
+      {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}
+      <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}</div>
+      <div className="snap-sound">♫ Original sound · @{username}</div>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
-      {post.isSponsored ? <>
+      {post.isSponsored && <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
-      </> : <>
-        <div className="meta-row">{formatCount(post.viewCount)} views</div>
       </>}
     </div>
     {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>
@@ -411,6 +408,7 @@ export default function PostCard({ post, active }) {
         <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
         <button className="post-menu-item" onClick={() => { setShowMenu(false); setShowRepostSheet(true); }}><Icon name="repeat" size={18} /> {reposted ? 'Undo repost' : 'Repost'}</button>
         <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Hide post</button>
+        {!isOwnPost && <button className="post-menu-item" onClick={() => { setShowMenu(false); setShowGifts(true); }}>Send a gift</button>}
         <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
         <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
       </section>
