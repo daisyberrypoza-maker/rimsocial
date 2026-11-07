@@ -305,7 +305,7 @@ export default function Profile() {
         </div>
         {profile.isMe ? (
           <div className="pf-actions">
-            <button type="button" className="pf-btn pf-btn-on">My Account</button>
+            <button type="button" className="pf-btn pf-btn-on" onClick={() => navigate('/u/me/edit')}>My Account</button>
             <button type="button" className="pf-btn" onClick={() => navigate('/u/' + profile.username)}>Public Profile</button>
           </div>
         ) : (
@@ -317,9 +317,10 @@ export default function Profile() {
       </header>
       <div className="pf-body">
         {profile.bio && <p className="pf-bio">{profile.bio}</p>}
-        {profile.country && (
+        {(profile.city || profile.country || profile.website) && (
           <div className="pf-chips">
-            <span className="pf-chip"><Icon name="map-pin" size={15} />{profile.country}</span>
+            {(profile.city || profile.country) && <span className="pf-chip"><Icon name="map-pin" size={15} />{[profile.city, profile.country].filter(Boolean).join(', ')}</span>}
+            {profile.website && <a className="pf-chip" href={profile.website} target="_blank" rel="noopener noreferrer"><Icon name="link" size={15} />{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>}
           </div>
         )}
       </div>

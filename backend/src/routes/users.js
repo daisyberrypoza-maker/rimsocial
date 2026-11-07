@@ -185,6 +185,50 @@ router.get('/blocked', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Profile details (bio, website, city). Read and written with SQL so the app works before migration 027.
+async function readProfileExtras(userId) {
+  try {
+    const [rows] = await sequelize.query('SELECT bio, website, city FROM users WHERE id = :userId', { replacements: { userId } });
+    return rows[0] || {};
+  } catch { return {}; }
+}
+
+function cleanWebsite(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  const withScheme = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+  try {
+    const url = new URL(withScheme);
+    if (!url.hostname.includes('.')) throw new Error('no host');
+    return url.toString().replace(/\/$/, '').slice(0, 200);
+  } catch { throw httpError(400, 'Enter a valid website address'); }
+}
+
+// PUT /v1/users/me/profile  body: { displayName, bio, website, city }
+router.put('/me/profile', requireAuth, async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const displayName = String(body.displayName || '').trim();
+    const bio = String(body.bio || '').trim();
+    const city = String(body.city || '').trim();
+    if (!displayName || displayName.length > 64) throw httpError(400, 'Name must be 1 to 64 characters');
+    if (bio.length > 150) throw httpError(400, 'Bio must be 150 characters or fewer');
+    if (city.length > 80) throw httpError(400, 'City must be 80 characters or fewer');
+    const website = cleanWebsite(body.website);
+    await User.update({ displayName }, { where: { id: req.user.id } });
+    try {
+      await sequelize.query(
+        'UPDATE users SET bio = :bio, website = :website, city = :city WHERE id = :userId',
+        { replacements: { bio: bio || null, website, city: city || null, userId: req.user.id } },
+      );
+    } catch (err) {
+      if (/bio|website|city/.test(err.message)) throw httpError(503, 'Profile details are not available yet on this server');
+      throw err;
+    }
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 router.get('/:username', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
@@ -195,7 +239,7 @@ router.get('/:username', requireAuth, async (req, res, next) => {
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
       Follow.count({ where: { followerId: user.id } }),
     ]);
-    res.json({ ...user.toJSON(), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id });
+    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id });
   } catch (e) { next(e); }
 });
 
