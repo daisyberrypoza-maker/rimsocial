@@ -2975,7 +2975,6 @@ html, body, #root { background: #ffffff; color: #111111; }
 .sc-stats { gap:8px 18px !important; align-items:center !important; }
 .sc-stats > * { background:transparent !important; border-radius:0 !important; padding:0 !important; height:auto !important; font-size:14px !important; }
 .sc-stats strong { font-weight:600 !important; }
-.sc-profile .sc-hero { overflow:hidden !important; }
 .sc-profile .sc-hero-bg { inset:0 !important; z-index:-1 !important; }
 .sc-profile .sc-hero-shade { z-index:-1 !important; }
 .sc-profile .sc-add { min-width:112px; justify-content:center; }
@@ -3653,18 +3652,6 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-add.added { background:rgba(255,255,255,.22) !important; color:#fff !important; border:0 !important; }
 
 /* ===== Profile v4: centred identity, stats row, full-screen connections sheet ===== */
-.sc-profile .sc-hero { min-height:0 !important; }
-.sc-profile .sc-hero .sc-hero-id { flex-direction:column !important; align-items:center !important; justify-content:center !important; text-align:center !important; gap:12px !important; padding:18px 16px 0 !important; }
-.sc-profile .sc-hero .sc-hero-avatar { flex:0 0 auto !important; margin:0 auto !important; }
-.sc-profile .sc-hero .sc-hero-text { display:flex !important; flex-direction:column !important; align-items:center !important; text-align:center !important; width:100% !important; flex:none !important; }
-.sc-profile .sc-name, .sc-profile .sc-handle { text-align:center !important; margin-left:auto !important; margin-right:auto !important; }
-.sc-profile .sc-creator-status, .sc-profile .sc-profile-country { margin-left:auto !important; margin-right:auto !important; }
-.sc-profile .sc-hero-top { justify-content:space-between !important; }
-.pv-stats { display:flex; justify-content:center; align-items:flex-start; gap:30px; margin-top:4px; }
-.pv-stats button { display:flex; flex-direction:column; align-items:center; gap:2px; border:0 !important; background:transparent !important; color:#fff !important; padding:0; cursor:pointer; }
-.pv-stats strong { font-size:18px; font-weight:800; line-height:1.1; }
-.pv-stats span { font-size:13px; color:rgba(255,255,255,.82); }
-.sc-profile .sc-seg-row, .sc-profile .sc-add-row { padding-top:18px !important; }
 
 .pv-sheet-backdrop { position:fixed; inset:0; z-index:300; background:#fff; color:#111; display:flex; justify-content:center; }
 .pv-sheet { width:100%; max-width:560px; height:100dvh; display:flex; flex-direction:column; background:#fff; padding-top:env(safe-area-inset-top, 0px); overflow:hidden; }
@@ -3703,3 +3690,4 @@ html, body, #root { min-height:100%; }
 .rec-back { width:40px !important; height:40px !important; }
 .rec-spacer { width:40px; height:40px; }
 .rec-list { margin:16px !important; }
+

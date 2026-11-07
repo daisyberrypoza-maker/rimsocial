@@ -263,15 +263,12 @@ export default function Profile() {
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
           <div className="sc-hero-actions">
+            {profile.isMe && <button className="sc-circle" aria-label="Edit profile photo or background" onClick={() => setImageChoiceOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
-              <>
-                <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
-                <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
-              </>
+              <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
             )}
-            {profile.isMe && <button className="sc-circle" aria-label="Edit profile photo or background" onClick={() => setImageChoiceOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe
               ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
               : <button className="sc-circle" aria-label="More options" onClick={() => setOptionsOpen(true)}><span className="sc-dots" aria-hidden="true">•••</span></button>}
@@ -280,17 +277,15 @@ export default function Profile() {
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
             <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={84} ring />
+              <Avatar user={profile} size={100} ring />
             </button>
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            {profile.isMe && <p className="sc-handle">@{profile.username}</p>}
-            <div className="pv-stats" aria-label="Profile statistics">
-              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
-              <button type="button" onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
-              <button type="button" onClick={() => setTab('posts')}><strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span></button>
+            <p className="sc-handle">@{profile.username}</p>
+            <div className="sc-inline-stats" aria-label="Followers">
+              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> followers</button>
             </div>
             {profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}
             {!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
@@ -303,10 +298,22 @@ export default function Profile() {
           </div>
         ) : (
           <div className="sc-add-row">
-            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Following' : 'Follow'}</button>
+            <button className="sc-circle sc-more-down" aria-label="More options" onClick={shareProfile}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
       </header>
+      <section className="sc-profile-stats" aria-label="Profile statistics">
+        <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
+          <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
+        </button>
+        <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
+          <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
+        </button>
+        <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
+          <strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span>
+        </button>
+      </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
