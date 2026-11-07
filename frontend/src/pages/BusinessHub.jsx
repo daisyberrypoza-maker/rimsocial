@@ -208,8 +208,7 @@ export default function BusinessHub() {
 
   return <main className="page business-page">
     <header className="business-hero">
-      <button type="button" className="ghost small" onClick={() => goBack(navigate, '/u/me')} aria-label="Back">← Back</button>
-      <div><span className="chip">RIMSOCIAL BUSINESS</span><h1>Find, Flip &amp; Fix</h1><p>Find opportunities, negotiate real deals, and document the work that improves a business.</p></div>
+      <div><button type="button" className="ghost small" onClick={() => goBack(navigate, '/u/me')} aria-label="Back">← Back</button><span className="chip">RIMSOCIAL BUSINESS</span><h1>Find, Flip &amp; Fix</h1><p>Find opportunities, negotiate real deals, and document the work that improves a business.</p></div>
       <button onClick={() => { setForm({ ...blankOpportunity(user?.country || 'NG'), lane }); setShowCreate(true); }}>＋ List opportunity</button>
     </header>
     <div className="business-tabs" role="tablist" aria-label="Find Flip Fix">
