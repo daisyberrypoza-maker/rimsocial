@@ -52,6 +52,6 @@ export default function TopBar({ immersive, title }) {
     </header>;
   }
   return <header className={`topbar ${immersive ? 'overlay' : ''}`}>
-    {nested ? <><button className="topbar-back" onClick={() => goBack(navigate, '/')} aria-label="Go back"><Icon name="arrow-left" size={22} /></button><div className="topbar-title">{title || 'Back'}</div></> : <div className="brand">{title || 'RimSocial'}</div>}
+    {nested ? <><button className="topbar-back" onClick={() => goBack(navigate, location.pathname.startsWith('/creator/live/') ? '/creator' : '/u/me')} aria-label="Go back"><Icon name="arrow-left" size={22} /></button><div className="topbar-title">{title || 'Back'}</div></> : <div className="brand">{title || 'RimSocial'}</div>}
   </header>;
 }
