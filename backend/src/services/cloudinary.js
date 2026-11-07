@@ -71,16 +71,18 @@ async function storeLocally(file) {
   }
   return { url: `/uploads/${filename}`, publicId: null, resourceType };
 }
-async function uploadFile(file, folder = 'rimsocial') {
+async function uploadFile(file, folder = 'rimsocial', options = {}) {
   if (!file) throw new Error('Missing uploaded file');
   if (!isConfigured()) return storeLocally(file);
   try {
     const { cloudName, apiKey, apiSecret } = credentials();
+    const resourceType = String(file.mimetype || '').startsWith('video/') ? 'video' : 'image';
     const params = { folder, timestamp: String(Math.floor(Date.now() / 1000)) };
+    // Cloudinary keeps only the first N seconds of a video (server-side safety net for the browser trim).
+    if (resourceType === 'video' && options.maxSeconds) params.transformation = `du_${Math.floor(options.maxSeconds)}`;
     const fields = { ...params, api_key: apiKey, signature: signature(params, apiSecret) };
     const buffer = file.buffer || await fs.promises.readFile(file.path);
     const form = multipart(fields, { ...file, buffer });
-    const resourceType = String(file.mimetype || '').startsWith('video/') ? 'video' : 'image';
     const result = await request(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, form.body, form.contentType);
     return { url: result.secure_url, publicId: result.public_id, resourceType: result.resource_type };
   } finally {
