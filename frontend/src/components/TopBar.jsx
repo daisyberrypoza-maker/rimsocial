@@ -29,11 +29,9 @@ export default function TopBar({ immersive, title }) {
   // LIVE header, matched to the reference: menu, Follow / LIVE tabs, search.
   if (location.pathname === '/live') {
     return <header className="topbar overlay live-top">
-      <button className="live-top-icon" onClick={() => navigate('/u/me')} aria-label="Menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-      </button>
-      <nav className="live-tabs" aria-label="LIVE sections"><NavLink to="/following">Follow<span className="live-tab-badge">LIVE</span></NavLink><NavLink to="/live">LIVE</NavLink></nav>
-      <button className="live-top-icon" onClick={() => navigate('/explore')} aria-label="Search">
+      <span className="live-top-spacer" aria-hidden="true" />
+      <nav className="live-tabs" aria-label="LIVE sections"><NavLink to="/" end>Rimlight<span className="live-tab-badge">LIVE</span></NavLink><NavLink to="/live">LIVE</NavLink></nav>
+      <button className="live-top-icon" onClick={() => navigate('/live?search=1')} aria-label="Search who is live">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
       </button>
     </header>;

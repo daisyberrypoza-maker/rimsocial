@@ -3998,3 +3998,7 @@ html, body, #root { min-height:100%; }
 main.live-page { background:#fff !important; color:#111 !important; padding-top:calc(env(safe-area-inset-top,0px) + 62px) !important; }
 .live-page .live-empty { background:none !important; border:0 !important; color:#8e8e93 !important; }
 .live-page .live-fab { position:fixed !important; right:16px; bottom:calc(var(--nav-height,56px) + 16px); z-index:25; background:#fe2c55 !important; color:#fff !important; border:0 !important; border-radius:999px !important; padding:12px 18px !important; font-weight:800; box-shadow:0 4px 14px rgba(254,44,85,.35); }
+
+/* LIVE header: no menu; Rimlight tab; search finds who is live. */
+.topbar.live-top .live-top-spacer { display:block; width:40px; }
+.live-page .live-search { display:block; width:calc(100% - 20px); margin:0 10px 10px; box-sizing:border-box; background:#f3f3f5; color:#111; border:1px solid #e2e2e6; border-radius:10px; padding:10px 12px; font-size:15px; }
