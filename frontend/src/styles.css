@@ -4017,3 +4017,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .algo-page button.algo-chip.filled { background:#2a2d33 !important; color:#fff !important; border:0 !important; }
 .algo-page button.algo-chip.outline { background:transparent !important; color:#fff !important; border:1px solid #3c3f46 !important; }
 .algo-plus { font-size:18px; line-height:1; font-weight:400; }
+
+/* Bottom bar: icons only, all the same small size. */
+.bottomnav a svg, .bottomnav svg { width:22px !important; height:22px !important; stroke-width:1.9 !important; }
+.bottomnav .add-btn .add-face svg { width:20px !important; height:20px !important; stroke-width:2.6 !important; }
+.bottomnav a { justify-content:center; }
