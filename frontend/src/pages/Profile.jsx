@@ -249,7 +249,7 @@ export default function Profile() {
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            <p className="sc-handle">@{profile.username}{!profile.isMe && <> · {formatCount(profile.followerCount)} Followers</>}</p>
+            <p className="sc-handle">@{profile.username}</p>{profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
           </div>
         </div>
         {profile.isMe ? (
@@ -264,13 +264,7 @@ export default function Profile() {
           </div>
         )}
       </header>
-      <section className="sc-stats" aria-label="Profile stats">
-        <button onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount)}</strong> Followers</button>
-        <button onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong> Following</button>
-        <span><strong>{formatCount(profile.postCount || 0)}</strong> Posts</span>
-        {profile.country && <span className="sc-country">{profile.country}</span>}
-      </section>
-      {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
+            {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
