@@ -4,14 +4,14 @@ import {
   MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2, ShieldCheck,
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
-  Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal,
+  Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, Trash2,
 } from 'lucide-react';
 
 const ICONS = {
   'badge-check': BadgeCheck, 'circle-play': CirclePlay, clapperboard: Clapperboard, hash: Hash, image: ImageIcon,
   'map-pin': MapPin, pencil: Pencil, 'repeat-2': Repeat2, shield: Shield, 'user-round': UserRound,
   'arrow-left': ArrowLeft,
-  sliders: SlidersHorizontal, 'volume-2': Volume2, 'volume-x': VolumeX, pause: Pause, 'skip-back': SkipBack, 'skip-forward': SkipForward,
+  sliders: SlidersHorizontal, ellipsis: MoreHorizontal, trash: Trash2, 'volume-2': Volume2, 'volume-x': VolumeX, pause: Pause, 'skip-back': SkipBack, 'skip-forward': SkipForward,
   'arrow-right': ArrowRight,
   eye: Eye,
   'eye-off': EyeOff,
