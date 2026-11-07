@@ -10,7 +10,6 @@ import ActionSheet from './ActionSheet.jsx';
 import { prefetchMedia } from '../lib/prefetch.js';
 
 const PHOTO_MS = 5000;
-const TICK_MS = 100;
 const SWIPE_PX = 60;
 const CLOSE_PX = 120;
 const DOUBLE_TAP_MS = 260;
@@ -37,7 +36,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [gi, setGi] = useState(startIndex);
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
-  const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
   const [flash, setFlash] = useState(null);
@@ -55,7 +53,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const swipeRef = useRef(null);
   const swipedRef = useRef(false);
   const videoRef = useRef(null);
-  const elapsedRef = useRef(0);
+  const activeFillRef = useRef(null);
   const tapRef = useRef({ time: 0, middle: false });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -133,8 +131,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   // Each story starts fresh and is recorded as viewed
   useEffect(() => {
-    setProgress(0);
-    elapsedRef.current = 0;
     setPaused(false);
     setReply('');
     if (current) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
@@ -155,23 +151,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     });
     return undefined;
   }, [current?.id, isVideo, frozen]);
-
-  // Photo timer (pauses with the viewer)
-  useEffect(() => {
-    if (!current || isVideo) return undefined;
-    const timer = setInterval(() => {
-      if (frozen) return;
-      elapsedRef.current += TICK_MS;
-      const p = elapsedRef.current / PHOTO_MS;
-      if (p >= 1) {
-        clearInterval(timer);
-        next();
-      } else {
-        setProgress(p);
-      }
-    }, TICK_MS);
-    return () => clearInterval(timer);
-  }, [current?.id, isVideo, frozen, next]);
 
   function flashIcon(icon) {
     const key = Date.now();
@@ -296,8 +275,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   }
 
   function onVideoTime(event) {
+    // Moves the progress bar directly, without re-rendering the viewer
     const d = event.currentTarget.duration;
-    if (d > 0) setProgress(event.currentTarget.currentTime / d);
+    if (d > 0 && activeFillRef.current) activeFillRef.current.style.width = `${(event.currentTarget.currentTime / d) * 100}%`;
   }
 
   async function reshare() {
@@ -374,7 +354,18 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
-          <div key={i} className="sv-bar"><i style={{ width: i < si ? '100%' : i === si ? `${Math.min(progress, 1) * 100}%` : '0%' }} /></div>
+          i === si ? (
+            <div key={`${i}-${current?.id || ''}`} className="sv-bar">
+              <i
+                ref={activeFillRef}
+                className={isVideo ? 'sv-fill-live' : 'sv-fill-run'}
+                style={isVideo ? undefined : { animationPlayState: frozen ? 'paused' : 'running' }}
+                onAnimationEnd={(e) => { if (e.animationName === 'sv-fill') next(); }}
+              />
+            </div>
+          ) : (
+            <div key={i} className="sv-bar"><i style={{ width: i < si ? '100%' : '0%' }} /></div>
+          )
         ))}
       </div>
 

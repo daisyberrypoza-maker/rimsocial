@@ -4816,3 +4816,25 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   .sv-root .sv-sticker { flex-basis:34px; width:34px !important; }
   .sv-reaction-picker-footer { left:8px; right:8px; bottom:calc(env(safe-area-inset-bottom,0px) + 98px); }
 }
+
+/* Story progress: photos fill over 5 seconds with CSS (no re-render per tick); videos set width from playback. */
+@keyframes sv-fill { from { width: 0; } to { width: 100%; } }
+.sv-bar > i.sv-fill-run { width: 0; animation: sv-fill 5s linear forwards; }
+.sv-bar > i.sv-fill-live { width: 0; }
+
+/* Story viewer: sizes measured from the reference screens (360 x 800 CSS px). */
+.sv-root .sv-head { top:18px; left:14px; right:14px; }
+.sv-root .sv-who .avatar { width:36px !important; height:36px !important; }
+.sv-root .sv-name { font-size:16px; font-weight:700; }
+.sv-root .sv-time { font-size:13px; }
+.sv-root .sv-head-actions { gap:4px; }
+.sv-root .sv-icon { width:36px !important; height:36px !important; }
+.sv-root .sv-icon svg { width:22px; height:22px; }
+.sv-root .sv-caption { bottom:calc(env(safe-area-inset-bottom,0px) + 150px); }
+.sv-footer { padding:0 10px calc(env(safe-area-inset-bottom,0px) + 12px); }
+.sv-sound { height:30px; padding:0 12px; font-size:13px; margin-bottom:10px; }
+.sv-reply-row { gap:8px; }
+.sv-root .sv-cam, .sv-root .sv-send { width:46px !important; height:46px !important; }
+.sv-reply { height:46px; padding:0 6px 0 14px; }
+.sv-reply input { font-size:15px; }
+.sv-react { width:32px; height:32px; font-size:22px; }
