@@ -3757,3 +3757,7 @@ html, body, #root { min-height:100%; }
 .pv-person { text-align:left !important; justify-content:flex-start; }
 .pv-person-text { align-items:flex-start !important; text-align:left !important; }
 .pv-person-text strong, .pv-person-text small { text-align:left; }
+
+/* #Tags empty state: fill the full width like the Stories/Rimlight grid */
+.sc-profile .sc-hashtag-panel:has(> .sc-empty-grid) { padding:0; }
+.sc-profile .sc-hashtag-panel > .sc-empty-grid { flex:1 0 100%; width:100%; min-width:0; }
