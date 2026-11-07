@@ -311,6 +311,7 @@ export default function Profile() {
         ) : (
           <div className="pf-actions">
             <button type="button" className={`pf-btn pf-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            {profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
             <button type="button" className="pf-round pf-more" aria-label="More options" onClick={() => setOptionsOpen(true)}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
