@@ -4,6 +4,7 @@ import Icon from '../components/Icon.jsx';
 import Avatar from '../components/Avatar.jsx';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
+import { goBack } from '../lib/goBack.js';
 
 export default function Recommended() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function Recommended() {
   return (
     <main className="rec-page">
       <header className="rec-top">
-        <button className="rec-back" aria-label="Back" onClick={() => navigate(-1)}><Icon name="chevron-down" size={26} /></button>
+        <button className="rec-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="chevron-down" size={26} /></button>
         <h1>Recommended</h1>
         <span className="rec-spacer" aria-hidden="true" />
       </header>
