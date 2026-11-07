@@ -262,13 +262,13 @@ export default function Profile() {
         <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.coverUrl ? `url(${mediaUrl(profile.coverUrl)})` : 'linear-gradient(180deg, #252525 0%, #181818 70%, #050505 100%)' }} />
         <span className="sc-hero-shade" aria-hidden="true" />
         <div className="sc-hero-top">
-          <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
+          <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="chevron-down" size={24} /></button>
           <div className="sc-hero-actions">
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
               <>
-                {profile.isFollowing && <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
+                <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
                 <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
               </>
             )}
@@ -280,19 +280,21 @@ export default function Profile() {
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
             <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={100} ring />
+              <Avatar user={profile} size={76} ring />
             </button>
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
-            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
-            <p className="sc-handle">@{profile.username}{profile.isMe && <> · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button></>}</p>
+            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isCreator && <span className="sc-verified" aria-label="Verified"><Icon name="badge-check" size={14} /></span>}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
+            <p className="sc-handle">@{profile.username} · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
             <div className="sc-inline-stats" aria-label="Followers">
               <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> Followers</button>
             </div>
-            {profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}
-            {!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
           </div>
+        </div>
+        <div className="sc-chips">
+          {profile.country && <span className="sc-chip"><Icon name="map-pin" size={15} />{profile.country}</span>}
+          {!profile.isMe && <button type="button" className="sc-chip" onClick={() => navigate(`/chat/${profile.id}`)}><Icon name="mail" size={15} />Contact</button>}
         </div>
         {profile.isMe ? (
           <div className="sc-seg-row">
@@ -415,10 +417,10 @@ export default function Profile() {
       </div>, document.body)}
 
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
-        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}><Icon name="circle-play" size={18} />Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}><Icon name="clapperboard" size={18} />Rimlight</button>
-        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}><Icon name="repeat-2" size={18} />Reposts</button>
-        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}><Icon name="hash" size={18} />#Tags</button>
+        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>>Stories</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>>Rimlight</button>
+        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>>Reposts</button>
+        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}>>#Tags</button>
       </nav>
 
       {tab === 'posts' ? (
