@@ -49,11 +49,11 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /></NavLink>
-      <NavLink to="/chat" aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}</NavLink>
-      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
-      <NavLink to="/explore" aria-label="Explore"><ExploreIcon /></NavLink>
-      <NavLink to="/stories" aria-label="Stories"><StoriesIcon /></NavLink>
+      <NavLink to="/" replace end aria-label="Rimlight"><RimlightIcon /></NavLink>
+      <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}</NavLink>
+      <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
+      <NavLink to="/explore" replace aria-label="Explore"><ExploreIcon /></NavLink>
+      <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /></NavLink>
     </nav>
   );
 }

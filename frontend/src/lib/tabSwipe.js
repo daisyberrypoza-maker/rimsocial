@@ -82,7 +82,8 @@ export function useTabSwipe(navigate, pathname, enabled) {
       settle(outTo, () => {
         // The new screen starts off to the side the finger came from, then slides in
         setClass('swipe-anim', false);
-        navigate(target);
+        // Replace, not push: moving between bottom tabs never adds a Back step
+        navigate(target, { replace: true });
         setOffset(-outTo);
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
           settle(0, () => {
@@ -98,11 +99,15 @@ export function useTabSwipe(navigate, pathname, enabled) {
 
     window.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: true });
+    // A cancelled touch ends the gesture too, so the page is never left pushed to the side
+    const onCancel = () => { gesture = null; if (!busyRef.current) { setClass('swiping', false); setClass('swipe-anim', false); setOffset(0); } };
     window.addEventListener('touchend', onEnd, { passive: true });
+    window.addEventListener('touchcancel', onCancel, { passive: true });
     return () => {
       window.removeEventListener('touchstart', onStart);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onCancel);
     };
   }, [enabled, navigate, pathname]);
 }

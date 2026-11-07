@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Component, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
@@ -19,6 +19,22 @@ function Avatar({ user, className = '' }) {
         : <span>{(nameOf(user)).slice(0, 1).toUpperCase()}</span>}
     </span>
   );
+}
+
+// Keeps a viewer crash from turning the whole screen white: shows a message and a close button instead.
+class ViewerBoundary extends Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error) { console.error('Story viewer failed', error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="sv-root sv-fallback" role="dialog" aria-label="Stories unavailable">
+        <p>This story could not be opened.</p>
+        <button type="button" className="sc-pill" onClick={this.props.onClose}>Close</button>
+      </div>
+    );
+  }
 }
 
 export default function Stories() {
@@ -123,11 +139,13 @@ export default function Stories() {
       )}
 
       {openAt !== null && (
-        <StoryViewer
-          groups={rail.map((group) => ({ user: group.user }))}
-          startIndex={openAt}
-          onClose={() => { setOpenAt(null); loadRail(); }}
-        />
+        <ViewerBoundary onClose={() => { setOpenAt(null); loadRail(); }}>
+          <StoryViewer
+            groups={rail.filter((group) => group.user).map((group) => ({ user: group.user }))}
+            startIndex={openAt}
+            onClose={() => { setOpenAt(null); loadRail(); }}
+          />
+        </ViewerBoundary>
       )}
     </main>
   );
