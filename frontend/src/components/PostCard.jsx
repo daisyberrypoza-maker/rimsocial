@@ -117,6 +117,7 @@ export default function PostCard({ post, active }) {
   const videoRef = useRef(null);
   const activeRef = useRef(false);
   const viewerId = useAppStore((s) => s.user?.id);
+  const isOwnPost = viewerId != null && post.author?.id != null && String(viewerId) === String(post.author.id);
   const [soundOn, setSoundOn] = useState(feedSoundOn);
   const [paused, setPaused] = useState(false);
   const [flash, setFlash] = useState(null);
@@ -343,7 +344,7 @@ export default function PostCard({ post, active }) {
       </button>
       <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /></button>
       <button className="rail-btn" onClick={copyPostLink} aria-label="Share post"><Icon name="send" /></button>
-      <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /></button>
+      {!isOwnPost && <button className="rail-btn" onClick={() => setShowGifts(true)} aria-label="Send a gift"><Icon name="gift" /></button>}
       {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span></button>
     </aside>
@@ -391,7 +392,7 @@ export default function PostCard({ post, active }) {
       </section>
     </div>}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
-    {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
+    {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
   </article>;
 }
