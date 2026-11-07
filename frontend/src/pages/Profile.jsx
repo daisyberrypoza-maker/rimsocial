@@ -274,8 +274,6 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); navigate('/friends'); }}><Icon name="users" size={21} />Find friends & creators</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}><Icon name="wallet" size={21} />Creator Studio · earnings & cashout</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}><Icon name="megaphone" size={21} />Ads & Sponsors</button>
-          <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}><Icon name="user-plus" size={21} />Followers</button>
-          <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users" size={21} />Following</button>
           <button onClick={openBlockedPeople}><Icon name="shield" size={21} />Blocked accounts</button>
           <button onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} disabled={avatarBusy || coverBusy}><Icon name="image" size={21} />Change profile or background image</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
