@@ -6,8 +6,8 @@ const ICON_PROPS = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', 
 function ChatIcon() {
   return <svg {...ICON_PROPS}><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /></svg>;
 }
-function LensesIcon() {
-  return <svg {...ICON_PROPS}><path d="M10 4.5c.5 3.6 2 5.1 5.6 5.5-3.6.4-5.1 1.9-5.6 5.5-.5-3.6-2-5.1-5.6-5.5 3.6-.4 5.1-1.9 5.6-5.5z" /><path d="M18 3.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z" /></svg>;
+function ExploreIcon() {
+  return <svg {...ICON_PROPS}><circle cx="12" cy="12" r="5.5" /><path d="M3 14.5c2.6 2.6 13 1.2 16.5-3.4" /></svg>;
 }
 function StoriesIcon() {
   return <svg {...ICON_PROPS}><rect x="4" y="4" width="6.5" height="16" rx="2" /><rect x="13.5" y="7" width="6.5" height="13" rx="2" /></svg>;
@@ -21,15 +21,17 @@ function RimlightIcon() {
 
 // Stories, Chat, Add post, Explore, Rimlight: Add post stays in the centre.
 export default function BottomNav() {
-  // The bar turns dark on the Rimlight (home) screen only.
+  // Dark on Rimlight and Following; white with dark text on LIVE.
   const { pathname } = useLocation();
-  const dark = pathname === '/';
+  const dark = pathname === '/' || pathname === '/following';
+  const light = pathname === '/live';
+  const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
-    <nav className={dark ? 'bottomnav bottomnav-dark' : 'bottomnav'} aria-label="Main navigation">
+    <nav className={className} aria-label="Main navigation">
       <NavLink to="/stories" aria-label="Stories"><StoriesIcon /><span>Stories</span></NavLink>
       <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
       <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
-      <NavLink to="/explore" aria-label="Explore"><LensesIcon /><span>Explore</span></NavLink>
+      <NavLink to="/explore" aria-label="Explore"><ExploreIcon /><span>Explore</span></NavLink>
       <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /><span>Rimlight</span></NavLink>
     </nav>
   );
