@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
+import StoryViewer from '../components/StoryViewer.jsx';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
@@ -25,14 +26,7 @@ export default function Stories() {
   const me = useAppStore((s) => s.user);
   const [rail, setRail] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeUser, setActiveUser] = useState(null);
-  const [items, setItems] = useState([]);
-  const [index, setIndex] = useState(0);
-  const [storyLoading, setStoryLoading] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [flash, setFlash] = useState(null);
-  const videoRef = useRef(null);
+  const [openAt, setOpenAt] = useState(null);
 
   const loadRail = useCallback(async () => {
     setLoading(true);
@@ -48,90 +42,12 @@ export default function Stories() {
 
   useEffect(() => { loadRail(); }, [loadRail]);
 
-  async function openStories(group) {
-    if (!group?.user?.id) return;
-    setActiveUser(group.user);
-    setItems([]);
-    setIndex(0);
-    setStoryLoading(true);
-    try {
-      const result = await api('/v1/stories/users/' + encodeURIComponent(group.user.id));
-      const stories = result.items || [];
-      if (!stories.length) {
-        toast('No active stories from this creator');
-        setActiveUser(null);
-        await loadRail();
-        return;
-      }
-      setItems(stories);
-      const firstUnseen = stories.findIndex((story) => !story.viewed);
-      setIndex(firstUnseen < 0 ? 0 : firstUnseen);
-      if (stories[firstUnseen < 0 ? 0 : firstUnseen]?.id) {
-        api('/v1/stories/' + stories[firstUnseen < 0 ? 0 : firstUnseen].id + '/view', { method: 'POST' }).catch(() => {});
-      }
-    } catch (error) {
-      toast(error.message);
-      setActiveUser(null);
-    } finally {
-      setStoryLoading(false);
-    }
+  // Every story opens in the shared StoryViewer, so photos, videos and controls behave the same everywhere.
+  function openStories(group) {
+    const i = rail.findIndex((item) => item.user?.id === group.user?.id);
+    if (i >= 0) setOpenAt(i);
   }
 
-  function moveStory(direction) {
-    const next = index + direction;
-    if (next < 0) {
-      setActiveUser(null);
-      return;
-    }
-    if (next >= items.length) {
-      setActiveUser(null);
-      loadRail();
-      return;
-    }
-    setIndex(next);
-    const story = items[next];
-    if (story?.id) api('/v1/stories/' + story.id + '/view', { method: 'POST' }).catch(() => {});
-  }
-
-  const current = items[index];
-
-  // Start each new story video; if the browser blocks sound, continue muted.
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || current?.kind !== 'video') return;
-    setVideoProgress(0);
-    v.play().catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}); });
-  }, [current?.id, current?.kind]);
-
-  function showFlash(icon) {
-    const key = Date.now();
-    setFlash({ icon, key });
-    setTimeout(() => setFlash((c) => (c && c.key === key ? null : c)), 600);
-  }
-  function togglePlay() {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) { v.play().catch(() => {}); showFlash('pause-off'); } else { v.pause(); showFlash('pause'); }
-  }
-  function skip(seconds) {
-    const v = videoRef.current;
-    if (!v) return;
-    const max = Number.isFinite(v.duration) ? v.duration : Infinity;
-    v.currentTime = Math.min(max, Math.max(0, v.currentTime + seconds));
-    showFlash(seconds < 0 ? 'skip-back' : 'skip-forward');
-  }
-  // Videos: left/right skip 5 seconds, middle plays or pauses. Photos: left/right change story.
-  function onStageTap(event) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
-    if (current?.kind === 'video') {
-      if (x < 0.3) skip(-5); else if (x > 0.7) skip(5); else togglePlay();
-    } else if (x < 0.34) moveStory(-1); else if (x > 0.66) moveStory(1);
-  }
-  function onVideoTime(event) {
-    const d = event.currentTarget.duration;
-    if (d > 0) setVideoProgress(event.currentTarget.currentTime / d);
-  }
   const myGroup = rail.find((group) => group.user?.id === me?.id);
   const others = rail.filter((group) => group.user?.id !== me?.id);
 
@@ -206,45 +122,12 @@ export default function Stories() {
         </section>
       )}
 
-      {activeUser && (
-        <div className="sc-viewer-backdrop" role="presentation" onClick={() => setActiveUser(null)}>
-          <section className="sc-viewer" role="dialog" aria-modal="true" aria-label="Story viewer" onClick={(event) => event.stopPropagation()}>
-            {storyLoading || !current ? <div className="sc-viewer-loading">Loading story…</div> : <>
-              <div className="sc-progress">
-                {items.map((story, i) => (
-                  <span key={story.id} className={i < index ? 'done' : i === index ? 'active' : ''} />
-                ))}
-              </div>
-              <header className="sc-viewer-head">
-                <Avatar user={activeUser} />
-                <div className="sc-viewer-who">
-                  <strong>{nameOf(activeUser)}</strong>
-                  <small>{current.createdAt ? new Date(current.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}</small>
-                </div>
-                {current.kind === 'video' && <button className="sc-viewer-icon" aria-label={muted ? 'Turn sound on' : 'Mute'} onClick={() => setMuted((m) => !m)}><Icon name={muted ? 'volume-x' : 'volume-2'} size={20} /></button>}
-                <button className="sc-viewer-icon" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={20} /></button>
-                <button className="sc-viewer-icon" aria-label="Close" onClick={() => setActiveUser(null)}><Icon name="x" size={22} /></button>
-              </header>
-              <div className="sc-media" onClick={onStageTap}>
-                {current.kind === 'video'
-                  ? <video key={current.id} ref={videoRef} src={mediaUrl(current.mediaUrl)} autoPlay playsInline muted={muted} onTimeUpdate={onVideoTime} onEnded={() => moveStory(1)} />
-                  : <img src={mediaUrl(current.mediaUrl)} alt={current.caption || 'Story'} />}
-                {current.caption && <p className="sc-caption">{current.caption}</p>}
-                {current.kind === 'video' && <div className="sc-video-progress"><span style={{ width: `${videoProgress * 100}%` }} /></div>}
-                {flash && <span key={flash.key} className="sc-flash" aria-hidden="true"><Icon name={flash.icon === 'pause-off' ? 'play' : flash.icon} size={34} /></span>}
-              </div>
-              <footer className="sc-reply">
-                <span className="sc-reply-field">Reply to {nameOf(activeUser)}…</span>
-                <button className="sc-reply-icon" aria-label="Send a heart">
-                  <Icon name="heart" size={22} />
-                </button>
-                <button className="sc-reply-icon" aria-label="Send">
-                  <Icon name="send" size={22} />
-                </button>
-              </footer>
-            </>}
-          </section>
-        </div>
+      {openAt !== null && (
+        <StoryViewer
+          groups={rail.map((group) => ({ user: group.user }))}
+          startIndex={openAt}
+          onClose={() => { setOpenAt(null); loadRail(); }}
+        />
       )}
     </main>
   );

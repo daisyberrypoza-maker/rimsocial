@@ -7,6 +7,7 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import ShareOptions from '../components/ShareOptions.jsx';
+import VideoPlayer from '../components/VideoPlayer.jsx';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -83,12 +84,12 @@ export default function PostDetail() {
     <div className="post-detail-toolbar"><button className="icon-button" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={21} /></button><strong>Post</strong><div className="post-detail-toolbar-actions"><button className="ghost small" onClick={shareExternally}><Icon name="share" size={18} /> Share</button><button className="ghost small" onClick={toggleRepost} disabled={busy} aria-pressed={reposted}><Icon name="repeat" size={18} /> {reposted ? 'Reposted' : 'Repost'}</button></div></div>
     <article className="post-detail-card">
       <button className="post-detail-author" onClick={() => navigate(`/u/${username}`)}><Avatar user={post.author} size={44} /><span><strong>{post.author?.displayName || username}</strong><small>@{username}</small></span><Icon name="chevron" size={20} /></button>
-      <div className="post-detail-media">{post.kind === 'video' ? <video src={src} poster={mediaUrl(post.thumbUrl) || undefined} controls playsInline preload="metadata" /> : <img src={src} alt={post.caption || 'Shared post'} />}</div>
+      <div className="post-detail-media">{post.kind === 'video' ? <VideoPlayer src={src} poster={mediaUrl(post.thumbUrl) || undefined} /> : <img src={src} alt={post.caption || 'Shared post'} />}</div>
       {post.caption && <p className="post-detail-caption">{post.caption}</p>}
       <div className="post-detail-actions">
-        <button className={liked ? 'detail-action liked' : 'detail-action'} onClick={toggleLike} disabled={busy} aria-pressed={liked}><Icon name="heart" size={19} /> {formatCount(post.likeCount)} Like</button>
-        <button className="detail-action" onClick={() => document.getElementById('detail-comment-input')?.focus()}><Icon name="message-circle" size={19} /> Comment</button>
-        <button className={reposted ? 'detail-action reposted' : 'detail-action'} onClick={toggleRepost} disabled={busy} aria-pressed={reposted}><Icon name="repeat" size={19} /> {reposted ? 'Reposted' : 'Repost'}</button>
+        <button className={liked ? 'detail-action liked' : 'detail-action'} onClick={toggleLike} disabled={busy} aria-pressed={liked}><Icon name="heart" size={22} /> <span>{formatCount(post.likeCount)}</span></button>
+        <button className="detail-action" onClick={() => document.getElementById('detail-comment-input')?.focus()}><Icon name="message-circle" size={22} /> <span>{formatCount(comments.length)}</span></button>
+        <button className={reposted ? 'detail-action reposted' : 'detail-action'} onClick={toggleRepost} disabled={busy} aria-pressed={reposted}><Icon name="repeat" size={22} /> <span>{formatCount(post.repostCount || 0)}</span></button>
       </div>
       <div className="detail-comments"><h3>Comments <span>{comments.length}</span></h3>
         {comments.map((item) => <div className="comment-row" key={item.id}><Avatar user={item.author} size={34} /><div className="comment-copy"><strong>@{item.author?.username || 'user'}</strong><p>{item.body}</p></div></div>)}
