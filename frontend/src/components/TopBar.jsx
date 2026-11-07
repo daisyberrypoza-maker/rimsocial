@@ -27,7 +27,7 @@ export default function TopBar({ immersive, title }) {
   }, [reelsHeader]);
 
   if (reelsHeader) {
-    return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}`}>
+    return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}${location.pathname === '/live' ? ' is-live' : ''}`}>
       <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={34} /></button>
       <nav className="reels-tabs" aria-label="Rimlight sections"><NavLink to="/" end>Rimlight</NavLink><NavLink to="/following">Following</NavLink><NavLink to="/live">LIVE</NavLink></nav>
       <button className="reels-icon" onClick={() => navigate('/explore')} aria-label="Search and filters"><Icon name="sliders" size={32} /></button>

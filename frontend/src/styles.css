@@ -3966,3 +3966,20 @@ html, body, #root { min-height:100%; }
 .bottomnav.bottomnav-live { background:#fff !important; border-top-color:#e5e5ea !important; }
 .bottomnav.bottomnav-live a { color:#111 !important; }
 .bottomnav.bottomnav-live a.active { color:#000 !important; font-weight:800; }
+
+/* LIVE screen, matched to the Likee reference: white header, text tabs, two-column tiles. */
+.reels-top.is-live { background:#fff !important; }
+.reels-top.is-live .reels-icon { color:#111 !important; filter:none !important; }
+.reels-top.is-live .reels-tabs a { color:#9a9aa0 !important; font-size:17px !important; font-weight:600; text-shadow:none !important; padding:4px 0; }
+.reels-top.is-live .reels-tabs a.active { color:#111 !important; font-weight:800; border-bottom:3px solid #111; }
+.reels-top .reels-tabs a { font-size:17px !important; }
+.live-page { background:#fff !important; color:#111 !important; }
+.live-page .live-list { gap:8px !important; padding:0 10px !important; }
+.live-page .live-card { border-radius:12px !important; background:#1e1f24 !important; }
+.live-page .live-tile-photo { position:absolute; inset:0; background:linear-gradient(170deg,#4a3f73 0%,#1d1a2b 70%,#0d0c12 100%) center / cover no-repeat; }
+.live-page .live-tag { z-index:1; border-radius:6px; }
+.live-page .live-count { z-index:1; background:none !important; padding:0 !important; top:10px; right:10px; display:inline-flex; align-items:center; gap:4px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+.live-page .live-card-copy { position:relative; z-index:1; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+.live-page .live-card-copy small { color:rgba(255,255,255,.85); }
+.live-page .live-start-form input { background:#f3f3f5 !important; color:#111 !important; border-color:#e2e2e6 !important; }
+.live-page .live-start-form .live-primary { background:#fe2c55 !important; }
