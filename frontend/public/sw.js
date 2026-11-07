@@ -147,9 +147,19 @@ self.addEventListener('message', (event) => {
   if (data.type === 'prefetch' && Array.isArray(data.items)) {
     event.waitUntil(prefetch(data.items));
   } else if (data.type === 'clear-media') {
+    videoBlobs.clear();
     event.waitUntil(caches.delete(MEDIA_CACHE));
+  } else if (data.type === 'evict' && Array.isArray(data.urls)) {
+    data.urls.forEach((url) => videoBlobs.delete(url));
+    event.waitUntil(evict(data.urls));
   }
 });
+
+// Removes media that is no longer available (deleted or expired) from the device
+async function evict(urls) {
+  const cache = await caches.open(MEDIA_CACHE);
+  await Promise.all(urls.map((url) => cache.delete(url)));
+}
 
 async function prefetch(items) {
   const cache = await caches.open(MEDIA_CACHE);

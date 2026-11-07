@@ -7,7 +7,7 @@ import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import ActionSheet from './ActionSheet.jsx';
-import { prefetchMedia } from '../lib/prefetch.js';
+import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
 
 const PHOTO_MS = 5000;
 const SWIPE_PX = 60;
@@ -81,6 +81,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     api(`/v1/stories/users/${group.user.id}`)
       .then((d) => {
         if (!alive) return;
+        evictMedia(missingItems(saved?.items, d.items));
         setStories(d.items);
         setSubscribed(Boolean(d.isSubscribed));
         useAppStore.getState().setStoryCache(group.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
@@ -134,7 +135,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     setPaused(false);
     setReply('');
     if (!current) return;
-    api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
+    api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
+      if (error.status === 404) dropStory(current.id);
+    });
     updateCurrent(current.id, { viewed: true });
   }, [current?.id]);
 
@@ -182,6 +185,20 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       flashIcon(paused ? 'play' : 'pause');
     }
   }
+
+  // Removes a story that is no longer available, along with its media on this device
+  function dropStory(id) {
+    const gone = stories?.find((item) => item.id === id);
+    if (gone) evictMedia([gone]);
+    setStories((list) => (list ? list.filter((item) => item.id !== id) : list));
+  }
+
+  // Stop playback as soon as the app is minimised or closed; playback resumes only on a tap
+  useEffect(() => {
+    const onHide = () => { if (document.hidden) setPaused(true); };
+    document.addEventListener('visibilitychange', onHide);
+    return () => document.removeEventListener('visibilitychange', onHide);
+  }, []);
 
   function updateCurrent(id, patch) {
     setStories((list) => (list ? list.map((s) => (s.id === id ? { ...s, ...patch } : s)) : list));
@@ -357,6 +374,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/stories/${current.id}`, { method: 'DELETE' });
       const rest = stories.filter((item) => item.id !== current.id);
+      evictMedia([current]);
       setStories(rest);
       setSi((i) => Math.min(i, Math.max(0, rest.length - 1)));
       toast('Story deleted');

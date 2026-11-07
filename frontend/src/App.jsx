@@ -75,6 +75,19 @@ export default function App() {
   const setOffline = useAppStore((s) => s.setOffline);
   useTabSwipe(navigate, location.pathname, showChrome && !offline);
 
+  // Minimised or closed: stop all playback immediately
+  useEffect(() => {
+    const stopMedia = () => {
+      if (document.hidden) document.querySelectorAll('video, audio').forEach((media) => media.pause());
+    };
+    document.addEventListener('visibilitychange', stopMedia);
+    window.addEventListener('pagehide', stopMedia);
+    return () => {
+      document.removeEventListener('visibilitychange', stopMedia);
+      window.removeEventListener('pagehide', stopMedia);
+    };
+  }, []);
+
   // Device connectivity: the Connection Failed screen replaces the content when the network is gone
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) setOffline(true);
