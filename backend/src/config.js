@@ -44,7 +44,8 @@ module.exports = {
   storyRailCacheSeconds: 30,
 
   // Uploads
-  maxUploadBytes: 100 * 1024 * 1024,
+  // Long posts (up to 20 minutes) need more room than the old 100 MB limit. Override with MAX_UPLOAD_MB.
+  maxUploadBytes: Number(process.env.MAX_UPLOAD_MB || 1024) * 1024 * 1024,
 
   // Draft NGN web coin packs. Prices are configuration, not a public price commitment.
   // All values use kobo; only NGN is enabled until provider/account eligibility is verified.
