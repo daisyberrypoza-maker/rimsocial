@@ -8,7 +8,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup } = require('../services/mediaCleanup');
 
-const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'country', 'followerCount'];
+const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'country', 'followerCount', 'isCreator'];
 
 // Resolve whether the currently authenticated viewer follows each person in a list.
 async function excludeBlockedPeople(people, viewerId) {
