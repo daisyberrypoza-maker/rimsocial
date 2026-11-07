@@ -4114,3 +4114,30 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   .reels-top.is-hidden { transform: translate(-50%, -100%) !important; }
   .rv-sheet-backdrop .rv-sheet { max-width: 460px !important; }
 }
+
+/* Reels: icons at Instagram's size; header icons smaller; seek bar always visible and draggable. */
+.post .rail-btn svg { width:27px !important; height:27px !important; }
+.reels-top .reels-icon { width:36px !important; height:36px !important; }
+.reels-top .reels-icon svg { width:24px !important; height:24px !important; }
+.post .post-seek { position:absolute; left:0; right:0; bottom:0; width:100%; height:24px; margin:0; z-index:5; -webkit-appearance:none; appearance:none; background:transparent; cursor:pointer; touch-action:none; }
+.post .post-seek::-webkit-slider-runnable-track { height:3px; background:linear-gradient(to right,#fff var(--p,0%),rgba(255,255,255,.35) var(--p,0%)); }
+.post .post-seek::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#fff; margin-top:-4.5px; border:0; }
+.post .post-seek::-moz-range-track { height:3px; background:rgba(255,255,255,.35); }
+.post .post-seek::-moz-range-progress { height:3px; background:#fff; }
+.post .post-seek::-moz-range-thumb { width:12px; height:12px; border-radius:50%; background:#fff; border:0; }
+
+/* Comments sheet: Instagram-style white sheet. */
+.rv-sheet .rv-sheet-head { display:grid !important; grid-template-columns:40px 1fr 40px; align-items:center; padding:6px 8px 10px !important; border-bottom:1px solid #efefef !important; }
+.rv-sheet .rv-sheet-head strong { text-align:center; font-size:16px !important; font-weight:700 !important; color:#111 !important; }
+.rv-sheet .rv-sheet-head .rv-icon { width:36px; height:36px; }
+.rv-sheet .rv-comments { padding:8px 14px; }
+.rv-sheet .rv-comment { display:flex !important; gap:12px; align-items:flex-start; padding:10px 0 !important; border:0 !important; }
+.rv-sheet .rv-comment-body { flex:1; min-width:0; }
+.rv-sheet .rv-comment-body p { margin:0; font-size:14px; line-height:1.4; color:#111 !important; white-space:pre-wrap; word-wrap:break-word; }
+.rv-sheet .rv-comment-body strong { font-weight:600; }
+.rv-sheet .rv-comment-body small { display:block; margin-top:4px; font-size:12px; color:#8e8e93 !important; }
+.rv-sheet .rv-comment-body .rv-delete { font-size:12px; color:#8e8e93 !important; font-weight:600; padding:0 !important; background:none !important; border:0 !important; }
+.rv-sheet .rv-empty { text-align:center; color:#8e8e93 !important; font-size:14px; padding:40px 16px; }
+.rv-sheet .rv-compose { display:flex; align-items:center; gap:10px; padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 10px); border-top:1px solid #efefef; background:#fff; }
+.rv-sheet .rv-compose input { flex:1; min-width:0; border:1px solid #dbdbdb !important; border-radius:999px !important; background:#fff !important; color:#111 !important; padding:9px 14px !important; font-size:14px; }
+.rv-sheet-backdrop .rv-compose > button[type="submit"] { height:auto !important; padding:6px 4px !important; background:transparent !important; color:#3797f0 !important; font-weight:700 !important; border-radius:0 !important; }
