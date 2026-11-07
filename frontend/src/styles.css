@@ -4301,3 +4301,12 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-share-row:first-child { border-top:0; }
 .sv-share-row:disabled { opacity:.5; }
 .sv-share-row.danger { color:#ff3040; }
+
+/* Story viewer: the global button style was giving these a grey box, so override it here. */
+.sv-root button.sv-who,
+.sv-root button.sv-react,
+.sv-share-backdrop .sv-share-reacts button,
+.sv-share-backdrop button.sv-share-row { background-color:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; }
+.sv-share-backdrop button.sv-share-row { color:#111 !important; }
+.sv-share-backdrop button.sv-share-row.danger { color:#ff3040 !important; }
+.sv-views { justify-content:center; gap:8px; color:#fff; font-size:15px; font-weight:600; }
