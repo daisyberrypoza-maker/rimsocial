@@ -33,7 +33,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
   let storyPersisted = false;
   try {
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/stories', { maxSeconds: 15 });
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/stories', { maxSeconds: 60 });
     uploadedAsset = asset;
     const story = await Post.create({
       authorId: req.user.id,
