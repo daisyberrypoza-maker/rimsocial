@@ -4887,3 +4887,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .sc-tabs button.on { color:#111 !important; }
 .sc-profile .sc-tabs button svg { display:none; }
 .sc-profile .sc-grid { gap:2px !important; padding:2px 0 0 !important; }
+
+/* Profile header: one dark block from the top through the buttons, so no white band cuts through it */
+.sc-profile .sc-hero { background:#141414 !important; }
+.sc-profile .sc-hero-bg { position:absolute !important; inset:0 !important; height:100% !important; width:100% !important; }
+.sc-profile .sc-hero-shade { position:absolute !important; inset:0 !important; }
