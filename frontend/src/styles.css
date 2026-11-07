@@ -3836,7 +3836,8 @@ html, body, #root { min-height:100%; }
 .reels-top .reels-tabs { display:flex; justify-content:center; align-items:center; gap:18px; }
 .reels-top .reels-tabs a { color:rgba(255,255,255,.7) !important; font-size:17px; font-weight:600; text-decoration:none; text-shadow:0 1px 4px rgba(0,0,0,.6); }
 .reels-top .reels-tabs a.active { color:#fff !important; font-weight:800; }
-.bottomnav a span { display:none !important; }
+.bottomnav a { flex-direction:column; gap:3px; }
+.bottomnav a span { font-size:11px; font-weight:600; }
 .bottomnav a { flex:1; display:flex; align-items:center; justify-content:center; padding:10px 0; }
 .bottomnav a svg { width:28px; height:28px; stroke-width:1.9; }
 .post .view-profile:disabled { opacity:.6; }

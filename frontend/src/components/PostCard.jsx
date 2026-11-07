@@ -320,19 +320,21 @@ export default function PostCard({ post, active }) {
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
+      <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
-      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /></button>
       <button className={`rail-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
         <Icon name="repeat" />{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
       </button>
+      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /></button>
+      <button className="rail-btn" onClick={copyPostLink} aria-label="Share post"><Icon name="send" /></button>
       <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /></button>
       {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span></button>
     </aside>
     <div className="info">
-      {post.topic && <div className="post-topic"><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
+      {post.topic && <div className="post-topic"><Icon name="map-pin" size={14} /> {post.topic}</div>}
       <div className="author-row">
         <button className="author-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={32} ring /></button>
         <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
