@@ -6,16 +6,6 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 
-function Dots() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="5" cy="12" r="2" fill="currentColor" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-      <circle cx="19" cy="12" r="2" fill="currentColor" />
-    </svg>
-  );
-}
-
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
 }
@@ -100,7 +90,6 @@ export default function Stories() {
   }
 
   const current = items[index];
-  const unseenCount = rail.filter((group) => group.unseen).length;
 
   return (
     <main className="page sc-stories">
@@ -108,14 +97,10 @@ export default function Stories() {
         <button className="sc-round sc-avatar-btn" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
           <Avatar user={me || {}} />
         </button>
-        <button className="sc-round" aria-label="Search" onClick={() => navigate('/explore')}><Icon name="search" size={21} /></button>
-        <h1>Stories</h1>
-        <button className="sc-round" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={21} /></button>
-        <button className="sc-round" aria-label={unseenCount ? `Find friends, ${unseenCount} new stories` : 'Find friends'} onClick={() => navigate('/explore')}>
-          <Icon name="user-plus" size={21} />
-          {unseenCount > 0 && <span className="sc-badge">{unseenCount}</span>}
+        <span className="sc-top-spacer" />
+        <button className="sc-round" aria-label="Notifications" onClick={() => navigate('/activity')}>
+          <Icon name="bell" size={21} />
         </button>
-        <button className="sc-round" aria-label="More" onClick={() => navigate('/explore')}><Dots /></button>
       </header>
 
       <section className="sc-block" aria-label="My stories">
