@@ -303,16 +303,15 @@ export default function Profile() {
         ) : (
           <div className="pf-actions">
             <button type="button" className={`pf-btn pf-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
-            <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
+            <button type="button" className="pf-round pf-more" aria-label="More options" onClick={() => setOptionsOpen(true)}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
       </header>
       <div className="pf-body">
         {profile.bio && <p className="pf-bio">{profile.bio}</p>}
-        {(profile.country || !profile.isMe) && (
+        {profile.isMe && profile.country && (
           <div className="pf-chips">
-            {profile.country && <span className="pf-chip"><Icon name="map-pin" size={15} />{profile.country}</span>}
-            {!profile.isMe && <button type="button" className="pf-chip" onClick={() => navigate(`/chat/${profile.id}`)}><Icon name="mail" size={15} />Contact</button>}
+            <span className="pf-chip"><Icon name="map-pin" size={15} />{profile.country}</span>
           </div>
         )}
       </div>
@@ -370,6 +369,7 @@ export default function Profile() {
           <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(`/chat/${profile.id}`); }}><span>Contact</span><Icon name="mail" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate('/recommended'); }}><span>Recommended</span><Icon name="chevron-right" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); shareProfile(); }}><span>Send Profile to…</span><Icon name="send" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
