@@ -4254,3 +4254,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .pos-circle { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; }
 .pos-circle.grey { background:#b9b9bd; }
 .pos-circle.blue { background:#1e9bff; }
+
+/* Rimlight header: no dark circles behind the avatar or the algorithm icon. The icons get a soft shadow so they stay visible over the video. */
+.topbar.reels-top button.snap-circle { background:transparent !important; }
+.topbar.reels-top button.snap-circle svg { filter:drop-shadow(0 1px 4px rgba(0,0,0,.6)); }
+.topbar.reels-top button.snap-circle .avatar { filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
