@@ -154,7 +154,7 @@ export default function Upload() {
         setFeed('following', { updatedAt: 0 });
       }
       toast(asStory ? 'Public story posted. It disappears in 24 hours.' : visibility === 'public' ? 'Post published publicly' : 'Post saved as Only me');
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (err) { toast(err.message); }
     finally { setBusy(false); }
   }
