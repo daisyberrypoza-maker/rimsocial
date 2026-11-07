@@ -4600,3 +4600,31 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-root img {
   border-radius:0 !important;
 }
+
+
+/* Keep the Rimlight seek/progress control inside each post's media bounds. */
+.post {
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+  isolation:isolate;
+}
+.post > .post-seek {
+  box-sizing:border-box !important;
+  display:block !important;
+  left:6px !important;
+  right:6px !important;
+  bottom:0 !important;
+  width:calc(100% - 12px) !important;
+  max-width:calc(100% - 12px) !important;
+  min-width:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  transform:none !important;
+  overflow:visible;
+}
+.post > video,
+.post > img {
+  display:block;
+  max-width:100%;
+}
