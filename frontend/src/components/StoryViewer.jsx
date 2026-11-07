@@ -4,6 +4,8 @@ import { mediaUrl } from '../lib/config.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
+import { useAppStore } from '../store.js';
+import ActionSheet from './ActionSheet.jsx';
 
 const PHOTO_MS = 5000;
 const TICK_MS = 100;
@@ -21,6 +23,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [muted, setMuted] = useState(false);
   const [flash, setFlash] = useState(null);
   const [resharing, setResharing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const me = useAppStore((st) => st.user);
   const videoRef = useRef(null);
   const elapsedRef = useRef(0);
   const closeRef = useRef(onClose);
@@ -30,6 +34,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
   const total = stories?.length || 0;
+  const isOwner = Boolean(me?.id) && group.user?.id === me.id;
 
   // Load this creator's active stories
   useEffect(() => {
@@ -146,6 +151,18 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     finally { setResharing(false); }
   }
 
+  async function deleteCurrent() {
+    if (!current) return;
+    if (!window.confirm('Delete this story? This cannot be undone.')) return;
+    try {
+      await api(`/v1/stories/${current.id}`, { method: 'DELETE' });
+      const rest = stories.filter((item) => item.id !== current.id);
+      setStories(rest);
+      setSi((i) => Math.min(i, Math.max(0, rest.length - 1)));
+      toast('Story deleted');
+    } catch (e) { toast(e.message); }
+  }
+
   return (
     <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`}>
       <div className="sv-bars">
@@ -163,7 +180,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               <Icon name={muted ? 'volume-x' : 'volume-2'} size={20} />
             </button>
           )}
-          <button type="button" className="sv-pill" disabled={!current || resharing} onClick={reshare}>{resharing ? 'Sharing…' : 'Reshare'}</button>
+          {isOwner ? <button type="button" className="sv-icon" aria-label="Story options" disabled={!current} onClick={() => setMenuOpen(true)}><Icon name="ellipsis" size={22} /></button>
+          : <button type="button" className="sv-pill" disabled={!current || resharing} onClick={reshare}>{resharing ? 'Sharing…' : 'Reshare'}</button>}
           <button type="button" className="sv-icon" aria-label="Close" onClick={() => closeRef.current()}><Icon name="x" size={22} /></button>
         </div>
       </div>
@@ -190,6 +208,11 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         {current?.caption && <p className="sv-caption">{current.caption}</p>}
         {flash && <span key={flash.key} className="sv-flash" aria-hidden="true"><Icon name={flash.icon} size={34} /></span>}
       </div>
+
+      {menuOpen && <ActionSheet
+        actions={[{ label: 'Delete story', icon: 'trash', danger: true, onClick: deleteCurrent }]}
+        onClose={() => setMenuOpen(false)}
+      />}
 
       {isVideo && (
         <div className="sv-controls">

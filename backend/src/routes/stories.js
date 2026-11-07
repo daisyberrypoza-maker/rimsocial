@@ -8,7 +8,7 @@ const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
 const { assertNotBlocked } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
-const { requestAssetCleanup } = require('../services/mediaCleanup');
+const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
 
 // GET /v1/stories/rail  -> creators with active stories, unseen first
 router.get('/rail', requireAuth, async (req, res, next) => {
@@ -88,6 +88,21 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
       where: { storyId: story.id, viewerId: req.user.id },
     });
     if (created) await Post.increment('viewCount', { by: 1, where: { id: story.id } });
+    res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+// The owner deletes a story from its open viewer. It is hidden at once and its media is cleaned up.
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const story = await Post.findOne({ where: { id: req.params.id, isStory: true, authorId: req.user.id, status: 'live' } });
+    if (!story) throw httpError(404, 'Story not found');
+    await story.update({ status: 'removed' });
+    try {
+      await cleanupRemovedPostMedia(story);
+    } catch (cleanupError) {
+      console.error('Removed story media cleanup deferred:', cleanupError.message);
+    }
     res.status(204).end();
   } catch (e) { next(e); }
 });

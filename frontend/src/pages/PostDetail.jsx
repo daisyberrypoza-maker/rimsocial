@@ -9,6 +9,7 @@ import { toast } from '../toast.js';
 import ShareOptions from '../components/ShareOptions.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
+import ActionSheet from '../components/ActionSheet.jsx';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -25,6 +26,7 @@ export default function PostDetail() {
   const [showComments, setShowComments] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const me = useAppStore((st) => st.user);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -68,6 +70,15 @@ export default function PostDetail() {
     setShowShare(true);
   }
 
+  async function deletePost() {
+    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    try {
+      await api(`/v1/posts/${encodeURIComponent(postId)}`, { method: 'DELETE' });
+      toast('Post deleted');
+      navigate(-1);
+    } catch (e) { toast(e.message); }
+  }
+
   async function submitComment(e) {
     e.preventDefault();
     if (!comment.trim() || commentBusy) return;
@@ -86,6 +97,7 @@ export default function PostDetail() {
   const src = mediaUrl(post.mediaUrl);
   const dateText = post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const caption = post.caption || '';
+  const isOwner = Boolean(me?.id) && post.author?.id === me.id;
   const longCaption = caption.length > 90;
 
   return <main className={`rv-page ${showComments ? 'sheet-open' : ''}`}>
@@ -110,7 +122,7 @@ export default function PostDetail() {
         <Icon name="repeat" size={30} /><span>{formatCount(post.repostCount || 0)}</span>
       </button>
       <button onClick={shareExternally} aria-label="Share"><Icon name="send" size={28} /></button>
-      <button onClick={shareExternally} aria-label="More"><span className="rv-more-dots">•••</span></button>
+      <button onClick={() => (isOwner ? setMenuOpen(true) : shareExternally())} aria-label="More"><span className="rv-more-dots">•••</span></button>
     </aside>}
 
     {!showComments && <div className="rv-info">
@@ -143,6 +155,14 @@ export default function PostDetail() {
         {comment.trim() && <button type="submit" disabled={commentBusy}>{commentBusy ? '…' : 'Post'}</button>}
       </form>
     </section>}
+
+    {menuOpen && <ActionSheet
+      actions={[
+        { label: 'Share', icon: 'send', onClick: shareExternally },
+        { label: 'Delete post', icon: 'trash', danger: true, onClick: deletePost },
+      ]}
+      onClose={() => setMenuOpen(false)}
+    />}
 
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
   </main>;
