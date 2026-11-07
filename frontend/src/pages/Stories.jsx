@@ -6,6 +6,16 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 
+function Dots() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="12" r="2" fill="currentColor" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <circle cx="19" cy="12" r="2" fill="currentColor" />
+    </svg>
+  );
+}
+
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
 }
@@ -90,37 +100,43 @@ export default function Stories() {
   }
 
   const current = items[index];
-  const friends = rail.filter((group) => group.unseen);
-  const discover = rail.filter((group) => !group.unseen);
-  const everyone = rail;
+  const unseenCount = rail.filter((group) => group.unseen).length;
 
   return (
     <main className="page sc-stories">
       <header className="sc-top">
-        <button className="sc-top-icon sc-top-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
+        <button className="sc-round sc-avatar-btn" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
           <Avatar user={me || {}} />
         </button>
-        <span className="sc-top-spacer" />
-        <button className="sc-top-icon" aria-label="Notifications" onClick={() => navigate('/activity')}>
-          <Icon name="bell" size={22} />
+        <button className="sc-round" aria-label="Search" onClick={() => navigate('/explore')}><Icon name="search" size={21} /></button>
+        <h1>Stories</h1>
+        <button className="sc-round" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={21} /></button>
+        <button className="sc-round" aria-label={unseenCount ? `Find friends, ${unseenCount} new stories` : 'Find friends'} onClick={() => navigate('/explore')}>
+          <Icon name="user-plus" size={21} />
+          {unseenCount > 0 && <span className="sc-badge">{unseenCount}</span>}
         </button>
+        <button className="sc-round" aria-label="More" onClick={() => navigate('/explore')}><Dots /></button>
       </header>
 
-      <section className="sc-section" aria-label="Friends">
-        <div className="sc-section-head"><h2>Friends</h2></div>
+      <section className="sc-block" aria-label="My stories">
+        <h2 className="sc-h2">My Stories</h2>
         <div className="sc-ring-row">
-          <button className="sc-ring-item" onClick={() => navigate('/upload?story=1')}>
-            <span className="sc-ring none">
-              <span className="sc-avatar own"><Icon name="camera" size={24} /></span>
-              <span className="sc-plus"><Icon name="plus" size={13} /></span>
+          <button className="sc-story-item" onClick={() => navigate('/upload?story=1')}>
+            <span className="sc-story-ring none">
+              <span className="sc-avatar sc-own-avatar">
+                {me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
+              </span>
+              <span className="sc-plus"><Icon name="plus" size={14} /></span>
             </span>
-            <span className="sc-ring-name">Your story</span>
+            <span className="sc-story-name">My Story</span>
           </button>
+          <span className="sc-divider" aria-hidden="true" />
           {loading && <p className="sc-state">Loading stories…</p>}
-          {!loading && friends.map((group) => (
-            <button className="sc-ring-item" key={group.user.id} onClick={() => openStories(group)}>
-              <span className="sc-ring unseen"><Avatar user={group.user} /></span>
-              <span className="sc-ring-name">{nameOf(group.user)}</span>
+          {!loading && rail.map((group) => (
+            <button className="sc-story-item" key={group.user.id} onClick={() => openStories(group)}>
+              <span className={`sc-story-ring ${group.unseen ? 'unseen' : 'seen'}`}><Avatar user={group.user} /></span>
+              <span className="sc-story-name">{nameOf(group.user)}</span>
+              {group.user.username && <span className="sc-story-sub">@{group.user.username}</span>}
             </button>
           ))}
         </div>
@@ -133,17 +149,28 @@ export default function Stories() {
         )}
       </section>
 
-      {everyone.length > 0 && (
-        <section className="sc-section" aria-label="Discover">
-          <div className="sc-section-head"><h2>Discover</h2></div>
+      {rail.length > 0 && (
+        <section className="sc-block" aria-label="Discover">
+          <h2 className="sc-h2">Discover <Icon name="chevron-right" size={20} /></h2>
           <div className="sc-card-row">
-            {(discover.length ? discover : everyone).map((group) => (
+            {rail.map((group) => (
               <button className="sc-card" key={group.user.id} onClick={() => openStories(group)}>
                 {group.user.avatarUrl
                   ? <img className="sc-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
                   : <span className="sc-card-img sc-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
                 <span className="sc-card-shade" />
                 <span className="sc-card-name">{nameOf(group.user)}</span>
+              </button>
+            ))}
+          </div>
+          <div className="sc-big-grid">
+            {rail.map((group) => (
+              <button className="sc-big" key={`big-${group.user.id}`} onClick={() => openStories(group)}>
+                {group.user.avatarUrl
+                  ? <img className="sc-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
+                  : <span className="sc-card-img sc-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
+                <span className="sc-card-shade" />
+                <span className="sc-big-who"><Avatar user={group.user} /><span>{nameOf(group.user)}</span></span>
               </button>
             ))}
           </div>
