@@ -6,6 +6,16 @@ import { toast } from '../toast.js';
 import { mediaUrl, postShareUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
+
+// Sound preference is shared by every video in the feed, like TikTok.
+let feedSoundOn = true;
+
+// Starts playback with the shared sound setting; if the browser blocks sound, play muted.
+function playVideo(video) {
+  video.muted = !feedSoundOn;
+  const attempt = video.play();
+  if (attempt && attempt.catch) attempt.catch(() => { video.muted = true; video.play().catch(() => {}); });
+}
 import Icon from './Icon.jsx';
 import ShareOptions from './ShareOptions.jsx';
 
@@ -85,6 +95,11 @@ function CommentsSheet({ post, onClose }) {
 export default function PostCard({ post, active }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const activeRef = useRef(false);
+  const viewerId = useAppStore((s) => s.user?.id);
+  const [soundOn, setSoundOn] = useState(feedSoundOn);
+  const [paused, setPaused] = useState(false);
+  const [flash, setFlash] = useState(null);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
   const pressTimer = useRef(null);
@@ -104,6 +119,57 @@ export default function PostCard({ post, active }) {
   const src = mediaUrl(post.mediaUrl);
   const poster = mediaUrl(post.thumbUrl) || undefined;
 
+  // Pause when the app is hidden (closed or switched away) and resume when it is shown again.
+  useEffect(() => {
+    let resumeOnShow = false;
+    function onVisibility() {
+      const video = videoRef.current;
+      if (!video) return;
+      if (document.hidden) {
+        resumeOnShow = !video.paused;
+        video.pause();
+      } else if (resumeOnShow && activeRef.current) {
+        resumeOnShow = false;
+        playVideo(video);
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  function toggleSound() {
+    feedSoundOn = !feedSoundOn;
+    setSoundOn(feedSoundOn);
+    if (videoRef.current) videoRef.current.muted = !feedSoundOn;
+  }
+
+  function flashIcon(kind) {
+    const key = Date.now();
+    setFlash({ kind, key });
+    setTimeout(() => setFlash((current) => (current && current.key === key ? null : current)), 600);
+  }
+
+  // Left and right thirds skip 10 seconds; the middle toggles play and pause.
+  function onMediaTap(event) {
+    const video = videoRef.current;
+    if (!video) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    if (x < 0.3) {
+      video.currentTime = Math.max(0, video.currentTime - 10);
+      flashIcon('back');
+    } else if (x > 0.7) {
+      video.currentTime = Math.min(Number(video.duration) || Infinity, video.currentTime + 10);
+      flashIcon('forward');
+    } else if (video.paused) {
+      playVideo(video);
+      flashIcon('play');
+    } else {
+      video.pause();
+      flashIcon('pause');
+    }
+  }
+
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/engagement`).then((r) => {
@@ -118,8 +184,9 @@ export default function PostCard({ post, active }) {
       api(`/v1/posts/${post.id}/view`, { method: 'POST' }).catch(() => {});
     }
     const video = videoRef.current;
+    activeRef.current = active;
     if (!video) return;
-    if (active) video.play().catch(() => {}); else video.pause();
+    if (active) playVideo(video); else video.pause();
     return () => {
       // Send a single watch-time sample when the viewer leaves this post.
       const duration = Number(video.duration);
@@ -208,8 +275,10 @@ export default function PostCard({ post, active }) {
     setShowMenu(true);
   }
   return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
-    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
+    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} />
       : <img src={src} alt="" loading="lazy" />}
+    {post.kind === 'video' && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
+    {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause' }[flash.kind]} size={34} /></span>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
@@ -223,6 +292,7 @@ export default function PostCard({ post, active }) {
         <Icon name="repeat" /><span>{reposted ? 'Reposted' : 'Repost'}</span>{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
       </button>
       <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /><span>Gift</span></button>
+      {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /><span>{soundOn ? 'Sound' : 'Muted'}</span></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span><span>More</span></button>
     </aside>
     <div className="info">
@@ -234,7 +304,7 @@ export default function PostCard({ post, active }) {
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
       </> : <>
         <div className="meta-row">{formatCount(post.viewCount)} views</div>
-        <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+        {post.author?.isFollowing === false && post.author?.id !== viewerId && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>}
       </>}
     </div>
     {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>

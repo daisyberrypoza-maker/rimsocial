@@ -144,4 +144,20 @@ async function fanOutPost(post, followerIds) {
   }
 }
 
-module.exports = { pagePosts, getDiscoverPage, getFollowingPage, fanOutPost, clampLimit, authorInclude };
+// Tells the viewer, for each post author, whether they already follow that author.
+async function markFollowing(result, viewerId) {
+  const authorIds = [...new Set(result.items.map((item) => item.author?.id).filter(Boolean))];
+  if (!authorIds.length) return result;
+  const rows = await Follow.findAll({
+    where: { followerId: viewerId, followeeId: { [Op.in]: authorIds } }, attributes: ['followeeId'], raw: true,
+  });
+  const followed = new Set(rows.map((row) => row.followeeId));
+  return {
+    ...result,
+    items: result.items.map((item) => (item.author
+      ? { ...item, author: { ...item.author, isFollowing: followed.has(item.author.id) } }
+      : item)),
+  };
+}
+
+module.exports = { pagePosts, getDiscoverPage, getFollowingPage, fanOutPost, clampLimit, authorInclude, markFollowing };
