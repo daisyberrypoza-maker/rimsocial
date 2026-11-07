@@ -71,14 +71,15 @@ export default function Explore() {
     finally { setRefreshing(false); }
   }
 
-  async function search(e) {
+  function search(e) {
     e?.preventDefault();
     const q = query.trim();
-    if (!q) { setResults(null); return; }
-    setSearching(true);
-    try { setResults(await api(`/v1/search?q=${encodeURIComponent(q)}&type=${searchType}`)); }
-    catch (err) { toast(err.message); }
-    finally { setSearching(false); }
+    if (!q) {
+      setResults(null);
+      navigate(`${location.pathname}?search=1`, { replace: true });
+      return;
+    }
+    navigate(`${location.pathname}?search=1&q=${encodeURIComponent(q)}&type=${searchType}`, { replace: true });
   }
 
   async function toggleFollow(person) {
@@ -101,16 +102,23 @@ export default function Explore() {
   }
 
   function searchHashtag(tag) {
-    setQuery(`#${tag}`);
+    const value = `#${tag}`;
+    setQuery(value);
     setSearchType('hashtags');
-    setTimeout(() => api(`/v1/search?q=${encodeURIComponent(`#${tag}`)}&type=hashtags`).then(setResults).catch((e) => toast(e.message)), 0);
+    navigate(`${location.pathname}?search=1&q=${encodeURIComponent(value)}&type=hashtags`, { replace: true });
   }
 
   useEffect(() => {
     const initial = searchParams.get('q');
-    if (!initial) return;
-    const type = initial.startsWith('#') ? 'hashtags' : 'all';
-    setQuery(initial); setSearchType(type);
+    if (!initial) {
+      setQuery('');
+      setSearchType('all');
+      setResults(null);
+      return;
+    }
+    const type = searchParams.get('type') || (initial.startsWith('#') ? 'hashtags' : 'all');
+    setQuery(initial);
+    setSearchType(type);
     api(`/v1/search?q=${encodeURIComponent(initial)}&type=${type}`).then(setResults).catch((e) => toast(e.message));
   }, [searchParams]);
 
@@ -127,7 +135,7 @@ export default function Explore() {
         </form>
       </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
-        {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{label}</button>)}
+        {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) navigate(`${location.pathname}?search=1&q=${encodeURIComponent(query.trim())}&type=${t}`, { replace: true }); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('comedy')}>Comedy</button>
       </div>}
