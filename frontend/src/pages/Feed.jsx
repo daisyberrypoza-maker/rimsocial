@@ -3,7 +3,6 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
-import StoryRail from '../components/StoryRail.jsx';
 
 const STALE_AFTER_MS = 60 * 1000;
 const WINDOW = 1; // render the current post and one on each side
@@ -67,7 +66,6 @@ export default function Feed({ tab }) {
 
   return (
     <>
-      {tab === 'discover' && <StoryRail />}
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
         {refreshing && <div className="feed-refresh-indicator"><span className="refresh-spinner" /> Refreshing</div>}
         {items.map((p, i) =>
