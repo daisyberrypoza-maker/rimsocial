@@ -1,4 +1,15 @@
 const router = require('express').Router();
+
+// Post-notification bell state, read with SQL so the app works before migration 025 adds the column
+async function readNotify(followerId, followeeId) {
+  try {
+    const [rows] = await sequelize.query(
+      'SELECT notifyPosts FROM follows WHERE followerId = :followerId AND followeeId = :followeeId',
+      { replacements: { followerId, followeeId } },
+    );
+    return Boolean(rows[0] && rows[0].notifyPosts);
+  } catch { return false; }
+}
 const { Op } = require('sequelize');
 const { sequelize, User, Post, Repost, Follow, UserBlock } = require('../db');
 const { requireAuth } = require('../middleware/auth');
@@ -184,7 +195,7 @@ router.get('/:username', requireAuth, async (req, res, next) => {
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
       Follow.count({ where: { followerId: user.id } }),
     ]);
-    res.json({ ...user.toJSON(), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow && follow.notifyPosts), isMe: user.id === req.user.id });
+    res.json({ ...user.toJSON(), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id });
   } catch (e) { next(e); }
 });
 
@@ -296,10 +307,17 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
 router.put('/:id/follow/notify', requireAuth, async (req, res, next) => {
   try {
     const enabled = Boolean(req.body && req.body.enabled);
-    if (!Follow.rawAttributes.notifyPosts) throw httpError(503, 'Post notifications are not available yet on this server');
     const follow = await Follow.findOne({ where: { followerId: req.user.id, followeeId: req.params.id } });
     if (!follow) throw httpError(409, 'Follow this account to turn on notifications');
-    await follow.update({ notifyPosts: enabled });
+    try {
+      await sequelize.query(
+        'UPDATE follows SET notifyPosts = :enabled WHERE followerId = :followerId AND followeeId = :followeeId',
+        { replacements: { enabled: enabled ? 1 : 0, followerId: req.user.id, followeeId: req.params.id } },
+      );
+    } catch (err) {
+      if (/notifyPosts/.test(err.message)) throw httpError(503, 'Post notifications are not available yet on this server');
+      throw err;
+    }
     res.json({ isNotifying: enabled });
   } catch (e) { next(e); }
 });
