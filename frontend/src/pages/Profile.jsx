@@ -27,7 +27,7 @@ export default function Profile() {
   const posts = profile ? feedPosts.filter((p) => (p.author?.id ?? profile.id) === profile.id) : [];
   const tagList = [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))];
 
-  const [tab, setTab] = useState('stories');
+  const [tab, setTab] = useState('posts');
   const [reposts, setReposts] = useState([]);
   const [repostsLoading, setRepostsLoading] = useState(false);
   const [stories, setStories] = useState([]);
@@ -266,54 +266,56 @@ export default function Profile() {
         <button className="sc-compact-back" aria-label="Back" onClick={() => navigate(-1)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <span className="sc-compact-name">{profile.displayName || profile.username}</span>
       </div>
-      <header className="sc-hero">
-        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.coverUrl ? `url(${mediaUrl(profile.coverUrl)})` : 'linear-gradient(180deg, #252525 0%, #181818 70%, #050505 100%)' }} />
-        <span className="sc-hero-shade" aria-hidden="true" />
-        <div className="sc-hero-top">
-          <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="chevron-down" size={24} /></button>
-          <div className="sc-hero-actions">
-            {profile.isMe ? (
-              <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
-            ) : (
-              <>
-                <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
-                <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
-              </>
-            )}
+      <header className="pf-hero">
+        <div className="pf-cover" aria-hidden="true" style={{ backgroundImage: (profile.coverUrl || profile.avatarUrl) ? `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` : 'none' }} />
+        <span className="pf-shade" aria-hidden="true" />
+        <div className="pf-top">
+          <button type="button" className="pf-round" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
+          <div className="pf-top-right">
+            <button type="button" className="pf-round" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
             {profile.isMe
-              ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
-              : <button className="sc-circle" aria-label="More options" onClick={() => setOptionsOpen(true)}><span className="sc-dots" aria-hidden="true">•••</span></button>}
+              ? <button type="button" className="pf-round" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
+              : <button type="button" className="pf-round" aria-label="More options" onClick={() => setOptionsOpen(true)}><span aria-hidden="true">•••</span></button>}
           </div>
         </div>
-        <div className="sc-hero-id">
-          <div className="sc-hero-avatar">
-            <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={76} ring />
+        <div className="pf-id">
+          <div className="pf-avatar">
+            <button type="button" className="pf-avatar-btn" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
+              <Avatar user={profile} size={92} ring />
             </button>
-            {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
+            {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
-          <div className="sc-hero-text">
-            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isCreator && <span className="sc-verified" aria-label="Verified">★</span>}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
-            <p className="sc-handle">@{profile.username} · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
+          <div className="pf-name-block">
+            <h2 className="pf-name">
+              <span>{profile.displayName || profile.username}</span>
+              {profile.isCreator && <span className="pf-star" aria-label="Verified">★</span>}
+              {profile.isMe && <button type="button" className="pf-chev" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}
+            </h2>
+            <p className="pf-handle">{profile.username}</p>
+            <p className="pf-sub"><button type="button" className="pf-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
           </div>
         </div>
-        <div className="sc-chips">
-          {profile.country && <span className="sc-chip"><Icon name="map-pin" size={15} />{profile.country}</span>}
-          {!profile.isMe && <button type="button" className="sc-chip" onClick={() => navigate(`/chat/${profile.id}`)}><Icon name="mail" size={15} />Contact</button>}
-        </div>
-        {profile.bio && <p className="sc-bio">{profile.bio}</p>}
         {profile.isMe ? (
-          <div className="sc-seg-row">
-            <button className="sc-seg on">My Account</button>
-            <button className="sc-seg" onClick={() => navigate('/u/' + profile.username)}>Public Profile</button>
+          <div className="pf-actions">
+            <button type="button" className="pf-btn pf-btn-on">My Account</button>
+            <button type="button" className="pf-btn" onClick={() => navigate('/u/' + profile.username)}>Public Profile</button>
           </div>
         ) : (
-          <div className="sc-add-row">
-            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Following' : 'Follow'}</button>
-            <button className="sc-circle sc-more-down" aria-label="More options" onClick={shareProfile}><Icon name="chevron-down" size={22} /></button>
+          <div className="pf-actions">
+            <button type="button" className={`pf-btn pf-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
+            <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
           </div>
         )}
       </header>
+      <div className="pf-body">
+        {profile.bio && <p className="pf-bio">{profile.bio}</p>}
+        {(profile.country || !profile.isMe) && (
+          <div className="pf-chips">
+            {profile.country && <span className="pf-chip"><Icon name="map-pin" size={15} />{profile.country}</span>}
+            {!profile.isMe && <button type="button" className="pf-chip" onClick={() => navigate(`/chat/${profile.id}`)}><Icon name="mail" size={15} />Contact</button>}
+          </div>
+        )}
+      </div>
       <section className="sc-profile-stats" aria-label="Profile statistics">
         <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
           <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
@@ -422,10 +424,10 @@ export default function Profile() {
         </section>
       </div>, document.body)}
 
-      <nav className="sc-tabs" role="tablist" aria-label="Profile content">
-        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
-        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
+      <nav className="pf-tabs" role="tablist" aria-label="Profile content">
+        <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
+        <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
+        <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
       </nav>
 
       {tab === 'posts' ? (
