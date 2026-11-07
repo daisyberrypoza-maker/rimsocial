@@ -14,7 +14,13 @@ let feedSoundOn = true;
 function playVideo(video) {
   video.muted = !feedSoundOn;
   const attempt = video.play();
-  if (attempt && attempt.catch) attempt.catch(() => { video.muted = true; video.play().catch(() => {}); });
+  if (attempt && attempt.catch) attempt.catch(() => {
+    video.muted = true;
+    video.play().catch(() => {});
+    // Browsers only allow sound after a tap on the page, so turn it on at the first tap anywhere.
+    const unmute = () => { if (!feedSoundOn) return; video.muted = false; video.play().catch(() => {}); };
+    window.addEventListener('pointerdown', unmute, { once: true, capture: true });
+  });
 }
 import Icon from './Icon.jsx';
 import ShareOptions from './ShareOptions.jsx';

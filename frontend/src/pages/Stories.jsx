@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
@@ -29,6 +29,10 @@ export default function Stories() {
   const [items, setItems] = useState([]);
   const [index, setIndex] = useState(0);
   const [storyLoading, setStoryLoading] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [flash, setFlash] = useState(null);
+  const videoRef = useRef(null);
 
   const loadRail = useCallback(async () => {
     setLoading(true);
@@ -90,6 +94,44 @@ export default function Stories() {
   }
 
   const current = items[index];
+
+  // Start each new story video; if the browser blocks sound, continue muted.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || current?.kind !== 'video') return;
+    setVideoProgress(0);
+    v.play().catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}); });
+  }, [current?.id, current?.kind]);
+
+  function showFlash(icon) {
+    const key = Date.now();
+    setFlash({ icon, key });
+    setTimeout(() => setFlash((c) => (c && c.key === key ? null : c)), 600);
+  }
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play().catch(() => {}); showFlash('pause-off'); } else { v.pause(); showFlash('pause'); }
+  }
+  function skip(seconds) {
+    const v = videoRef.current;
+    if (!v) return;
+    const max = Number.isFinite(v.duration) ? v.duration : Infinity;
+    v.currentTime = Math.min(max, Math.max(0, v.currentTime + seconds));
+    showFlash(seconds < 0 ? 'skip-back' : 'skip-forward');
+  }
+  // Videos: left/right skip 5 seconds, middle plays or pauses. Photos: left/right change story.
+  function onStageTap(event) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    if (current?.kind === 'video') {
+      if (x < 0.3) skip(-5); else if (x > 0.7) skip(5); else togglePlay();
+    } else if (x < 0.34) moveStory(-1); else if (x > 0.66) moveStory(1);
+  }
+  function onVideoTime(event) {
+    const d = event.currentTarget.duration;
+    if (d > 0) setVideoProgress(event.currentTarget.currentTime / d);
+  }
   const myGroup = rail.find((group) => group.user?.id === me?.id);
   const others = rail.filter((group) => group.user?.id !== me?.id);
 
@@ -179,16 +221,17 @@ export default function Stories() {
                   <strong>{nameOf(activeUser)}</strong>
                   <small>{current.createdAt ? new Date(current.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}</small>
                 </div>
+                {current.kind === 'video' && <button className="sc-viewer-icon" aria-label={muted ? 'Turn sound on' : 'Mute'} onClick={() => setMuted((m) => !m)}><Icon name={muted ? 'volume-x' : 'volume-2'} size={20} /></button>}
                 <button className="sc-viewer-icon" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={20} /></button>
                 <button className="sc-viewer-icon" aria-label="Close" onClick={() => setActiveUser(null)}><Icon name="x" size={22} /></button>
               </header>
-              <div className="sc-media">
+              <div className="sc-media" onClick={onStageTap}>
                 {current.kind === 'video'
-                  ? <video src={mediaUrl(current.mediaUrl)} controls autoPlay playsInline />
+                  ? <video key={current.id} ref={videoRef} src={mediaUrl(current.mediaUrl)} autoPlay playsInline muted={muted} onTimeUpdate={onVideoTime} onEnded={() => moveStory(1)} />
                   : <img src={mediaUrl(current.mediaUrl)} alt={current.caption || 'Story'} />}
                 {current.caption && <p className="sc-caption">{current.caption}</p>}
-                <button className="sc-hit sc-hit-prev" aria-label="Previous story" onClick={() => moveStory(-1)} />
-                <button className="sc-hit sc-hit-next" aria-label="Next story" onClick={() => moveStory(1)} />
+                {current.kind === 'video' && <div className="sc-video-progress"><span style={{ width: `${videoProgress * 100}%` }} /></div>}
+                {flash && <span key={flash.key} className="sc-flash" aria-hidden="true"><Icon name={flash.icon === 'pause-off' ? 'play' : flash.icon} size={34} /></span>}
               </div>
               <footer className="sc-reply">
                 <span className="sc-reply-field">Reply to {nameOf(activeUser)}…</span>

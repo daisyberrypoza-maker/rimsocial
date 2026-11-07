@@ -3767,6 +3767,15 @@ html, body, #root { min-height:100%; }
 .post .post-flash { position:absolute; left:50%; top:50%; z-index:3; width:72px; height:72px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; display:grid; place-items:center; pointer-events:none; transform:translate(-50%,-50%); animation:post-flash-pop .6s ease-out forwards; }
 @keyframes post-flash-pop { 0% { opacity:1; transform:translate(-50%,-50%) scale(.8); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) scale(1.15); } }
 
+/* Global button rule gives every button a pill shape; reset the ones that are not pills */
+.post .post-tap-layer, .sc-hit, .sc-tile, button.sc-tile { border-radius:0 !important; background:transparent !important; padding:0 !important; }
+.sc-tile { border-radius:10px !important; background:#111 !important; }
+.post .post-tap-layer { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; }
+.sc-viewer .sc-media img, .sc-viewer .sc-media video { object-fit:cover; }
+.sc-viewer .sc-media { cursor:pointer; touch-action:manipulation; }
+.sc-viewer .sc-video-progress { position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.35); z-index:2; }
+.sc-viewer .sc-video-progress > span { display:block; height:100%; background:#fff; }
+.sc-viewer .sc-flash { position:absolute; left:50%; top:50%; z-index:3; width:72px; height:72px; border-radius:50% !important; background:rgba(0,0,0,.45); color:#fff; display:grid; place-items:center; pointer-events:none; transform:translate(-50%,-50%); }
 /* Video progress bar along the bottom edge, like TikTok */
 .post .post-progress { position:absolute; left:0; right:0; bottom:0; height:22px; z-index:4; display:flex; align-items:flex-end; cursor:pointer; touch-action:none; }
 .post .post-progress::before { content:''; position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(255,255,255,.35); }
