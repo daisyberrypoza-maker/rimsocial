@@ -4358,3 +4358,162 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-root .sv-reply input::placeholder { color:#6b6b6b; }
 .sv-root .sv-react { width:30px; height:30px; font-size:22px; }
 .sv-root .sv-send { width:60px !important; height:48px !important; border-radius:999px !important; background:rgba(40,40,40,.8) !important; color:#fff !important; }
+
+
+/* Rimlight profile layout polish — keep the existing profile and navigation intact. */
+.sc-profile .sc-tabs {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  width:100%;
+  overflow:visible !important;
+  gap:0 !important;
+  padding:0 4px;
+  box-sizing:border-box;
+  background:#fff !important;
+  border-bottom:1px solid #e8e8ec;
+}
+.sc-profile .sc-tabs button {
+  display:flex !important;
+  min-width:0 !important;
+  width:100%;
+  flex:initial !important;
+  align-items:center;
+  justify-content:center;
+  gap:5px !important;
+  padding:0 2px !important;
+  height:50px !important;
+  font-size:clamp(11px,3.5vw,14px) !important;
+  line-height:1;
+  letter-spacing:-.15px;
+  white-space:nowrap;
+}
+.sc-profile .sc-tabs button svg {
+  width:18px !important;
+  height:18px !important;
+  flex:0 0 18px;
+}
+.sc-profile .sc-tabs button.on::after {
+  left:14% !important;
+  right:14% !important;
+  bottom:0 !important;
+  height:3px !important;
+  border-radius:3px 3px 0 0 !important;
+  background:#171717 !important;
+}
+.sc-profile .sc-watch {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:14px 16px 12px !important;
+  margin:0;
+  min-height:0;
+  box-sizing:border-box;
+}
+.sc-profile .sc-watch .sc-pill {
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:9px !important;
+  width:auto;
+  max-width:100%;
+  min-height:44px !important;
+  height:44px;
+  padding:0 18px !important;
+  border:1px solid #e7e7eb !important;
+  border-radius:999px !important;
+  background:#f3f3f6 !important;
+  color:#17171a !important;
+  font-size:14px !important;
+  line-height:1;
+  font-weight:700 !important;
+  white-space:nowrap;
+  box-shadow:none !important;
+}
+.sc-profile .sc-watch .sc-pill svg {
+  width:17px !important;
+  height:17px !important;
+  flex:0 0 17px;
+}
+.sc-profile .sc-grid {
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:3px !important;
+  align-items:start;
+  padding:0 3px 110px;
+  box-sizing:border-box;
+}
+.sc-profile .sc-tile {
+  width:100% !important;
+  min-width:0;
+  aspect-ratio:9 / 16;
+  border-radius:10px !important;
+  overflow:hidden;
+  background:#e9e9ed !important;
+}
+.sc-profile .sc-tile video,
+.sc-profile .sc-tile img {
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+.sc-profile .sc-tile-count {
+  left:8px;
+  bottom:8px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 6px;
+  border-radius:999px;
+  background:rgba(0,0,0,.48);
+  font-size:12px;
+  line-height:1.2;
+  text-shadow:none;
+}
+.sc-profile .sc-tile-delete {
+  top:7px;
+  right:7px;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  background:rgba(0,0,0,.62) !important;
+}
+.sc-profile .sc-empty-grid {
+  grid-column:1 / -1;
+  min-height:180px !important;
+  margin:0 3px;
+  padding:24px 16px;
+  border-radius:12px;
+  background:#f7f7f9 !important;
+  background-image:none !important;
+  color:#777 !important;
+  font-size:14px !important;
+}
+.sc-profile .sc-empty-grid strong {
+  background:transparent !important;
+  color:#777 !important;
+}
+.sc-profile .sc-post-float {
+  width:min(420px,calc(100vw - 36px));
+  min-height:58px;
+  height:58px;
+  gap:12px;
+  padding:0 17px 0 9px;
+  font-size:16px;
+  box-shadow:0 8px 28px rgba(0,0,0,.14);
+}
+.sc-profile .sc-post-float-icon {
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+}
+@media (max-width:380px) {
+  .sc-profile .sc-tabs { padding:0 2px; }
+  .sc-profile .sc-tabs button { gap:3px !important; font-size:11px !important; }
+  .sc-profile .sc-tabs button svg { width:16px !important; height:16px !important; flex-basis:16px; }
+  .sc-profile .sc-watch { padding:12px 12px 10px !important; }
+  .sc-profile .sc-watch .sc-pill { min-height:42px !important; height:42px; padding:0 14px !important; font-size:13px !important; }
+  .sc-profile .sc-grid { gap:2px !important; padding-left:2px; padding-right:2px; }
+  .sc-profile .sc-tile { border-radius:7px !important; }
+}
