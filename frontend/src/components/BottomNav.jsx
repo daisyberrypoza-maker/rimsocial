@@ -19,17 +19,17 @@ function RimlightIcon() {
   return <svg {...ICON_PROPS} fill="currentColor" stroke="none"><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
 }
 
-// Chat, Lenses, Add post, Stories, Rimlight: the reference style, with Add post in the centre.
+// Stories, Chat, Add post, Explore, Rimlight: Add post stays in the centre.
 export default function BottomNav() {
   // The bar turns dark on the Rimlight (home) screen only.
   const { pathname } = useLocation();
   const dark = pathname === '/';
   return (
     <nav className={dark ? 'bottomnav bottomnav-dark' : 'bottomnav'} aria-label="Main navigation">
-      <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
-      <NavLink to="/explore" aria-label="Lenses"><LensesIcon /><span>Lenses</span></NavLink>
-      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
       <NavLink to="/stories" aria-label="Stories"><StoriesIcon /><span>Stories</span></NavLink>
+      <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
+      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
+      <NavLink to="/explore" aria-label="Explore"><LensesIcon /><span>Explore</span></NavLink>
       <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /><span>Rimlight</span></NavLink>
     </nav>
   );
