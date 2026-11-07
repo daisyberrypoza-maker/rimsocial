@@ -340,6 +340,16 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     } catch (e) { toast(e.message); }
   }
 
+  function shareLocation() {
+    if (!navigator.geolocation) { toast('Location sharing is not supported by this device'); return; }
+    toast('Requesting location permission…');
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => sendReply(`📍 My location: https://maps.google.com/?q=${coords.latitude},${coords.longitude}`),
+      () => toast('Location permission was denied or location is unavailable'),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
   async function copyProfileLink() {
     const link = `${window.location.origin}/u/${group.user.username}`;
     try {
@@ -480,7 +490,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               </form>
               <button type="button" aria-label="Reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="smile" size={27} /></button>
               <button type="button" aria-label="Stickers" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="images" size={27} /></button>
-              <button type="button" aria-label="Location" onClick={() => toast('Location sharing is not available yet')}><Icon name="map-pin" size={27} /></button>
+              <button type="button" aria-label="Share location" onClick={shareLocation}><Icon name="map-pin" size={27} /></button>
             </div>
           </div>
           {reactionPickerOpen && <div className="sv-reaction-picker" onClick={(e) => e.stopPropagation()} aria-label="Choose a reaction">
