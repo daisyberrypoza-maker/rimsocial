@@ -4062,3 +4062,24 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .dm-input input { flex:1; min-width:0; border:0; outline:0; font-size:15px; color:#111; background:transparent; padding:8px 0; }
 .dm-page .dm-input button, .dm-convo .dm-input button { width:38px !important; height:38px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:#3797f0 !important; color:#fff !important; display:grid; place-items:center; }
 .dm-input button:disabled { opacity:.4; }
+
+
+/* Rimlight feed viewport correction: the fixed bottom navigation overlays the video;
+   it must not also consume layout height through feed padding. */
+.app > .feed {
+  padding-bottom: 0 !important;
+  min-height: 0 !important;
+  height: 100%;
+}
+.app > .feed > .post,
+.app > .feed > .slot {
+  height: 100%;
+  min-height: 100%;
+}
+/* Anchor the engagement rail and caption just above the actual bottom tab bar. */
+.app > .feed > .post > .rail {
+  bottom: calc(var(--nav-height, 58px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+}
+.app > .feed > .post > .info {
+  bottom: calc(var(--nav-height, 58px) + env(safe-area-inset-bottom, 0px) + 10px) !important;
+}
