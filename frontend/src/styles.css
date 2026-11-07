@@ -4776,3 +4776,43 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   .sv-share-sheet { width:calc(100% - 20px) !important; max-height:52dvh; }
   .sv-share-sheet button.sv-share-row { min-height:54px !important; padding:12px 16px !important; font-size:16px !important; }
 }
+
+
+/* Story reply controls: reply field, reactions, sticker tray and send button. */
+.sv-root .sv-reply-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.sv-root .sv-reply-row > .sv-reply {
+  flex:1 1 auto;
+  min-width:0;
+}
+.sv-root .sv-sticker {
+  flex:0 0 40px;
+  width:40px !important;
+  height:48px !important;
+  display:grid;
+  place-items:center;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+.sv-reaction-picker-footer {
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 104px);
+  z-index:425;
+  width:auto;
+  max-width:none;
+}
+@media (max-width:380px) {
+  .sv-root .sv-reply-row { gap:5px; }
+  .sv-root .sv-sticker { flex-basis:34px; width:34px !important; }
+  .sv-reaction-picker-footer { left:8px; right:8px; bottom:calc(env(safe-area-inset-bottom,0px) + 98px); }
+}
