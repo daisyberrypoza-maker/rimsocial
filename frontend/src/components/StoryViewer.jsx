@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 import Avatar from './Avatar.jsx';
@@ -10,6 +11,7 @@ import ActionSheet from './ActionSheet.jsx';
 const PHOTO_MS = 5000;
 const TICK_MS = 100;
 const SKIP_SECONDS = 5;
+const SWIPE_PX = 60;
 
 // Full-screen story player. groups: [{ user }].
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
@@ -25,6 +27,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [resharing, setResharing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const me = useAppStore((st) => st.user);
+  const navigate = useNavigate();
+  const swipeRef = useRef(null);
+  const swipedRef = useRef(false);
   const videoRef = useRef(null);
   const elapsedRef = useRef(0);
   const closeRef = useRef(onClose);
@@ -128,7 +133,25 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     v.currentTime = Math.min(max, Math.max(0, v.currentTime + seconds));
   }
 
+  // Swipe up from the lower half of the story opens that person's profile.
+  function onPointerDown(event) {
+    swipeRef.current = { x: event.clientX, y: event.clientY, startedLow: event.clientY > window.innerHeight / 2 };
+  }
+
+  function onPointerUp(event) {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (start.startedLow && dy < -SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
+      swipedRef.current = true;
+      navigate(`/u/${group.user.username}`);
+    }
+  }
+
   function onStageTap(event) {
+    if (swipedRef.current) { swipedRef.current = false; return; }
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     if (x < 0.33) prev();
@@ -164,7 +187,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   }
 
   return (
-    <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`}>
+    <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
           <div key={i} className="sv-bar"><i style={{ width: i < si ? '100%' : i === si ? `${Math.min(progress, 1) * 100}%` : '0%' }} /></div>
