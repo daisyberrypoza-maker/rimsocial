@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, DirectMessage } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -72,6 +72,7 @@ app.use('/v1/feed', require('./routes/feed'));
 app.use('/v1/stories', require('./routes/stories'));
 app.use('/v1/users', require('./routes/users'));
 app.use('/v1/activity', require('./routes/activity'));
+app.use('/v1/messages', require('./routes/messages'));
 app.use('/v1/search', require('./routes/search'));
 app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
@@ -122,6 +123,8 @@ async function start() {
   if (config.createDatabase) await ensureDatabaseExists();
   await sequelize.authenticate();
   if (config.syncDatabase) await sequelize.sync();
+  // Creates only the direct messages table when it is missing; safe to run in production.
+  await DirectMessage.sync();
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
   const userColumns = await qi.describeTable('users');
