@@ -10,7 +10,7 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 
 const KEY = 'explore';
-const PATH = '/v1/feed/discover';
+const PATH = '/v1/feed/explore';
 const STALE_AFTER_MS = 60 * 1000;
 
 export default function Explore() {
