@@ -83,6 +83,10 @@ export default function App() {
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/creator/earnings" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/creator/cashout" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/creator/matches" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
+        <Route path="/creator/grow" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
         <Route path="/business" element={<RequireAuth><BusinessHub /></RequireAuth>} />
         <Route path="/ads-sponsors" element={<RequireAuth><AdsSponsors /></RequireAuth>} />
         <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
