@@ -432,24 +432,42 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
       {shareOpen && (
         <div className="sv-share-backdrop" role="presentation" onClick={() => setShareOpen(false)}>
-          <div className="sv-share-reacts" onClick={(e) => e.stopPropagation()}>
-            {QUICK_REACTIONS.map((emoji) => (
-              <button key={emoji} type="button" aria-label={emoji === '❤️' ? (current?.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => { setShareOpen(false); onQuickReaction(emoji); }}>{emoji}</button>
-            ))}
+          <div className="sv-share-top" onClick={(e) => e.stopPropagation()}>
+            <p className="sv-share-note">{creatorName} can share your reply to their public Story.</p>
+            <div className="sv-share-reacts">
+              {QUICK_REACTIONS.map((emoji) => (
+                <button key={emoji} type="button" aria-label={emoji === '❤️' ? (current?.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => { setShareOpen(false); onQuickReaction(emoji); }}>{emoji}</button>
+              ))}
+            </div>
+            <div className="sv-share-chat">
+              <button type="button" className="sv-share-camera" aria-label="Open camera" onClick={() => { setShareOpen(false); navigate('/upload'); }}><Icon name="camera" size={24} /></button>
+              <form className="sv-share-chat-input" onSubmit={(e) => { e.preventDefault(); const value = e.currentTarget.elements.chat.value; setShareOpen(false); sendReply(value); }}>
+                <input name="chat" aria-label="Send a chat" placeholder="Send a chat" maxLength={2000} />
+              </form>
+              <button type="button" aria-label="Reactions" onClick={() => onQuickReaction('❤️')}><Icon name="smile" size={27} /></button>
+              <button type="button" aria-label="Stickers" onClick={() => toast('Stickers are coming soon')}><Icon name="images" size={27} /></button>
+              <button type="button" aria-label="Location" onClick={() => toast('Location sharing is not available yet')}><Icon name="map-pin" size={27} /></button>
+            </div>
           </div>
           <section className="sv-share-sheet" role="dialog" aria-label="Story options" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="sv-share-row" disabled={resharing} onClick={() => { setShareOpen(false); reshare(); }}>
-              <Icon name="repeat" size={22} /><span>Remix story</span>
-            </button>
-            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); toggleLike(false); }}>
-              <Icon name="heart" size={22} /><span>{current?.liked ? 'Unlike story' : 'Like story'}</span>
+              <span>Remix Snap</span>
             </button>
             <button type="button" className="sv-share-row danger" onClick={() => { setShareOpen(false); setReportOpen(true); }}>
-              <Icon name="shield" size={22} /><span>Report story</span>
+              <span>Report Snap</span>
             </button>
-            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); copyProfileLink(); }}>
-              <Icon name="link" size={22} /><span>Send profile link</span>
+            <button type="button" className="sv-share-row sv-send-snap" onClick={() => {
+              setShareOpen(false);
+              const url = `${window.location.origin}/u/${group.user.username}`;
+              if (navigator.share) navigator.share({ title: 'RimSocial Story', text: `View ${creatorName}'s story on RimSocial`, url }).catch(() => {});
+              else copyProfileLink();
+            }}>
+              <span>Send Snap</span><span className="sv-send-snap-icon"><Icon name="send" size={25} /></span>
             </button>
+          </section>
+          <section className="sv-lens-section" onClick={(e) => e.stopPropagation()}>
+            <h3>Lens</h3>
+            <div className="sv-lens-placeholder">Lenses will appear here</div>
           </section>
         </div>
       )}
