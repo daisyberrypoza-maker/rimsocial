@@ -26,6 +26,8 @@ import Recommended from './pages/Recommended.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 import ExploreWatch from './pages/ExploreWatch.jsx';
+import ConnectionFailed from './components/ConnectionFailed.jsx';
+import { useTabSwipe } from './lib/tabSwipe.js';
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -69,10 +71,24 @@ export default function App() {
   const immersive = IMMERSIVE_PATHS.includes(location.pathname) || profileWatch;
   const exploreWatch = location.pathname.startsWith('/explore/watch/');
   const showChrome = Boolean(token) && location.pathname !== '/login';
+  const offline = useAppStore((s) => s.offline);
+  const setOffline = useAppStore((s) => s.setOffline);
+  useTabSwipe(navigate, location.pathname, showChrome && !offline);
+
+  // Device connectivity: the Connection Failed screen replaces the content when the network is gone
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) setOffline(true);
+    const onOnline = () => setOffline(false);
+    const onOffline = () => setOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); };
+  }, [setOffline]);
 
   return (
     <div className="app">
       {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && offline ? <ConnectionFailed /> : (
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -101,6 +117,7 @@ export default function App() {
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      )}
       {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && <BottomNav />}
       <Toast />
     </div>
