@@ -116,7 +116,7 @@ export default function Explore() {
   return (
     <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
-      {peopleMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
+      {peopleMode && !searchMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => navigate(peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
@@ -142,7 +142,7 @@ export default function Explore() {
         {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3>{results.posts.map((p) => <button key={p.id} className="rim-search-post" onClick={() => navigate(`/p/${p.id}`)}><span className="rim-search-post-thumb">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</span><span className="rim-search-post-copy"><strong>@{p.author?.username || 'creator'}</strong><small>{p.caption || 'Post'} · {formatCount(p.viewCount)} views</small></span></button>)}</section>}
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
-        {recommendations.followBack.length > 0 && <section className="ig-section">
+        {peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
