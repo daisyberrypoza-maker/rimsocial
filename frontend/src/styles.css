@@ -4536,3 +4536,43 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 @media (max-width:380px) {
   .sc-profile .sc-tile { border-radius:0 !important; }
 }
+
+
+/* TikTok-style Rimlight viewing: temporarily clear overlays while the feed is moving. */
+.feed .post .rail,
+.feed .post .info,
+.feed .post .post-seek,
+.feed .post .shade,
+.feed .post .ai-content-label,
+.feed .post .sponsored-label {
+  transition:opacity 160ms ease, visibility 160ms ease;
+}
+.feed.is-scrolling .post .rail,
+.feed.is-scrolling .post .info,
+.feed.is-scrolling .post .post-seek,
+.feed.is-scrolling .post .shade,
+.feed.is-scrolling .post .ai-content-label,
+.feed.is-scrolling .post .sponsored-label {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+.profile-watch-page .profile-watch-back {
+  transition:opacity 160ms ease, visibility 160ms ease;
+}
+.profile-watch-page.is-scrolling .profile-watch-back {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed .post .rail,
+  .feed .post .info,
+  .feed .post .post-seek,
+  .feed .post .shade,
+  .feed .post .ai-content-label,
+  .feed .post .sponsored-label,
+  .profile-watch-page .profile-watch-back {
+    transition:none;
+  }
+}
