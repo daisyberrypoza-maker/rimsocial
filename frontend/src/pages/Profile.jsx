@@ -285,10 +285,10 @@ export default function Profile() {
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
-            <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            <p className="sc-handle">@{profile.username}</p>
+            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
+            <p className="sc-handle">@{profile.username}{profile.isMe && <> · {formatCount(profile.followerCount || 0)} Followers</>}</p>
             <div className="sc-inline-stats" aria-label="Followers">
-              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> followers</button>
+              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> Followers</button>
             </div>
             {profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}
             {!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
@@ -456,7 +456,7 @@ export default function Profile() {
               </button>
             ))}
           </div>
-          {!stories.length && <p className="sc-empty-note">No active stories. Stories disappear after 24 hours.</p>}
+          {!stories.length && <div className="sc-empty-grid" role="status"><strong>No stories yet</strong></div>}
           {viewing !== false && stories.length > 0 && (
             <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
           )}

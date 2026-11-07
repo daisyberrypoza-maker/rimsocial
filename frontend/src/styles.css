@@ -3727,3 +3727,10 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-hero-id { align-items:center !important; }
 .sc-profile .sc-hero-avatar { margin-top:0 !important; width:76px !important; height:76px !important; flex:0 0 76px !important; }
 .sc-profile .sc-hero-avatar .avatar, .sc-profile .sc-hero-avatar .avatar .inner { width:76px !important; height:76px !important; }
+
+/* ===== Profile marks from the Snapchat reference ===== */
+.sc-profile .sc-name { display:flex !important; align-items:center !important; gap:6px !important; }
+.sc-profile .sc-name-chevron { width:26px; height:26px; border:0 !important; background:transparent !important; color:#fff !important; display:grid; place-items:center; padding:0; cursor:pointer; }
+.sc-profile.is-me .sc-inline-stats { display:none !important; }
+.sc-profile .sc-empty-grid { position:relative; min-height:300px; display:flex; align-items:center; justify-content:center; background-color:#e6e6e6 !important; background-image:linear-gradient(to right, #fff 2px, transparent 2px), linear-gradient(to bottom, #fff 2px, transparent 2px) !important; background-size:33.33% 150px, 100% 150px !important; color:#111; font-size:17px; font-weight:600; }
+.sc-profile .sc-empty-grid strong { font-weight:600; background:#e6e6e6; padding:6px 12px; border-radius:8px; }
