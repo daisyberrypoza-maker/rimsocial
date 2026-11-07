@@ -78,6 +78,7 @@ const Repost = sequelize.define('Repost', {
 const Follow = sequelize.define('Follow', {
   followerId: { type: DataTypes.UUID, primaryKey: true },
   followeeId: { type: DataTypes.UUID, primaryKey: true },
+  notifyPosts: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 }, { tableName: 'follows', indexes: [{ fields: ['followeeId'] }] });
 
 // One row per viewer per story, so story view counts are not inflated

@@ -43,8 +43,7 @@ export default function Profile() {
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [storyNotifications, setStoryNotifications] = useState(false);
-  const [recommended, setRecommended] = useState(true);
+  const [notifyBusy, setNotifyBusy] = useState(false);
   const [compactHeader, setCompactHeader] = useState(false);
 
   useEffect(() => {
@@ -172,6 +171,18 @@ export default function Profile() {
   }
 
 
+  async function toggleNotify() {
+    if (!profile || profile.isMe) return;
+    if (!profile.isFollowing) return toast('Add this creator first to get new post notifications');
+    setNotifyBusy(true);
+    try {
+      const r = await api(`/v1/users/${profile.id}/follow/notify`, { method: 'PUT', body: { enabled: !profile.isNotifying } });
+      setProfile(username, { user: { ...profile, isNotifying: r.isNotifying } });
+      toast(r.isNotifying ? 'You will be notified when they post' : 'Post notifications off');
+    } catch (err) { toast(err.message); }
+    finally { setNotifyBusy(false); }
+  }
+
   async function toggleFollow() {
   if (!profile) return;
     setBusy(true);
@@ -179,7 +190,7 @@ export default function Profile() {
       const r = profile.isFollowing
         ? await api(`/v1/users/${profile.id}/follow`, { method: 'DELETE' })
         : await api(`/v1/users/${profile.id}/follow`, { method: 'POST' });
-      setProfile(username, { user: { ...profile, isFollowing: r.isFollowing, followerCount: r.followerCount } });
+      setProfile(username, { user: { ...profile, isFollowing: r.isFollowing, followerCount: r.followerCount, ...(r.isFollowing ? {} : { isNotifying: false }) } });
     } catch (err) {
       toast(err.message);
     } finally {
@@ -229,12 +240,15 @@ export default function Profile() {
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
           <div className="sc-hero-actions">
-            {profile.isMe && <button className="sc-circle" aria-label="Edit profile" onClick={() => setDrawerOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
-              <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+              <>
+                <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
+                <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+              </>
             )}
+            {profile.isMe && <button className="sc-circle" aria-label="Edit profile" onClick={() => setDrawerOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe
               ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
               : <button className="sc-circle" aria-label="More options" onClick={() => setOptionsOpen(true)}><span className="sc-dots" aria-hidden="true">•••</span></button>}
@@ -243,13 +257,13 @@ export default function Profile() {
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
             <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={100} ring />
+              <Avatar user={profile} size={84} ring />
             </button>
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            <p className="sc-handle">@{profile.username}</p>
+            {profile.isMe && <p className="sc-handle">@{profile.username}</p>}
             <div className="sc-inline-stats" aria-label="Followers">
               <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> followers</button>
             </div>
@@ -264,8 +278,7 @@ export default function Profile() {
           </div>
         ) : (
           <div className="sc-add-row">
-            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Following' : 'Follow'}</button>
-            <button className="sc-circle sc-more-down" aria-label="More options" onClick={shareProfile}><Icon name="chevron-down" size={22} /></button>
+            <button className={`sc-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
           </div>
         )}
       </header>
@@ -320,14 +333,13 @@ export default function Profile() {
         <section className="sc-options-sheet" role="dialog" aria-label={`Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
           <button className="sc-option danger" onClick={blockProfile}>Block</button>
           <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); toast('Direct chat is not available yet.'); }}>Chat</button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}>{profile.isFollowing ? 'Following' : 'Follow'}</button>
-          <button className="sc-option toggle-row" onClick={() => setStoryNotifications((v) => !v)}>Story Notifications <span className={`sc-switch${storyNotifications ? ' on' : ''}`} aria-checked={storyNotifications} role="switch" /></button>
-          <button className="sc-option toggle-row" onClick={() => setRecommended((v) => !v)}>Recommended <span className={`sc-switch${recommended ? ' on' : ''}`} aria-checked={recommended} role="switch" /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); if (navigator.share) shareProfile(); else { navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile link copied')).catch(() => toast('Unable to copy profile link')); } }}>Send Profile to… <Icon name="share" size={22} /></button>
+          <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
+          <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate('/recommended'); }}><span>Recommended</span><Icon name="chevron-right" size={18} /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); shareProfile(); }}><span>Send Profile to…</span><Icon name="send" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
+          <button className="sc-options-done" onClick={() => setOptionsOpen(false)}>Done</button>
         </section>
-        <button className="sc-options-done" onClick={() => setOptionsOpen(false)}>Done</button>
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
@@ -359,6 +371,7 @@ export default function Profile() {
         </section>
       </div>}
 
+      {profile.isMe && <button className="sc-post-float" onClick={() => navigate('/upload')}><span className="sc-post-float-icon"><Icon name="play" size={18} /></span><span>Post to Spotlight</span><Icon name="chevron-right" size={20} /></button>}
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
         <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}><Icon name="circle-play" size={18} />Stories</button>
         <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}><Icon name="clapperboard" size={18} />Rimlight</button>

@@ -47,7 +47,22 @@ router.get('/', async (req, res, next) => {
     const mentionedPosts = mentionPattern
       ? mentionCandidates.filter((post) => mentionPattern.test(post.caption || '') && !blockedIds.has(String(post.authorId)))
       : [];
-    if (!postIds.length && !incomingFollows.length && !mentionedPosts.length) return res.json({ items: [] });
+    const bellRows = await Follow.findAll({ where: { followerId: userId, notifyPosts: true }, attributes: ['followeeId'], raw: true });
+    const bellIds = bellRows.map((row) => String(row.followeeId));
+    const bellPosts = bellIds.length ? await Post.findAll({
+      where: {
+        authorId: bellIds,
+        status: 'live',
+        isStory: false,
+        visibility: 'public',
+        createdAt: { [Op.gte]: new Date(Date.now() - 14 * 24 * 3600 * 1000) },
+      },
+      attributes: ['id', 'authorId', 'caption', 'mediaUrl', 'kind', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+      raw: true,
+    }) : [];
+    if (!postIds.length && !incomingFollows.length && !mentionedPosts.length && !bellPosts.length) return res.json({ items: [] });
 
     const [likes, comments, reposts] = postIds.length ? await Promise.all([
       PostLike.findAll({ where: { postId: postIds, userId: { [Op.ne]: userId } }, order: [['createdAt', 'DESC']], limit: 100, raw: true }),
@@ -57,9 +72,11 @@ router.get('/', async (req, res, next) => {
 
     const postById = new Map(ownedPosts.map((post) => [String(post.id), post]));
     for (const post of mentionedPosts) postById.set(String(post.id), post);
+    for (const post of bellPosts) postById.set(String(post.id), post);
     const actors = new Set([
       ...incomingFollows.map((row) => String(row.followerId)),
       ...mentionedPosts.map((post) => String(post.authorId)),
+      ...bellPosts.map((post) => String(post.authorId)),
       ...likes.map((row) => String(row.userId)),
       ...comments.map((row) => String(row.userId)),
       ...reposts.map((row) => String(row.userId)),
@@ -92,6 +109,7 @@ router.get('/', async (req, res, next) => {
     for (const row of comments) push('comment', row.userId, row.createdAt, row.postId, row.body);
     for (const row of reposts) push('repost', row.userId, row.createdAt, row.postId);
     for (const post of mentionedPosts) push('mention', post.authorId, post.createdAt, post.id);
+    for (const post of bellPosts) push('post', post.authorId, post.createdAt, post.id);
 
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json({ items: items.slice(0, 100) });
