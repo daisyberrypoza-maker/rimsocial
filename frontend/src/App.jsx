@@ -73,6 +73,7 @@ export default function App() {
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
+        <Route path="/friends" element={<RequireAuth><Explore /></RequireAuth>} />
         <Route path="/explore/watch/:postId" element={<RequireAuth><ExploreWatch /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
         <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
