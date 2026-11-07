@@ -3691,3 +3691,11 @@ html, body, #root { min-height:100%; }
 .rec-spacer { width:40px; height:40px; }
 .rec-list { margin:16px !important; }
 
+
+/* ===== Header band fix: no blur/transform on the header background (it painted past the header as a dark strip) ===== */
+.sc-profile .sc-hero-bg { filter:none !important; transform:none !important; inset:0 !important; }
+.sc-profile .sc-hero { overflow:hidden !important; }
+.sc-profile .sc-profile-stats { margin-top:0 !important; }
+.sc-profile .sc-bell.on { background:#fff !important; color:#111 !important; }
+.sc-profile .sc-hero { position:relative !important; isolation:isolate; }
+.sc-profile .sc-hero-bg { position:absolute !important; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; height:auto !important; }
