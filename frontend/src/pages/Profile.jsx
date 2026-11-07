@@ -25,6 +25,7 @@ export default function Profile() {
 
   // Only posts written by the profile's owner are shown on this profile
   const posts = profile ? feedPosts.filter((p) => (p.author?.id ?? profile.id) === profile.id) : [];
+  const tagList = [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))];
 
   const [tab, setTab] = useState('stories');
   const [reposts, setReposts] = useState([]);
@@ -292,14 +293,15 @@ export default function Profile() {
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
-            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isCreator && <span className="sc-verified" aria-label="Verified"><Icon name="badge-check" size={14} /></span>}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
-            <p className="sc-handle">@{profile.username}{profile.isCreator && <> · Creator</>}</p>
+            <h2 className="sc-name">{profile.displayName || profile.username}{profile.isCreator && <span className="sc-verified" aria-label="Verified">★</span>}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
+            <p className="sc-handle">@{profile.username} · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
           </div>
         </div>
         <div className="sc-chips">
           {profile.country && <span className="sc-chip"><Icon name="map-pin" size={15} />{profile.country}</span>}
           {!profile.isMe && <button type="button" className="sc-chip" onClick={() => navigate(`/chat/${profile.id}`)}><Icon name="mail" size={15} />Contact</button>}
         </div>
+        {profile.bio && <p className="sc-bio">{profile.bio}</p>}
         {profile.isMe ? (
           <div className="sc-seg-row">
             <button className="sc-seg on">My Account</button>
@@ -422,13 +424,13 @@ export default function Profile() {
 
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
         <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Rimlight</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
-        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}>#Tags</button>
       </nav>
 
       {tab === 'posts' ? (
         <>
+          {tagList.length > 0 && <div className="sc-tag-row">{tagList.map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>)}</div>}
           <div className="sc-grid">
             {posts.map((p) => (
               <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>

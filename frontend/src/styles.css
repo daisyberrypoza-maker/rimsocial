@@ -4892,3 +4892,15 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .sc-hero { background:#141414 !important; }
 .sc-profile .sc-hero-bg { position:absolute !important; inset:0 !important; height:100% !important; width:100% !important; }
 .sc-profile .sc-hero-shade { position:absolute !important; inset:0 !important; }
+
+/* Profile to match the reference: blurred full-bleed header, round translucent buttons, gold star, outlined chips, three tabs */
+.sc-profile .sc-hero { background:#0d0d0d !important; }
+.sc-profile .sc-hero-bg { filter:blur(28px) brightness(.45); transform:scale(1.2); }
+.sc-profile .sc-circle { background:rgba(70,70,70,.6) !important; color:#fff !important; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.sc-profile .sc-add { background:rgba(255,255,255,.2) !important; color:#fff !important; border-radius:999px; height:56px; font-size:18px; }
+.sc-profile .sc-verified { width:22px; height:22px; background:#f5c518; color:#111; font-size:13px; font-weight:800; line-height:1; }
+.sc-profile .sc-chips .sc-chip { background:#fff !important; color:#222 !important; border:1px solid #d7d7dc !important; }
+.sc-profile .sc-bio { margin:12px 16px 0; color:#fff; font-size:15px; text-shadow:0 1px 6px rgba(0,0,0,.4); }
+.sc-tabs { grid-template-columns:1fr 1fr 1fr !important; }
+.sc-tag-row { display:flex; gap:8px; overflow-x:auto; padding:12px 12px 4px; scrollbar-width:none; }
+.sc-tag-row::-webkit-scrollbar { display:none; }
