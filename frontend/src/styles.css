@@ -3712,3 +3712,9 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-hero-id { gap:22px !important; }
 .sc-profile .sc-hero-text { margin-left:4px !important; }
 .sc-profile .sc-profile-stats, .sc-profile .pv-stats-bar { display:none !important; }
+
+/* ===== Smaller, lighter profile tabs and name ===== */
+.sc-profile .sc-tabs button { font-size:14px !important; font-weight:500 !important; }
+.sc-profile .sc-tabs button.on { font-weight:600 !important; }
+.sc-profile .sc-tabs svg { width:18px !important; height:18px !important; }
+.sc-profile .sc-name { font-size:18px !important; font-weight:500 !important; }
