@@ -121,23 +121,23 @@ export default function PostCard({ post, active }) {
 
   // Never keep feed audio/video running while the browser/app is backgrounded.
   useEffect(() => {
-    const syncPlayback = () => {
+    const pausePlayback = () => {
       const video = videoRef.current;
-      if (!video) return;
-      if (document.visibilityState !== 'visible') {
-        video.pause();
-        setVideoPlaying(false);
-      } else if (active) {
-        video.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false));
-      }
+      if (video) video.pause();
+      setVideoPlaying(false);
     };
-    document.addEventListener('visibilitychange', syncPlayback);
-    window.addEventListener('pagehide', syncPlayback);
-    window.addEventListener('pageshow', syncPlayback);
+    const resumePlayback = () => {
+      if (document.visibilityState !== 'visible') return pausePlayback();
+      const video = videoRef.current;
+      if (video && active) video.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false));
+    };
+    document.addEventListener('visibilitychange', resumePlayback);
+    window.addEventListener('pagehide', pausePlayback);
+    window.addEventListener('pageshow', resumePlayback);
     return () => {
-      document.removeEventListener('visibilitychange', syncPlayback);
-      window.removeEventListener('pagehide', syncPlayback);
-      window.removeEventListener('pageshow', syncPlayback);
+      document.removeEventListener('visibilitychange', resumePlayback);
+      window.removeEventListener('pagehide', pausePlayback);
+      window.removeEventListener('pageshow', resumePlayback);
     };
   }, [active, post.id]);
 
