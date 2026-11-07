@@ -202,7 +202,6 @@ export default function Profile() {
     } catch (e) { toast(e.message); }
   }
 
-
   async function toggleNotify() {
     if (!profile || profile.isMe) return;
     if (!profile.isFollowing) return toast('Add this creator first to get new post notifications');
@@ -294,10 +293,7 @@ export default function Profile() {
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}{profile.isCreator && <span className="sc-verified" aria-label="Verified"><Icon name="badge-check" size={14} /></span>}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
-            <p className="sc-handle">@{profile.username} · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
-            <div className="sc-inline-stats" aria-label="Followers">
-              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> Followers</button>
-            </div>
+            <p className="sc-handle">@{profile.username}{profile.isCreator && <> · Creator</>}</p>
           </div>
         </div>
         <div className="sc-chips">
@@ -425,10 +421,10 @@ export default function Profile() {
       </div>, document.body)}
 
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
-        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>>Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>>Rimlight</button>
-        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>>Reposts</button>
-        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}>>#Tags</button>
+        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Rimlight</button>
+        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
+        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}>#Tags</button>
       </nav>
 
       {tab === 'posts' ? (
