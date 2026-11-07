@@ -70,9 +70,10 @@ async function getUserStories(userId, viewerId) {
   });
   const ids = stories.map((s) => s.id);
   const viewed = await viewedSet(viewerId, ids);
+  // If migration 026 has not run yet, stories still load without like state instead of failing.
   const [likedRows, countRows] = ids.length ? await Promise.all([
-    StoryLike.findAll({ where: { userId: viewerId, postId: ids }, attributes: ['postId'], raw: true }),
-    StoryLike.findAll({ where: { postId: ids }, attributes: ['postId', [fn('COUNT', col('postId')), 'n']], group: ['postId'], raw: true }),
+    StoryLike.findAll({ where: { userId: viewerId, postId: ids }, attributes: ['postId'], raw: true }).catch(() => []),
+    StoryLike.findAll({ where: { postId: ids }, attributes: ['postId', [fn('COUNT', col('postId')), 'n']], group: ['postId'], raw: true }).catch(() => []),
   ]) : [[], []];
   const liked = new Set(likedRows.map((r) => r.postId));
   const counts = new Map(countRows.map((r) => [r.postId, Number(r.n)]));
