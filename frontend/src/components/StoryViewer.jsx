@@ -54,7 +54,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const swipedRef = useRef(false);
   const videoRef = useRef(null);
   const elapsedRef = useRef(0);
-  const tapRef = useRef({ time: 0, timer: null });
+  const tapRef = useRef({ time: 0, middle: false });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -130,27 +130,21 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (current) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
   }, [current?.id]);
 
-  // Video: start playing. Browsers block sound until the viewer is tapped, so if that happens
-  // play muted and turn the sound on at the next tap anywhere.
+  // Video: one effect decides play or pause from the viewer state. Browsers only allow sound after a tap,
+  // so if autoplay with sound is refused the video starts muted and sound comes on at the next tap.
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !isVideo) return undefined;
+    if (frozen) { v.pause(); return undefined; }
     v.play().catch(() => {
       setMuted(true);
+      v.muted = true;
       v.play().catch(() => {});
-      const unmute = () => { setMuted(false); v.play().catch(() => {}); };
+      const unmute = () => { setMuted(false); v.muted = false; v.play().catch(() => {}); };
       window.addEventListener('pointerdown', unmute, { once: true, capture: true });
     });
     return undefined;
-  }, [current?.id, isVideo]);
-
-  // Pause or resume the video with the viewer's state
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || !isVideo) return;
-    if (frozen) v.pause();
-    else v.play().catch(() => {});
-  }, [frozen, isVideo]);
+  }, [current?.id, isVideo, frozen]);
 
   // Photo timer (pauses with the viewer)
   useEffect(() => {
@@ -168,9 +162,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     }, TICK_MS);
     return () => clearInterval(timer);
   }, [current?.id, isVideo, frozen, next]);
-
-  // Clear a pending single-tap when the viewer closes
-  useEffect(() => () => clearTimeout(tapRef.current.timer), []);
 
   function flashIcon(icon) {
     const key = Date.now();
@@ -276,18 +267,22 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const now = Date.now();
-    if (tapRef.current.timer && now - tapRef.current.time < DOUBLE_TAP_MS) {
-      clearTimeout(tapRef.current.timer);
-      tapRef.current = { time: 0, timer: null };
+    const middle = x >= 0.33 && x <= 0.67;
+    if (!middle) {
+      tapRef.current = { time: 0, middle: false };
+      if (x < 0.33) prev(); else next();
+      return;
+    }
+    // Middle tap: pause or play right away. A second middle tap within the window likes the story.
+    if (tapRef.current.middle && now - tapRef.current.time < DOUBLE_TAP_MS) {
+      tapRef.current = { time: 0, middle: false };
+      togglePlay();                       // undo the pause the first tap caused
       flashIcon('heart');
       toggleLike(true);
       return;
     }
-    const action = x < 0.33 ? prev : x > 0.67 ? next : togglePlay;
-    tapRef.current = {
-      time: now,
-      timer: setTimeout(() => { tapRef.current = { time: 0, timer: null }; action(); }, DOUBLE_TAP_MS),
-    };
+    tapRef.current = { time: now, middle: true };
+    togglePlay();
   }
 
   function onVideoTime(event) {
@@ -376,11 +371,13 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
               playsInline
               muted={muted}
+              preload="auto"
               onEnded={next}
+              onError={next}
               onTimeUpdate={onVideoTime}
             />
           ) : (
-            <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" />
+            <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
           )
         ) : (
           <p className="sv-empty">{stories ? 'No stories' : 'Loading…'}</p>
