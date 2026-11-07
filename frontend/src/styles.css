@@ -4855,3 +4855,15 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Tab swipe: the page follows the finger, then slides to the next tab. The bottom bar stays put. */
 .app.swiping > :not(.bottomnav) { transform: translate3d(var(--swipe-x, 0px), 0, 0); will-change: transform; }
 .app.swipe-anim > :not(.bottomnav) { transition: transform 230ms cubic-bezier(.2, .8, .2, 1); }
+
+/* Story viewer, matched to the reference: dark reply bar, round camera avatar, filled send arrow, vertical options. */
+.sv-root .sv-head-actions .sv-icon svg { width:26px !important; height:26px !important; }
+.sv-root .sv-head-actions .sv-icon { width:40px !important; height:40px !important; }
+.sv-sound { display:inline-flex !important; align-items:center; gap:8px; padding:0 14px 0 4px !important; background:rgba(20,20,20,.55) !important; }
+.sv-sound-art { display:inline-flex; border-radius:50%; overflow:hidden; }
+.sv-root .sv-cam { width:46px !important; height:46px !important; padding:0 !important; border-radius:50% !important; background:transparent !important; overflow:hidden; }
+.sv-root .sv-cam .avatar { width:46px !important; height:46px !important; }
+.sv-root .sv-reply { background:rgba(40,40,40,.88) !important; border:0 !important; }
+.sv-root .sv-reply input { background:transparent !important; color:#fff !important; border:0 !important; box-shadow:none !important; }
+.sv-root .sv-reply input::placeholder { color:rgba(255,255,255,.9) !important; }
+.sv-root .sv-send { background:rgba(40,40,40,.92) !important; color:#fff !important; }

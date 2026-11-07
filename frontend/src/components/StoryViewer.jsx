@@ -389,7 +389,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
             </button>
           )}
           <button type="button" className="sv-icon" aria-label="Story options" disabled={!current} onClick={openOptions}>
-            <Icon name="ellipsis" size={22} />
+            <Icon name="more-vertical" size={26} />
           </button>
         </div>
       </div>
@@ -422,8 +422,13 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
       {current && (
         <div className="sv-footer">
-          <span className="sv-sound">♪ Original sound</span>
+          <span className="sv-sound"><span className="sv-sound-art"><Avatar user={group.user} size={22} /></span>Original sound</span>
           <div className="sv-reply-row">
+            {!isOwner && (
+              <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
+                <Avatar user={me} size={46} />
+              </button>
+            )}
             {isOwner ? (
               <div className="sv-reply sv-views"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
             ) : (
@@ -446,7 +451,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
             )}
             {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="images" size={24} /></button>}
             <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
-              <Icon name="send" size={22} />
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>
           </div>
         </div>
