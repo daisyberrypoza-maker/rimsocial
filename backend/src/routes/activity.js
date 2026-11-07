@@ -47,7 +47,9 @@ router.get('/', async (req, res, next) => {
     const mentionedPosts = mentionPattern
       ? mentionCandidates.filter((post) => mentionPattern.test(post.caption || '') && !blockedIds.has(String(post.authorId)))
       : [];
-    const bellRows = await Follow.findAll({ where: { followerId: userId, notifyPosts: true }, attributes: ['followeeId'], raw: true });
+    const bellRows = Follow.rawAttributes.notifyPosts
+      ? await Follow.findAll({ where: { followerId: userId, notifyPosts: true }, attributes: ['followeeId'], raw: true })
+      : [];
     const bellIds = bellRows.map((row) => String(row.followeeId));
     const bellPosts = bellIds.length ? await Post.findAll({
       where: {

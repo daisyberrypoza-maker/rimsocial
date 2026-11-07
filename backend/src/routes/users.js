@@ -296,6 +296,7 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
 router.put('/:id/follow/notify', requireAuth, async (req, res, next) => {
   try {
     const enabled = Boolean(req.body && req.body.enabled);
+    if (!Follow.rawAttributes.notifyPosts) throw httpError(503, 'Post notifications are not available yet on this server');
     const follow = await Follow.findOne({ where: { followerId: req.user.id, followeeId: req.params.id } });
     if (!follow) throw httpError(409, 'Follow this account to turn on notifications');
     await follow.update({ notifyPosts: enabled });
