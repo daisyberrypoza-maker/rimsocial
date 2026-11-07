@@ -45,7 +45,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial', { maxSeconds: 60 });
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial', { maxSeconds: 20 * 60 });
     uploadedAsset = asset;
     const post = await Post.create({
       authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: asset.url, mediaPublicId: asset.publicId,

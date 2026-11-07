@@ -1,6 +1,6 @@
 // Trims a picked video to the first `maxSeconds` in the browser, so every upload is cut
 // even before Cloudinary is configured. Videos already within the limit are returned unchanged.
-export const POST_MAX_SECONDS = 60;
+export const POST_MAX_SECONDS = 20 * 60; // Instagram Reels allow up to 20 minutes
 export const STORY_MAX_SECONDS = 15;
 
 export async function trimVideo(file, maxSeconds) {
