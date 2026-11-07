@@ -3734,3 +3734,11 @@ html, body, #root { min-height:100%; }
 .sc-profile.is-me .sc-inline-stats { display:none !important; }
 .sc-profile .sc-empty-grid { position:relative; min-height:300px; display:flex; align-items:center; justify-content:center; background-color:#e6e6e6 !important; background-image:linear-gradient(to right, #fff 2px, transparent 2px), linear-gradient(to bottom, #fff 2px, transparent 2px) !important; background-size:33.33% 150px, 100% 150px !important; color:#111; font-size:17px; font-weight:600; }
 .sc-profile .sc-empty-grid strong { font-weight:600; background:#e6e6e6; padding:6px 12px; border-radius:8px; }
+
+
+/* Creator Studio: each tool opens as a focused, separate screen. */
+.studio-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:18px 0; }
+.studio-shortcuts a { display:flex; flex-direction:column; gap:6px; min-width:0; padding:16px; border:1px solid var(--border, rgba(127,127,127,.25)); border-radius:16px; color:inherit; text-decoration:none; background:var(--panel, rgba(127,127,127,.06)); }
+.studio-shortcuts a strong { font-size:15px; }
+.studio-shortcuts a span { font-size:12px; opacity:.75; line-height:1.4; }
+@media (max-width:420px) { .studio-shortcuts { gap:8px; } .studio-shortcuts a { padding:12px; } }
