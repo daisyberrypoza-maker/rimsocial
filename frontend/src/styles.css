@@ -3722,3 +3722,8 @@ html, body, #root { min-height:100%; }
 /* ===== Avatar top-aligned with the name (was sitting too low) ===== */
 .sc-profile .sc-hero-id { align-items:flex-start !important; }
 .sc-profile .sc-hero-avatar { margin-top:2px !important; }
+
+/* ===== Match the Snapchat reference: avatar centred against the name block, about 76px ===== */
+.sc-profile .sc-hero-id { align-items:center !important; }
+.sc-profile .sc-hero-avatar { margin-top:0 !important; width:76px !important; height:76px !important; flex:0 0 76px !important; }
+.sc-profile .sc-hero-avatar .avatar, .sc-profile .sc-hero-avatar .avatar .inner { width:76px !important; height:76px !important; }
