@@ -5040,3 +5040,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .sc-compact-nav { background:#fff !important; color:#111 !important; justify-content:space-between !important; border-bottom:1px solid #ececf0 !important; padding:8px 12px !important; }
 .sc-profile .sc-compact-back, .sc-profile .sc-compact-round { background:transparent !important; color:#111 !important; box-shadow:none !important; width:40px !important; height:40px !important; }
 .sc-profile .sc-compact-back svg, .sc-profile .sc-compact-round svg { stroke:#111 !important; }
+
+/* Profile: subscribed bell is white-filled */
+.sc-profile .pf-bell.on { background:rgba(40,40,40,.55) !important; color:#fff !important; }
+.sc-profile .pf-bell.on svg { fill:#fff !important; }
