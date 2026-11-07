@@ -249,7 +249,7 @@ export default function Profile() {
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            <p className="sc-handle">@{profile.username}</p><span className={`sc-creator-status${profile.isCreator ? " is-creator" : " is-member"}`}><Icon name={profile.isCreator ? "badge-check" : "user-round"} size={13} />{profile.isCreator ? "Creator" : "Not a creator"}</span>{profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
+            <p className="sc-handle">@{profile.username}</p>{profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}{!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
           </div>
         </div>
         {profile.isMe ? (
