@@ -45,6 +45,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [favorite, setFavorite] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [reply, setReply] = useState('');
   const [typing, setTyping] = useState(false);
@@ -100,7 +102,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         url: item.kind === 'video' ? videoStreamUrl(mediaUrl(item.mediaUrl)) : mediaUrl(item.mediaUrl),
         kind: item.kind === 'video' ? 'video' : 'image',
       }]);
-    }, 1500);
+    }, 0);
     return () => clearTimeout(timer);
   }, [stories, si]);
 
@@ -120,6 +122,14 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   useEffect(() => {
     if (stories && stories.length === 0) next();
   }, [stories, next]);
+
+  // Load this story's saved state from this device and record the view.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('rimsocial:favoriteStories') || '[]');
+      setFavorite(Boolean(current && saved.includes(String(current.id))));
+    } catch { setFavorite(false); }
+  }, [current?.id]);
 
   // Each story starts fresh and is recorded as viewed
   useEffect(() => {
@@ -308,6 +318,28 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     } catch (e) { toast(e.message); }
   }
 
+  function toggleFavorite() {
+    if (!current) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('rimsocial:favoriteStories') || '[]');
+      const id = String(current.id);
+      const nextSaved = favorite ? saved.filter((value) => value !== id) : [...new Set([...saved, id])];
+      window.localStorage.setItem('rimsocial:favoriteStories', JSON.stringify(nextSaved));
+      setFavorite(!favorite);
+      toast(favorite ? 'Removed from Favorites on this device' : 'Added to Favorites on this device');
+    } catch { toast('Could not update Favorites'); }
+  }
+
+  async function blockCreator() {
+    if (!group.user?.id || isOwner) return;
+    if (!window.confirm(`Block @${group.user.username}? You will no longer see their content.`)) return;
+    try {
+      await api(`/v1/users/${group.user.id}/block`, { method: 'POST' });
+      toast(`@${group.user.username} blocked`);
+      closeRef.current();
+    } catch (e) { toast(e.message); }
+  }
+
   async function copyProfileLink() {
     const link = `${window.location.origin}/u/${group.user.username}`;
     try {
@@ -446,17 +478,29 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               <form className="sv-share-chat-input" onSubmit={(e) => { e.preventDefault(); const value = e.currentTarget.elements.chat.value; setShareOpen(false); sendReply(value); }}>
                 <input name="chat" aria-label="Send a chat" placeholder="Send a chat" maxLength={2000} />
               </form>
-              <button type="button" aria-label="Reactions" onClick={() => onQuickReaction('❤️')}><Icon name="smile" size={27} /></button>
-              <button type="button" aria-label="Stickers" onClick={() => toast('Stickers are coming soon')}><Icon name="images" size={27} /></button>
+              <button type="button" aria-label="Reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="smile" size={27} /></button>
+              <button type="button" aria-label="Stickers" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="images" size={27} /></button>
               <button type="button" aria-label="Location" onClick={() => toast('Location sharing is not available yet')}><Icon name="map-pin" size={27} /></button>
             </div>
           </div>
+          {reactionPickerOpen && <div className="sv-reaction-picker" onClick={(e) => e.stopPropagation()} aria-label="Choose a reaction">
+            {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" onClick={() => { setReactionPickerOpen(false); setShareOpen(false); onQuickReaction(emoji); }}>{emoji}</button>)}
+          </div>}
           <section className="sv-share-sheet" role="dialog" aria-label="Story options" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="sv-share-row" disabled={resharing} onClick={() => { setShareOpen(false); reshare(); }}>
-              <span>Remix Snap</span>
+              <Icon name="repeat-2" size={22} /><span>Remix Snap</span>
+            </button>
+            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); toggleFavorite(); }}>
+              <Icon name={favorite ? 'bookmark-check' : 'bookmark'} size={22} /><span>{favorite ? 'Remove from Favorites' : 'Add to Favorites'}</span>
             </button>
             <button type="button" className="sv-share-row danger" onClick={() => { setShareOpen(false); setReportOpen(true); }}>
-              <span>Report Snap</span>
+              <Icon name="flag" size={22} /><span>Report Snap</span>
+            </button>
+            <button type="button" className="sv-share-row danger" onClick={() => { setShareOpen(false); blockCreator(); }}>
+              <Icon name="ban" size={22} /><span>Block {creatorName}</span>
+            </button>
+            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); copyProfileLink(); }}>
+              <Icon name="link" size={22} /><span>Copy Link</span>
             </button>
             <button type="button" className="sv-share-row sv-send-snap" onClick={() => {
               setShareOpen(false);
@@ -464,12 +508,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               if (navigator.share) navigator.share({ title: 'RimSocial Story', text: `View ${creatorName}'s story on RimSocial`, url }).catch(() => {});
               else copyProfileLink();
             }}>
-              <span>Send Snap</span><span className="sv-send-snap-icon"><Icon name="send" size={25} /></span>
+              <span>Share Story</span><span className="sv-send-snap-icon"><Icon name="send" size={25} /></span>
             </button>
-          </section>
-          <section className="sv-lens-section" onClick={(e) => e.stopPropagation()}>
-            <h3>Lens</h3>
-            <div className="sv-lens-placeholder">Lenses will appear here</div>
           </section>
         </div>
       )}
