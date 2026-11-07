@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 // Icons drawn to match the reference: outline chat, sparkle, two cards, and a filled play shape.
 const ICON_PROPS = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
@@ -21,8 +21,11 @@ function RimlightIcon() {
 
 // Chat, Lenses, Add post, Stories, Rimlight: the reference style, with Add post in the centre.
 export default function BottomNav() {
+  // The bar turns dark on the Rimlight (home) screen only.
+  const { pathname } = useLocation();
+  const dark = pathname === '/';
   return (
-    <nav className="bottomnav" aria-label="Main navigation">
+    <nav className={dark ? 'bottomnav bottomnav-dark' : 'bottomnav'} aria-label="Main navigation">
       <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
       <NavLink to="/explore" aria-label="Lenses"><LensesIcon /><span>Lenses</span></NavLink>
       <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
