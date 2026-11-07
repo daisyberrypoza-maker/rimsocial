@@ -219,6 +219,14 @@ export default function PostCard({ post, active }) {
     const side = x < 0.35 ? 'back' : x > 0.65 ? 'forward' : 'middle';
     const now = Date.now();
     const last = lastTapRef.current;
+    // Double tap the middle: like the post once (never unlike), with a heart. The like button still toggles.
+    if (side === 'middle' && last.side === 'middle' && now - last.t < 320) {
+      clearTimeout(tapTimerRef.current);
+      lastTapRef.current = { t: 0, side: null };
+      if (!liked) like();
+      flashIcon('heart');
+      return;
+    }
     if (side !== 'middle' && side === last.side && now - last.t < 320) {
       clearTimeout(tapTimerRef.current);
       lastTapRef.current = { t: 0, side: null };
@@ -346,7 +354,7 @@ export default function PostCard({ post, active }) {
     {post.kind === 'video' && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
       onPointerDown={() => { seekingRef.current = true; }} onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}
       onChange={(e) => { const v = videoRef.current; const ratio = Number(e.target.value) / 1000; setProgress(ratio); if (v && Number.isFinite(v.duration)) v.currentTime = ratio * v.duration; }} />}
-    {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause' }[flash.kind]} size={34} /></span>}
+    {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause', heart: 'heart' }[flash.kind]} size={34} /></span>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
