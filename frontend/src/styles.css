@@ -3453,3 +3453,56 @@ html, body, #root { min-height:100%; }
   font-weight:500;
 }
 .sc-profile .sc-profile-country svg { flex:0 0 auto; opacity:.9; }
+
+
+/* Reduce the oversized top half of the profile to a compact native mobile header. */
+.sc-profile .sc-hero {
+  min-height:300px !important;
+  height:auto !important;
+}
+.sc-profile .sc-hero-top {
+  padding:calc(env(safe-area-inset-top, 0px) + 1px) 14px 0 !important;
+  gap:8px !important;
+}
+.sc-profile .sc-hero-id {
+  padding:0 18px !important;
+  gap:12px !important;
+}
+.sc-profile .sc-hero-avatar,
+.sc-profile .sc-avatar-preview,
+.sc-profile .sc-hero-avatar .avatar {
+  width:84px !important;
+  height:84px !important;
+}
+.sc-profile .sc-hero-avatar { flex-basis:84px !important; }
+.sc-profile .sc-name { font-size:21px !important; }
+.sc-profile .sc-profile-country {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin:4px 0 0 !important;
+  font-size:12px !important;
+  line-height:1.25 !important;
+  color:rgba(255,255,255,.82) !important;
+}
+.sc-profile .sc-seg-row,
+.sc-profile .sc-add-row {
+  padding:14px 14px 12px !important;
+}
+.sc-profile .sc-seg {
+  height:44px !important;
+  min-height:44px !important;
+}
+.sc-profile .sc-hero-bg {
+  top:0 !important;
+  height:350px !important;
+}
+@media (max-width:390px) {
+  .sc-profile .sc-hero { min-height:286px !important; }
+  .sc-profile .sc-hero-top { padding:calc(env(safe-area-inset-top, 0px) + 1px) 12px 0 !important; }
+  .sc-profile .sc-hero-id { padding:0 14px !important; gap:10px !important; }
+  .sc-profile .sc-hero-avatar,
+  .sc-profile .sc-avatar-preview,
+  .sc-profile .sc-hero-avatar .avatar { width:78px !important; height:78px !important; }
+  .sc-profile .sc-hero-avatar { flex-basis:78px !important; }
+}
