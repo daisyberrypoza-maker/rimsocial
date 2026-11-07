@@ -391,13 +391,10 @@ export default function PostCard({ post, active }) {
     {showMenu && <PostOptionsSheet
       username={username}
       isOwn={isOwnPost}
-      canRemix={Boolean(post.allowRemix)}
       reposted={reposted}
       reporting={reporting}
       onClose={() => setShowMenu(false)}
-      onGift={() => { setShowMenu(false); setShowGifts(true); }}
       onRemix={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}
-      onRepost={() => { setShowMenu(false); repost(); }}
       onShare={() => { setShowMenu(false); setShowSend(true); }}
       onCopy={() => { setShowMenu(false); copyPostLink(); }}
       onNotInterested={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}
