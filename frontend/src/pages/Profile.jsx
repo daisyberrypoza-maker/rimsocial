@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -16,6 +16,9 @@ import { goBack } from '../lib/goBack.js';
 export default function Profile() {
   const { username = 'me' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const connectionType = searchParams.get('connections');
   const logout = useAppStore((s) => s.logout);
   const setProfile = useAppStore((s) => s.setProfile);
   const setFeed = useAppStore((s) => s.setFeed);
@@ -73,6 +76,19 @@ export default function Profile() {
   // Switching profiles must never leave the previous person's stories or reposts on screen
   useEffect(() => { setStories([]); setReposts([]); setViewing(false); }, [username]);
 
+  // The connections sheet is represented in the URL. This restores it when
+  // browser/device Back returns from a profile opened in the list.
+  useEffect(() => {
+    if (connectionType !== 'followers' && connectionType !== 'following') return undefined;
+    let current = true;
+    setListType(connectionType);
+    setPeopleQuery('');
+    api(`/v1/users/${username}/${connectionType}`)
+      .then((data) => { if (current) setPeople(data.items || []); })
+      .catch((error) => { if (current) { toast(error.message); setListType(''); } });
+    return () => { current = false; };
+  }, [username, connectionType]);
+
   useEffect(() => {
     if (tab !== 'stories' || !profile) return undefined;
     let current = true;
@@ -82,13 +98,17 @@ export default function Profile() {
     return () => { current = false; };
   }, [tab, profile]);
 
-  async function openPeople(type) {
-    setListType(type);
-    setPeopleQuery('');
-    try {
-      const data = await api(`/v1/users/${username}/${type}`);
-      setPeople(data.items || []);
-    } catch (e) { toast(e.message); setListType(''); }
+  function openPeople(type) {
+    // Keep the connections sheet in the router history so opening a person
+    // and pressing Back restores this exact Followers/Following screen.
+    navigate(`${location.pathname}?connections=${type}`, {
+      replace: searchParams.has('connections'),
+    });
+  }
+
+  function closePeople() {
+    setListType('');
+    if (searchParams.has('connections')) navigate(location.pathname, { replace: true });
   }
 
   async function openBlockedPeople() {
@@ -391,7 +411,7 @@ export default function Profile() {
       {listType && createPortal(<div className="pv-sheet-backdrop" role="presentation">
         <section className="pv-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <header className="pv-sheet-top">
-            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => setListType('')}><Icon name="arrow-left" size={22} /></button>
+            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={closePeople}><Icon name="arrow-left" size={22} /></button>
             <h2 className="pv-sheet-title">{listType === 'blocked' ? 'Blocked accounts' : listType === 'activity' ? 'Activity' : profile.username}</h2>
             {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => { setListType(''); navigate('/explore'); }}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
           </header>
