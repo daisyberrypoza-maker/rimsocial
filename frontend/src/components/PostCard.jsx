@@ -11,6 +11,17 @@ import Avatar from './Avatar.jsx';
 let feedSoundOn = true;
 
 // Starts playback with the shared sound setting; if the browser blocks sound, play muted.
+// Short relative time for comments: 5m, 3h, 2d, 4w.
+function timeAgo(iso) {
+  if (!iso) return '';
+  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return 'Now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+  return `${Math.floor(seconds / 604800)}w`;
+}
+
 function playVideo(video) {
   video.muted = !feedSoundOn;
   const attempt = video.play();
@@ -86,26 +97,27 @@ function CommentsSheet({ post, onClose }) {
       setItems((current) => current.filter((item) => item.id !== comment.id));
     } catch (e) { toast(e.message); }
   }
-  const dateText = post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const username = post.author?.username || 'creator';
   return <div className="rv-sheet-backdrop" onClick={onClose}>
     <section className="rv-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
       <div className="rv-handle" aria-hidden="true" />
       <header className="rv-sheet-head">
-        <Avatar user={post.author} size={40} />
-        <div><strong>{username}</strong><small>{dateText}</small></div>
+        <span className="rv-spacer" aria-hidden="true" />
+        <strong>Comments</strong>
         <button className="rv-icon" onClick={onClose} aria-label="Close comments"><Icon name="x" size={22} /></button>
       </header>
       <div className="rv-comments">
         {loading ? <p className="rv-empty">Loading comments…</p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
-          <Avatar user={item.author} size={34} />
-          <div><strong>@{item.author?.username || 'user'}</strong><p>{item.body}</p></div>
-          {item.isMine && <button className="rv-delete" aria-label="Delete comment" onClick={() => remove(item)}>×</button>}
-        </div>) : <p className="rv-empty">No comments yet. Start the conversation.</p>}
+          <Avatar user={item.author} size={36} />
+          <div className="rv-comment-body">
+            <p><strong>{item.author?.username || 'user'}</strong> {item.body}</p>
+            <small>{timeAgo(item.createdAt)}{item.isMine ? ' · ' : ''}{item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}</small>
+          </div>
+        </div>) : <p className="rv-empty">No comments yet.<br />Start the conversation.</p>}
       </div>
       <form className="rv-compose" onSubmit={submit}>
-        <Avatar user={me || {}} size={32} />
-        <input aria-label="Write a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder={`Comment as ${me?.username || 'you'}…`} />
+        <Avatar user={me || {}} size={30} />
+        <input aria-label="Add a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder="Add a comment…" />
         {body.trim() && <button type="submit" disabled={sending}>{sending ? '…' : 'Post'}</button>}
       </form>
     </section>
@@ -125,6 +137,8 @@ export default function PostCard({ post, active }) {
   const [following, setFollowing] = useState(Boolean(post.author?.isFollowing));
   const [followBusy, setFollowBusy] = useState(false);
   const seekingRef = useRef(false);
+  const lastTapRef = useRef({ t: 0, side: null });
+  const tapTimerRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
   const pressTimer = useRef(null);
@@ -196,24 +210,29 @@ export default function PostCard({ post, active }) {
   }
 
   // Left and right thirds skip 10 seconds; the middle toggles play and pause.
+  // Single tap plays or pauses. Double tap the left or right side to go back or forward 10 seconds.
   function onMediaTap(event) {
     const video = videoRef.current;
     if (!video) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
-    if (x < 0.3) {
-      video.currentTime = Math.max(0, video.currentTime - 10);
-      flashIcon('back');
-    } else if (x > 0.7) {
-      video.currentTime = Math.min(Number(video.duration) || Infinity, video.currentTime + 10);
-      flashIcon('forward');
-    } else if (video.paused) {
-      playVideo(video);
-      flashIcon('play');
-    } else {
-      video.pause();
-      flashIcon('pause');
+    const side = x < 0.35 ? 'back' : x > 0.65 ? 'forward' : 'middle';
+    const now = Date.now();
+    const last = lastTapRef.current;
+    if (side !== 'middle' && side === last.side && now - last.t < 320) {
+      clearTimeout(tapTimerRef.current);
+      lastTapRef.current = { t: 0, side: null };
+      if (side === 'back') video.currentTime = Math.max(0, video.currentTime - 10);
+      else video.currentTime = Math.min(Number(video.duration) || Infinity, video.currentTime + 10);
+      flashIcon(side);
+      return;
     }
+    lastTapRef.current = { t: now, side };
+    clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      if (video.paused) { playVideo(video); flashIcon('play'); }
+      else { video.pause(); flashIcon('pause'); }
+    }, 260);
   }
 
   useEffect(() => {
@@ -324,12 +343,9 @@ export default function PostCard({ post, active }) {
     {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
       : <img src={src} alt="" loading="lazy" />}
     {post.kind === 'video' && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
-    {post.kind === 'video' && <div className="post-progress" role="slider" aria-label="Video progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}
-      onPointerDown={(e) => { e.stopPropagation(); seekingRef.current = true; e.currentTarget.setPointerCapture(e.pointerId); seekFromPointer(e); }}
-      onPointerMove={(e) => { if (seekingRef.current) seekFromPointer(e); }}
-      onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}>
-      <div className="post-progress-fill" style={{ width: `${progress * 100}%` }} />
-    </div>}
+    {post.kind === 'video' && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
+      onPointerDown={() => { seekingRef.current = true; }} onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}
+      onChange={(e) => { const v = videoRef.current; const ratio = Number(e.target.value) / 1000; setProgress(ratio); if (v && Number.isFinite(v.duration)) v.currentTime = ratio * v.duration; }} />}
     {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause' }[flash.kind]} size={34} /></span>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
