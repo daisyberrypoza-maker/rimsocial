@@ -22,7 +22,7 @@ function RimlightIcon() {
   return <svg {...ICON_PROPS} fill="currentColor" stroke="none"><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
 }
 
-// Rimlight, Chat, Add post, Explore, Stories: Add post stays in the centre.
+// Stories, Rimlight, Chat, Add post, Explore: Add post stays in the centre.
 export default function BottomNav() {
   // Dark on Rimlight and Following; white with dark text on LIVE.
   const { pathname } = useLocation();
@@ -49,11 +49,11 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
+      <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /></NavLink>
       <NavLink to="/" replace end aria-label="Rimlight"><RimlightIcon /></NavLink>
       <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}</NavLink>
       <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
       <NavLink to="/explore" replace aria-label="Explore"><ExploreIcon /></NavLink>
-      <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /></NavLink>
     </nav>
   );
 }
