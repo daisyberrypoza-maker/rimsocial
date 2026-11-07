@@ -4987,3 +4987,29 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .pf-tabs button.on::after { height:2px !important; }
 .sc-profile .sc-grid { gap:2px !important; grid-template-columns:repeat(3,1fr) !important; }
 .sc-profile .sc-tile { aspect-ratio:9/16 !important; }
+
+/* ===== Profile, measured against the reference (CSS px = screenshot px / 2) ===== */
+.sc-profile .sc-profile-stats { display:none !important; }
+.sc-profile .pf-hero { height:259px !important; min-height:0 !important; }
+.sc-profile .pf-top { padding:5px 9px !important; }
+.sc-profile .pf-top-right { gap:8px !important; }
+.sc-profile .pf-round { width:38px !important; height:38px !important; font-size:16px !important; }
+.sc-profile .pf-id { padding:0 16px 14px !important; gap:14px !important; align-items:center !important; }
+.sc-profile .pf-avatar { flex:0 0 75px !important; }
+.sc-profile .pf-avatar-btn :is(.avatar, span) { width:75px !important; height:75px !important; }
+.sc-profile .pf-name { font-size:20px !important; line-height:1.15 !important; }
+.sc-profile .pf-star { width:17px !important; height:17px !important; font-size:10px !important; }
+.sc-profile .pf-handle { font-size:13px !important; margin-top:2px !important; }
+.sc-profile .pf-sub { font-size:13px !important; margin-top:2px !important; }
+.sc-profile .pf-actions { padding:0 16px 10px !important; gap:10px !important; align-items:center !important; }
+.sc-profile .pf-btn { height:44px !important; font-size:15px !important; font-weight:600 !important; gap:8px !important; flex:1 1 auto !important; }
+.sc-profile .pf-btn svg { width:20px !important; height:20px !important; }
+.sc-profile .pf-actions .pf-round { width:48px !important; height:48px !important; flex:0 0 48px !important; }
+.sc-profile .pf-body { padding:14px 20px 0 !important; }
+.sc-profile .pf-bio { font-size:15px !important; line-height:1.1 !important; margin:0 0 10px !important; }
+.sc-profile .pf-tabs button { height:32px !important; font-size:16px !important; font-weight:500 !important; }
+.sc-profile .pf-tabs button.on { font-weight:700 !important; }
+.sc-profile .pf-tabs button.on::after { left:6px !important; right:6px !important; height:2px !important; }
+.sc-profile .sc-grid { gap:2px !important; }
+.sc-profile .sc-tile { aspect-ratio:0.58 !important; }
+.sc-profile .sc-tile-count { font-size:13px !important; left:7px !important; bottom:5px !important; }
