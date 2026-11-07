@@ -417,7 +417,7 @@ export default function Profile() {
         </>
       ) : (
         <section className="sc-hashtag-panel" aria-label="Profile hashtags">
-          {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\\p{L}\\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\\p{L}\\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <p className="sc-empty-note">Hashtags from your Rimlight captions will appear here.</p>}
+          {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <p className="sc-empty-note">Hashtags from your Rimlight captions will appear here.</p>}
         </section>
       )}
     </div>
