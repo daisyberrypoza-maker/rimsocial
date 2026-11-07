@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { clearMediaCache } from './lib/prefetch.js';
+import { clearMediaCache, evictMedia, missingItems } from './lib/prefetch.js';
 
 const STORY_CACHE_LIMIT = 20;
 const STORY_CACHE_KEY = 'clipverse-stories';
@@ -52,8 +52,10 @@ export const useAppStore = create(
       setGifts: (gifts) => set({ gifts }),
       setCoins: (coinBalance) => set({ coinBalance }),
       setLastPath: (lastPath) => set({ lastPath }),
-      setFeed: (key, data) =>
-        set((s) => ({ feeds: { ...s.feeds, [key]: { ...s.feeds[key], ...data } } })),
+      setFeed: (key, data) => {
+        if (Array.isArray(data.items)) evictMedia(missingItems(useAppStore.getState().feeds[key]?.items, data.items));
+        set((s) => ({ feeds: { ...s.feeds, [key]: { ...s.feeds[key], ...data } } }));
+      },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
       setStoryRail: (storyRail) => set({ storyRail }),
