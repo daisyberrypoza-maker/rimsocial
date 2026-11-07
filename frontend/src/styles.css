@@ -4168,7 +4168,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .post .rail-btn.repost-btn svg { stroke:#fff !important; }
 .post .rail-btn.repost-btn.reposted svg { stroke:var(--snap-yellow) !important; }
 .post .rail-btn.repost-btn.reposted { color:var(--snap-yellow) !important; }
-.post .rail-btn.liked svg { fill:#fff; stroke:#fff; }
+.post .rail-btn.liked svg { fill:#ff3040; stroke:#ff3040; }
 
 .post .post-topic, .post .author-row, .post .meta-row { display:none !important; }
 .post .info { left:14px !important; right:84px !important; bottom:86px !important; }
