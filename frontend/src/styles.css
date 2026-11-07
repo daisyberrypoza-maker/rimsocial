@@ -3706,3 +3706,9 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-tabs button { font-size:16px !important; font-weight:600 !important; }
 .sc-profile .sc-tabs button.on { font-weight:700 !important; }
 .sc-profile .sc-tabs svg { width:20px !important; height:20px !important; }
+
+/* ===== Profile name size/weight, spacing from avatar; hide the Followers / Following / Posts panel (both profiles) ===== */
+.sc-profile .sc-name { font-size:20px !important; font-weight:600 !important; line-height:1.2 !important; }
+.sc-profile .sc-hero-id { gap:22px !important; }
+.sc-profile .sc-hero-text { margin-left:4px !important; }
+.sc-profile .sc-profile-stats, .sc-profile .pv-stats-bar { display:none !important; }
