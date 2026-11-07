@@ -87,6 +87,71 @@ async function getDiscoverPage({ userId, cursor, limit }) {
   };
 }
 
+// Explore: what someone is likely to want to see from accounts they do not follow.
+// Own posts and followed accounts are left out (Instagram's Explore works the same way), engagement
+// rate counts more than age, and no author takes more than two places in a page.
+const EXPLORE_AUTHOR_CAP = 2;
+const EXPLORE_WINDOW = 30;
+
+async function getExplorePage({ userId, cursor, limit }) {
+  const n = clampLimit(limit);
+  const offset = parseRankCursor(cursor);
+  const cacheKey = `feed:explore:ranked:${userId}`;
+  let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
+
+  if (!ids) {
+    const [candidates, follows, blocks] = await Promise.all([
+      Post.findAll({
+        where: { status: 'live', isStory: false, visibility: 'public' },
+        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
+        order: [['createdAt', 'DESC']], limit: 500, raw: true,
+      }),
+      Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
+      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+    ]);
+    const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
+    const followed = new Set(follows.map((f) => f.followeeId));
+    const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
+    const now = Date.now();
+    const scored = candidates
+      .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId))
+      .map((p) => {
+        const views = Number(p.viewCount) || 0;
+        const interactions = (Number(p.likeCount) || 0) * 2 + (Number(p.repostCount) || 0) * 3 + Math.log1p(Number(p.giftCoins) || 0) * 2;
+        // Engagement rate, smoothed so a post with few views is not over-rewarded.
+        const rate = interactions / (views + 20);
+        const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
+        const score = rate * 40
+          + Math.log1p(views) * 0.8
+          + 4 * Math.exp(-ageHours / 168)
+          + (Number(preferenceScores[p.id]) || 0);
+        return { id: p.id, authorId: p.authorId, score, createdAt: new Date(p.createdAt).getTime() };
+      })
+      .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);
+
+    // Diversity: the first window keeps at most EXPLORE_AUTHOR_CAP posts per author; the rest follow in score order.
+    const perAuthor = new Map();
+    const head = [];
+    const tail = [];
+    for (const item of scored) {
+      const count = perAuthor.get(item.authorId) || 0;
+      if (head.length < EXPLORE_WINDOW && count >= EXPLORE_AUTHOR_CAP) { tail.push(item); continue; }
+      perAuthor.set(item.authorId, count + 1);
+      head.push(item);
+    }
+    ids = [...head, ...tail].map((item) => item.id);
+    await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
+  }
+
+  const pageIds = ids.slice(offset, offset + n + 1);
+  const hasMore = pageIds.length > n;
+  const page = await hydrate(pageIds.slice(0, n));
+  return {
+    items: page.map(toPostDTO),
+    nextCursor: hasMore ? `rank:${offset + n}` : null,
+  };
+}
+
 // Following: a Redis sorted set per user (score = post time), filled on post.
 // Paging walks that set in small windows and resumes after the cursor member.
 async function getFollowingPage({ userId, cursor, limit }) {
@@ -160,4 +225,5 @@ async function markFollowing(result, viewerId) {
   };
 }
 
-module.exports = { pagePosts, getDiscoverPage, getFollowingPage, fanOutPost, clampLimit, authorInclude, markFollowing };
+module.exports = {
+  getExplorePage, pagePosts, getDiscoverPage, getFollowingPage, fanOutPost, clampLimit, authorInclude, markFollowing };

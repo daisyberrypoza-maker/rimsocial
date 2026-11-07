@@ -11,6 +11,15 @@ router.get('/discover', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /v1/feed/explore?cursor=...&limit=10: Explore ranking (not your own posts or accounts you follow)
+router.get('/explore', requireAuth, async (req, res, next) => {
+  try {
+    res.json(await feed.markFollowing(await feed.getExplorePage({
+      userId: req.user.id, cursor: req.query.cursor, limit: req.query.limit,
+    }), req.user.id));
+  } catch (e) { next(e); }
+});
+
 // GET /v1/feed/following?cursor=...&limit=10
 router.get('/following', requireAuth, async (req, res, next) => {
   try {
