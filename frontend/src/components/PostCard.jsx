@@ -371,7 +371,7 @@ export default function PostCard({ post, active }) {
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
       <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" />{post.commentCount > 0 && <span>{formatCount(post.commentCount)}</span>}</button>
-      <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
+      <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={repost} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
         <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
       </button>
       <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
@@ -388,15 +388,6 @@ export default function PostCard({ post, active }) {
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
       </>}
     </div>
-    {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>
-      <section className="sheet repost-sheet" role="dialog" aria-label="Repost" onClick={(e) => e.stopPropagation()}>
-        <div className="people-sheet-handle" />
-        <div className="comments-heading"><h3>{reposted ? 'Remove repost?' : 'Repost to your friends'}</h3><button className="icon-button" onClick={() => setShowRepostSheet(false)} aria-label="Close"><Icon name="x" size={20} /></button></div>
-        <p className="muted">{reposted ? 'This post will no longer be shared with people who follow you.' : 'Share this video with people who follow you. The original creator and post stay credited.'}</p>
-        <div className="repost-preview"><Avatar user={post.author} size={38} /><div><strong>@{username}</strong><small>{post.caption || 'Video post'}</small></div><Icon name="repeat" size={20} /></div>
-        <button className={reposted ? 'repost-confirm remove' : 'repost-confirm'} disabled={repostBusy} onClick={async () => { const success = await repost(); if (success) setShowRepostSheet(false); }}>{repostBusy ? 'Please wait…' : reposted ? 'Remove repost' : 'Repost'}</button>
-      </section>
-    </div>}
     {showMenu && <PostOptionsSheet
       username={username}
       isOwn={isOwnPost}
@@ -406,7 +397,7 @@ export default function PostCard({ post, active }) {
       onClose={() => setShowMenu(false)}
       onGift={() => { setShowMenu(false); setShowGifts(true); }}
       onRemix={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}
-      onRepost={() => { setShowMenu(false); setShowRepostSheet(true); }}
+      onRepost={() => { setShowMenu(false); repost(); }}
       onShare={() => { setShowMenu(false); setShowSend(true); }}
       onCopy={() => { setShowMenu(false); copyPostLink(); }}
       onNotInterested={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}
