@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
@@ -15,8 +15,9 @@ const STALE_AFTER_MS = 60 * 1000;
 
 export default function Explore() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const peopleMode = searchParams.get('people') === '1';
+  const peopleMode = location.pathname === '/friends' || searchParams.get('people') === '1';
   const searchMode = searchParams.get('search') === '1';
   const cached = useAppStore((s) => s.feeds[KEY]);
   const [loading, setLoading] = useState(false);
@@ -113,17 +114,17 @@ export default function Explore() {
   }, [searchParams]);
 
   return (
-    <div className="ig-explore" onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
+    <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
-      {peopleMode && <header className="people-discovery-heading"><h1>Find people</h1><p>Friends, followers and creators you may know</p></header>}
+      {peopleMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => navigate(-1)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
       {searchMode ? <div className="rim-search-head">
-        <button type="button" className="rim-search-back" aria-label="Back" onClick={() => navigate(peopleMode ? '/explore?people=1' : '/explore')}><Icon name="arrow-left" size={23} /></button>
+        <button type="button" className="rim-search-back" aria-label="Back" onClick={() => navigate(peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
           <Icon name="search" size={19} />
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/explore?people=1&search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
+      </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
@@ -142,7 +143,7 @@ export default function Explore() {
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
         {recommendations.followBack.length > 0 && <section className="ig-section">
-          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/explore?people=1')}>See all</button>}</div>
+          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
