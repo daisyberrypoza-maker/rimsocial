@@ -4,6 +4,13 @@ import { clearMediaCache, evictMedia, missingItems } from './lib/prefetch.js';
 
 const STORY_CACHE_LIMIT = 20;
 const STORY_CACHE_KEY = 'clipverse-stories';
+// One-time reset: clears cached stories on this browser once, then never again
+try {
+  if (!localStorage.getItem('rimsocial-reset-2026-11-07')) {
+    localStorage.removeItem(STORY_CACHE_KEY);
+    localStorage.setItem('rimsocial-reset-2026-11-07', '1');
+  }
+} catch { /* storage unavailable: nothing to clear */ }
 const STORY_STORE_ITEMS = 10;
 
 // Story lists live under their own key, so scrolling the feed does not re-save them each time

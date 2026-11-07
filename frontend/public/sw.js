@@ -5,7 +5,7 @@
 // - The page can ask for media to be prefetched ("prefetch" message) so stories play without waiting.
 
 const SHELL_CACHE = 'rimsocial-shell-v3';
-const MEDIA_CACHE = 'rimsocial-media-v1';
+const MEDIA_CACHE = 'rimsocial-media-v2'; // bumped once: the old media cache is deleted on activation
 const KEEP_CACHES = [SHELL_CACHE, MEDIA_CACHE];
 const MEDIA_LIMIT = 400;                       // images and videos kept on the device
 const VIDEO_MAX_BYTES = 25 * 1024 * 1024;      // larger videos stream from the network only
