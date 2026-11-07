@@ -4260,3 +4260,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .topbar.reels-top button.snap-circle { background:transparent !important; }
 .topbar.reels-top button.snap-circle svg { filter:drop-shadow(0 1px 4px rgba(0,0,0,.6)); }
 .topbar.reels-top button.snap-circle .avatar { filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
+
+/* Header add-post: outline gallery-and-plus icon, no background. Bottom bar add-post: yellow with a black plus. */
+.topbar.reels-top button.snap-square { background:transparent !important; border:0 !important; color:#fff !important; box-shadow:none !important; }
+.topbar.reels-top button.snap-square svg { stroke:#fff !important; stroke-width:2 !important; width:28px !important; height:28px !important; filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
+.bottomnav .add-btn .add-face { background:#FFFC00 !important; border:0 !important; color:#000 !important; }
+.bottomnav .add-btn .add-face svg { stroke:#000 !important; }
