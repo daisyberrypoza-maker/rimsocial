@@ -363,13 +363,16 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         {current?.liked && !flash && <span className="sv-liked-mark" aria-hidden="true"><Icon name="heart" size={16} /></span>}
       </div>
 
-      {!isOwner && current && (
+      {current && (
         <div className="sv-footer">
           <span className="sv-sound">♪ Original sound</span>
           <div className="sv-reply-row">
             <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
               <Icon name="camera" size={22} />
             </button>
+            {isOwner ? (
+              <div className="sv-reply sv-views"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
+            ) : (
             <div className="sv-reply">
               <input
                 type="text"
@@ -386,7 +389,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
                 <button key={emoji} type="button" className="sv-react" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>
               ))}
             </div>
-            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : () => setShareOpen(true)}>
+            )}
+            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
               <Icon name="send" size={22} />
             </button>
           </div>
