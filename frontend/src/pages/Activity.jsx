@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { goBack } from '../lib/goBack.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 
@@ -65,6 +66,7 @@ export default function Activity() {
 
   return <main className="page activity-page">
     <div className="activity-heading">
+      <button type="button" className="ghost activity-back" aria-label="Back" onClick={() => goBack(navigate, '/chat')}><Icon name="arrow-left" size={21} /></button>
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
       <button className="ghost activity-refresh" onClick={load} aria-label="Refresh activity" title="Refresh"><Icon name="refresh" size={19} /></button>
     </div>
