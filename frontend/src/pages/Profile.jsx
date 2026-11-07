@@ -266,7 +266,6 @@ export default function Profile() {
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
         <button className="sc-compact-back" aria-label="Back" onClick={() => navigate(-1)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
-        <span className="sc-compact-name">{profile.displayName || profile.username}</span>
         <div className="sc-compact-actions">
           <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
           {profile.isMe
@@ -280,6 +279,7 @@ export default function Profile() {
         <div className="pf-top">
           <button type="button" className="pf-round" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
           <div className="pf-top-right">
+            {!profile.isMe && profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
             <button type="button" className="pf-round" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
             {profile.isMe
               ? <button type="button" className="pf-round" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
@@ -311,7 +311,6 @@ export default function Profile() {
         ) : (
           <div className="pf-actions">
             <button type="button" className={`pf-btn pf-add${profile.isFollowing ? ' added' : ''}`} onClick={toggleFollow} disabled={busy}><Icon name="user-plus" size={22} />{profile.isFollowing ? 'Added' : 'Add'}</button>
-            {profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
             <button type="button" className="pf-round pf-more" aria-label="More options" onClick={() => setOptionsOpen(true)}><Icon name="chevron-down" size={22} /></button>
           </div>
         )}
