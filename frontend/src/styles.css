@@ -3046,3 +3046,78 @@ html, body, #root { background: #ffffff; color: #111111; }
 .sc-compact-nav { min-height:calc(48px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 10px 0; }
 .sc-profile .sc-compact-back { width:38px; height:38px; flex-basis:38px; }
 .topbar { padding:calc(env(safe-area-inset-top, 0px) + 5px) 14px 6px; }
+
+
+/* Reference-matched mobile profile: charcoal hero, rounded controls, compact native spacing. */
+.sc-profile { max-width:560px; width:100%; margin:0 auto; padding-bottom:calc(var(--nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 12px); font-size:14px; }
+.sc-profile .sc-hero { min-height:390px; background:#1b1b1b !important; color:#fff; overflow:hidden; }
+.sc-profile .sc-hero-bg { background-color:#202020 !important; background-size:cover !important; background-position:center !important; filter:none !important; }
+.sc-profile .sc-hero-shade { background:linear-gradient(180deg,rgba(0,0,0,.22) 0%,rgba(0,0,0,.12) 42%,rgba(0,0,0,.86) 100%) !important; }
+.sc-profile .sc-hero-top { padding:calc(env(safe-area-inset-top, 0px) + 7px) 16px 0; gap:10px; }
+.sc-profile .sc-circle { width:44px; height:44px; border-radius:50% !important; background:rgba(10,10,10,.72) !important; color:#fff !important; }
+.sc-profile .sc-share-pill { height:44px; border-radius:999px !important; padding:0 18px; background:rgba(10,10,10,.72) !important; color:#fff !important; font-size:15px; }
+.sc-profile .sc-hero-id { align-items:center; gap:14px; padding:0 22px; margin-top:auto; }
+.sc-profile .sc-hero-avatar { width:100px; height:100px; flex:0 0 100px; }
+.sc-profile .sc-hero-avatar .avatar { width:100px !important; height:100px !important; box-shadow:0 0 0 3px #1c1c1c,0 0 0 7px rgba(255,255,255,.16) !important; }
+.sc-profile .sc-avatar-preview { width:100px; height:100px; }
+.sc-profile .sc-avatar-edit { width:36px; height:36px; right:-3px; bottom:-2px; border:2px solid #202020 !important; border-radius:50% !important; background:#fff !important; color:#151515 !important; }
+.sc-profile .sc-name { font-size:22px; line-height:1.2; letter-spacing:-.35px; font-weight:750; margin:0 0 5px; }
+.sc-profile .sc-handle { font-size:14px; line-height:1.35; color:rgba(255,255,255,.74); margin:0; overflow-wrap:anywhere; }
+.sc-profile .sc-seg-row, .sc-profile .sc-add-row { display:flex; gap:10px; padding:24px 16px 18px; }
+.sc-profile .sc-seg { min-height:44px !important; border:1px solid rgba(255,255,255,.2) !important; border-radius:999px !important; background:rgba(255,255,255,.22) !important; color:#fff !important; font-size:14px !important; font-weight:650 !important; }
+.sc-profile .sc-seg.on { background:#393939 !important; border-color:#393939 !important; }
+.sc-profile .sc-add { min-height:44px; border-radius:999px !important; background:#fff !important; color:#171717 !important; }
+.sc-profile .sc-stats { gap:8px 18px !important; padding:14px 16px 12px !important; font-size:14px !important; color:#333; }
+.sc-profile .sc-stats strong { font-weight:750; }
+.sc-profile .sc-post-to { padding:12px 16px 6px; }
+.sc-profile .sc-post-head { margin-bottom:10px; }
+.sc-profile .sc-post-head h3 { font-size:17px; font-weight:700; }
+.sc-profile .sc-pill { min-height:40px; border-radius:999px !important; background:#f1f1f3 !important; color:#151515 !important; padding:9px 16px; font-size:14px; }
+.sc-profile .sc-row { min-height:64px; border-radius:16px !important; background:#f4f4f6 !important; color:#171717 !important; }
+.sc-profile .sc-row-icon { border-radius:50% !important; }
+.sc-profile .sc-row-copy strong { font-size:14px; }
+.sc-profile .sc-row-copy small { font-size:12px; }
+.sc-profile .sc-tabs { display:flex; width:100%; gap:0; margin:8px 0 0; position:sticky; top:0; z-index:8; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:none; background:#fff; border-bottom:1px solid #e9e9ec; scroll-behavior:smooth; }
+.sc-profile .sc-tabs::-webkit-scrollbar { display:none; }
+.sc-profile .sc-tabs button { flex:1 0 25%; min-width:0; display:flex; align-items:center; justify-content:center; gap:6px; height:48px; padding:0 8px; border-radius:0 !important; color:#777 !important; font-size:13px !important; font-weight:600 !important; white-space:nowrap; }
+.sc-profile .sc-tabs button svg { width:17px; height:17px; flex:none; }
+.sc-profile .sc-tabs button.on { color:#171717 !important; }
+.sc-profile .sc-tabs button.on::after { left:12%; right:12%; height:2px; border-radius:2px; background:#171717; }
+.sc-profile .sc-grid { gap:2px; }
+.sc-profile .sc-empty-note { padding:38px 22px; margin:0; font-size:14px; line-height:1.45; color:#777; text-align:center; }
+.sc-hashtag-panel { display:flex; flex-wrap:wrap; gap:10px; padding:18px 16px; }
+.sc-hashtag-chip { display:inline-flex; align-items:center; gap:5px; min-height:38px; border-radius:999px !important; padding:8px 13px; background:#f1f1f3 !important; color:#202020 !important; font-size:14px; font-weight:600; }
+.sc-profile .profile-drawer-backdrop { background:rgba(0,0,0,.28) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+.sc-profile .profile-drawer { background:#fff !important; background-image:none !important; color:#171717 !important; border-radius:20px 0 0 20px; box-shadow:-8px 0 28px rgba(0,0,0,.12) !important; }
+.sc-profile .profile-drawer .drawer-head { background:#fff !important; }
+.sc-profile .profile-drawer .drawer-head h3 { font-size:18px; }
+.sc-profile .profile-drawer > button svg { width:21px; height:21px; color:#454545; stroke-width:1.8; }
+.sc-profile .image-choice-sheet, .sc-profile .people-sheet, .sc-profile .sc-options-sheet { background:#fff !important; background-image:none !important; color:#171717 !important; }
+.sc-profile .sc-options-backdrop { background:rgba(0,0,0,.28) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+.sc-profile .sc-option { background:#fff !important; color:#171717 !important; border-radius:0 !important; }
+.sc-profile .sc-option svg { color:#333; stroke-width:1.8; }
+.sc-profile .sc-compact-nav { min-height:calc(48px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 10px 0; background:rgba(255,255,255,.98); }
+.sc-profile .sc-compact-nav.visible { transform:translate(-50%,0); }
+.sc-profile .sc-compact-back { border-radius:50% !important; }
+.bottomnav { min-height:68px; padding:7px 7px calc(env(safe-area-inset-bottom, 0px) + 7px) !important; gap:2px; background:#fff !important; transition:padding 180ms ease, min-height 180ms ease; }
+.bottomnav a { min-width:0 !important; flex:1; gap:4px; font-size:12px !important; line-height:1.1; font-weight:500; transition:color 160ms ease, transform 160ms ease; }
+.bottomnav a:active { transform:scale(.96); }
+.bottomnav svg { width:27px !important; height:27px !important; stroke-width:1.8; }
+.bottomnav .create { gap:4px; }
+.bottomnav .create span.plus { width:34px; height:32px; border-radius:11px !important; background:#4b5cff !important; color:#fff !important; }
+.bottomnav .create span.plus svg { width:25px !important; height:25px !important; }
+.people-discovery-heading { display:flex; align-items:center; gap:12px; padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px !important; background:#fff !important; color:#171717 !important; }
+.people-discovery-heading .friends-back { display:grid; place-items:center; width:42px; height:42px; flex:0 0 42px; padding:0; border-radius:50% !important; background:#f2f2f4 !important; color:#171717 !important; }
+.people-discovery-heading h1 { margin:0; font-size:20px; line-height:1.2; font-weight:700; }
+.people-discovery-heading p { margin:4px 0 0; font-size:13px; color:#777; line-height:1.35; }
+.friends-page .rim-search-launch { margin-top:8px !important; }
+@media (max-width:390px) {
+  .sc-profile .sc-hero { min-height:370px; }
+  .sc-profile .sc-hero-id { padding-left:18px; padding-right:18px; gap:12px; }
+  .sc-profile .sc-name { font-size:20px; }
+  .sc-profile .sc-hero-avatar, .sc-profile .sc-hero-avatar .avatar, .sc-profile .sc-avatar-preview { width:88px !important; height:88px !important; }
+  .sc-profile .sc-hero-avatar { flex-basis:88px; }
+  .sc-profile .sc-tabs button { font-size:12px !important; gap:4px; padding:0 5px; }
+  .bottomnav { min-height:66px; }
+  .bottomnav svg { width:26px !important; height:26px !important; }
+}
