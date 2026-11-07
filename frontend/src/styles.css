@@ -5027,3 +5027,11 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .pf-bio { font-weight:400 !important; }
 .sc-profile .pf-tabs button { font-weight:500 !important; }
 .sc-profile .pf-tabs button.on { font-weight:600 !important; }
+
+/* Profile: scrolled bar fades in with the scroll (opacity set from scroll position); lighter type */
+.sc-profile .sc-compact-nav { transition:none !important; }
+.sc-profile .pf-name { font-size:16px !important; font-weight:500 !important; line-height:1.2 !important; }
+.sc-profile .pf-handle, .sc-profile .pf-sub { font-size:13px !important; font-weight:400 !important; }
+.sc-profile .pf-btn, .sc-profile .pf-add, .sc-profile .pf-add.added { font-size:14px !important; font-weight:500 !important; }
+.sc-profile .pf-bio { font-size:14px !important; font-weight:400 !important; }
+.sc-profile .pf-tabs button, .sc-profile .pf-tabs button.on { font-size:15px !important; font-weight:500 !important; }
