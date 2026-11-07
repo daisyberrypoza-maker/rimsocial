@@ -12,16 +12,20 @@ function LensesIcon() {
 function StoriesIcon() {
   return <svg {...ICON_PROPS}><rect x="4" y="4" width="6.5" height="16" rx="2" /><rect x="13.5" y="7" width="6.5" height="13" rx="2" /></svg>;
 }
+function PlusIcon() {
+  return <svg {...ICON_PROPS}><path d="M12 5v14M5 12h14" /></svg>;
+}
 function RimlightIcon() {
   return <svg {...ICON_PROPS} fill="currentColor" stroke="none"><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
 }
 
-// Four items in the same order and style as the reference: Chat, Lenses, Stories, Rimlight.
+// Chat, Lenses, Add post, Stories, Rimlight: the reference style, with Add post in the centre.
 export default function BottomNav() {
   return (
     <nav className="bottomnav" aria-label="Main navigation">
       <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
       <NavLink to="/explore" aria-label="Lenses"><LensesIcon /><span>Lenses</span></NavLink>
+      <NavLink to="/upload" aria-label="Add post"><PlusIcon /><span>Add post</span></NavLink>
       <NavLink to="/stories" aria-label="Stories"><StoriesIcon /><span>Stories</span></NavLink>
       <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /><span>Rimlight</span></NavLink>
     </nav>
