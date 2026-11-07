@@ -61,7 +61,7 @@ export default function ExploreWatch() {
   }
 
   return <main className="profile-watch-page xp-watch">
-    <button className="profile-watch-back" onClick={() => goBack(navigate)} aria-label="Back to Explore">← Explore</button>
+    <button className="profile-watch-back" onClick={() => goBack(navigate, '/explore')} aria-label="Back to Explore">← Explore</button>
     <div className="feed profile-watch-feed" ref={container} onScroll={onScroll}>
       {items.map((post, index) => <PostCard key={post.id} post={post} active={index === active} />)}
       {loading && <div className="slot"><p className="muted">Loading posts…</p></div>}
