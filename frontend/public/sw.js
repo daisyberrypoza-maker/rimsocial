@@ -8,7 +8,7 @@ const SHELL_CACHE = 'rimsocial-shell-v2';
 const MEDIA_CACHE = 'rimsocial-media-v1';
 const KEEP_CACHES = [SHELL_CACHE, MEDIA_CACHE];
 const MEDIA_LIMIT = 400;                       // images and videos kept on the device
-const VIDEO_MAX_BYTES = 40 * 1024 * 1024;      // larger videos stream from the network only
+const VIDEO_MAX_BYTES = 25 * 1024 * 1024;      // larger videos stream from the network only
 const APP_ROOT = new URL('./', self.registration.scope).pathname;
 
 self.addEventListener('install', (event) => {
@@ -49,12 +49,30 @@ async function staleWhileRevalidate(request) {
   return (await network) || Response.error();
 }
 
+// Recently used videos stay in memory, so a player's many range requests do not re-read the file each time.
+const videoBlobs = new Map(); // url -> Blob, most recently used last
+const VIDEO_MEMORY_LIMIT = 3;
+
+async function cachedVideoBlob(url) {
+  if (videoBlobs.has(url)) {
+    const known = videoBlobs.get(url);
+    videoBlobs.delete(url);
+    videoBlobs.set(url, known);
+    return known;
+  }
+  const cache = await caches.open(MEDIA_CACHE);
+  const hit = await cache.match(url);
+  if (!hit) return null;
+  const blob = await hit.blob();
+  videoBlobs.set(url, blob);
+  while (videoBlobs.size > VIDEO_MEMORY_LIMIT) videoBlobs.delete(videoBlobs.keys().next().value);
+  return blob;
+}
+
 // Serves a cached video, answering byte-range requests so the player can seek.
 async function videoResponse(request) {
-  const cache = await caches.open(MEDIA_CACHE);
-  const cached = await cache.match(request.url);
-  if (!cached) return fetch(request);
-  const blob = await cached.blob();
+  const blob = await cachedVideoBlob(request.url);
+  if (!blob) return fetch(request);
   const type = blob.type || 'video/mp4';
   const range = request.headers.get('range');
   if (!range) {

@@ -90,13 +90,18 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   }, [group.user.id]);
 
   // Behind the scenes: warm the next story (and the one after) while this one plays
+  // Waits a moment so it never competes with the story on screen.
   useEffect(() => {
-    if (!stories) return;
-    const upcoming = stories.slice(si + 1, si + 3).map((item) => ({
-      url: item.kind === 'video' ? videoStreamUrl(mediaUrl(item.mediaUrl)) : mediaUrl(item.mediaUrl),
-      kind: item.kind === 'video' ? 'video' : 'image',
-    })).filter((item) => item.url);
-    prefetchMedia(upcoming);
+    if (!stories) return undefined;
+    const item = stories[si + 1];
+    if (!item) return undefined;
+    const timer = setTimeout(() => {
+      prefetchMedia([{
+        url: item.kind === 'video' ? videoStreamUrl(mediaUrl(item.mediaUrl)) : mediaUrl(item.mediaUrl),
+        kind: item.kind === 'video' ? 'video' : 'image',
+      }]);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [stories, si]);
 
   const next = useCallback(() => {
