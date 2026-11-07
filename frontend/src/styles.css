@@ -3699,3 +3699,10 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-bell.on { background:#fff !important; color:#111 !important; }
 .sc-profile .sc-hero { position:relative !important; isolation:isolate; }
 .sc-profile .sc-hero-bg { position:absolute !important; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; height:auto !important; }
+
+/* ===== Flush stats panel under the header (no gap, card border or margin) and larger tab labels ===== */
+.sc-profile .sc-profile-stats { margin:0 !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#fff !important; padding:14px 16px 8px !important; gap:8px !important; }
+.sc-profile .sc-tabs { margin-top:0 !important; }
+.sc-profile .sc-tabs button { font-size:16px !important; font-weight:600 !important; }
+.sc-profile .sc-tabs button.on { font-weight:700 !important; }
+.sc-profile .sc-tabs svg { width:20px !important; height:20px !important; }
