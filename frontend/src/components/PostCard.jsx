@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
-import { mediaUrl, postShareUrl } from '../lib/config.js';
+import { mediaUrl, postShareUrl, videoStreamUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 
@@ -141,7 +141,7 @@ export default function PostCard({ post, active }) {
   const [likeBusy, setLikeBusy] = useState(false);
   const [repostBusy, setRepostBusy] = useState(false);
   const username = post.author?.username || 'unknown';
-  const src = mediaUrl(post.mediaUrl);
+  const src = post.kind === 'video' ? videoStreamUrl(mediaUrl(post.mediaUrl)) : mediaUrl(post.mediaUrl);
   const poster = mediaUrl(post.thumbUrl) || undefined;
 
   // Pause when the app is hidden (closed or switched away) and resume when it is shown again.

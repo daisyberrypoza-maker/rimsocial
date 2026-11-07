@@ -17,3 +17,10 @@ export function postShareUrl(postId) {
   const base = configured || (!Capacitor.isNativePlatform() ? window.location.origin : '');
   return base ? base + '/p/' + encodeURIComponent(postId) : null;
 }
+
+// Cloudinary videos are served as a smaller, compressed stream (auto quality and format, max 720px wide),
+// so phones download far less before playback starts. Other URLs are returned unchanged.
+export function videoStreamUrl(url) {
+  if (!url || !url.includes('res.cloudinary.com/') || !url.includes('/video/upload/') || url.includes('/video/upload/q_auto')) return url;
+  return url.replace('/video/upload/', '/video/upload/q_auto,f_auto,w_720,c_limit/');
+}
