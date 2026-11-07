@@ -3568,3 +3568,16 @@ html, body, #root { min-height:100%; }
   min-height:calc(44px + env(safe-area-inset-top, 0px)) !important;
 }
 .page-title { margin-top:8px !important; }
+
+
+/* Visible account type beside the handle, matching the compact social profile identity. */
+.sc-profile .sc-creator-status {
+  display:inline-flex; align-items:center; align-self:flex-start; gap:5px;
+  width:max-content; max-width:100%; margin:4px 0 0; padding:4px 8px;
+  border-radius:999px; font-size:11px; font-weight:650; line-height:1.2;
+}
+.sc-profile .sc-creator-status.is-creator { background:#e9f8ef; color:#187544; }
+.sc-profile .sc-creator-status.is-member { background:rgba(255,255,255,.14); color:rgba(255,255,255,.88); }
+.sc-profile .sc-creator-status svg { flex:0 0 auto; }
+.sc-profile .sc-hero-text { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+.sc-profile .sc-profile-stats > button span { white-space:nowrap; }
