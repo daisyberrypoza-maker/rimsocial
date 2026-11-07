@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import Avatar from './Avatar.jsx';
+import { useAppStore } from '../store.js';
 
 export default function TopBar({ immersive, title }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const me = useAppStore((st) => st.user);
   const nested = location.pathname.startsWith('/p/') || location.pathname.startsWith('/creator/live/') || location.pathname === '/creator' || location.pathname === '/upload' || location.pathname === '/friends' || (location.pathname.startsWith('/u/') && location.pathname !== '/u/me');
 
   // Rimlight header: hidden while the page is scrolling, shown again once scrolling stops.
@@ -39,9 +42,12 @@ export default function TopBar({ immersive, title }) {
 
   if (reelsHeader) {
     return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}`}>
-      <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={26} /></button>
+      <button className="snap-circle" onClick={() => navigate('/u/me')} aria-label="Your profile"><Avatar user={me} size={34} /></button>
       <nav className="reels-tabs" aria-label="Rimlight sections"><NavLink to="/" end>Rimlight</NavLink><NavLink to="/following">Following</NavLink><NavLink to="/live">LIVE</NavLink></nav>
-      <button className="reels-icon" onClick={() => navigate('/algorithm')} aria-label="Your algorithm"><Icon name="sliders" size={24} /></button>
+      <div className="snap-right">
+        <button className="snap-circle" onClick={() => navigate('/algorithm')} aria-label="Your algorithm"><Icon name="sliders" size={20} /></button>
+        <button className="snap-square" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={22} /></button>
+      </div>
     </header>;
   }
   return <header className={`topbar ${immersive ? 'overlay' : ''}`}>
