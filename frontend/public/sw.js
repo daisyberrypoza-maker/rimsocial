@@ -4,7 +4,7 @@
 // - Videos: served from the cache when prefetched (including seeking), otherwise from the network.
 // - The page can ask for media to be prefetched ("prefetch" message) so stories play without waiting.
 
-const SHELL_CACHE = 'rimsocial-shell-v2';
+const SHELL_CACHE = 'rimsocial-shell-v3';
 const MEDIA_CACHE = 'rimsocial-media-v1';
 const KEEP_CACHES = [SHELL_CACHE, MEDIA_CACHE];
 const MEDIA_LIMIT = 400;                       // images and videos kept on the device
