@@ -1,4 +1,7 @@
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { api } from '../api.js';
+import { playChime } from '../lib/notify.js';
 
 // Icons drawn to match the reference: outline chat, sparkle, two cards, and a filled play shape.
 const ICON_PROPS = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
@@ -23,13 +26,31 @@ function RimlightIcon() {
 export default function BottomNav() {
   // Dark on Rimlight and Following; white with dark text on LIVE.
   const { pathname } = useLocation();
+  const [unread, setUnread] = useState(0);
+  const lastCount = useRef(null);
+  // Unread chat messages: badge on the Chat tab, and a chime when the count goes up.
+  useEffect(() => {
+    let alive = true;
+    const load = () => api('/v1/messages/unread-count')
+      .then((data) => {
+        if (!alive) return;
+        const count = data.count || 0;
+        if (lastCount.current !== null && count > lastCount.current) playChime();
+        lastCount.current = count;
+        setUnread(count);
+      })
+      .catch(() => {});
+    load();
+    const timer = setInterval(load, 6000);
+    return () => { alive = false; clearInterval(timer); };
+  }, []);
   const dark = pathname === '/' || pathname === '/following';
   const light = pathname === '/live';
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
       <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /></NavLink>
-      <NavLink to="/activity" aria-label="Chat"><ChatIcon /></NavLink>
+      <NavLink to="/chat" aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}</NavLink>
       <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
       <NavLink to="/explore" aria-label="Explore"><ExploreIcon /></NavLink>
       <NavLink to="/stories" aria-label="Stories"><StoriesIcon /></NavLink>

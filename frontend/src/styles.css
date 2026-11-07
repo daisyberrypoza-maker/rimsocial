@@ -4027,3 +4027,38 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .bottomnav a svg, .bottomnav svg { width:28px !important; height:28px !important; stroke-width:1.8 !important; }
 .bottomnav .add-btn { width:52px !important; height:36px !important; }
 .bottomnav .add-btn .add-face svg { width:24px !important; height:24px !important; stroke-width:2.6 !important; }
+
+/* Chat: Instagram-style inbox, conversation and new message screens. */
+.bottomnav a { position:relative; }
+.bottomnav .tab-badge { position:absolute; top:4px; left:calc(50% + 8px); min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:#fe2c55; color:#fff; font-size:11px; font-weight:800; line-height:18px; text-align:center; box-sizing:border-box; }
+.dm-page, .dm-convo { min-height:100dvh; background:#fff; color:#111; box-sizing:border-box; padding-top:calc(env(safe-area-inset-top,0px) + 8px); }
+.dm-page { padding-bottom:calc(var(--nav-height,56px) + 8px); }
+.dm-convo { display:flex; flex-direction:column; height:100dvh; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px); }
+.dm-head { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; padding:8px 12px 12px; }
+.dm-head h1 { margin:0; font-size:22px; font-weight:800; text-align:center; }
+.dm-page button.dm-icon, .dm-convo button.dm-icon { width:40px !important; height:40px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#111 !important; display:grid; place-items:center; box-shadow:none !important; }
+.dm-filters { display:flex; gap:8px; padding:0 12px 12px; }
+.dm-page button.dm-chip { border-radius:999px !important; padding:8px 16px !important; font-size:14px !important; font-weight:600; background:#f0f0f2 !important; color:#111 !important; border:0 !important; }
+.dm-page button.dm-chip.on { background:#111 !important; color:#fff !important; }
+.dm-list { list-style:none; margin:0; padding:0; }
+.dm-page a.dm-row, .dm-page button.dm-row { display:flex; align-items:center; gap:12px; padding:10px 14px; width:100%; box-sizing:border-box; text-decoration:none; color:#111; background:transparent; border:0; text-align:left; }
+.dm-text { display:flex; flex-direction:column; min-width:0; flex:1; }
+.dm-text strong { font-size:15px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-text small { font-size:14px; color:#8e8e93; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-row.unread .dm-text strong, .dm-row.unread .dm-text small { color:#111; font-weight:700; }
+.dm-unread { min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:#3797f0; color:#fff; font-size:12px; font-weight:700; display:grid; place-items:center; }
+.dm-empty { text-align:center; color:#8e8e93; font-size:15px; padding:40px 24px; }
+.dm-error { color:#c62828; font-size:14px; text-align:center; margin:8px 14px; }
+.dm-to { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid #efefef; font-size:16px; }
+.dm-to span { font-weight:600; }
+.dm-to input { flex:1; border:0; outline:0; font-size:16px; color:#111; background:transparent; }
+.dm-chead { display:flex; align-items:center; gap:10px; padding:8px 10px; border-bottom:1px solid #efefef; }
+.dm-cname { font-size:17px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-thread { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:14px 12px; }
+.dm-bubble { max-width:75%; padding:9px 13px; border-radius:20px; font-size:15px; line-height:1.35; word-wrap:break-word; white-space:pre-wrap; }
+.dm-bubble.mine { align-self:flex-end; background:#3797f0; color:#fff; border-bottom-right-radius:6px; }
+.dm-bubble.theirs { align-self:flex-start; background:#efefef; color:#111; border-bottom-left-radius:6px; }
+.dm-input { display:flex; align-items:center; gap:8px; margin:6px 12px 4px; border:1px solid #dbdbdb; border-radius:999px; padding:4px 6px 4px 16px; }
+.dm-input input { flex:1; min-width:0; border:0; outline:0; font-size:15px; color:#111; background:transparent; padding:8px 0; }
+.dm-page .dm-input button, .dm-convo .dm-input button { width:38px !important; height:38px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:#3797f0 !important; color:#fff !important; display:grid; place-items:center; }
+.dm-input button:disabled { opacity:.4; }
