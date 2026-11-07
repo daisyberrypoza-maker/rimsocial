@@ -1,4 +1,5 @@
-const { Op, Post, User, Follow, StoryView } = require('../db');
+const { Op, Post, User, Follow, StoryView, StoryLike } = require('../db');
+const { fn, col } = require('sequelize');
 const redis = require('../redis');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
@@ -67,8 +68,26 @@ async function getUserStories(userId, viewerId) {
     order: [['createdAt', 'ASC']],
     limit: 100,
   });
-  const viewed = await viewedSet(viewerId, stories.map((s) => s.id));
-  return stories.map((s) => ({ ...toPostDTO(s), viewed: viewed.has(s.id) }));
+  const ids = stories.map((s) => s.id);
+  const viewed = await viewedSet(viewerId, ids);
+  const [likedRows, countRows] = ids.length ? await Promise.all([
+    StoryLike.findAll({ where: { userId: viewerId, postId: ids }, attributes: ['postId'], raw: true }),
+    StoryLike.findAll({ where: { postId: ids }, attributes: ['postId', [fn('COUNT', col('postId')), 'n']], group: ['postId'], raw: true }),
+  ]) : [[], []];
+  const liked = new Set(likedRows.map((r) => r.postId));
+  const counts = new Map(countRows.map((r) => [r.postId, Number(r.n)]));
+  return stories.map((s) => ({
+    ...toPostDTO(s),
+    viewed: viewed.has(s.id),
+    liked: liked.has(s.id),
+    likeCount: counts.get(s.id) || 0,
+  }));
 }
 
-module.exports = { getStoryRail, getUserStories };
+// Whether the viewer subscribes to a creator (a follow) and has the bell on for new posts and stories.
+async function getSubscription(creatorId, viewerId) {
+  const follow = await Follow.findOne({ where: { followerId: viewerId, followeeId: creatorId }, raw: true });
+  return { isSubscribed: Boolean(follow), isNotifying: Boolean(follow && follow.notifyPosts) };
+}
+
+module.exports = { getStoryRail, getUserStories, getSubscription };

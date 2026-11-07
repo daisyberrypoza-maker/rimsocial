@@ -4266,3 +4266,38 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .topbar.reels-top button.snap-square svg { stroke:#fff !important; stroke-width:2 !important; width:28px !important; height:28px !important; filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
 .bottomnav .add-btn .add-face { background:#FFFC00 !important; border:0 !important; color:#000 !important; }
 .bottomnav .add-btn .add-face svg { stroke:#000 !important; }
+
+/* ---- Story viewer, matched to the Snapchat-style design: header with bell and options, sound pill,
+   reply bar with quick reactions, and a share sheet. Shared colours follow the reel rail. ---- */
+.sv-root .sv-head { top:22px; left:12px; right:12px; }
+.sv-who { display:flex; align-items:center; gap:10px; min-width:0; flex:1; background:none; border:0; padding:0; color:#fff; text-align:left; cursor:pointer; }
+.sv-who .avatar { width:36px; height:36px; flex:0 0 auto; }
+.sv-meta { display:flex; flex-direction:column; min-width:0; }
+.sv-root .sv-name { flex:none; font-size:16px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
+.sv-time { font-size:13px; color:rgba(255,255,255,.8); text-shadow:0 1px 4px rgba(0,0,0,.6); }
+.sv-root .sv-icon { width:40px !important; height:40px !important; }
+.sv-root .sv-icon.on { color:var(--snap-yellow) !important; }
+.sv-root .sv-icon.on svg { fill:var(--snap-yellow); }
+.sv-root .sv-icon:disabled { opacity:.5; }
+.sv-liked-mark { position:absolute; left:14px; bottom:calc(env(safe-area-inset-bottom,0px) + 150px); z-index:2; color:#ff3040; pointer-events:none; }
+.sv-liked-mark svg { fill:#ff3040; stroke:#ff3040; }
+
+.sv-footer { position:absolute; left:0; right:0; bottom:0; z-index:3; padding:0 12px calc(env(safe-area-inset-bottom,0px) + 14px); }
+.sv-sound { display:inline-flex; align-items:center; height:32px; padding:0 14px; margin-bottom:12px; border-radius:999px; background:rgba(0,0,0,.45); color:#fff; font-size:14px; font-weight:600; }
+.sv-reply-row { display:flex; align-items:center; gap:10px; }
+.sv-root .sv-cam { width:48px !important; height:48px !important; flex:0 0 auto; border-radius:50% !important; background:rgba(30,30,30,.85) !important; color:#fff !important; }
+.sv-reply { flex:1; min-width:0; display:flex; align-items:center; gap:4px; height:48px; padding:0 8px 0 16px; border-radius:999px; background:rgba(30,30,30,.85); }
+.sv-reply input { flex:1; min-width:0; height:100%; border:0; outline:0; background:transparent; color:#fff; font:inherit; font-size:15px; }
+.sv-reply input::placeholder { color:rgba(255,255,255,.85); }
+.sv-react { flex:0 0 auto; width:34px; height:34px; border:0; padding:0; background:none; font-size:22px; line-height:1; cursor:pointer; }
+.sv-root .sv-send { width:48px !important; height:48px !important; flex:0 0 auto; border-radius:50% !important; background:rgba(30,30,30,.85) !important; color:#fff !important; }
+.sv-root .sv-caption { bottom:calc(env(safe-area-inset-bottom,0px) + 150px); }
+
+.sv-share-backdrop { position:fixed; inset:0; z-index:430; background:rgba(0,0,0,.55); display:flex; flex-direction:column; justify-content:flex-end; }
+.sv-share-reacts { display:flex; justify-content:space-around; align-items:center; padding:14px 12px 18px; }
+.sv-share-reacts button { border:0; background:none; padding:4px; font-size:34px; line-height:1; cursor:pointer; }
+.sv-share-sheet { background:#fff; color:#111; border-radius:16px 16px 0 0; padding:4px 0 calc(env(safe-area-inset-bottom,0px) + 8px); max-height:70vh; overflow:auto; }
+.sv-share-row { display:flex; align-items:center; gap:14px; width:100%; padding:17px 20px; border:0; border-top:1px solid #eee; background:none; color:#111; font:inherit; font-size:16px; font-weight:600; text-align:left; cursor:pointer; }
+.sv-share-row:first-child { border-top:0; }
+.sv-share-row:disabled { opacity:.5; }
+.sv-share-row.danger { color:#ff3040; }
