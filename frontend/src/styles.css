@@ -3583,3 +3583,35 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-creator-status svg { flex:0 0 auto; }
 .sc-profile .sc-hero-text { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
 .sc-profile .sc-profile-stats > button span { white-space:nowrap; }
+
+
+/* Keep follower and following totals directly under the handle, before the Creator badge. */
+.sc-profile .sc-inline-stats {
+  display:flex !important;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+  margin:5px 0 2px;
+  color:rgba(255,255,255,.92);
+  font-size:12px;
+  line-height:1.35;
+}
+.sc-profile .sc-inline-stats button {
+  display:inline-flex;
+  align-items:baseline;
+  gap:4px;
+  min-width:0;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:rgba(255,255,255,.92) !important;
+  box-shadow:none !important;
+  font-size:12px;
+  font-weight:500;
+}
+.sc-profile .sc-inline-stats button strong {
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
+}
