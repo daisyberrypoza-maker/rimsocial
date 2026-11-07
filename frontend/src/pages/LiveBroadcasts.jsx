@@ -172,7 +172,7 @@ export default function LiveBroadcasts() {
 
   return (
     <main className="live-page">
-      <div className="live-toolbar"><h1>LIVE</h1><span><span className="live-dot" />Live broadcasts</span></div>
+      {selected && <div className="live-toolbar"><h1>LIVE</h1><span><span className="live-dot" />Live broadcasts</span></div>}
       {error && <p className="live-error" role="alert">{error}</p>}
       {!selected ? <>
         <form className="live-start-form" onSubmit={startBroadcast}>
@@ -181,8 +181,10 @@ export default function LiveBroadcasts() {
         </form>
         <section className="live-list" aria-label="Current live broadcasts">
           {items.length ? items.map((item) => <article className="live-card" key={item.id}>
-            <div className="live-card-copy"><strong><span className="live-dot" />{item.title}</strong><small>{item.host?.displayName || item.host?.username || 'RimSocial creator'} · {item.viewerCount || 0} watching</small></div>
-            <button type="button" onClick={() => connectToBroadcast(item, false)} disabled={busy}>{busy ? 'Joining…' : 'Watch LIVE'}</button>
+            <span className="live-tag"><span className="live-dot" />LIVE</span>
+            <span className="live-count">{item.viewerCount || 0}</span>
+            <div className="live-card-copy"><strong>{item.title}</strong><small>{item.host?.displayName || item.host?.username || 'RimSocial creator'}</small></div>
+            <button type="button" className="live-watch" aria-label={`Watch LIVE: ${item.title}`} onClick={() => connectToBroadcast(item, false)} disabled={busy}>{busy ? 'Joining…' : 'Watch LIVE'}</button>
           </article>) : <div className="live-empty">No one is live right now. Start a broadcast and invite your audience.</div>}
         </section>
       </> : <>

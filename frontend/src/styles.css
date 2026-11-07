@@ -3944,3 +3944,25 @@ html, body, #root { min-height:100%; }
 .bottomnav .add-btn { display:flex !important; align-items:center; justify-content:center; }
 .bottomnav .add-btn .add-face { display:flex !important; align-items:center; justify-content:center; padding:0 !important; margin:0 !important; line-height:0; box-sizing:border-box; }
 .bottomnav .add-btn .add-face svg { display:block !important; flex:none; margin:0 !important; padding:0 !important; position:static !important; transform:none !important; }
+
+/* LIVE tab: Likee-style layout (grid of tiles under the Rimlight / Following / LIVE header). */
+.live-page { padding-top: calc(env(safe-area-inset-top,0px) + 84px) !important; padding-bottom: calc(var(--nav-height, 56px) + 12px) !important; background:#000; color:#fff; min-height:100dvh; }
+.live-page .live-start-form { display:flex; gap:8px; padding:0 8px 10px; }
+.live-page .live-start-form input { flex:1; min-width:0; background:#16171b; color:#fff; border:1px solid #2a2b31; border-radius:10px; padding:10px 12px; }
+.live-page .live-start-form .live-primary { border-radius:10px; padding:10px 14px; background:#fe2c55; color:#fff; }
+.live-page .live-error { margin:0 8px 8px; color:#ff8a9c; }
+.live-page .live-list { display:grid !important; grid-template-columns:1fr 1fr; gap:6px; padding:0 6px; }
+.live-page .live-card { position:relative; aspect-ratio:3 / 4; border-radius:10px; overflow:hidden; background:linear-gradient(170deg,#3a2f5e 0%,#1a1626 70%,#0d0c12 100%); display:flex; flex-direction:column; justify-content:flex-end; padding:10px; margin:0; }
+.live-page .live-tag { position:absolute; top:8px; left:8px; display:inline-flex; align-items:center; gap:4px; background:#fe2c55; color:#fff; font-size:11px; font-weight:800; border-radius:6px; padding:3px 7px; }
+.live-page .live-tag .live-dot { background:#fff; }
+.live-page .live-count { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.45); color:#fff; font-size:12px; font-weight:700; border-radius:999px; padding:3px 8px; }
+.live-page .live-card-copy { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.live-page .live-card-copy strong { font-size:14px; line-height:1.25; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.live-page .live-card-copy small { font-size:12px; color:rgba(255,255,255,.7); }
+.live-page .live-card > button.live-watch { position:absolute; inset:0; width:100%; height:100%; margin:0; border-radius:0; padding:0; background:transparent; color:transparent; font-size:0; }
+.live-page .live-empty { grid-column:1 / -1; color:rgba(255,255,255,.6); text-align:center; padding:40px 16px; }
+
+/* LIVE tab bottom bar: white background, dark text. */
+.bottomnav.bottomnav-live { background:#fff !important; border-top-color:#e5e5ea !important; }
+.bottomnav.bottomnav-live a { color:#111 !important; }
+.bottomnav.bottomnav-live a.active { color:#000 !important; font-weight:800; }

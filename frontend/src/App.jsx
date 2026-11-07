@@ -30,7 +30,7 @@ function RequireAuth({ children }) {
   return children;
 }
 
-const IMMERSIVE_PATHS = ['/', '/following'];
+const IMMERSIVE_PATHS = ['/', '/following', '/live'];
 
 export default function App() {
   const navigate = useNavigate();
