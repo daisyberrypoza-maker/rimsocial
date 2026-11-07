@@ -4165,7 +4165,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .post .snap-follow { position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); width:24px; height:24px; border-radius:50%; background:var(--snap-yellow) !important; color:#000 !important; border:0 !important; font-size:18px; font-weight:800; line-height:1; padding:0 !important; display:grid; place-items:center; box-shadow:0 0 0 2px #000; }
 .post .rail-btn { font-size:14px !important; font-weight:700 !important; color:#fff !important; gap:4px !important; text-shadow:0 1px 3px rgba(0,0,0,.6); }
 .post .rail-btn svg { width:28px !important; height:28px !important; stroke:#fff; stroke-width:1.9 !important; }
-.post .rail-btn.repost-btn svg { stroke:var(--snap-yellow) !important; }
+.post .rail-btn.repost-btn svg { stroke:#fff !important; }
+.post .rail-btn.repost-btn.reposted svg { stroke:var(--snap-yellow) !important; }
 .post .rail-btn.repost-btn.reposted { color:var(--snap-yellow) !important; }
 .post .rail-btn.liked svg { fill:#fff; stroke:#fff; }
 
