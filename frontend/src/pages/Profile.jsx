@@ -38,6 +38,7 @@ export default function Profile() {
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
+  const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [storyNotifications, setStoryNotifications] = useState(false);
   const [recommended, setRecommended] = useState(true);
@@ -232,7 +233,7 @@ export default function Profile() {
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
             <Avatar user={profile} size={96} ring />
-            {profile.isMe && <button className="sc-avatar-edit" aria-label="Change profile photo" onClick={() => document.getElementById('profile-avatar-file')?.click()} disabled={avatarBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
+            {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
@@ -283,14 +284,22 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); openPeople('followers'); }}><Icon name="user-plus" size={21} />Followers</button>
           <button onClick={() => { setDrawerOpen(false); openPeople('following'); }}><Icon name="users" size={21} />Following</button>
           <button onClick={openBlockedPeople}><Icon name="shield" size={21} />Blocked accounts</button>
-          <button onClick={() => { setDrawerOpen(false); document.getElementById('profile-avatar-file')?.click(); }}>Change profile photo</button>
-          <button onClick={() => document.getElementById('profile-cover-file')?.click()} disabled={coverBusy}><Icon name="image" size={21} />{coverBusy ? 'Uploading cover…' : 'Change profile background'}</button>
+          <button onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} disabled={avatarBusy || coverBusy}><Icon name="image" size={21} />Change profile or background image</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
           <button onClick={() => { setDrawerOpen(false); setShowCoins(true); }}><Icon name="gift" size={21} />Get coins</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase" size={21} />Business hub</button>
           <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
         </aside>
+      </div>}
+
+      {imageChoiceOpen && profile.isMe && <div className="sheet-backdrop image-choice-backdrop" onClick={() => setImageChoiceOpen(false)}>
+        <section className="sheet image-choice-sheet" role="dialog" aria-modal="true" aria-label="Choose image type" onClick={(e) => e.stopPropagation()}>
+          <div className="people-sheet-handle" />
+          <div className="people-sheet-title"><div><h3>Choose an image</h3><small>What would you like to update?</small></div><button className="icon-button" onClick={() => setImageChoiceOpen(false)} aria-label="Close"><Icon name="x" size={21} /></button></div>
+          <button className="image-choice-option" onClick={() => { setImageChoiceOpen(false); document.getElementById('profile-avatar-file')?.click(); }} disabled={avatarBusy}><span className="sc-row-icon"><Icon name="user-round" size={22} /></span><span><strong>Profile image</strong><small>Change the photo shown on your profile</small></span><Icon name="chevron-right" size={20} /></button>
+          <button className="image-choice-option" onClick={() => { setImageChoiceOpen(false); document.getElementById('profile-cover-file')?.click(); }} disabled={coverBusy}><span className="sc-row-icon"><Icon name="image" size={22} /></span><span><strong>Background image</strong><small>Change the large image behind your profile</small></span><Icon name="chevron-right" size={20} /></button>
+        </section>
       </div>}
 
       {optionsOpen && !profile.isMe && <div className="sc-options-backdrop" onClick={() => setOptionsOpen(false)}>
