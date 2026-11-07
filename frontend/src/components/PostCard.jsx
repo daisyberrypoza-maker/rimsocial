@@ -346,7 +346,7 @@ export default function PostCard({ post, active }) {
       <button className="rail-btn" onClick={copyPostLink} aria-label="Share post"><Icon name="send" /></button>
       {!isOwnPost && <button className="rail-btn" onClick={() => setShowGifts(true)} aria-label="Send a gift"><Icon name="gift" /></button>}
       {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
-      <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span></button>
+      <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
     </aside>
     <div className="info">
       {post.topic && <div className="post-topic"><Icon name="map-pin" size={14} /> {post.topic}</div>}
