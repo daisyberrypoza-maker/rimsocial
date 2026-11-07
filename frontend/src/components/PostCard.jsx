@@ -312,16 +312,19 @@ export default function PostCard({ post, active }) {
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
-      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /><span>Comment</span></button>
+      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" /></button>
       <button className={`rail-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
-        <Icon name="repeat" /><span>{reposted ? 'Reposted' : 'Repost'}</span>{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
+        <Icon name="repeat" />{repostCount > 0 && <small>{formatCount(repostCount)}</small>}
       </button>
-      <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /><span>Gift</span></button>
-      {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /><span>{soundOn ? 'Sound' : 'Muted'}</span></button>}
-      <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span><span>More</span></button>
+      <button className="rail-btn" onClick={() => setShowGifts(true)}><Icon name="gift" /></button>
+      {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
+      <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span></button>
     </aside>
     <div className="info">
-      <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
+      <div className="author-row">
+        <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
+        {!post.isSponsored && post.author?.isFollowing === false && post.author?.id !== viewerId && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View profile</button>}
+      </div>
       {post.topic && <div className="post-topic">{post.topic}</div>}
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored ? <>
@@ -329,7 +332,6 @@ export default function PostCard({ post, active }) {
         {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
       </> : <>
         <div className="meta-row">{formatCount(post.viewCount)} views</div>
-        {post.author?.isFollowing === false && post.author?.id !== viewerId && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>}
       </>}
     </div>
     {showRepostSheet && <div className="sheet-backdrop repost-backdrop" onClick={() => setShowRepostSheet(false)}>
