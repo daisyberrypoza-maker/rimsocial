@@ -3752,3 +3752,8 @@ html, body, #root { min-height:100%; }
 .sc-profile .sc-hero-id { align-items:center !important; }
 .sc-profile .sc-hero { min-height:0 !important; }
 .sc-profile .sc-hero-id { margin-top:34px !important; }
+
+/* People sheet: names left-aligned beside the avatar; only the avatar letter stays centred */
+.pv-person { text-align:left !important; justify-content:flex-start; }
+.pv-person-text { align-items:flex-start !important; text-align:left !important; }
+.pv-person-text strong, .pv-person-text small { text-align:left; }

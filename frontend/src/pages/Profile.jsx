@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api } from '../api.js';
@@ -367,7 +368,7 @@ export default function Profile() {
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
-      {listType && <div className="pv-sheet-backdrop" role="presentation">
+      {listType && createPortal(<div className="pv-sheet-backdrop" role="presentation">
         <section className="pv-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <header className="pv-sheet-top">
             <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => setListType('')}><Icon name="arrow-left" size={22} /></button>
@@ -411,7 +412,7 @@ export default function Profile() {
             {!people.length && <div className="pv-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here.' : 'People who connect with this account will appear here.'}</p></div>}
           </>}
         </section>
-      </div>}
+      </div>, document.body)}
 
       {profile.isMe && <button className="sc-post-float" onClick={() => navigate('/upload')}><span className="sc-post-float-icon"><Icon name="play" size={18} /></span><span>Post to Rimlight</span><Icon name="chevron-right" size={20} /></button>}
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
