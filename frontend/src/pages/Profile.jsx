@@ -79,7 +79,10 @@ export default function Profile() {
   // The connections sheet is represented in the URL. This restores it when
   // browser/device Back returns from a profile opened in the list.
   useEffect(() => {
-    if (connectionType !== 'followers' && connectionType !== 'following') return undefined;
+    if (connectionType !== 'followers' && connectionType !== 'following') {
+      setListType((current) => current === 'followers' || current === 'following' ? '' : current);
+      return undefined;
+    }
     let current = true;
     setListType(connectionType);
     setPeopleQuery('');
@@ -439,7 +442,7 @@ export default function Profile() {
             <ul className="pv-list">
               {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) => (
                 <li className="pv-row" key={person.id}>
-                  <button type="button" className="pv-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
+                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
                     <Avatar user={person} size={52} />
                     <span className="pv-person-text"><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                   </button>
