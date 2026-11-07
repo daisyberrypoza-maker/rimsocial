@@ -4576,3 +4576,27 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
     transition:none;
   }
 }
+
+/* Rimlight media should be edge-to-edge and square, with no rounded card styling. */
+.sc-profile .sc-grid,
+.sc-profile .sc-tile,
+.sc-profile .sc-tile img,
+.sc-profile .sc-tile video,
+.sc-profile .sc-tile-delete,
+.sc-profile .sc-tile-count,
+.sc-profile .sc-post-float,
+.sc-profile .sc-post-float-icon,
+.sc-profile .sc-watch,
+.sc-profile .sc-pill {
+  border-radius:0 !important;
+}
+.sc-profile .sc-grid { gap:3px !important; }
+.sc-profile .sc-tile { overflow:hidden; }
+.sc-profile .sc-tile-delete { display:none !important; }
+.sv-root,
+.sv-root .sv-stage,
+.sv-root .sv-media,
+.sv-root video,
+.sv-root img {
+  border-radius:0 !important;
+}
