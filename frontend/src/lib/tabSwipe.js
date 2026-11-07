@@ -5,38 +5,103 @@ export const TAB_PATHS = ['/', '/chat', '/upload', '/explore', '/stories'];
 
 // Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
 const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
-const MIN_DISTANCE = 70;
-const MAX_DURATION = 700;
+const LOCK_PX = 10;          // movement needed before we decide the direction
+const SETTLE_MS = 230;       // length of the slide or spring-back
+const busyRef = { current: false };
 
+function appEl() { return document.querySelector('.app'); }
+function setOffset(px) { appEl()?.style.setProperty('--swipe-x', `${px}px`); }
+function setClass(name, on) { appEl()?.classList.toggle(name, on); }
+
+// Follows the finger, then slides the screen to the next tab (Snapchat-style) or springs back.
 export function useTabSwipe(navigate, pathname, enabled) {
   useEffect(() => {
     if (!enabled || !TAB_PATHS.includes(pathname)) return undefined;
-    let start = null;
+    const index = TAB_PATHS.indexOf(pathname);
+    let gesture = null; // { x, y, time, mode: 'pending' | 'horizontal' | 'ignore', dx }
 
-    const onStart = (event) => {
-      if (event.touches.length !== 1 || (event.target.closest && event.target.closest(IGNORE))) { start = null; return; }
+    const targetFor = (dx) => TAB_PATHS[dx < 0 ? index + 1 : index - 1];
+
+    function settle(to, onDone) {
+      setClass('swipe-anim', true);
+      setOffset(to);
+      window.setTimeout(onDone, SETTLE_MS);
+    }
+
+    function springBack() {
+      settle(0, () => {
+        setClass('swipe-anim', false);
+        setClass('swiping', false);
+        setOffset(0);
+        busyRef.current = false;
+      });
+    }
+
+    function onStart(event) {
+      if (busyRef.current || event.touches.length !== 1 || (event.target.closest && event.target.closest(IGNORE))) { gesture = null; return; }
       const touch = event.touches[0];
-      start = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    };
+      gesture = { x: touch.clientX, y: touch.clientY, time: Date.now(), mode: 'pending', dx: 0 };
+    }
 
-    const onEnd = (event) => {
-      const origin = start;
-      start = null;
-      if (!origin || Date.now() - origin.time > MAX_DURATION) return;
-      const touch = event.changedTouches[0];
-      const dx = touch.clientX - origin.x;
-      const dy = touch.clientY - origin.y;
-      // Mostly horizontal only, so vertical scrolling is never mistaken for a swipe
-      if (Math.abs(dx) < MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-      const index = TAB_PATHS.indexOf(pathname);
-      const target = TAB_PATHS[dx < 0 ? index + 1 : index - 1];
-      if (target) navigate(target);
-    };
+    function onMove(event) {
+      if (!gesture || busyRef.current || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - gesture.x;
+      const dy = touch.clientY - gesture.y;
+      if (gesture.mode === 'pending') {
+        if (Math.abs(dx) < LOCK_PX && Math.abs(dy) < LOCK_PX) return;
+        if (Math.abs(dx) > Math.abs(dy) * 1.4) {
+          gesture.mode = 'horizontal';
+          setClass('swipe-anim', false);
+          setClass('swiping', true);
+        } else {
+          gesture.mode = 'ignore';
+          return;
+        }
+      }
+      if (gesture.mode !== 'horizontal') return;
+      gesture.dx = dx;
+      // Resists at the first and last tab, as Snapchat does
+      const edge = !targetFor(dx);
+      setOffset(edge ? dx * 0.3 : dx);
+    }
+
+    function onEnd(event) {
+      const current = gesture;
+      gesture = null;
+      if (!current || current.mode !== 'horizontal' || busyRef.current) return;
+      const dx = current.dx;
+      const elapsed = Date.now() - current.time;
+      const target = targetFor(dx);
+      const commit = Boolean(target) && (Math.abs(dx) > window.innerWidth * 0.25 || (elapsed < 320 && Math.abs(dx) > 50));
+      if (!commit) { busyRef.current = true; springBack(); return; }
+
+      busyRef.current = true;
+      const width = window.innerWidth;
+      const outTo = dx < 0 ? -width : width;
+      settle(outTo, () => {
+        // The new screen starts off to the side the finger came from, then slides in
+        setClass('swipe-anim', false);
+        navigate(target);
+        setOffset(-outTo);
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          settle(0, () => {
+            setClass('swipe-anim', false);
+            setClass('swiping', false);
+            setOffset(0);
+            busyRef.current = false;
+          });
+        }));
+      });
+      void event;
+    }
 
     window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onEnd, { passive: true });
     return () => {
       window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onEnd);
     };
   }, [enabled, navigate, pathname]);
