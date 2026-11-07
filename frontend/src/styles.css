@@ -4943,3 +4943,22 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .pf-tabs button.on::after { content:''; position:absolute; left:10%; right:10%; bottom:0; height:3px; border-radius:3px; background:#111; }
 .pf-profile-page .sc-grid { gap:2px; }
 .pf-actions .pf-more { background:rgba(40,40,40,.55); color:#fff; }
+
+/* Profile: the reference styles must beat the app's global button styles */
+.sc-profile .pf-tabs { background:#fff !important; border-bottom:1px solid #ececf0 !important; }
+.sc-profile .pf-tabs button { background:transparent !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; color:#8a8a94 !important; height:52px !important; padding:0 !important; min-width:0 !important; font-size:18px !important; font-weight:600 !important; }
+.sc-profile .pf-tabs button.on { color:#111 !important; font-weight:700 !important; }
+.sc-profile .pf-round { background:rgba(40,40,40,.55) !important; color:#fff !important; border:0 !important; border-radius:50% !important; width:50px !important; height:50px !important; padding:0 !important; }
+.sc-profile .pf-actions .pf-round { width:56px !important; height:56px !important; }
+.sc-profile .pf-round.on { background:#fff200 !important; color:#111 !important; }
+.sc-profile .pf-btn { background:rgba(255,255,255,.18) !important; color:#fff !important; border:0 !important; border-radius:999px !important; height:56px !important; padding:0 !important; box-shadow:none !important; }
+.sc-profile .pf-btn.pf-btn-on { background:#fff !important; color:#111 !important; }
+.sc-profile .pf-add { background:#fff200 !important; color:#111 !important; }
+.sc-profile .pf-add.added { background:rgba(255,255,255,.18) !important; color:#fff !important; }
+.sc-profile .pf-link { background:none !important; border:0 !important; border-radius:0 !important; padding:0 !important; color:inherit !important; font:inherit !important; box-shadow:none !important; }
+.sc-profile .pf-chev { background:none !important; border:0 !important; padding:0 !important; color:#fff !important; width:auto !important; height:auto !important; border-radius:0 !important; }
+.sc-profile .pf-edit { background:#fff !important; color:#111 !important; border:0 !important; border-radius:50% !important; padding:0 !important; }
+.sc-profile .pf-avatar-btn { background:none !important; border:0 !important; padding:0 !important; border-radius:50% !important; }
+.sc-profile .pf-chip { background:#fff !important; color:#111 !important; border:1px solid #d7d7dc !important; border-radius:999px !important; height:34px !important; padding:0 12px !important; box-shadow:none !important; }
+.sc-profile .pf-name { font-size:22px !important; }
+.sc-profile .pf-name-block { flex:1 1 auto; min-width:0; }
