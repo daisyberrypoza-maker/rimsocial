@@ -14,6 +14,13 @@ export default function StoryRail() {
   const setStoryRail = useAppStore((s) => s.setStoryRail);
   const [openAt, setOpenAt] = useState(null);
 
+  // Re-reads the rail from the server, so rings reflect what this account has watched
+  function refreshRail() {
+    api('/v1/stories/rail')
+      .then((data) => setStoryRail({ items: data.items, updatedAt: Date.now() }))
+      .catch(() => {});
+  }
+
   useEffect(() => {
     const stale = Date.now() - (rail.updatedAt || 0) > REFRESH_AFTER_MS;
     if (stale) {
@@ -61,7 +68,7 @@ export default function StoryRail() {
         ))}
       </div>
       {openAt !== null && (
-        <StoryViewer groups={groups} startIndex={openAt} onClose={() => setOpenAt(null)} />
+        <StoryViewer groups={groups} startIndex={openAt} onClose={() => { setOpenAt(null); refreshRail(); }} />
       )}
     </>
   );

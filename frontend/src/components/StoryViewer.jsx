@@ -133,8 +133,21 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   useEffect(() => {
     setPaused(false);
     setReply('');
-    if (current) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
+    if (!current) return;
+    api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
+    updateCurrent(current.id, { viewed: true });
   }, [current?.id]);
+
+  // This viewer's ring goes grey once every story from this creator has been watched on this device
+  useEffect(() => {
+    if (!stories || stories.length === 0 || !stories.every((s) => s.viewed)) return;
+    const store = useAppStore.getState();
+    const rail = store.storyRail;
+    store.setStoryRail({
+      ...rail,
+      items: (rail.items || []).map((g) => (g.user.id === group.user.id ? { ...g, unseen: false } : g)),
+    });
+  }, [stories, group.user.id]);
 
   // Video: one effect decides play or pause from the viewer state. Browsers only allow sound after a tap,
   // so if autoplay with sound is refused the video starts muted and sound comes on at the next tap.

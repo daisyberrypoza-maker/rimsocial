@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { Op, Post, StoryView, StoryLike, Follow, User, PostReport } = require('../db');
 const config = require('../config');
 const { requireAuth } = require('../middleware/auth');
+const redis = require('../redis');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
@@ -157,6 +158,8 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
       where: { storyId: story.id, viewerId: req.user.id },
     });
     if (created) await Post.increment('viewCount', { by: 1, where: { id: story.id } });
+    // The viewer's rail is cached briefly; drop it so their ring updates right away
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     res.status(204).end();
   } catch (e) { next(e); }
 });
