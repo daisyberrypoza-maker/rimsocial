@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { mediaUrl } from '../lib/config.js';
+import { mediaUrl, videoStreamUrl } from '../lib/config.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
@@ -216,7 +216,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               key={current.id}
               ref={videoRef}
               className="sv-media"
-              src={mediaUrl(current.mediaUrl)}
+              src={videoStreamUrl(mediaUrl(current.mediaUrl))}
               playsInline
               muted={muted}
               onEnded={next}
