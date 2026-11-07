@@ -64,6 +64,7 @@ export default function Algorithm() {
       <p className="algo-summary">Choose what you want more or less of in Rimlight.</p>
       {section('more', 'What you want to see more of', 'Topics you add here are shown more often in Rimlight.')}
       {section('less', 'What you want to see less of', 'Topics you add here are shown less often in Rimlight.')}
+      <p className="algo-build">Build {__APP_BUILD__}</p>
     </main>
   );
 }

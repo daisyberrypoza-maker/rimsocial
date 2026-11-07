@@ -4144,3 +4144,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Double-tap like: the heart flash is red. */
 .post .post-flash:has(svg) { color:#ff3040; }
+
+/* Build id, so you can tell which version the device is running. */
+.algo-build { text-align:center; color:#6b6f78; font-size:12px; margin:28px 0 0; }
