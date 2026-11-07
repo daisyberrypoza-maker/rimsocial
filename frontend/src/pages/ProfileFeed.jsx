@@ -13,6 +13,7 @@ export default function ProfileFeed() {
   const items = cached?.items || [];
   const nextCursor = cached?.nextCursor ?? null;
   const container = useRef(null);
+  const scrollHideTimer = useRef(null);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -30,6 +31,13 @@ export default function ProfileFeed() {
 
   function onScroll(e) {
     const el = e.currentTarget;
+    el.classList.add('is-scrolling');
+    el.closest('.profile-watch-page')?.classList.add('is-scrolling');
+    clearTimeout(scrollHideTimer.current);
+    scrollHideTimer.current = setTimeout(() => {
+      el.classList.remove('is-scrolling');
+      el.closest('.profile-watch-page')?.classList.remove('is-scrolling');
+    }, 450);
     const index = Math.round(el.scrollTop / Math.max(1, el.clientHeight));
     setActive(index);
     if (nextCursor && !loading && index >= items.length - 3) load(false);
