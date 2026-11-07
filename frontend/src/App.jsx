@@ -89,7 +89,7 @@ export default function App() {
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && !exploreWatch && <BottomNav />}
+      {showChrome && !profileWatch && !exploreWatch && location.pathname !== '/recommended' && <BottomNav />}
       <Toast />
     </div>
   );

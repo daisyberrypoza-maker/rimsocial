@@ -36,6 +36,8 @@ export default function Profile() {
   const [people, setPeople] = useState([]);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
+  const [activity, setActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
@@ -95,6 +97,27 @@ export default function Profile() {
       toast(`@${person.username} unblocked`);
     } catch (e) { toast(e.message); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
+  }
+
+  async function openActivity() {
+    setListType('activity');
+    setActivityLoading(true);
+    try {
+      const data = await api('/v1/activity');
+      setActivity(data.items || []);
+    } catch (e) { toast(e.message); setListType(''); }
+    finally { setActivityLoading(false); }
+  }
+
+  function activityText(item) {
+    const name = item.actor?.username || 'Someone';
+    if (item.type === 'follow') return `${name} started following you`;
+    if (item.type === 'like') return `${name} liked your post`;
+    if (item.type === 'comment') return `${name} commented${item.comment ? `: ${item.comment}` : ' on your post'}`;
+    if (item.type === 'repost') return `${name} reposted your post`;
+    if (item.type === 'mention') return `${name} mentioned you`;
+    if (item.type === 'post') return `${name} posted a new Rimlight`;
+    return `${name} interacted with you`;
   }
 
   async function toggleListFollow(person) {
@@ -248,7 +271,7 @@ export default function Profile() {
                 <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
               </>
             )}
-            {profile.isMe && <button className="sc-circle" aria-label="Edit profile" onClick={() => setDrawerOpen(true)}><Icon name="pencil" size={20} /></button>}
+            {profile.isMe && <button className="sc-circle" aria-label="Edit profile photo or background" onClick={() => setImageChoiceOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe
               ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
               : <button className="sc-circle" aria-label="More options" onClick={() => setOptionsOpen(true)}><span className="sc-dots" aria-hidden="true">•••</span></button>}
@@ -264,8 +287,10 @@ export default function Profile() {
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
             {profile.isMe && <p className="sc-handle">@{profile.username}</p>}
-            <div className="sc-inline-stats" aria-label="Followers">
-              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> followers</button>
+            <div className="pv-stats" aria-label="Profile statistics">
+              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
+              <button type="button" onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+              <button type="button" onClick={() => setTab('posts')}><strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span></button>
             </div>
             {profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}
             {!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
@@ -282,17 +307,6 @@ export default function Profile() {
           </div>
         )}
       </header>
-      <section className="sc-profile-stats" aria-label="Profile statistics">
-        <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
-          <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
-        </button>
-        <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
-          <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
-        </button>
-        <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
-          <strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span>
-        </button>
-      </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
@@ -343,35 +357,53 @@ export default function Profile() {
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
-      {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
-        <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
-          <div className="people-sheet-handle" />
-          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{listType === 'blocked' ? 'Blocked accounts' : profile.username}</h3><small>{listType === 'blocked' ? `${people.length} blocked ${people.length === 1 ? 'account' : 'accounts'}` : listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions">{listType !== 'blocked' && <button className="icon-button" onClick={() => { setListType(''); navigate('/friends'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button>}</div></div>
-          {listType !== 'blocked' && <div className="people-tabs">
-            <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><span>{formatCount(profile.followerCount)}</span> followers</button>
-            <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><span>{formatCount(profile.followingCount || 0)}</span> following</button>
-          </div>}
-          <label className="people-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>
-          <div className="people-sort"><span>Sorted by <strong>Default</strong></span><Icon name="sort" size={22} /></div>
-          <div className="people-list">
-            {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) =>
-              <div className="people-list-row" key={person.id}>
-                <button className="people-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
-                  <Avatar user={person} size={56} />
-                  <span><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
-                </button>
-                {listType === 'blocked'
-                  ? <button className="people-follow-btn" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
-                  : <button className={person.isFollowing ? 'people-follow-btn following' : 'people-follow-btn'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>}
-              </div>
-            )}
-            {!people.length && <div className="people-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here. You can unblock them any time.' : 'People who connect with this account will appear here.'}</p></div>}
-            {people.length > 0 && !people.some((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())) && <p className="muted center">No people match that search.</p>}
-          </div>
+      {listType && <div className="pv-sheet-backdrop" role="presentation">
+        <section className="pv-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
+          <header className="pv-sheet-top">
+            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => setListType('')}><Icon name="arrow-left" size={22} /></button>
+            <h2 className="pv-sheet-title">{listType === 'blocked' ? 'Blocked accounts' : listType === 'activity' ? 'Activity' : profile.username}</h2>
+            {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => { setListType(''); navigate('/explore'); }}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
+          </header>
+          {listType !== 'blocked' && <nav className="pv-sheet-tabs" role="tablist" aria-label="Connections">
+            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+            {profile.isMe && <button type="button" role="tab" aria-selected={listType === 'activity'} className={listType === 'activity' ? 'on' : ''} onClick={() => { if (listType !== 'activity') openActivity(); }}><strong>{activity.length ? formatCount(activity.length) : '0'}</strong><span>Activity</span></button>}
+          </nav>}
+          {listType === 'activity' ? (
+            <ul className="pv-list" aria-label="Activity">
+              {activityLoading && <li className="pv-empty-row">Loading activity…</li>}
+              {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
+              {activity.map((item) => (
+                <li className="pv-row pv-activity-row" key={item.id}>
+                  <button type="button" className="pv-person" onClick={() => { setListType(''); if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
+                    <Avatar user={item.actor || {}} size={44} />
+                    <span className="pv-person-text"><strong>{activityText(item)}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</small></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : <>
+            {listType !== 'blocked' && <label className="pv-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>}
+            {listType !== 'blocked' && <div className="pv-sort">Sorted by <strong>Default</strong></div>}
+            <ul className="pv-list">
+              {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) => (
+                <li className="pv-row" key={person.id}>
+                  <button type="button" className="pv-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
+                    <Avatar user={person} size={52} />
+                    <span className="pv-person-text"><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
+                  </button>
+                  {listType === 'blocked'
+                    ? <button type="button" className="pv-follow" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
+                    : <button type="button" className={person.isFollowing ? 'pv-follow added' : 'pv-follow'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Add'}</button>}
+                </li>
+              ))}
+            </ul>
+            {!people.length && <div className="pv-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here.' : 'People who connect with this account will appear here.'}</p></div>}
+          </>}
         </section>
       </div>}
 
-      {profile.isMe && <button className="sc-post-float" onClick={() => navigate('/upload')}><span className="sc-post-float-icon"><Icon name="play" size={18} /></span><span>Post to Spotlight</span><Icon name="chevron-right" size={20} /></button>}
+      {profile.isMe && <button className="sc-post-float" onClick={() => navigate('/upload')}><span className="sc-post-float-icon"><Icon name="play" size={18} /></span><span>Post to Rimlight</span><Icon name="chevron-right" size={20} /></button>}
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
         <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}><Icon name="circle-play" size={18} />Stories</button>
         <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}><Icon name="clapperboard" size={18} />Rimlight</button>
