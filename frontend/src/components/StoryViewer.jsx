@@ -14,6 +14,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [stories, setStories] = useState(null);
   const [progress, setProgress] = useState(0);
   const [resharing, setResharing] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const storyVideoRef = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -48,16 +51,46 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (stories && stories.length === 0) next();
   }, [stories, next]);
 
-  // Reset progress and record the view for each story shown
+  // Reset playback state and record the view for each story shown
   useEffect(() => {
     setProgress(0);
+    setPaused(false);
     if (current) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
   }, [current?.id]);
 
-  // Photo timer
+  // Pause stories while the app/browser is backgrounded; resume when it returns.
   useEffect(() => {
-    if (!current || current.kind !== 'photo') return undefined;
-    const started = Date.now();
+    const handleVisibility = () => setPaused(document.visibilityState !== 'visible');
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handleVisibility);
+    window.addEventListener('pageshow', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handleVisibility);
+      window.removeEventListener('pageshow', handleVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = storyVideoRef.current;
+    if (!video) return;
+    if (paused || document.visibilityState !== 'visible') video.pause();
+    else video.play().catch(() => {});
+  }, [paused, current?.id]);
+
+  function togglePlayback() {
+    const video = storyVideoRef.current;
+    if (video) {
+      if (video.paused) video.play().catch(() => {});
+      else video.pause();
+    }
+    setPaused((value) => !value);
+  }
+
+  // Photo timer keeps its progress when paused.
+  useEffect(() => {
+    if (!current || current.kind !== 'photo' || paused || document.visibilityState !== 'visible') return undefined;
+    const started = Date.now() - progress * PHOTO_MS;
     const timer = setInterval(() => {
       const p = (Date.now() - started) / PHOTO_MS;
       if (p >= 1) {
@@ -68,7 +101,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       }
     }, 50);
     return () => clearInterval(timer);
-  }, [current?.id, current?.kind, next]);
+  }, [current?.id, current?.kind, next, paused]);
 
   const total = stories?.length || 0;
 
@@ -102,10 +135,14 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         current.kind === 'video' ? (
           <video
             key={current.id}
+            ref={storyVideoRef}
             className="viewer-media"
             src={mediaUrl(current.mediaUrl)}
             autoPlay
+            muted={muted}
             playsInline
+            onPlay={() => setPaused(false)}
+            onPause={() => { if (document.visibilityState === 'visible') setPaused(true); }}
             onEnded={next}
             onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime / (e.currentTarget.duration || 1))}
           />
@@ -118,8 +155,15 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
       {current?.caption && <p className="viewer-caption">{current.caption}</p>}
 
+      <div className="story-playback-controls">
+        <button type="button" className="story-control" onClick={prev} aria-label="Previous story">‹</button>
+        <button type="button" className="story-control story-control-main" onClick={togglePlayback} aria-label={paused ? 'Play story' : 'Pause story'}>{paused ? '▶' : 'Ⅱ'}</button>
+        <button type="button" className="story-control" onClick={next} aria-label="Next story">›</button>
+        {current?.kind === 'video' && <button type="button" className="story-control story-control-volume" onClick={() => setMuted((value) => !value)} aria-label={muted ? 'Turn sound on' : 'Mute story'}>{muted ? '🔇' : '🔊'}</button>}
+      </div>
       <button className="tap tap-prev" aria-label="Previous story" onClick={prev} />
       <button className="tap tap-next" aria-label="Next story" onClick={next} />
+      <button className="story-center-toggle" type="button" aria-label={paused ? 'Play story' : 'Pause story'} onClick={togglePlayback}>{paused ? '▶' : 'Ⅱ'}</button>
     </div>
   );
 }
