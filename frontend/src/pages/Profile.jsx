@@ -264,6 +264,17 @@ export default function Profile() {
           </div>
         )}
       </header>
+      <section className="sc-profile-stats" aria-label="Profile statistics">
+        <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
+          <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
+        </button>
+        <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
+          <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
+        </button>
+        <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(profile.postCount ?? posts.length)} posts`}>
+          <strong>{formatCount(profile.postCount ?? posts.length)}</strong><span>Posts</span>
+        </button>
+      </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
