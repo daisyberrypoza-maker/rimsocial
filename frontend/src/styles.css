@@ -4851,3 +4851,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .bottomnav a svg, .bottomnav svg { width:32px !important; height:32px !important; stroke-width:1.9 !important; }
 .bottomnav .add-btn { width:64px !important; height:44px !important; }
 .bottomnav .add-btn .add-face svg { width:26px !important; height:26px !important; }
+
+/* Tab swipe: the page follows the finger, then slides to the next tab. The bottom bar stays put. */
+.app.swiping > :not(.bottomnav) { transform: translate3d(var(--swipe-x, 0px), 0, 0); will-change: transform; }
+.app.swipe-anim > :not(.bottomnav) { transition: transform 230ms cubic-bezier(.2, .8, .2, 1); }
