@@ -1,6 +1,6 @@
 // RimSocial service worker.
 // - App shell: network first, cached copy when offline. Fingerprinted JS/CSS: cache first.
-// - Images and avatars: stale-while-revalidate, so they show at once and refresh in the background.
+// - Images and avatars: cache first, so repeat views are instant.
 // - Videos: served from the cache when prefetched (including seeking), otherwise from the network.
 // - The page can ask for media to be prefetched ("prefetch" message) so stories play without waiting.
 
@@ -34,19 +34,22 @@ async function trim(cacheName, limit) {
   for (let i = 0; i < keys.length - limit; i += 1) await cache.delete(keys[i]);
 }
 
-async function staleWhileRevalidate(request) {
+// Images and avatars: served from the device when present. Fetched and stored only when missing,
+// so a cached picture never costs a second download while it is shown.
+async function cacheFirst(request) {
   const cache = await caches.open(MEDIA_CACHE);
   const cached = await cache.match(request);
-  const network = fetch(request).then(async (response) => {
-    // Opaque responses (cross-site images without CORS) can be stored and shown too
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
     if (response.ok || response.type === 'opaque') {
       await cache.put(request, response.clone());
       trim(MEDIA_CACHE, MEDIA_LIMIT);
     }
     return response;
-  }).catch(() => null);
-  if (cached) return cached;
-  return (await network) || Response.error();
+  } catch {
+    return Response.error();
+  }
 }
 
 // Recently used videos stay in memory, so a player's many range requests do not re-read the file each time.
@@ -129,7 +132,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'image') {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(cacheFirst(request));
     return;
   }
 

@@ -2,7 +2,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clearMediaCache } from './lib/prefetch.js';
 
-const STORY_CACHE_LIMIT = 60;
+const STORY_CACHE_LIMIT = 20;
+const STORY_CACHE_KEY = 'clipverse-stories';
+const STORY_STORE_ITEMS = 10;
+
+// Story lists live under their own key, so scrolling the feed does not re-save them each time
+function loadStoryCache() {
+  try { return JSON.parse(localStorage.getItem(STORY_CACHE_KEY) || '{}') || {}; } catch { return {}; }
+}
+let storyCacheTimer = null;
+function saveStoryCache(value) {
+  clearTimeout(storyCacheTimer);
+  storyCacheTimer = setTimeout(() => {
+    try { localStorage.setItem(STORY_CACHE_KEY, JSON.stringify(value)); } catch { /* storage full or unavailable */ }
+  }, 500);
+}
 
 // Only the first PERSIST_ITEMS posts of each list are saved on the device.
 // Keeping storage small keeps load times short. Lists longer than that are
@@ -21,7 +35,7 @@ export const useAppStore = create(
       feeds: {},        // { discover, following, explore, 'u:<username>': { items, nextCursor, activeIndex, updatedAt } }
       profiles: {},     // { [username | 'me']: { user, updatedAt } }
       storyRail: EMPTY_STORIES,
-      storyCache: {},   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
+      storyCache: loadStoryCache(),   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
       uploadDraft: { caption: '' },
 
       setSession: (token, user) => set({ token, user }),
@@ -31,6 +45,7 @@ export const useAppStore = create(
           token: null, user: null, gifts: [], coinBalance: 0, feeds: {}, profiles: {},
           storyRail: EMPTY_STORIES, storyCache: {}, lastPath: '/',
         });
+        saveStoryCache({});
       },
       setGifts: (gifts) => set({ gifts }),
       setCoins: (coinBalance) => set({ coinBalance }),
@@ -41,9 +56,10 @@ export const useAppStore = create(
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
       setStoryRail: (storyRail) => set({ storyRail }),
       setStoryCache: (userId, entry) => set((s) => {
-        const next = { ...s.storyCache, [userId]: { ...entry, updatedAt: Date.now() } };
+        const next = { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, STORY_STORE_ITEMS), updatedAt: Date.now() } };
         const keys = Object.keys(next);
         if (keys.length > STORY_CACHE_LIMIT) keys.slice(0, keys.length - STORY_CACHE_LIMIT).forEach((k) => { delete next[k]; });
+        saveStoryCache(next);
         return { storyCache: next };
       }),
       setUploadDraft: (uploadDraft) => set((s) => ({ uploadDraft: typeof uploadDraft === 'function' ? uploadDraft(s.uploadDraft) : uploadDraft })),
@@ -59,7 +75,6 @@ export const useAppStore = create(
         lastPath: s.lastPath,
         profiles: s.profiles,
         storyRail: s.storyRail,
-        storyCache: s.storyCache,
         uploadDraft: s.uploadDraft,
         feeds: Object.fromEntries(
           Object.entries(s.feeds).map(([key, f]) => {
