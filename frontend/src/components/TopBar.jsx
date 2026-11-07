@@ -7,8 +7,8 @@ export default function TopBar({ immersive, title }) {
   const navigate = useNavigate();
   const nested = location.pathname.startsWith('/p/') || location.pathname.startsWith('/creator/live/') || location.pathname === '/creator' || location.pathname === '/upload' || location.pathname === '/friends' || (location.pathname.startsWith('/u/') && location.pathname !== '/u/me');
 
-  // Reels header: hidden while the page is scrolling, shown again once scrolling stops.
-  const reelsHeader = immersive && !nested;
+  // Rimlight header: hidden while the page is scrolling, shown again once scrolling stops.
+  const reelsHeader = immersive && !nested && location.pathname !== '/live';
   const [scrolling, setScrolling] = useState(false);
   useEffect(() => {
     if (!reelsHeader) return undefined;
@@ -26,8 +26,21 @@ export default function TopBar({ immersive, title }) {
     };
   }, [reelsHeader]);
 
+  // LIVE header, matched to the reference: menu, Follow / LIVE tabs, search.
+  if (location.pathname === '/live') {
+    return <header className="topbar overlay live-top">
+      <button className="live-top-icon" onClick={() => navigate('/u/me')} aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
+      <nav className="live-tabs" aria-label="LIVE sections"><NavLink to="/following">Follow<span className="live-tab-badge">LIVE</span></NavLink><NavLink to="/live">LIVE</NavLink></nav>
+      <button className="live-top-icon" onClick={() => navigate('/explore')} aria-label="Search">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
+      </button>
+    </header>;
+  }
+
   if (reelsHeader) {
-    return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}${location.pathname === '/live' ? ' is-live' : ''}`}>
+    return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}`}>
       <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={34} /></button>
       <nav className="reels-tabs" aria-label="Rimlight sections"><NavLink to="/" end>Rimlight</NavLink><NavLink to="/following">Following</NavLink><NavLink to="/live">LIVE</NavLink></nav>
       <button className="reels-icon" onClick={() => navigate('/explore')} aria-label="Search and filters"><Icon name="sliders" size={32} /></button>
