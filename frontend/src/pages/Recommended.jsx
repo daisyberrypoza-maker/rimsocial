@@ -36,7 +36,7 @@ export default function Recommended() {
   return (
     <main className="rec-page">
       <header className="rec-top">
-        <button className="rec-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="chevron-down" size={26} /></button>
+        <button className="rec-back" aria-label="Back" onClick={() => goBack(navigate, '/u/me')}><Icon name="chevron-down" size={26} /></button>
         <h1>Recommended</h1>
         <span className="rec-spacer" aria-hidden="true" />
       </header>
