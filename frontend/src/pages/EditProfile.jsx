@@ -33,7 +33,7 @@ export default function EditProfile() {
     try {
       await api('/v1/users/me/profile', { method: 'PUT', body: form });
       toast('Profile updated');
-      navigate(`/u/${me?.username || 'me'}`);
+      navigate(`/u/${me?.username || 'me'}`, { replace: true });
     } catch (error) {
       toast(error.message);
     } finally {
