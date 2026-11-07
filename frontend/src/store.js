@@ -62,3 +62,14 @@ export const useAppStore = create(
     }
   )
 );
+// A fresh app start (not a minimize) always opens reels from the top: forget the saved reel index.
+// Minimizing keeps this page in memory, so the position is kept there.
+{
+  const { feeds } = useAppStore.getState();
+  if (feeds && Object.keys(feeds).length) {
+    useAppStore.setState({
+      feeds: Object.fromEntries(Object.entries(feeds).map(([key, value]) => [key, { ...value, activeIndex: 0 }])),
+    });
+  }
+}
+
