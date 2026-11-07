@@ -36,6 +36,7 @@ function playVideo(video) {
 import Icon from './Icon.jsx';
 import ShareOptions from './ShareOptions.jsx';
 import ShareSheet from './ShareSheet.jsx';
+import PostOptionsSheet from './PostOptionsSheet.jsx';
 
 const countedViews = new Set();
 
@@ -310,11 +311,11 @@ export default function PostCard({ post, active }) {
     } catch (e) { toast(e.message); }
   }
 
-  async function reportPost() {
+  async function reportPost(reason = reportReason) {
     if (reporting) return;
     setReporting(true);
     try {
-      await api(`/v1/posts/${post.id}/report`, { method: 'POST', body: { reason: reportReason } });
+      await api(`/v1/posts/${post.id}/report`, { method: 'POST', body: { reason } });
       toast('Report submitted for review'); setShowMenu(false);
     } catch (e) { toast(e.message); }
     finally { setReporting(false); }
@@ -396,25 +397,23 @@ export default function PostCard({ post, active }) {
         <button className={reposted ? 'repost-confirm remove' : 'repost-confirm'} disabled={repostBusy} onClick={async () => { const success = await repost(); if (success) setShowRepostSheet(false); }}>{repostBusy ? 'Please wait…' : reposted ? 'Remove repost' : 'Repost'}</button>
       </section>
     </div>}
-    {showMenu && <div className="sheet-backdrop post-menu-backdrop" onClick={() => setShowMenu(false)}>
-      <section className="sheet post-menu-sheet" role="dialog" aria-label="Post controls" onClick={(e) => e.stopPropagation()}>
-        <div className="people-sheet-handle" />
-        <div className="comments-heading"><h3>Post options</h3><button className="icon-button" onClick={() => setShowMenu(false)} aria-label="Close menu">✕</button></div>
-        {post.allowRemix && <button className="post-menu-item" onClick={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}>Remix this post</button>}
-        <button className="post-menu-item" onClick={blockCreator}>Block @{username}</button>
-        <label className="post-report-reason">Report reason
-          <select value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
-            <option>Spam or misleading</option><option>Harassment or bullying</option><option>Hate or harmful content</option><option>Violence or dangerous acts</option><option>Copyright concern</option><option>Other</option>
-          </select>
-        </label>
-        <button className="post-menu-item" onClick={reportPost} disabled={reporting}>{reporting ? "Submitting report…" : "Report post"}</button>
-        <button className="post-menu-item" onClick={() => { setShowMenu(false); setShowRepostSheet(true); }}><Icon name="repeat" size={18} /> {reposted ? 'Undo repost' : 'Repost'}</button>
-        <button className="post-menu-item" onClick={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}>Hide post</button>
-        {!isOwnPost && <button className="post-menu-item" onClick={() => { setShowMenu(false); setShowGifts(true); }}>Send a gift</button>}
-        <button className="post-menu-item" onClick={copyPostLink}>Copy link</button>
-        <button className="post-menu-item" onClick={sharePost}><Icon name="share-2" size={18} /> Share to other apps</button>
-      </section>
-    </div>}
+    {showMenu && <PostOptionsSheet
+      username={username}
+      isOwn={isOwnPost}
+      canRemix={Boolean(post.allowRemix)}
+      reposted={reposted}
+      reporting={reporting}
+      onClose={() => setShowMenu(false)}
+      onGift={() => { setShowMenu(false); setShowGifts(true); }}
+      onRemix={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}
+      onRepost={() => { setShowMenu(false); setShowRepostSheet(true); }}
+      onShare={() => { setShowMenu(false); setShowSend(true); }}
+      onCopy={() => { setShowMenu(false); copyPostLink(); }}
+      onNotInterested={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}
+      onBlock={() => { setShowMenu(false); blockCreator(); }}
+      onReport={(reason) => { setReportReason(reason); reportPost(reason); }}
+      onDelete={async () => { setShowMenu(false); if (!window.confirm('Delete this post? This cannot be undone.')) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { toast(e.message); } }}
+    />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
