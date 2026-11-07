@@ -5013,3 +5013,17 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-profile .sc-grid { gap:2px !important; }
 .sc-profile .sc-tile { aspect-ratio:0.58 !important; }
 .sc-profile .sc-tile-count { font-size:13px !important; left:7px !important; bottom:5px !important; }
+
+/* Profile: scrolled bar with share and settings; lighter type, sizes from the reference */
+.sc-profile .sc-compact-nav { display:flex !important; align-items:center !important; gap:10px !important; padding:10px 12px !important; }
+.sc-profile .sc-compact-name { flex:1 1 auto !important; min-width:0 !important; overflow:hidden !important; text-overflow:ellipsis !important; white-space:nowrap !important; }
+.sc-profile .sc-compact-actions { display:flex !important; gap:8px !important; flex:0 0 auto !important; }
+.sc-profile .sc-compact-round { width:38px !important; height:38px !important; border-radius:50% !important; border:0 !important; padding:0 !important; background:rgba(40,40,40,.6) !important; color:#fff !important; display:grid !important; place-items:center !important; cursor:pointer; }
+.sc-profile .pf-name { font-size:17px !important; font-weight:500 !important; }
+.sc-profile .pf-handle, .sc-profile .pf-sub { font-weight:400 !important; }
+.sc-profile .pf-btn { height:40px !important; font-size:14px !important; font-weight:500 !important; }
+.sc-profile .pf-add { font-size:14px !important; font-weight:500 !important; }
+.sc-profile .pf-actions .pf-round { width:44px !important; height:44px !important; flex:0 0 44px !important; }
+.sc-profile .pf-bio { font-weight:400 !important; }
+.sc-profile .pf-tabs button { font-weight:500 !important; }
+.sc-profile .pf-tabs button.on { font-weight:600 !important; }

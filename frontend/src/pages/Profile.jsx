@@ -261,10 +261,16 @@ export default function Profile() {
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
-    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactHeader(e.currentTarget.scrollTop > 155)}>
+    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactHeader(e.currentTarget.scrollTop > 6)}>
       <div className={`sc-compact-nav${compactHeader ? ' visible' : ''}`} aria-hidden={!compactHeader}>
         <button className="sc-compact-back" aria-label="Back" onClick={() => navigate(-1)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <span className="sc-compact-name">{profile.displayName || profile.username}</span>
+        <div className="sc-compact-actions">
+          <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
+          {profile.isMe
+            ? <button type="button" className="sc-compact-round" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)} tabIndex={compactHeader ? 0 : -1}><Icon name="settings" size={19} /></button>
+            : <button type="button" className="sc-compact-round" aria-label="More options" onClick={() => setOptionsOpen(true)} tabIndex={compactHeader ? 0 : -1}><span aria-hidden="true">•••</span></button>}
+        </div>
       </div>
       <header className="pf-hero">
         <div className="pf-cover" aria-hidden="true" style={{ backgroundImage: (profile.coverUrl || profile.avatarUrl) ? `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` : 'none' }} />
