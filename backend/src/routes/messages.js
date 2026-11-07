@@ -65,6 +65,18 @@ router.get('/with/:userId', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Public details of the person being messaged (for the conversation header).
+router.get('/with/:userId/info', async (req, res, next) => {
+  try {
+    const other = req.params.userId;
+    if (other === req.user.id) return res.status(400).json({ error: 'Choose someone else' });
+    if ((await blockedUserIds(req.user.id)).has(String(other))) return res.status(404).json({ error: 'Account not found' });
+    const user = await User.findByPk(other, { attributes: PUBLIC_USER, raw: true });
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+    res.json({ user });
+  } catch (error) { next(error); }
+});
+
 // Send a message to one person.
 router.post('/with/:userId', async (req, res, next) => {
   try {
