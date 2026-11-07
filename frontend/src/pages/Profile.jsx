@@ -267,7 +267,10 @@ export default function Profile() {
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
-              <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+              <>
+                <button className={`sc-circle sc-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>
+                <button className="sc-circle" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+              </>
             )}
             {profile.isMe
               ? <button className="sc-circle" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
