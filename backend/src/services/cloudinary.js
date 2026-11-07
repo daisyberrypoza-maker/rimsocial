@@ -55,8 +55,25 @@ function multipart(fields, file) {
   chunks.push(Buffer.from(`--${boundary}--\r\n`));
   return { body: Buffer.concat(chunks), contentType: `multipart/form-data; boundary=${boundary}` };
 }
+function isConfigured() {
+  return Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+}
+// Until Cloudinary credentials exist, keep the file in the local upload folder and serve it from /uploads.
+// Once the CLOUDINARY_* variables are set, new uploads go to Cloudinary automatically.
+async function storeLocally(file) {
+  const resourceType = String(file.mimetype || '').startsWith('video/') ? 'video' : 'image';
+  let filename = file.filename;
+  if (!filename || !file.path) {
+    const config = require('../config');
+    fs.mkdirSync(config.uploadDir, { recursive: true });
+    filename = crypto.randomUUID() + path.extname(file.originalname || '').toLowerCase();
+    await fs.promises.writeFile(path.join(config.uploadDir, filename), file.buffer);
+  }
+  return { url: `/uploads/${filename}`, publicId: null, resourceType };
+}
 async function uploadFile(file, folder = 'rimsocial') {
   if (!file) throw new Error('Missing uploaded file');
+  if (!isConfigured()) return storeLocally(file);
   try {
     const { cloudName, apiKey, apiSecret } = credentials();
     const params = { folder, timestamp: String(Math.floor(Date.now() / 1000)) };
@@ -89,4 +106,4 @@ function publicIdFromUrl(url) {
     return publicId || null;
   } catch { return null; }
 }
-module.exports = { uploadFile, deleteAsset, publicIdFromUrl };
+module.exports = { uploadFile, deleteAsset, publicIdFromUrl, isConfigured };
