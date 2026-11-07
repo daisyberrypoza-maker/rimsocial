@@ -90,6 +90,8 @@ export default function PostCard({ post, active }) {
   const [showComments, setShowComments] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [repostBusy, setRepostBusy] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(Boolean(active));
+  const [videoMuted, setVideoMuted] = useState(true);
   const username = post.author?.username || 'unknown';
   const src = mediaUrl(post.mediaUrl);
   const poster = mediaUrl(post.thumbUrl) || undefined;
@@ -109,8 +111,52 @@ export default function PostCard({ post, active }) {
     }
     const video = videoRef.current;
     if (!video) return;
-    if (active) video.play().catch(() => {}); else video.pause();
+    if (active && document.visibilityState === 'visible') {
+      video.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false));
+    } else {
+      video.pause();
+      setVideoPlaying(false);
+    }
   }, [active, post.id]);
+
+  // Never keep feed audio/video running while the browser/app is backgrounded.
+  useEffect(() => {
+    const syncPlayback = () => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (document.visibilityState !== 'visible') {
+        video.pause();
+        setVideoPlaying(false);
+      } else if (active) {
+        video.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false));
+      }
+    };
+    document.addEventListener('visibilitychange', syncPlayback);
+    window.addEventListener('pagehide', syncPlayback);
+    window.addEventListener('pageshow', syncPlayback);
+    return () => {
+      document.removeEventListener('visibilitychange', syncPlayback);
+      window.removeEventListener('pagehide', syncPlayback);
+      window.removeEventListener('pageshow', syncPlayback);
+    };
+  }, [active, post.id]);
+
+  function toggleVideoPlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().then(() => setVideoPlaying(true)).catch(() => setVideoPlaying(false));
+    } else {
+      video.pause();
+      setVideoPlaying(false);
+    }
+  }
+
+  function seekVideo(seconds) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+  }
 
   async function like() {
     if (likeBusy) return;
@@ -133,9 +179,18 @@ export default function PostCard({ post, active }) {
     finally { setRepostBusy(false); }
   }
 
+  const isFollowingAuthor = Boolean(post.author?.isFollowing ?? post.author?.following ?? post.isFollowingAuthor ?? post.isFollowing);
+
   return <article className="post" data-id={post.id}>
-    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted playsInline preload={active ? 'auto' : 'none'} />
-      : <img src={src} alt="" loading="lazy" />}
+    {post.kind === 'video' ? <>
+      <video ref={videoRef} src={active ? src : undefined} poster={poster} loop muted={videoMuted} playsInline preload={active ? 'auto' : 'none'} onClick={toggleVideoPlayback} onPlay={() => setVideoPlaying(true)} onPause={() => setVideoPlaying(false)} />
+      <div className="post-video-controls" aria-label="Video controls">
+        <button type="button" className="post-video-control" onClick={(e) => { e.stopPropagation(); seekVideo(-10); }} aria-label="Back 10 seconds">−10</button>
+        <button type="button" className="post-video-control post-video-play" onClick={(e) => { e.stopPropagation(); toggleVideoPlayback(); }} aria-label={videoPlaying ? 'Pause video' : 'Play video'}>{videoPlaying ? 'Ⅱ' : '▶'}</button>
+        <button type="button" className="post-video-control" onClick={(e) => { e.stopPropagation(); seekVideo(10); }} aria-label="Forward 10 seconds">+10</button>
+        <button type="button" className="post-video-control post-video-volume" onClick={(e) => { e.stopPropagation(); setVideoMuted((v) => !v); }} aria-label={videoMuted ? 'Turn sound on' : 'Mute video'}>{videoMuted ? '🔇' : '🔊'}</button>
+      </div>
+    </> : <img src={src} alt="" loading="lazy" />}
     <div className="shade" />
     <aside className="rail">
       <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
@@ -152,7 +207,7 @@ export default function PostCard({ post, active }) {
       <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} />}
       <div className="meta-row">{formatCount(post.viewCount)} views</div>
-      <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>
+      {!isFollowingAuthor && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View Profile</button>}
     </div>
     {showGifts && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
