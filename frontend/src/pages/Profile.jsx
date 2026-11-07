@@ -263,7 +263,6 @@ export default function Profile() {
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
           <div className="sc-hero-actions">
-            {profile.isMe && <button className="sc-circle" aria-label="Edit profile photo or background" onClick={() => setImageChoiceOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
@@ -286,7 +285,7 @@ export default function Profile() {
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}{profile.isMe && <button type="button" className="sc-name-chevron" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}</h2>
-            <p className="sc-handle">@{profile.username}{profile.isMe && <> · {formatCount(profile.followerCount || 0)} Followers</>}</p>
+            <p className="sc-handle">@{profile.username}{profile.isMe && <> · <button type="button" className="sc-handle-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button></>}</p>
             <div className="sc-inline-stats" aria-label="Followers">
               <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> Followers</button>
             </div>
