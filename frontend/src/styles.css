@@ -4083,3 +4083,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .app > .feed > .post > .info {
   bottom: calc(var(--nav-height, 58px) + env(safe-area-inset-bottom, 0px) + 10px) !important;
 }
+
+/* Chat header: Activity and New message icons side by side. */
+.dm-head-actions { display:flex; align-items:center; justify-content:flex-end; gap:4px; }
