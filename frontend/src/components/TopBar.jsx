@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 
@@ -6,11 +7,30 @@ export default function TopBar({ immersive, title }) {
   const navigate = useNavigate();
   const nested = location.pathname.startsWith('/p/') || location.pathname.startsWith('/creator/live/') || location.pathname === '/creator' || location.pathname === '/upload' || location.pathname === '/friends' || (location.pathname.startsWith('/u/') && location.pathname !== '/u/me');
 
-  if (immersive && !nested) {
-    return <header className="topbar overlay reels-top">
-      <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={28} /></button>
+  // Reels header: hidden while the page is scrolling, shown again once scrolling stops.
+  const reelsHeader = immersive && !nested;
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    if (!reelsHeader) return undefined;
+    let timer;
+    const onScroll = () => {
+      setScrolling(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setScrolling(false), 200);
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+      setScrolling(false);
+    };
+  }, [reelsHeader]);
+
+  if (reelsHeader) {
+    return <header className={`topbar overlay reels-top${scrolling ? ' is-hidden' : ''}`}>
+      <button className="reels-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={34} /></button>
       <nav className="reels-tabs" aria-label="Reels sections"><NavLink to="/" end>Reels</NavLink><NavLink to="/following">Friends</NavLink></nav>
-      <button className="reels-icon" onClick={() => navigate('/explore')} aria-label="Search and filters"><Icon name="sliders" size={26} /></button>
+      <button className="reels-icon" onClick={() => navigate('/explore')} aria-label="Search and filters"><Icon name="sliders" size={32} /></button>
     </header>;
   }
   return <header className={`topbar ${immersive ? 'overlay' : ''}`}>
