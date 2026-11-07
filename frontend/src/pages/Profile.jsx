@@ -271,7 +271,7 @@ export default function Profile() {
         <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
           <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
         </button>
-        <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(profile.postCount ?? posts.length)} creations`}>
+        <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
           <strong>{formatCount(profile.postCount ?? posts.length)}</strong><span>Creations</span>
         </button>
       </section>
