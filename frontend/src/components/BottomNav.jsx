@@ -25,7 +25,7 @@ export default function BottomNav() {
     <nav className="bottomnav" aria-label="Main navigation">
       <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
       <NavLink to="/explore" aria-label="Lenses"><LensesIcon /><span>Lenses</span></NavLink>
-      <NavLink to="/upload" aria-label="Add post"><PlusIcon /><span>Add post</span></NavLink>
+      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
       <NavLink to="/stories" aria-label="Stories"><StoriesIcon /><span>Stories</span></NavLink>
       <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /><span>Rimlight</span></NavLink>
     </nav>
