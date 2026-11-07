@@ -60,14 +60,15 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   // Pause stories while the app/browser is backgrounded; resume when it returns.
   useEffect(() => {
-    const handleVisibility = () => setPaused(document.visibilityState !== 'visible');
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', handleVisibility);
-    window.addEventListener('pageshow', handleVisibility);
+    const pauseForBackground = () => setPaused(true);
+    const resumeOnReturn = () => setPaused(document.visibilityState !== 'visible');
+    document.addEventListener('visibilitychange', resumeOnReturn);
+    window.addEventListener('pagehide', pauseForBackground);
+    window.addEventListener('pageshow', resumeOnReturn);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', handleVisibility);
-      window.removeEventListener('pageshow', handleVisibility);
+      document.removeEventListener('visibilitychange', resumeOnReturn);
+      window.removeEventListener('pagehide', pauseForBackground);
+      window.removeEventListener('pageshow', resumeOnReturn);
     };
   }, []);
 
@@ -79,11 +80,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   }, [paused, current?.id]);
 
   function togglePlayback() {
-    const video = storyVideoRef.current;
-    if (video) {
-      if (video.paused) video.play().catch(() => {});
-      else video.pause();
-    }
     setPaused((value) => !value);
   }
 
