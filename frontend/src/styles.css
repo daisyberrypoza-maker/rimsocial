@@ -3821,3 +3821,7 @@ html, body, #root { min-height:100%; }
 .post .rail-btn.liked svg { fill:#ff3040; stroke:#ff3040; }
 .post .author-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .post .view-profile { background:transparent !important; color:#fff !important; border:1px solid rgba(255,255,255,.9) !important; border-radius:8px !important; padding:4px 12px !important; font-size:13px !important; font-weight:600; }
+
+/* Post page author row: a plain row, not a pill-shaped global button */
+.post-detail-author { border-radius:0 !important; border:0 !important; background:transparent !important; padding:14px !important; }
+.post-detail-author .avatar, .post-detail-author .sc-avatar { width:44px !important; height:44px !important; border-radius:50% !important; flex:0 0 44px; }
