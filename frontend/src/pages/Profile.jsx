@@ -86,6 +86,7 @@ export default function Profile() {
     let current = true;
     setListType(connectionType);
     setPeopleQuery('');
+    setPeople([]);
     api(`/v1/users/${username}/${connectionType}`)
       .then((data) => { if (current) setPeople(data.items || []); })
       .catch((error) => { if (current) { toast(error.message); setListType(''); } });
