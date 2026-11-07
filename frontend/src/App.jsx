@@ -27,6 +27,7 @@ import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 import ExploreWatch from './pages/ExploreWatch.jsx';
 import ConnectionFailed from './components/ConnectionFailed.jsx';
+import EditProfile from './pages/EditProfile.jsx';
 import { useTabSwipe } from './lib/tabSwipe.js';
 
 function RequireAuth({ children }) {
@@ -127,6 +128,7 @@ export default function App() {
         <Route path="/business" element={<RequireAuth><BusinessHub /></RequireAuth>} />
         <Route path="/ads-sponsors" element={<RequireAuth><AdsSponsors /></RequireAuth>} />
         <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
+        <Route path="/u/me/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
