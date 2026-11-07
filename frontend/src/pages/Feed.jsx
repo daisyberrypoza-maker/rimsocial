@@ -14,6 +14,7 @@ export default function Feed({ tab }) {
   const setFeed = useAppStore((s) => s.setFeed);
   const containerRef = useRef(null);
   const saveTimer = useRef(null);
+  const scrollHideTimer = useRef(null);
   const touchStartY = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,9 @@ export default function Feed({ tab }) {
 
   function onScroll(e) {
     const el = e.currentTarget;
+    el.classList.add('is-scrolling');
+    clearTimeout(scrollHideTimer.current);
+    scrollHideTimer.current = setTimeout(() => el.classList.remove('is-scrolling'), 450);
     const idx = Math.round(el.scrollTop / el.clientHeight);
     if (idx !== active) setActive(idx);
 
