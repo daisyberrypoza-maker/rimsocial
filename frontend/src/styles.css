@@ -3761,3 +3761,8 @@ html, body, #root { min-height:100%; }
 /* #Tags empty state: fill the full width like the Stories/Rimlight grid */
 .sc-profile .sc-hashtag-panel:has(> .sc-empty-grid) { padding:0; }
 .sc-profile .sc-hashtag-panel > .sc-empty-grid { flex:1 0 100%; width:100%; min-width:0; }
+
+/* Video feed controls: tap layer, skip/play flash icon */
+.post .post-tap-layer { position:absolute; inset:0; z-index:1; background:transparent; border:0; padding:0; margin:0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.post .post-flash { position:absolute; left:50%; top:50%; z-index:3; width:72px; height:72px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; display:grid; place-items:center; pointer-events:none; transform:translate(-50%,-50%); animation:post-flash-pop .6s ease-out forwards; }
+@keyframes post-flash-pop { 0% { opacity:1; transform:translate(-50%,-50%) scale(.8); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) scale(1.15); } }
