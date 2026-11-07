@@ -29,9 +29,14 @@ export default function Messages() {
     <main className="dm-page">
       <header className="dm-head">
         <h1>Chat</h1>
-        <button type="button" className="dm-icon" onClick={() => navigate('/chat/new')} aria-label="New message">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
-        </button>
+        <div className="dm-head-actions">
+          <button type="button" className="dm-icon" onClick={() => navigate('/activity')} aria-label="Activity">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>
+          </button>
+          <button type="button" className="dm-icon" onClick={() => navigate('/chat/new')} aria-label="New message">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+          </button>
+        </div>
       </header>
       <div className="dm-filters">
         <button type="button" className={filter === 'all' ? 'dm-chip on' : 'dm-chip'} onClick={() => setFilter('all')}>All</button>
