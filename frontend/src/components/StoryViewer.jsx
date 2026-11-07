@@ -433,9 +433,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         <div className="sv-footer">
           <span className="sv-sound">♪ Original sound</span>
           <div className="sv-reply-row">
-            <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
-              <Icon name="camera" size={22} />
-            </button>
             {isOwner ? (
               <div className="sv-reply sv-views"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
             ) : (
@@ -443,7 +440,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               <input
                 type="text"
                 value={reply}
-                placeholder="Reply to..."
+                placeholder={`Reply to ${creatorName}...`}
                 aria-label={`Reply to ${group.user.username}`}
                 onFocus={() => setTyping(true)}
                 onBlur={() => setTyping(false)}
@@ -456,12 +453,17 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               ))}
             </div>
             )}
+            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="images" size={24} /></button>}
             <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
               <Icon name="send" size={22} />
             </button>
           </div>
         </div>
       )}
+
+      {reactionPickerOpen && !shareOpen && <div className="sv-reaction-picker sv-reaction-picker-footer" onClick={(e) => e.stopPropagation()} aria-label="Choose a reaction or sticker">
+        {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" onClick={() => { setReactionPickerOpen(false); onQuickReaction(emoji); }}>{emoji}</button>)}
+      </div>}
 
       {menuOpen && <ActionSheet
         actions={[{ label: 'Delete story', icon: 'trash', danger: true, onClick: deleteCurrent }]}
@@ -493,9 +495,6 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               <button type="button" aria-label="Share location" onClick={shareLocation}><Icon name="map-pin" size={27} /></button>
             </div>
           </div>
-          {reactionPickerOpen && <div className="sv-reaction-picker" onClick={(e) => e.stopPropagation()} aria-label="Choose a reaction">
-            {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" onClick={() => { setReactionPickerOpen(false); setShareOpen(false); onQuickReaction(emoji); }}>{emoji}</button>)}
-          </div>}
           <section className="sv-share-sheet" role="dialog" aria-label="Story options" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="sv-share-row" disabled={resharing} onClick={() => { setShareOpen(false); reshare(); }}>
               <Icon name="repeat-2" size={22} /><span>Remix Snap</span>
