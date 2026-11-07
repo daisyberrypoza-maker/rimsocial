@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
+import { useNavigate } from 'react-router-dom';
+import { goBack } from '../lib/goBack.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 
@@ -12,6 +14,7 @@ const money = (minor, currency = 'NGN') => minor == null ? 'Not stated' : new In
 const blankOpportunity = (country = 'NG') => ({ lane: 'find', title: '', description: '', category: '', country, city: '', currency: country === 'NG' ? 'NGN' : 'USD', askingPrice: '', estimatedCost: '', targetPrice: '', budget: '', evidenceUrl: '', businessId: '' });
 
 export default function BusinessHub() {
+  const navigate = useNavigate();
   const user = useAppStore((s) => s.user);
   const [lane, setLane] = useState('find');
   const [tab, setTab] = useState('discover');
@@ -205,6 +208,7 @@ export default function BusinessHub() {
 
   return <main className="page business-page">
     <header className="business-hero">
+      <button type="button" className="ghost small" onClick={() => goBack(navigate, '/u/me')} aria-label="Back">← Back</button>
       <div><span className="chip">RIMSOCIAL BUSINESS</span><h1>Find, Flip &amp; Fix</h1><p>Find opportunities, negotiate real deals, and document the work that improves a business.</p></div>
       <button onClick={() => { setForm({ ...blankOpportunity(user?.country || 'NG'), lane }); setShowCreate(true); }}>＋ List opportunity</button>
     </header>
