@@ -57,6 +57,12 @@ export default function ExploreWatch() {
     }, 450);
     const index = Math.round(el.scrollTop / Math.max(1, el.clientHeight));
     setActive(index);
+    // Keep the visible post in the route so Back from its profile restores
+    // the same position in the Explore watch feed.
+    const activePostId = items[index]?.id;
+    if (activePostId && String(activePostId) !== String(postId)) {
+      navigate(`/explore/watch/${activePostId}`, { replace: true });
+    }
     if (nextCursor && !loading && index >= items.length - 3) load(false);
   }
 
