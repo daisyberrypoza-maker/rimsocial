@@ -308,7 +308,6 @@ export default function PostCard({ post, active }) {
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
     <aside className="rail">
-      <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={48} ring /></button>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
@@ -322,6 +321,7 @@ export default function PostCard({ post, active }) {
     </aside>
     <div className="info">
       <div className="author-row">
+        <button className="author-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={32} ring /></button>
         <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
         {!post.isSponsored && post.author?.isFollowing === false && post.author?.id !== viewerId && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View profile</button>}
       </div>
