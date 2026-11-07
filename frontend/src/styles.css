@@ -3921,3 +3921,10 @@ html, body, #root { min-height:100%; }
 .bottomnav a.active { color:#111 !important; }
 .bottomnav a.active span { font-weight:700 !important; }
 .bottomnav a.active svg { stroke-width:2.1 !important; }
+
+/* ===== Bottom bar, final: four items in the reference style (Chat, Lenses, Stories, Rimlight) ===== */
+.bottomnav { display:grid !important; grid-template-columns:repeat(4, minmax(0,1fr)) !important; align-items:start !important; background:#fff !important; border-top:1px solid #ececef !important; box-shadow:none !important; padding:10px 0 calc(env(safe-area-inset-bottom,0px) + 6px) !important; min-height:0 !important; height:auto !important; }
+.bottomnav a, .bottomnav a.active { display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-start !important; gap:5px !important; padding:0 !important; min-height:0 !important; width:auto !important; color:#6a6a70 !important; text-decoration:none !important; }
+.bottomnav a svg { width:28px !important; height:28px !important; }
+.bottomnav a span { display:block !important; font-size:13px !important; font-weight:600 !important; line-height:1 !important; color:inherit !important; }
+.app > .feed { padding-bottom:calc(var(--nav-height) + 2px) !important; }
