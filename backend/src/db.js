@@ -87,6 +87,12 @@ const StoryView = sequelize.define('StoryView', {
   viewerId: { type: DataTypes.UUID, primaryKey: true },
 }, { tableName: 'story_views' });
 
+// One row per viewer who liked a story (migrations/026)
+const StoryLike = sequelize.define('StoryLike', {
+  postId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'story_likes', indexes: [{ fields: ['userId'] }] });
+
 const Wallet = sequelize.define('Wallet', {
   userId: { type: DataTypes.UUID, primaryKey: true },
   coinBalance: { type: DataTypes.BIGINT, defaultValue: 0 },
@@ -323,7 +329,7 @@ module.exports = {
   DirectMessage,
   MediaCleanupJob,
   BusinessFinancialRecord,
-  sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, PostReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };

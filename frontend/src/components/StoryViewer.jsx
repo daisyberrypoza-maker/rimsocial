@@ -10,12 +10,28 @@ import ActionSheet from './ActionSheet.jsx';
 
 const PHOTO_MS = 5000;
 const TICK_MS = 100;
-const SKIP_SECONDS = 5;
 const SWIPE_PX = 60;
+const CLOSE_PX = 120;
+const DOUBLE_TAP_MS = 260;
+const QUICK_REACTIONS = ['❤️', '😂', '😮', '🔥', '👏', '😢'];
+const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual content', 'Violence or dangerous content', 'Something else'];
+
+// "14h ago", "3m ago", "now"
+function timeAgo(iso) {
+  if (!iso) return '';
+  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return 'now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 // Full-screen story player. groups: [{ user }].
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
-// Videos have back/forward 5 seconds, a sound button and a progress bar. Photos advance after PHOTO_MS.
+// Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
+// Videos play with sound; photos advance after PHOTO_MS.
 export default function StoryViewer({ groups, startIndex, onClose }) {
   const [gi, setGi] = useState(startIndex);
   const [si, setSi] = useState(0);
@@ -26,28 +42,37 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [flash, setFlash] = useState(null);
   const [resharing, setResharing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [reply, setReply] = useState('');
+  const [typing, setTyping] = useState(false);
   const me = useAppStore((st) => st.user);
   const navigate = useNavigate();
   const swipeRef = useRef(null);
   const swipedRef = useRef(false);
   const videoRef = useRef(null);
   const elapsedRef = useRef(0);
+  const tapRef = useRef({ time: 0, timer: null });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
   const group = groups[gi];
+  const creatorName = group.user?.displayName || group.user?.username;
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
+  // Pauses the story while the viewer is typing or a sheet is open
+  const frozen = paused || typing || shareOpen || reportOpen || menuOpen;
 
-  // Load this creator's active stories
+  // Load this creator's active stories and the viewer's subscription state
   useEffect(() => {
     let alive = true;
     setStories(null);
     setSi(0);
     api(`/v1/stories/users/${group.user.id}`)
-      .then((d) => alive && setStories(d.items))
+      .then((d) => { if (alive) { setStories(d.items); setSubscribed(Boolean(d.isSubscribed)); } })
       .catch(() => alive && setStories([]));
     return () => { alive = false; };
   }, [group.user.id]);
@@ -74,6 +99,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     setProgress(0);
     elapsedRef.current = 0;
     setPaused(false);
+    setReply('');
     if (current) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch(() => {});
   }, [current?.id]);
 
@@ -91,11 +117,19 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     return undefined;
   }, [current?.id, isVideo]);
 
+  // Pause or resume the video with the viewer's state
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !isVideo) return;
+    if (frozen) v.pause();
+    else v.play().catch(() => {});
+  }, [frozen, isVideo]);
+
   // Photo timer (pauses with the viewer)
   useEffect(() => {
     if (!current || isVideo) return undefined;
     const timer = setInterval(() => {
-      if (paused) return;
+      if (frozen) return;
       elapsedRef.current += TICK_MS;
       const p = elapsedRef.current / PHOTO_MS;
       if (p >= 1) {
@@ -106,7 +140,10 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       }
     }, TICK_MS);
     return () => clearInterval(timer);
-  }, [current?.id, isVideo, paused, next]);
+  }, [current?.id, isVideo, frozen, next]);
+
+  // Clear a pending single-tap when the viewer closes
+  useEffect(() => () => clearTimeout(tapRef.current.timer), []);
 
   function flashIcon(icon) {
     const key = Date.now();
@@ -126,14 +163,66 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     }
   }
 
-  function skip(seconds) {
-    const v = videoRef.current;
-    if (!v) return;
-    const max = Number.isFinite(v.duration) ? v.duration : Infinity;
-    v.currentTime = Math.min(max, Math.max(0, v.currentTime + seconds));
+  function updateCurrent(id, patch) {
+    setStories((list) => (list ? list.map((s) => (s.id === id ? { ...s, ...patch } : s)) : list));
   }
 
-  // Swipe up from the lower half of the story opens that person's profile.
+  // Like or unlike the current story. A double-tap only likes, it never unlikes.
+  async function toggleLike(onlyLike = false) {
+    if (!current || isOwner) return;
+    const { id, liked, likeCount } = current;
+    if (onlyLike && liked) return;
+    const nextLiked = !liked;
+    updateCurrent(id, { liked: nextLiked, likeCount: Math.max(0, (likeCount || 0) + (nextLiked ? 1 : -1)) });
+    try {
+      const r = await api(`/v1/stories/${id}/like`, { method: 'POST' });
+      updateCurrent(id, { liked: r.liked, likeCount: r.likeCount });
+    } catch (e) {
+      updateCurrent(id, { liked, likeCount });
+      toast(e.message);
+    }
+  }
+
+  async function toggleSubscribe() {
+    const wanted = !subscribed;
+    setSubscribed(wanted);
+    try {
+      const r = await api(`/v1/stories/users/${group.user.id}/subscribe`, { method: 'PUT', body: { enabled: wanted } });
+      setSubscribed(Boolean(r.isSubscribed));
+      toast(wanted ? `Subscribed to ${creatorName}` : `Unsubscribed from ${creatorName}`);
+    } catch (e) {
+      setSubscribed(!wanted);
+      toast(e.message);
+    }
+  }
+
+  // Sends a reply (a chat message to the creator). Quick reactions send their emoji the same way.
+  async function sendReply(text) {
+    const body = String(text || '').trim();
+    if (!body || isOwner) return;
+    try {
+      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body } });
+      toast('Sent');
+    } catch (e) { toast(e.message); }
+  }
+
+  function submitReply() {
+    const body = reply;
+    setReply('');
+    setTyping(false);
+    sendReply(body);
+  }
+
+  function onQuickReaction(emoji) {
+    if (emoji === '❤️') toggleLike(false);
+    else sendReply(emoji);
+  }
+
+  function openOptions() {
+    if (isOwner) setMenuOpen(true);
+    else setShareOpen(true);
+  }
+
   function onPointerDown(event) {
     swipeRef.current = { x: event.clientX, y: event.clientY, startedLow: event.clientY > window.innerHeight / 2 };
   }
@@ -144,19 +233,34 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (!start) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
-    if (start.startedLow && dy < -SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
+    if (Math.abs(dy) <= Math.abs(dx)) return;
+    if (start.startedLow && dy < -SWIPE_PX) {
       swipedRef.current = true;
-      navigate(`/u/${group.user.username}`);
+      openOptions();
+    } else if (dy > CLOSE_PX) {
+      swipedRef.current = true;
+      closeRef.current();
     }
   }
 
   function onStageTap(event) {
     if (swipedRef.current) { swipedRef.current = false; return; }
+    if (typing) { setTyping(false); return; }
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
-    if (x < 0.33) prev();
-    else if (x > 0.67) next();
-    else togglePlay();
+    const now = Date.now();
+    if (tapRef.current.timer && now - tapRef.current.time < DOUBLE_TAP_MS) {
+      clearTimeout(tapRef.current.timer);
+      tapRef.current = { time: 0, timer: null };
+      flashIcon('heart');
+      toggleLike(true);
+      return;
+    }
+    const action = x < 0.33 ? prev : x > 0.67 ? next : togglePlay;
+    tapRef.current = {
+      time: now,
+      timer: setTimeout(() => { tapRef.current = { time: 0, timer: null }; action(); }, DOUBLE_TAP_MS),
+    };
   }
 
   function onVideoTime(event) {
@@ -169,9 +273,25 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     setResharing(true);
     try {
       await api(`/v1/stories/${current.id}/repost`, { method: 'POST' });
-      toast('Story reshared to your public story for 24 hours');
+      toast('Story remixed to your public story for 24 hours');
     } catch (e) { toast(e.message); }
     finally { setResharing(false); }
+  }
+
+  async function reportStory(reason) {
+    if (!current) return;
+    try {
+      await api(`/v1/stories/${current.id}/report`, { method: 'POST', body: { reason } });
+      toast('Thanks. We will review this story');
+    } catch (e) { toast(e.message); }
+  }
+
+  async function copyProfileLink() {
+    const link = `${window.location.origin}/u/${group.user.username}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast('Profile link copied');
+    } catch (e) { toast('Could not copy the link'); }
   }
 
   async function deleteCurrent() {
@@ -195,17 +315,27 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       </div>
 
       <div className="sv-head">
-        <Avatar user={group.user} size={34} />
-        <span className="sv-name">@{group.user.username}</span>
+        <button type="button" className="sv-who" aria-label={`Open ${group.user.username}'s profile`} onClick={() => navigate(`/u/${group.user.username}`)}>
+          <Avatar user={group.user} size={36} />
+          <span className="sv-meta">
+            <span className="sv-name">{group.user.username}</span>
+            <span className="sv-time">{timeAgo(current?.createdAt)}</span>
+          </span>
+        </button>
         <div className="sv-head-actions">
           {isVideo && (
             <button type="button" className="sv-icon" aria-label={muted ? 'Turn sound on' : 'Mute'} onClick={() => setMuted((m) => !m)}>
-              <Icon name={muted ? 'volume-x' : 'volume-2'} size={20} />
+              <Icon name={muted ? 'volume-x' : 'volume-2'} size={22} />
             </button>
           )}
-          {isOwner ? <button type="button" className="sv-icon" aria-label="Story options" disabled={!current} onClick={() => setMenuOpen(true)}><Icon name="ellipsis" size={22} /></button>
-          : <button type="button" className="sv-pill" disabled={!current || resharing} onClick={reshare}>{resharing ? 'Sharing…' : 'Reshare'}</button>}
-          <button type="button" className="sv-icon" aria-label="Close" onClick={() => closeRef.current()}><Icon name="x" size={22} /></button>
+          {!isOwner && (
+            <button type="button" className={`sv-icon ${subscribed ? 'on' : ''}`} aria-label={subscribed ? 'Unsubscribe' : 'Subscribe'} aria-pressed={subscribed} onClick={toggleSubscribe}>
+              <Icon name="bell" size={22} />
+            </button>
+          )}
+          <button type="button" className="sv-icon" aria-label="Story options" disabled={!current} onClick={openOptions}>
+            <Icon name="ellipsis" size={22} />
+          </button>
         </div>
       </div>
 
@@ -230,18 +360,71 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         )}
         {current?.caption && <p className="sv-caption">{current.caption}</p>}
         {flash && <span key={flash.key} className="sv-flash" aria-hidden="true"><Icon name={flash.icon} size={34} /></span>}
+        {current?.liked && !flash && <span className="sv-liked-mark" aria-hidden="true"><Icon name="heart" size={16} /></span>}
       </div>
+
+      {!isOwner && current && (
+        <div className="sv-footer">
+          <span className="sv-sound">♪ Original sound</span>
+          <div className="sv-reply-row">
+            <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
+              <Icon name="camera" size={22} />
+            </button>
+            <div className="sv-reply">
+              <input
+                type="text"
+                value={reply}
+                placeholder="Reply to..."
+                aria-label={`Reply to ${group.user.username}`}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
+                onChange={(e) => setReply(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && reply.trim()) submitReply(); }}
+                maxLength={2000}
+              />
+              {!reply.trim() && QUICK_REACTIONS.slice(0, 2).map((emoji) => (
+                <button key={emoji} type="button" className="sv-react" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>
+              ))}
+            </div>
+            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : () => setShareOpen(true)}>
+              <Icon name="send" size={22} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {menuOpen && <ActionSheet
         actions={[{ label: 'Delete story', icon: 'trash', danger: true, onClick: deleteCurrent }]}
         onClose={() => setMenuOpen(false)}
       />}
 
-      {isVideo && (
-        <div className="sv-controls">
-          <button type="button" className="sv-icon big" aria-label="Back 5 seconds" onClick={() => skip(-SKIP_SECONDS)}><Icon name="skip-back" size={26} /></button>
-          <button type="button" className="sv-icon big" aria-label={paused ? 'Play' : 'Pause'} onClick={togglePlay}><Icon name={paused ? 'play' : 'pause'} size={30} /></button>
-          <button type="button" className="sv-icon big" aria-label="Forward 5 seconds" onClick={() => skip(SKIP_SECONDS)}><Icon name="skip-forward" size={26} /></button>
+      {reportOpen && <ActionSheet
+        title="Report story"
+        actions={REPORT_REASONS.map((reason) => ({ label: reason, icon: 'shield', onClick: () => reportStory(reason) }))}
+        onClose={() => setReportOpen(false)}
+      />}
+
+      {shareOpen && (
+        <div className="sv-share-backdrop" role="presentation" onClick={() => setShareOpen(false)}>
+          <div className="sv-share-reacts" onClick={(e) => e.stopPropagation()}>
+            {QUICK_REACTIONS.map((emoji) => (
+              <button key={emoji} type="button" aria-label={emoji === '❤️' ? (current?.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => { setShareOpen(false); onQuickReaction(emoji); }}>{emoji}</button>
+            ))}
+          </div>
+          <section className="sv-share-sheet" role="dialog" aria-label="Story options" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="sv-share-row" disabled={resharing} onClick={() => { setShareOpen(false); reshare(); }}>
+              <Icon name="repeat" size={22} /><span>Remix story</span>
+            </button>
+            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); toggleLike(false); }}>
+              <Icon name="heart" size={22} /><span>{current?.liked ? 'Unlike story' : 'Like story'}</span>
+            </button>
+            <button type="button" className="sv-share-row danger" onClick={() => { setShareOpen(false); setReportOpen(true); }}>
+              <Icon name="shield" size={22} /><span>Report story</span>
+            </button>
+            <button type="button" className="sv-share-row" onClick={() => { setShareOpen(false); copyProfileLink(); }}>
+              <Icon name="link" size={22} /><span>Send profile link</span>
+            </button>
+          </section>
         </div>
       )}
     </div>

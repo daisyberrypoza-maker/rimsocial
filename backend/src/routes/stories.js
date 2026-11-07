@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, Post, StoryView } = require('../db');
+const { Op, Post, StoryView, StoryLike, Follow, User, PostReport } = require('../db');
 const config = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
@@ -19,7 +19,11 @@ router.get('/rail', requireAuth, async (req, res, next) => {
 router.get('/users/:userId', requireAuth, async (req, res, next) => {
   try {
     await assertNotBlocked(req.user.id, req.params.userId, 'User not found');
-    res.json({ items: await stories.getUserStories(req.params.userId, req.user.id) });
+    const [items, subscription] = await Promise.all([
+      stories.getUserStories(req.params.userId, req.user.id),
+      stories.getSubscription(req.params.userId, req.user.id),
+    ]);
+    res.json({ items, ...subscription });
   } catch (e) { next(e); }
 });
 
@@ -72,6 +76,71 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     res.status(201).json(toPostDTO(story));
+  } catch (e) { next(e); }
+});
+
+
+// The story must be live and unexpired; anything else is reported as not found.
+async function findLiveStory(id) {
+  const story = await Post.findOne({
+    where: { id, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
+    attributes: ['id', 'authorId'],
+  });
+  if (!story) throw httpError(404, 'Story not found or expired');
+  return story;
+}
+
+// Like or unlike a story (double-tap or the heart in the viewer). Returns the new state and count.
+router.post('/:id/like', requireAuth, async (req, res, next) => {
+  try {
+    const story = await findLiveStory(req.params.id);
+    await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
+    const existing = await StoryLike.findOne({ where: { postId: story.id, userId: req.user.id } });
+    let liked;
+    if (existing) { await existing.destroy(); liked = false; }
+    else { await StoryLike.create({ postId: story.id, userId: req.user.id }); liked = true; }
+    const likeCount = await StoryLike.count({ where: { postId: story.id } });
+    res.json({ liked, likeCount });
+  } catch (e) { next(e); }
+});
+
+// Report a story. Uses the same review queue as reported posts.
+router.post('/:id/report', requireAuth, async (req, res, next) => {
+  try {
+    const story = await findLiveStory(req.params.id);
+    await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
+    if (story.authorId === req.user.id) throw httpError(400, 'You cannot report your own story');
+    const reason = String(req.body?.reason || '').trim().slice(0, 500);
+    if (!reason) throw httpError(400, 'Choose a reason for reporting this story');
+    const existing = await PostReport.findOne({ where: { postId: story.id, reporterId: req.user.id, status: 'pending' } });
+    if (existing) throw httpError(409, 'You have already reported this story');
+    await PostReport.create({ postId: story.id, reporterId: req.user.id, reason: `Story: ${reason}` });
+    res.status(201).json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// Subscribe to a creator (YouTube-style): follows them and turns the bell on. Unsubscribing removes the follow.
+router.put('/users/:userId/subscribe', requireAuth, async (req, res, next) => {
+  try {
+    const creatorId = req.params.userId;
+    if (creatorId === req.user.id) throw httpError(400, 'You cannot subscribe to yourself');
+    await assertNotBlocked(req.user.id, creatorId, 'User not found');
+    const enabled = Boolean(req.body && req.body.enabled);
+    const creator = await User.findByPk(creatorId, { attributes: ['id'] });
+    if (!creator) throw httpError(404, 'User not found');
+    if (enabled) {
+      if (!Follow.rawAttributes.notifyPosts) throw httpError(503, 'Subscriptions are not available yet on this server');
+      const [follow, created] = await Follow.findOrCreate({
+        where: { followerId: req.user.id, followeeId: creatorId },
+        defaults: { notifyPosts: true },
+      });
+      if (created) await User.increment('followerCount', { by: 1, where: { id: creatorId } });
+      else if (!follow.notifyPosts) await follow.update({ notifyPosts: true });
+    } else {
+      const removed = await Follow.destroy({ where: { followerId: req.user.id, followeeId: creatorId } });
+      if (removed) await User.increment('followerCount', { by: -1, where: { id: creatorId } });
+    }
+    res.json({ isSubscribed: enabled, isNotifying: enabled });
   } catch (e) { next(e); }
 });
 
