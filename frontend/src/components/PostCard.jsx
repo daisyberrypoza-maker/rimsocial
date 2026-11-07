@@ -58,6 +58,7 @@ function GiftSheet({ post, onClose }) {
 }
 
 function CommentsSheet({ post, onClose }) {
+  const me = useAppStore((st) => st.user);
   const [items, setItems] = useState([]);
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(true);
@@ -85,15 +86,28 @@ function CommentsSheet({ post, onClose }) {
       setItems((current) => current.filter((item) => item.id !== comment.id));
     } catch (e) { toast(e.message); }
   }
-  return <div className="sheet-backdrop comments-backdrop" onClick={onClose}>
-    <section className="sheet comments-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
-      <div className="comments-heading"><h3>Comments</h3><button className="ghost small" onClick={onClose} aria-label="Close comments">✕</button></div>
-      <div className="comments-list">{loading ? <p className="muted center">Loading comments…</p> : items.length ? items.map((item) => <article className="comment-row" key={item.id}>
-        <Avatar user={item.author} size={34} />
-        <div className="comment-copy"><strong>@{item.author?.username || 'user'}</strong><p>{item.body}</p></div>
-        {item.isMine && <button className="comment-delete" aria-label="Delete comment" onClick={() => remove(item)}>×</button>}
-      </article>) : <p className="muted center">Be the first to comment.</p>}</div>
-      <form className="comment-compose" onSubmit={submit}><input aria-label="Write a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder="Add a comment…" /><button type="submit" disabled={sending || !body.trim()}>{sending ? '…' : 'Post'}</button></form>
+  const dateText = post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+  const username = post.author?.username || 'creator';
+  return <div className="rv-sheet-backdrop" onClick={onClose}>
+    <section className="rv-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
+      <div className="rv-handle" aria-hidden="true" />
+      <header className="rv-sheet-head">
+        <Avatar user={post.author} size={40} />
+        <div><strong>{username}</strong><small>{dateText}</small></div>
+        <button className="rv-icon" onClick={onClose} aria-label="Close comments"><Icon name="x" size={22} /></button>
+      </header>
+      <div className="rv-comments">
+        {loading ? <p className="rv-empty">Loading comments…</p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
+          <Avatar user={item.author} size={34} />
+          <div><strong>@{item.author?.username || 'user'}</strong><p>{item.body}</p></div>
+          {item.isMine && <button className="rv-delete" aria-label="Delete comment" onClick={() => remove(item)}>×</button>}
+        </div>) : <p className="rv-empty">No comments yet. Start the conversation.</p>}
+      </div>
+      <form className="rv-compose" onSubmit={submit}>
+        <Avatar user={me || {}} size={32} />
+        <input aria-label="Write a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder={`Comment as ${me?.username || 'you'}…`} />
+        {body.trim() && <button type="submit" disabled={sending}>{sending ? '…' : 'Post'}</button>}
+      </form>
     </section>
   </div>;
 }
