@@ -8,7 +8,7 @@ fs.mkdirSync(config.uploadDir, { recursive: true });
 
 const ALLOWED = {
   'video/mp4': 'video', 'video/webm': 'video',
-  'image/jpeg': 'photo', 'image/png': 'photo', 'image/webp': 'photo',
+  'image/jpeg': 'photo', 'image/png': 'photo', 'image/webp': 'photo', 'image/gif': 'photo',
 };
 
 const upload = multer({

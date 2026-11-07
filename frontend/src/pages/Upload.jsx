@@ -1,3 +1,4 @@
+import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -15,6 +16,8 @@ export default function Upload() {
   const setFeed = useAppStore((s) => s.setFeed);
   const setStoryRail = useAppStore((s) => s.setStoryRail);
   const [file, setFile] = useState(null);
+  const [rawFile, setRawFile] = useState(null);
+  const [trimming, setTrimming] = useState(false);
   const [preview, setPreview] = useState('');
   const [asStory, setAsStory] = useState(searchParams.get('story') === '1');
   const [allowRemix, setAllowRemix] = useState(false);
@@ -46,6 +49,26 @@ export default function Upload() {
     }).catch((error) => { if (active) toast(error.message); });
     return () => { active = false; };
   }, [remixId, setDraft]);
+
+  async function pickMedia(picked) {
+    setRawFile(picked);
+    if (!picked) { setFile(null); return; }
+    if (!String(picked.type).startsWith('video/')) { setFile(picked); return; }
+    setTrimming(true);
+    try {
+      setFile(await trimVideo(picked, POST_MAX_SECONDS));
+    } catch (error) {
+      setFile(null);
+      setRawFile(null);
+      toast(error.message);
+    } finally {
+      setTrimming(false);
+    }
+  }
+
+  function mediaFor(maxSeconds) {
+    return trimVideo(rawFile || file, maxSeconds);
+  }
 
   useEffect(() => {
     if (!file) { setPreview(''); return undefined; }
@@ -93,7 +116,6 @@ export default function Upload() {
     if (!file) return toast('Choose a photo or video first');
     if (remixId && !sourcePost) return toast('This post cannot be remixed. Choose a post whose creator allows remixing.');
     const fd = new FormData();
-    fd.append('media', file);
     fd.append('caption', draft.caption || '');
     fd.append('topic', topic.trim());
     fd.append('aiLabel', String(aiLabel));
@@ -111,10 +133,11 @@ export default function Upload() {
     }
     setBusy(true);
     try {
+      fd.append('media', asStory ? await mediaFor(STORY_MAX_SECONDS) : file);
       await api(asStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
       if (!asStory && shareToStory) {
         const storyFd = new FormData();
-        storyFd.append('media', file);
+        storyFd.append('media', await mediaFor(STORY_MAX_SECONDS));
         storyFd.append('caption', (draft.caption || '').slice(0, 200));
         try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
         catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
@@ -122,6 +145,7 @@ export default function Upload() {
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
       setTopic(''); setAiLabel(false); setShareToStory(false);
       setFile(null);
+      setRawFile(null);
       setSourcePost(null);
       if (asStory) setStoryRail({ items: [], updatedAt: 0 });
       else {
@@ -139,7 +163,7 @@ export default function Upload() {
       <header className="ig-compose-top">
         <button type="button" className="ig-icon-btn" onClick={() => navigate(-1)} aria-label="Close"><Icon name="x" size={24} /></button>
         <h2>{asStory ? 'New story' : 'New post'}</h2>
-        <button type="submit" className="ig-share" disabled={busy || !file}>{busy ? 'Sharing…' : 'Share'}</button>
+        <button type="submit" className="ig-share" disabled={busy || trimming || !file}>{busy ? 'Sharing…' : trimming ? 'Trimming…' : 'Share'}</button>
       </header>
 
       {sourcePost && <div className="ig-remix">
@@ -160,7 +184,7 @@ export default function Upload() {
           {preview && <div className="cmp-tile cmp-selected">{file?.type.startsWith('video/') ? <video src={preview} muted playsInline /> : <img src={preview} alt="Selected media" />}</div>}
         </div>
       </>}
-      <input id="post-media-file" className="hidden" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+      <input id="post-media-file" className="hidden" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" onChange={(e) => pickMedia(e.target.files?.[0] || null)} />
       <div className="cmp-modes" role="tablist" aria-label="Share type">
         <button type="button" role="tab" aria-selected={!asStory} className={!asStory ? 'on' : ''} onClick={() => setAsStory(false)}>POST</button>
         <button type="button" role="tab" aria-selected={asStory} className={asStory ? 'on' : ''} onClick={() => { setAsStory(true); setVisibility('public'); }}>STORY</button>
