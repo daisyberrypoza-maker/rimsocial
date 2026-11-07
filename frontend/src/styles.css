@@ -4339,3 +4339,22 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-lens-section { width:calc(100% - 20px); max-width:460px; margin:18px auto 0; color:#fff; }
 .sv-lens-section h3 { margin:0 0 22px; font-size:20px; line-height:1.2; font-weight:800; }
 .sv-lens-placeholder { min-height:100px; border-radius:18px; background:#fff; color:#777; padding:20px; font-size:13px; }
+
+/* ---- Story viewer measured from the reference (720x1600 screenshot = 360 css px wide at 2x) ---- */
+.sv-root .sv-bars { top:8px; left:10px; right:10px; gap:3px; }
+.sv-root .sv-bar { height:2px; border-radius:1px; background:rgba(255,255,255,.4); }
+.sv-root .sv-head { top:44px; left:12px; right:6px; gap:8px; }
+.sv-root .sv-who .avatar { width:36px !important; height:36px !important; }
+.sv-root .sv-name { font-size:16px; font-weight:700; line-height:20px; }
+.sv-root .sv-time { font-size:13px; line-height:16px; font-weight:500; }
+.sv-root .sv-head-actions { gap:2px; }
+.sv-root .sv-head-actions .sv-icon { width:36px !important; height:36px !important; }
+.sv-root .sv-footer { padding:0 6px calc(env(safe-area-inset-bottom,0px) + 31px); }
+.sv-root .sv-sound { height:31px; padding:0 12px 0 4px; margin:0 0 14px 0; font-size:14px; font-weight:600; background:rgba(40,40,40,.55); border-radius:999px; }
+.sv-root .sv-reply-row { gap:6px; }
+.sv-root .sv-cam { width:60px !important; height:48px !important; border-radius:999px !important; background:rgba(255,255,255,.95) !important; color:#111 !important; }
+.sv-root .sv-reply { height:48px; padding:0 6px 0 16px; border-radius:999px; background:#fff; }
+.sv-root .sv-reply input { color:#111; font-size:16px; }
+.sv-root .sv-reply input::placeholder { color:#6b6b6b; }
+.sv-root .sv-react { width:30px; height:30px; font-size:22px; }
+.sv-root .sv-send { width:60px !important; height:48px !important; border-radius:999px !important; background:rgba(40,40,40,.8) !important; color:#fff !important; }
