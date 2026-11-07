@@ -74,6 +74,9 @@ export default function Stories() {
           <Avatar user={me || {}} />
         </button>
         <span className="sc-top-spacer" />
+        <button className="sc-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}>
+          <Icon name="search" size={21} />
+        </button>
         <button className="sc-round" aria-label="Notifications" onClick={() => navigate('/activity')}>
           <Icon name="bell" size={21} />
         </button>
