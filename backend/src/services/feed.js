@@ -59,22 +59,12 @@ async function getDiscoverPage({ userId, cursor, limit }) {
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
-    const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
-    const now = Date.now();
-    ids = candidates.filter((p) => !blocked.has(p.authorId)).map((p) => {
-      const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
-      const freshness = 12 * Math.exp(-ageHours / 48);
-      const engagement = Math.log1p(Number(p.viewCount) || 0) * 1.2
-        + (Number(p.likeCount) || 0) * 2
-        + (Number(p.repostCount) || 0) * 3
-        + Math.log1p(Number(p.giftCoins) || 0) * 1.5;
-      const community = followed.has(p.authorId) ? 5 : 0;
-      // Per-viewer feedback makes recommendations adapt to real behavior.
-      // Positive values come from watch duration/completion; negative values from skips
-      // and explicit "not interested" feedback.
-      const personal = Number(preferenceScores[p.id]) || 0;
-      return { id: p.id, score: freshness + engagement + community + personal, createdAt: new Date(p.createdAt).getTime() };
-    }).sort((a, b) => b.score - a.score || b.createdAt - a.createdAt).map((p) => p.id);
+    // Rimlight Discover is newest-first (LIFO): the latest published post appears first.
+    // Keep recommendation scoring in Explore, while Following remains chronological too.
+    ids = candidates
+      .filter((p) => !blocked.has(p.authorId))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map((p) => p.id);
     await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
   }
 
