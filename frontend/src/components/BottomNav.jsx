@@ -28,11 +28,11 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /><span>Rimlight</span></NavLink>
-      <NavLink to="/activity" aria-label="Chat"><ChatIcon /><span>Chat</span></NavLink>
-      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span>Add post</span></NavLink>
-      <NavLink to="/explore" aria-label="Explore"><ExploreIcon /><span>Explore</span></NavLink>
-      <NavLink to="/stories" aria-label="Stories"><StoriesIcon /><span>Stories</span></NavLink>
+      <NavLink to="/" end aria-label="Rimlight"><RimlightIcon /></NavLink>
+      <NavLink to="/activity" aria-label="Chat"><ChatIcon /></NavLink>
+      <NavLink to="/upload" aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
+      <NavLink to="/explore" aria-label="Explore"><ExploreIcon /></NavLink>
+      <NavLink to="/stories" aria-label="Stories"><StoriesIcon /></NavLink>
     </nav>
   );
 }
