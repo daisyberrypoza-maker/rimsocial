@@ -317,7 +317,7 @@ export default function Profile() {
       </header>
       <div className="pf-body">
         {profile.bio && <p className="pf-bio">{profile.bio}</p>}
-        {profile.isMe && profile.country && (
+        {profile.country && (
           <div className="pf-chips">
             <span className="pf-chip"><Icon name="map-pin" size={15} />{profile.country}</span>
           </div>
