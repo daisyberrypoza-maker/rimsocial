@@ -4541,7 +4541,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* TikTok-style Rimlight viewing: temporarily clear overlays while the feed is moving. */
 .feed .post .rail,
 .feed .post .info,
-.feed .post .post-seek,
 .feed .post .shade,
 .feed .post .ai-content-label,
 .feed .post .sponsored-label {
@@ -4549,7 +4548,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 }
 .feed.is-scrolling .post .rail,
 .feed.is-scrolling .post .info,
-.feed.is-scrolling .post .post-seek,
 .feed.is-scrolling .post .shade,
 .feed.is-scrolling .post .ai-content-label,
 .feed.is-scrolling .post .sponsored-label {
@@ -4568,7 +4566,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 @media (prefers-reduced-motion: reduce) {
   .feed .post .rail,
   .feed .post .info,
-  .feed .post .post-seek,
   .feed .post .shade,
   .feed .post .ai-content-label,
   .feed .post .sponsored-label,
@@ -4627,4 +4624,55 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .post > img {
   display:block;
   max-width:100%;
+}
+
+
+/* Rimlight: visible, edge-aligned TikTok-style playback progress. */
+.post > .post-seek {
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:-1px !important;
+  width:100% !important;
+  max-width:100% !important;
+  height:8px !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:block !important;
+  z-index:20 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  transform:none !important;
+}
+.post > .post-seek::-webkit-slider-runnable-track {
+  height:2px !important;
+  background:linear-gradient(to right,#fff var(--p,0%),rgba(255,255,255,.42) var(--p,0%)) !important;
+}
+.post > .post-seek::-webkit-slider-thumb {
+  -webkit-appearance:none !important;
+  width:6px !important;
+  height:6px !important;
+  margin-top:-2px !important;
+  border:0 !important;
+  border-radius:50% !important;
+  background:#fff !important;
+}
+.post > .post-seek::-moz-range-track {
+  height:2px !important;
+  background:rgba(255,255,255,.42) !important;
+}
+.post > .post-seek::-moz-range-progress {
+  height:2px !important;
+  background:#fff !important;
+}
+.post > .post-seek::-moz-range-thumb {
+  width:6px !important;
+  height:6px !important;
+  border:0 !important;
+  border-radius:50% !important;
+  background:#fff !important;
 }
