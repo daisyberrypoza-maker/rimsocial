@@ -3742,3 +3742,13 @@ html, body, #root { min-height:100%; }
 .studio-shortcuts a strong { font-size:15px; }
 .studio-shortcuts a span { font-size:12px; opacity:.75; line-height:1.4; }
 @media (max-width:420px) { .studio-shortcuts { gap:8px; } .studio-shortcuts a { padding:12px; } }
+
+/* ===== Profile marks round 2: top row spacing, full name, tappable followers, avatar up ===== */
+.sc-profile .sc-hero-top { padding-top:calc(env(safe-area-inset-top, 0px) + 4px) !important; margin-top:0 !important; }
+.sc-profile .sc-hero { padding-top:0 !important; }
+.sc-profile .sc-name { white-space:normal !important; overflow:visible !important; text-overflow:clip !important; line-height:1.25 !important; }
+.sc-profile .sc-handle-link { border:0 !important; background:transparent !important; color:inherit !important; padding:0 !important; font:inherit !important; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.sc-profile .sc-hero-avatar { transform:translateY(-10px); }
+.sc-profile .sc-hero-id { align-items:center !important; }
+.sc-profile .sc-hero { min-height:0 !important; }
+.sc-profile .sc-hero-id { margin-top:34px !important; }
