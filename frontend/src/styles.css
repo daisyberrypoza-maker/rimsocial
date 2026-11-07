@@ -3028,3 +3028,21 @@ html, body, #root { background: #ffffff; color: #111111; }
   .image-choice-backdrop { align-items:center; }
   .image-choice-sheet { border-radius:20px; }
 }
+
+
+/* Profile photos open in a full-screen viewer for both your profile and other creators. */
+.sc-avatar-preview { display:block; width:100%; height:100%; margin:0; padding:0; border:0; border-radius:50%; background:transparent !important; color:inherit; overflow:visible; }
+.sc-avatar-preview .avatar { display:flex; }
+.sc-avatar-preview:focus-visible { outline:3px solid #fff; outline-offset:4px; }
+.profile-image-viewer { position:fixed; inset:0; z-index:2500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; padding:calc(env(safe-area-inset-top, 0px) + 24px) 18px calc(env(safe-area-inset-bottom, 0px) + 24px); background:rgba(8,10,16,.96); color:#fff; }
+.profile-image-viewer > img { display:block; width:min(88vw, 520px); max-height:min(72dvh, 680px); aspect-ratio:1; object-fit:contain; border-radius:10px; }
+.profile-image-viewer-close { position:absolute; top:env(safe-area-inset-top, 0px); right:12px; display:grid; place-items:center; width:44px; height:44px; padding:0; border-radius:50%; color:#fff !important; background:rgba(255,255,255,.14) !important; }
+.profile-image-viewer-name { max-width:90%; overflow-wrap:anywhere; color:rgba(255,255,255,.9); font-size:15px; font-weight:650; }
+.profile-image-viewer-empty { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.profile-image-viewer-empty p { margin:0; color:rgba(255,255,255,.75); font-size:14px; }
+
+/* Keep the profile back controls close to the top while extending their surfaces behind the status bar. */
+.sc-hero-top { padding-top:calc(env(safe-area-inset-top, 0px) + 4px); }
+.sc-compact-nav { min-height:calc(48px + env(safe-area-inset-top, 0px)); padding:env(safe-area-inset-top, 0px) 10px 0; }
+.sc-profile .sc-compact-back { width:38px; height:38px; flex-basis:38px; }
+.topbar { padding:calc(env(safe-area-inset-top, 0px) + 5px) 14px 6px; }
