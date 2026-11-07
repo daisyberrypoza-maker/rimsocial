@@ -1,0 +1,25 @@
+{
+  "id": "/rimsocial/",
+  "name": "RimSocial",
+  "short_name": "RimSocial",
+  "description": "Connect, create and discover on RimSocial.",
+  "lang": "en",
+  "start_url": "/rimsocial/#/",
+  "scope": "/rimsocial/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#171717",
+  "theme_color": "#171717",
+  "icons": [
+    {
+      "src": "/rimsocial/icons/rimsocial.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
