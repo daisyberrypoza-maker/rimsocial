@@ -5071,3 +5071,23 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-root .sv-send { width:59px !important; height:59px !important; flex:0 0 59px !important; border-radius:50% !important; border:0 !important; background:rgba(50,50,50,.9) !important; color:#fff !important; padding:0 !important; display:grid !important; place-items:center !important; box-shadow:none !important; }
 .sv-root .sv-send svg { width:26px !important; height:26px !important; }
 .sv-root .sv-views { font-size:14px !important; font-weight:500 !important; color:#fff !important; justify-content:center !important; gap:8px !important; }
+
+/* ===== Story share sheet and reaction tray, matched to the reference (CSS px = screenshot px / 2) ===== */
+.sv-root .sv-share-backdrop { background:rgba(0,0,0,.22) !important; justify-content:flex-end !important; }
+.sv-root .sv-share-top { padding:0 10px 10px !important; display:flex !important; flex-direction:column !important; gap:10px !important; }
+.sv-root .sv-share-note { margin:0 !important; text-align:center !important; color:#fff !important; font-size:14px !important; font-weight:500 !important; text-shadow:0 1px 4px rgba(0,0,0,.5) !important; }
+.sv-root .sv-share-reacts { display:flex !important; justify-content:space-between !important; padding:0 8px !important; }
+.sv-root .sv-share-reacts button { background:transparent !important; border:0 !important; font-size:36px !important; line-height:1 !important; padding:0 !important; width:auto !important; height:auto !important; box-shadow:none !important; }
+.sv-root .sv-share-chat { display:flex !important; align-items:center !important; gap:8px !important; }
+.sv-root .sv-share-camera { width:40px !important; height:40px !important; flex:0 0 40px !important; border-radius:50% !important; border:0 !important; background:rgba(40,40,40,.8) !important; color:#fff !important; display:grid !important; place-items:center !important; padding:0 !important; }
+.sv-root .sv-share-chat-input { flex:1 1 auto !important; min-width:0 !important; }
+.sv-root .sv-share-chat-input input { width:100% !important; height:40px !important; border-radius:999px !important; border:0 !important; padding:0 16px !important; background:rgba(40,40,40,.8) !important; color:#fff !important; font-size:15px !important; outline:none !important; }
+.sv-root .sv-share-chat-input input::placeholder { color:rgba(255,255,255,.85) !important; }
+.sv-root .sv-share-chat > button:not(.sv-share-camera) { background:transparent !important; border:0 !important; color:#fff !important; padding:0 !important; width:26px !important; height:26px !important; flex:0 0 26px !important; display:grid !important; place-items:center !important; box-shadow:none !important; }
+.sv-root .sv-share-sheet { background:#fff !important; color:#111 !important; border-radius:20px 20px 0 0 !important; padding:6px 0 calc(10px + env(safe-area-inset-bottom, 0px)) !important; }
+.sv-root .sv-share-row { display:flex !important; align-items:center !important; gap:14px !important; width:100% !important; height:52px !important; padding:0 18px !important; background:transparent !important; border:0 !important; border-bottom:1px solid #ececf0 !important; border-radius:0 !important; color:#111 !important; font-size:17px !important; font-weight:500 !important; text-align:left !important; box-shadow:none !important; }
+.sv-root .sv-share-row svg { width:20px !important; height:20px !important; flex:0 0 20px !important; }
+.sv-root .sv-share-row.danger { color:#e5384f !important; }
+.sv-root .sv-share-row.sv-send-snap { justify-content:space-between !important; }
+.sv-root .sv-send-snap-icon { width:36px !important; height:36px !important; border-radius:50% !important; background:#1ea7fd !important; color:#fff !important; display:grid !important; place-items:center !important; }
+.sv-root .sv-send-snap-icon svg { width:18px !important; height:18px !important; }
