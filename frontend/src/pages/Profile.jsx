@@ -79,8 +79,18 @@ export default function Profile() {
   // The connections sheet is represented in the URL. This restores it when
   // browser/device Back returns from a profile opened in the list.
   useEffect(() => {
+    if (connectionType === 'activity') {
+      let current = true;
+      setListType('activity');
+      setActivityLoading(true);
+      api('/v1/activity')
+        .then((data) => { if (current) setActivity(data.items || []); })
+        .catch((error) => { if (current) toast(error.message); })
+        .finally(() => { if (current) setActivityLoading(false); });
+      return () => { current = false; };
+    }
     if (connectionType !== 'followers' && connectionType !== 'following') {
-      setListType((current) => current === 'followers' || current === 'following' ? '' : current);
+      setListType((current) => ['followers', 'following', 'activity'].includes(current) ? '' : current);
       return undefined;
     }
     let current = true;
@@ -136,14 +146,10 @@ export default function Profile() {
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
-  async function openActivity() {
-    setListType('activity');
-    setActivityLoading(true);
-    try {
-      const data = await api('/v1/activity');
-      setActivity(data.items || []);
-    } catch (e) { toast(e.message); setListType(''); }
-    finally { setActivityLoading(false); }
+  function openActivity() {
+    navigate(`${location.pathname}?connections=activity`, {
+      replace: searchParams.has('connections'),
+    });
   }
 
   function activityText(item) {
@@ -430,7 +436,7 @@ export default function Profile() {
               {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
               {activity.map((item) => (
                 <li className="pv-row pv-activity-row" key={item.id}>
-                  <button type="button" className="pv-person" onClick={() => { setListType(''); if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
+                  <button type="button" className="pv-person" onClick={() => { if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
                     <Avatar user={item.actor || {}} size={44} />
                     <span className="pv-person-text"><strong>{activityText(item)}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</small></span>
                   </button>
