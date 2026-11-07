@@ -58,7 +58,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
-  const group = groups[gi];
+  const group = groups[gi] || { user: {} };
   const creatorName = group.user?.displayName || group.user?.username;
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
@@ -480,7 +480,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               ))}
             </div>
             )}
-            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="images" size={24} /></button>}
+            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="image" size={24} /></button>}
             <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>
