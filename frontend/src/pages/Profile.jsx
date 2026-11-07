@@ -22,7 +22,9 @@ export default function Profile() {
   const posts = useAppStore((s) => s.feeds[feedKey]?.items || []);
   const nextCursor = useAppStore((s) => s.feeds[feedKey]?.nextCursor ?? null);
 
-  const [tab, setTab] = useState('posts');
+  const [tab, setTab] = useState('stories');
+  const [reposts, setReposts] = useState([]);
+  const [repostsLoading, setRepostsLoading] = useState(false);
   const [stories, setStories] = useState([]);
   const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,6 +54,12 @@ export default function Profile() {
     loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => toast(e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
+
+  useEffect(() => {
+    if (tab !== 'reposts' || !profile) return;
+    setRepostsLoading(true);
+    api(`/v1/users/${username}/reposts`).then((data) => setReposts(data.items || [])).catch(() => setReposts([])).finally(() => setRepostsLoading(false));
+  }, [tab, profile, username]);
 
   useEffect(() => {
     if (tab !== 'stories' || !profile) return;
@@ -216,11 +224,12 @@ export default function Profile() {
         <span className="sc-compact-name">{profile.displayName || profile.username}</span>
       </div>
       <header className="sc-hero">
-        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: (profile.coverUrl || profile.avatarUrl) ? `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` : undefined }} />
+        <div className="sc-hero-bg" aria-hidden="true" style={{ backgroundImage: profile.coverUrl ? `url(${mediaUrl(profile.coverUrl)})` : undefined }} />
         <span className="sc-hero-shade" aria-hidden="true" />
         <div className="sc-hero-top">
           <button className="sc-circle" aria-label="Back" onClick={() => navigate(-1)}><Icon name="arrow-left" size={22} /></button>
           <div className="sc-hero-actions">
+            {profile.isMe && <button className="sc-circle" aria-label="Edit profile" onClick={() => setDrawerOpen(true)}><Icon name="pencil" size={20} /></button>}
             {profile.isMe ? (
               <button className="sc-share-pill" onClick={shareProfile}><Icon name="share" size={18} />Share</button>
             ) : (
@@ -329,7 +338,7 @@ export default function Profile() {
       {listType && <div className="sheet-backdrop people-backdrop" onClick={() => setListType('')}>
         <section className="sheet people-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <div className="people-sheet-handle" />
-          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{listType === 'blocked' ? 'Blocked accounts' : profile.username}</h3><small>{listType === 'blocked' ? `${people.length} blocked ${people.length === 1 ? 'account' : 'accounts'}` : listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions">{listType !== 'blocked' && <button className="icon-button" onClick={() => { setListType(''); navigate('/explore?people=1'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button>}</div></div>
+          <div className="people-sheet-title"><button className="icon-button" onClick={() => setListType('')} aria-label="Back"><Icon name="arrow-left" size={24} /></button><div><h3>{listType === 'blocked' ? 'Blocked accounts' : profile.username}</h3><small>{listType === 'blocked' ? `${people.length} blocked ${people.length === 1 ? 'account' : 'accounts'}` : listType === 'followers' ? `${formatCount(profile.followerCount)} followers` : `${formatCount(profile.followingCount || 0)} following`}</small></div><div className="people-title-actions">{listType !== 'blocked' && <button className="icon-button" onClick={() => { setListType(''); navigate('/friends'); }} aria-label="Discover people"><Icon name="user-plus" size={22} /></button>}</div></div>
           {listType !== 'blocked' && <div className="people-tabs">
             <button className={listType === 'followers' ? 'active' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><span>{formatCount(profile.followerCount)}</span> followers</button>
             <button className={listType === 'following' ? 'active' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><span>{formatCount(profile.followingCount || 0)}</span> following</button>
@@ -354,9 +363,11 @@ export default function Profile() {
         </section>
       </div>}
 
-      <nav className="sc-tabs" role="tablist">
-        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
-        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Rimlight</button>
+      <nav className="sc-tabs" role="tablist" aria-label="Profile content">
+        <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}><Icon name="circle-play" size={18} />Stories</button>
+        <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}><Icon name="clapperboard" size={18} />Rimlight</button>
+        <button role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}><Icon name="repeat-2" size={18} />Reposts</button>
+        <button role="tab" aria-selected={tab === 'tags'} className={tab === 'tags' ? 'on' : ''} onClick={() => setTab('tags')}><Icon name="hash" size={18} />#Tags</button>
       </nav>
 
       {tab === 'posts' ? (
@@ -382,7 +393,7 @@ export default function Profile() {
             </div>
           )}
         </>
-      ) : (
+      ) : tab === 'stories' ? (
         <>
           <div className="sc-grid">
             {stories.map((s, i) => (
@@ -399,6 +410,15 @@ export default function Profile() {
             <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
           )}
         </>
+      ) : tab === 'reposts' ? (
+        <>
+          {repostsLoading ? <p className="sc-empty-note">Loading reposts…</p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
+          {!repostsLoading && !reposts.length && <p className="sc-empty-note">No reposts yet.</p>}
+        </>
+      ) : (
+        <section className="sc-hashtag-panel" aria-label="Profile hashtags">
+          {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\\p{L}\\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\\p{L}\\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <p className="sc-empty-note">Hashtags from your Rimlight captions will appear here.</p>}
+        </section>
       )}
     </div>
   );
