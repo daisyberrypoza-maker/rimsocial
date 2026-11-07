@@ -100,6 +100,8 @@ export default function PostCard({ post, active }) {
   const [soundOn, setSoundOn] = useState(feedSoundOn);
   const [paused, setPaused] = useState(false);
   const [flash, setFlash] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const seekingRef = useRef(false);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
   const pressTimer = useRef(null);
@@ -141,6 +143,17 @@ export default function PostCard({ post, active }) {
     feedSoundOn = !feedSoundOn;
     setSoundOn(feedSoundOn);
     if (videoRef.current) videoRef.current.muted = !feedSoundOn;
+  }
+
+  // Drag or tap the bottom progress bar to seek.
+  function seekFromPointer(event) {
+    const video = videoRef.current;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    if (video && Number.isFinite(video.duration) && video.duration > 0) {
+      video.currentTime = ratio * video.duration;
+      setProgress(ratio);
+    }
   }
 
   function flashIcon(kind) {
@@ -275,9 +288,15 @@ export default function PostCard({ post, active }) {
     setShowMenu(true);
   }
   return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
-    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} />
+    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
       : <img src={src} alt="" loading="lazy" />}
     {post.kind === 'video' && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
+    {post.kind === 'video' && <div className="post-progress" role="slider" aria-label="Video progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}
+      onPointerDown={(e) => { e.stopPropagation(); seekingRef.current = true; e.currentTarget.setPointerCapture(e.pointerId); seekFromPointer(e); }}
+      onPointerMove={(e) => { if (seekingRef.current) seekFromPointer(e); }}
+      onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}>
+      <div className="post-progress-fill" style={{ width: `${progress * 100}%` }} />
+    </div>}
     {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause' }[flash.kind]} size={34} /></span>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
