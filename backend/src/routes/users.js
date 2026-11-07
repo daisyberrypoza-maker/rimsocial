@@ -184,7 +184,7 @@ router.get('/:username', requireAuth, async (req, res, next) => {
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
       Follow.count({ where: { followerId: user.id } }),
     ]);
-    res.json({ ...user.toJSON(), postCount, followingCount, isFollowing: Boolean(follow), isMe: user.id === req.user.id });
+    res.json({ ...user.toJSON(), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow && follow.notifyPosts), isMe: user.id === req.user.id });
   } catch (e) { next(e); }
 });
 
@@ -289,6 +289,17 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     res.json({ isFollowing: true, followerCount: fresh.followerCount });
+  } catch (e) { next(e); }
+});
+
+// PUT /v1/users/:id/follow/notify  body: { enabled }  (bell: notify me when this creator posts)
+router.put('/:id/follow/notify', requireAuth, async (req, res, next) => {
+  try {
+    const enabled = Boolean(req.body && req.body.enabled);
+    const follow = await Follow.findOne({ where: { followerId: req.user.id, followeeId: req.params.id } });
+    if (!follow) throw httpError(409, 'Follow this account to turn on notifications');
+    await follow.update({ notifyPosts: enabled });
+    res.json({ isNotifying: enabled });
   } catch (e) { next(e); }
 });
 

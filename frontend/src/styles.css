@@ -3616,3 +3616,38 @@ html, body, #root { min-height:100%; }
   font-size:13px;
   font-weight:800;
 }
+
+/* ===== Profile v3: bell, compact options sheet, Post to Spotlight, Recommended ===== */
+.sc-bell.on { background:#fff !important; color:#111 !important; }
+.sc-bell:disabled { opacity:.6; }
+.sc-avatar-edit { background:#fffc00 !important; color:#111 !important; border:2px solid #fff !important; }
+.sc-add { height:48px !important; border-radius:999px !important; font-size:17px !important; }
+.sc-add.added { background:rgba(255,255,255,.22) !important; color:#fff !important; backdrop-filter:blur(6px); }
+.sc-options-sheet { padding:4px 0 !important; border-radius:18px !important; overflow:hidden; background:#fff !important; }
+.sc-options-sheet .sc-option { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:12px !important; width:100% !important; min-height:46px !important; height:auto !important; padding:0 18px !important; margin:0 !important; border:0 !important; border-top:1px solid #efeff3 !important; border-radius:0 !important; background:#fff !important; color:#111 !important; font-size:16px !important; font-weight:500 !important; text-align:left !important; }
+.sc-options-sheet .sc-option:first-child { border-top:0 !important; }
+.sc-options-sheet .sc-option.danger { color:#e8364f !important; }
+.sc-options-sheet .sc-option:disabled { opacity:.5 !important; }
+.sc-options-sheet .sc-switch { flex:0 0 auto; }
+.sc-options-done { display:block !important; width:100% !important; min-height:48px !important; margin-top:8px !important; border:0 !important; border-radius:16px !important; background:#fff !important; color:#111 !important; font-size:16px !important; font-weight:700 !important; }
+.sc-post-float { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(var(--nav-height, 66px) + 14px + env(safe-area-inset-bottom, 0px)); z-index:40; width:min(340px,calc(100vw - 32px)); height:56px; display:flex; align-items:center; gap:12px; padding:0 16px 0 8px; border:0 !important; border-radius:999px; background:#fff !important; color:#111 !important; font-size:17px; font-weight:600; box-shadow:0 6px 24px rgba(0,0,0,.18); cursor:pointer; }
+.sc-post-float > span:nth-child(2) { flex:1; text-align:left; }
+.sc-post-float-icon { width:42px; height:42px; flex:0 0 42px; border-radius:50%; background:#ffe4ea; color:#ff3b5c; display:grid; place-items:center; }
+.sc-tabs { margin-bottom:0; }
+
+.rec-page { max-width:560px; margin:0 auto; min-height:100dvh; padding:calc(env(safe-area-inset-top, 0px) + 8px) 0 calc(var(--nav-height, 66px) + 20px); background:#f5f6f8; color:#111; }
+.rec-top { display:flex; align-items:center; justify-content:space-between; padding:8px 16px 16px; }
+.rec-top h1 { margin:0; font-size:20px; font-weight:600; color:#111; text-align:center; flex:1; }
+.rec-back, .rec-spacer { width:40px; height:40px; flex:0 0 40px; }
+.rec-back { border:0 !important; border-radius:50%; background:transparent !important; color:#111 !important; display:grid; place-items:center; padding:0; cursor:pointer; }
+.rec-list { list-style:none; margin:0 16px; padding:0; background:#fff; border-radius:18px; overflow:hidden; }
+.rec-row { display:flex; align-items:center; gap:12px; min-height:72px; padding:10px 14px; border-top:1px solid #efeff3; }
+.rec-row:first-child { border-top:0; }
+.rec-person { flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0 !important; background:transparent !important; color:#111 !important; padding:0; text-align:left; cursor:pointer; }
+.rec-name { font-size:16px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#111; }
+.rec-follow { flex:0 0 auto; min-width:84px; height:38px; padding:0 16px; border:0 !important; border-radius:999px !important; background:#fffc00 !important; color:#111 !important; font-size:15px; font-weight:600; cursor:pointer; }
+.rec-follow.added { background:#efefef !important; }
+.rec-follow:disabled { opacity:.6; }
+.rec-empty { text-align:center; color:#6b6b74; padding:24px 16px; }
+.sc-profile .sc-add:not(.added) { background:#fffc00 !important; color:#111 !important; border:0 !important; }
+.sc-profile .sc-add.added { background:rgba(255,255,255,.22) !important; color:#fff !important; border:0 !important; }
