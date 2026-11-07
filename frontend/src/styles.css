@@ -3439,3 +3439,17 @@ html, body, #root { min-height:100%; }
   .sc-profile .sc-name { font-size:20px !important; }
   .sc-profile .sc-tabs button { flex-basis:25%; font-size:12px !important; padding:0 5px !important; }
 }
+
+
+/* Country belongs to the profile identity, not the follower/statistics strip. */
+.sc-profile .sc-profile-country {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin:5px 0 0;
+  color:rgba(255,255,255,.82);
+  font-size:12px;
+  line-height:1.3;
+  font-weight:500;
+}
+.sc-profile .sc-profile-country svg { flex:0 0 auto; opacity:.9; }
