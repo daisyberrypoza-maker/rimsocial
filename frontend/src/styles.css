@@ -4904,3 +4904,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sc-tabs { grid-template-columns:1fr 1fr 1fr !important; }
 .sc-tag-row { display:flex; gap:8px; overflow-x:auto; padding:12px 12px 4px; scrollbar-width:none; }
 .sc-tag-row::-webkit-scrollbar { display:none; }
+
+/* Location and Contact chips sit on the dark header, not on a white strip */
+.sc-profile .sc-chips { background:transparent !important; }
