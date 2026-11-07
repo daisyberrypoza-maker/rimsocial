@@ -25,7 +25,6 @@ export default function Explore() {
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState('all');
   const [results, setResults] = useState(null);
-  const [searching, setSearching] = useState(false);
   const [followBusy, setFollowBusy] = useState({});
   const [recommendations, setRecommendations] = useState({ suggested: [], followBack: [] });
   const sentinel = useRef(null);
