@@ -4867,3 +4867,23 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-root .sv-reply input { background:transparent !important; color:#fff !important; border:0 !important; box-shadow:none !important; }
 .sv-root .sv-reply input::placeholder { color:rgba(255,255,255,.9) !important; }
 .sv-root .sv-send { background:rgba(40,40,40,.92) !important; color:#fff !important; }
+
+/* Profile, matched to the reference: dark blurred header, white body, large round avatar, chips, text tabs, 3-column grid. */
+.sc-profile { background:#fff !important; color:#111 !important; }
+.sc-profile .sc-hero { background:#111; color:#fff; padding-bottom:0; }
+.sc-profile .sc-hero-top { padding:10px 14px; }
+.sc-profile .sc-circle { width:44px !important; height:44px !important; background:rgba(60,60,60,.75) !important; color:#fff !important; }
+.sc-profile .sc-hero-id { display:flex; align-items:center; gap:14px; padding:18px 16px 6px; }
+.sc-profile .sc-hero-avatar .avatar { width:76px !important; height:76px !important; }
+.sc-profile .sc-name { font-size:22px; font-weight:700; color:#fff; margin:0; display:flex; align-items:center; gap:6px; }
+.sc-profile .sc-verified { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:#ffd60a; color:#111; }
+.sc-profile .sc-handle { font-size:14px; color:#d6d6d6; margin:2px 0 0; }
+.sc-profile .sc-handle-link { background:none; border:0; padding:0; color:inherit; font:inherit; }
+.sc-profile .sc-add-row { padding:14px 16px 4px; }
+.sc-chips { display:flex; flex-wrap:wrap; gap:8px; padding:14px 16px 0; background:#fff; }
+.sc-chip { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; border:1px solid #d7d7dc; border-radius:999px; background:#fff; color:#111; font-size:14px; font-weight:500; }
+.sc-profile .sc-tabs { background:#fff; border-bottom:1px solid #ececef; margin-top:14px; }
+.sc-profile .sc-tabs button { color:#8a8a92 !important; font-size:16px; font-weight:600; padding:14px 0; }
+.sc-profile .sc-tabs button.on { color:#111 !important; }
+.sc-profile .sc-tabs button svg { display:none; }
+.sc-profile .sc-grid { gap:2px !important; padding:2px 0 0 !important; }
