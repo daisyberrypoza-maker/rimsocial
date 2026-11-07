@@ -107,6 +107,8 @@ export default function PostCard({ post, active }) {
   const [paused, setPaused] = useState(false);
   const [flash, setFlash] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [following, setFollowing] = useState(Boolean(post.author?.isFollowing));
+  const [followBusy, setFollowBusy] = useState(false);
   const seekingRef = useRef(false);
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
@@ -160,6 +162,16 @@ export default function PostCard({ post, active }) {
       video.currentTime = ratio * video.duration;
       setProgress(ratio);
     }
+  }
+
+  async function followAuthor() {
+    if (followBusy || !post.author?.id) return;
+    setFollowBusy(true);
+    try {
+      const r = await api(`/v1/users/${post.author.id}/follow`, { method: 'POST' });
+      setFollowing(Boolean(r.isFollowing ?? true));
+    } catch (err) { toast(err.message); }
+    finally { setFollowBusy(false); }
   }
 
   function flashIcon(kind) {
@@ -320,12 +332,13 @@ export default function PostCard({ post, active }) {
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><span className="post-more-glyph">•••</span></button>
     </aside>
     <div className="info">
+      {post.topic && <div className="post-topic"><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
       <div className="author-row">
         <button className="author-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={32} ring /></button>
         <button className="author author-link" onClick={() => navigate(`/u/${username}`)}>@{username}</button>
-        {!post.isSponsored && post.author?.isFollowing === false && post.author?.id !== viewerId && <button className="view-profile" onClick={() => navigate(`/u/${username}`)}>View profile</button>}
+        {post.author?.isCreator && <Icon name="badge-check" size={15} />}
+        {!post.isSponsored && !following && post.author?.id !== viewerId && <button className="view-profile" onClick={followAuthor} disabled={followBusy}>Follow</button>}
       </div>
-      {post.topic && <div className="post-topic">{post.topic}</div>}
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored ? <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
