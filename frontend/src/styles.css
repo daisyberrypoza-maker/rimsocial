@@ -4907,3 +4907,38 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Location and Contact chips sit on the dark header, not on a white strip */
 .sc-profile .sc-chips { background:transparent !important; }
+
+/* ===== Profile page (rebuilt to the reference) ===== */
+.pf-hero { position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; min-height:440px; background:#2b2b2b; color:#fff; }
+.pf-cover { position:absolute; inset:0; z-index:-2; background-size:cover; background-position:center; background-color:#2b2b2b; }
+.pf-shade { position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,.12) 40%,rgba(0,0,0,.72) 100%); }
+.pf-top { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; }
+.pf-top-right { display:flex; gap:10px; }
+.pf-round { width:50px; height:50px; border-radius:50%; border:0; background:rgba(40,40,40,.55); color:#fff; display:grid; place-items:center; cursor:pointer; font-size:20px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.pf-round.on { background:#fff200; color:#111; }
+.pf-id { margin-top:auto; display:flex; align-items:center; gap:16px; padding:24px 16px 18px; }
+.pf-avatar { position:relative; flex:0 0 92px; }
+.pf-avatar-btn { display:block; padding:0; border:0; background:none; border-radius:50%; cursor:pointer; }
+.pf-edit { position:absolute; right:-2px; bottom:-2px; width:30px; height:30px; border-radius:50%; border:0; background:#fff; color:#111; display:grid; place-items:center; cursor:pointer; }
+.pf-name-block { min-width:0; }
+.pf-name { margin:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:26px; font-weight:700; line-height:1.2; text-shadow:0 1px 8px rgba(0,0,0,.35); }
+.pf-star { width:22px; height:22px; border-radius:50%; background:#ffd60a; color:#111; display:inline-grid; place-items:center; font-size:12px; line-height:1; }
+.pf-chev { background:none; border:0; color:#fff; padding:0; cursor:pointer; display:inline-grid; place-items:center; }
+.pf-handle { margin:4px 0 0; font-size:16px; opacity:.92; }
+.pf-sub { margin:2px 0 0; font-size:16px; opacity:.95; }
+.pf-link { background:none; border:0; color:inherit; font:inherit; padding:0; cursor:pointer; }
+.pf-actions { display:flex; gap:10px; padding:0 16px 20px; }
+.pf-btn { flex:1; height:56px; border-radius:999px; border:0; background:rgba(255,255,255,.22); color:#fff; font-size:18px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.pf-btn-on { background:#fff; color:#111; }
+.pf-add { background:#fff200; color:#111; }
+.pf-add.added { background:rgba(255,255,255,.22); color:#fff; }
+.pf-actions .pf-round { width:56px; height:56px; }
+.pf-body { background:#fff; color:#111; padding:14px 16px 4px; }
+.pf-bio { margin:0 0 12px; font-size:16px; line-height:1.45; color:#111; white-space:pre-wrap; }
+.pf-chips { display:flex; flex-wrap:wrap; gap:8px; padding-bottom:6px; }
+.pf-chip { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border:1px solid #d7d7dc; border-radius:999px; background:#fff; color:#111; font-size:14px; font-weight:500; cursor:pointer; }
+.pf-tabs { display:grid; grid-template-columns:repeat(3,1fr); background:#fff; border-bottom:1px solid #ececf0; }
+.pf-tabs button { position:relative; height:52px; border:0; background:transparent; color:#8a8a94; font-size:18px; font-weight:600; cursor:pointer; }
+.pf-tabs button.on { color:#111; font-weight:700; }
+.pf-tabs button.on::after { content:''; position:absolute; left:10%; right:10%; bottom:0; height:3px; border-radius:3px; background:#111; }
+.pf-profile-page .sc-grid { gap:2px; }
