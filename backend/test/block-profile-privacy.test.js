@@ -9,6 +9,6 @@ test('direct profile and profile-post routes reject either direction of a block'
   assert.match(source, /async function assertNotBlocked\(viewerId, targetId\)/);
   assert.match(source, /blockerId: viewerId, blockedUserId: targetId/);
   assert.match(source, /blockerId: targetId, blockedUserId: viewerId/);
-  assert.equal((source.match(/await assertNotBlocked\(req\.user\.id, user\.id\)/g) || []).length, 2);
+  assert.equal((source.match(/await assertNotBlocked\(req\.user\.id, user\.id\)/g) || []).length, 3);
   assert.match(source, /if \(relation\) throw httpError\(404, 'User not found'\)/);
 });
