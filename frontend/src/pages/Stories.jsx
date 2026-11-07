@@ -1,5 +1,5 @@
 import { Component, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 import Icon from '../components/Icon.jsx';
@@ -39,6 +39,8 @@ class ViewerBoundary extends Component {
 
 export default function Stories() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const storyUserId = searchParams.get('story');
   const me = useAppStore((s) => s.user);
   const [rail, setRail] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +60,25 @@ export default function Stories() {
 
   useEffect(() => { loadRail(); }, [loadRail]);
 
-  // Every story opens in the shared StoryViewer, so photos, videos and controls behave the same everywhere.
+  // Keep the open story in the URL so returning from a creator profile restores the viewer.
   function openStories(group) {
-    const i = rail.findIndex((item) => item.user?.id === group.user?.id);
-    if (i >= 0) setOpenAt(i);
+    if (group.user?.id != null) navigate(`/stories?story=${encodeURIComponent(group.user.id)}`);
   }
+
+  function closeStories() {
+    setOpenAt(null);
+    navigate('/stories', { replace: true });
+    loadRail();
+  }
+
+  useEffect(() => {
+    if (!storyUserId) {
+      setOpenAt(null);
+      return;
+    }
+    const index = rail.findIndex((group) => String(group.user?.id) === String(storyUserId));
+    if (index >= 0) setOpenAt(index);
+  }, [storyUserId, rail]);
 
   const myGroup = rail.find((group) => group.user?.id === me?.id);
   const others = rail.filter((group) => group.user?.id !== me?.id);
@@ -142,11 +158,11 @@ export default function Stories() {
       )}
 
       {openAt !== null && (
-        <ViewerBoundary onClose={() => { setOpenAt(null); loadRail(); }}>
+        <ViewerBoundary onClose={closeStories}>
           <StoryViewer
             groups={rail.filter((group) => group.user).map((group) => ({ user: group.user }))}
             startIndex={openAt}
-            onClose={() => { setOpenAt(null); loadRail(); }}
+            onClose={closeStories}
           />
         </ViewerBoundary>
       )}
