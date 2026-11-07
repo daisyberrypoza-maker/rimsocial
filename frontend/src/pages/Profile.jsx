@@ -20,8 +20,11 @@ export default function Profile() {
   const setFeed = useAppStore((s) => s.setFeed);
   const profile = useAppStore((s) => s.profiles[username]?.user);
   const feedKey = `u:${username}`;
-  const posts = useAppStore((s) => s.feeds[feedKey]?.items || []);
+  const feedPosts = useAppStore((s) => s.feeds[feedKey]?.items || []);
   const nextCursor = useAppStore((s) => s.feeds[feedKey]?.nextCursor ?? null);
+
+  // Only posts written by the profile's owner are shown on this profile
+  const posts = profile ? feedPosts.filter((p) => (p.author?.id ?? profile.id) === profile.id) : [];
 
   const [tab, setTab] = useState('stories');
   const [reposts, setReposts] = useState([]);
@@ -63,11 +66,16 @@ export default function Profile() {
     api(`/v1/users/${username}/reposts`).then((data) => setReposts(data.items || [])).catch(() => setReposts([])).finally(() => setRepostsLoading(false));
   }, [tab, profile, username]);
 
+  // Switching profiles must never leave the previous person's stories or reposts on screen
+  useEffect(() => { setStories([]); setReposts([]); setViewing(false); }, [username]);
+
   useEffect(() => {
-    if (tab !== 'stories' || !profile) return;
+    if (tab !== 'stories' || !profile) return undefined;
+    let current = true;
     api(`/v1/stories/users/${profile.id}`)
-      .then((d) => setStories(d.items))
-      .catch(() => setStories([]));
+      .then((d) => { if (current) setStories((d.items || []).filter((s) => (s.author?.id ?? profile.id) === profile.id)); })
+      .catch(() => { if (current) setStories([]); });
+    return () => { current = false; };
   }, [tab, profile]);
 
   async function openPeople(type) {
