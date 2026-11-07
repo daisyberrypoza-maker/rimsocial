@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
+import { mediaUrl, videoStreamUrl } from '../lib/config.js';
+import { prefetchMedia } from '../lib/prefetch.js';
 import Avatar from './Avatar.jsx';
 import StoryViewer from './StoryViewer.jsx';
 
@@ -24,6 +26,26 @@ export default function StoryRail() {
 
   const now = Date.now();
   const groups = (rail.items || []).filter((g) => new Date(g.expiresAt).getTime() > now);
+
+  // Behind the scenes: avatars for everyone on the rail, and the first story of the first few creators
+  const groupKey = groups.map((g) => g.user.id).join(',');
+  useEffect(() => {
+    if (!groups.length) return undefined;
+    let alive = true;
+    prefetchMedia(groups.map((g) => ({ url: mediaUrl(g.user.avatarUrl), kind: 'image' })).filter((i) => i.url));
+    const soon = groups.filter((g) => g.unseen).slice(0, 3);
+    soon.forEach((g) => {
+      api(`/v1/stories/users/${g.user.id}`).then((d) => {
+        if (!alive) return;
+        useAppStore.getState().setStoryCache(g.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
+        const first = d.items && d.items[0];
+        if (first) prefetchMedia([{ url: first.kind === 'video' ? videoStreamUrl(mediaUrl(first.mediaUrl)) : mediaUrl(first.mediaUrl), kind: first.kind === 'video' ? 'video' : 'image' }]);
+      }).catch(() => {});
+    });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupKey]);
+
   if (!groups.length) return null;
 
   return (

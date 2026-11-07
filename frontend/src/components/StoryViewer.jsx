@@ -7,6 +7,7 @@ import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import ActionSheet from './ActionSheet.jsx';
+import { prefetchMedia } from '../lib/prefetch.js';
 
 const PHOTO_MS = 5000;
 const TICK_MS = 100;
@@ -66,16 +67,37 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   // Pauses the story while the viewer is typing or a sheet is open
   const frozen = paused || typing || shareOpen || reportOpen || menuOpen;
 
-  // Load this creator's active stories and the viewer's subscription state
+  // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
     let alive = true;
-    setStories(null);
+    const saved = useAppStore.getState().storyCache?.[group.user.id];
     setSi(0);
+    if (saved) {
+      setStories(saved.items);
+      setSubscribed(Boolean(saved.isSubscribed));
+    } else {
+      setStories(null);
+    }
     api(`/v1/stories/users/${group.user.id}`)
-      .then((d) => { if (alive) { setStories(d.items); setSubscribed(Boolean(d.isSubscribed)); } })
-      .catch(() => alive && setStories([]));
+      .then((d) => {
+        if (!alive) return;
+        setStories(d.items);
+        setSubscribed(Boolean(d.isSubscribed));
+        useAppStore.getState().setStoryCache(group.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
+      })
+      .catch(() => { if (alive && !saved) setStories([]); });
     return () => { alive = false; };
   }, [group.user.id]);
+
+  // Behind the scenes: warm the next story (and the one after) while this one plays
+  useEffect(() => {
+    if (!stories) return;
+    const upcoming = stories.slice(si + 1, si + 3).map((item) => ({
+      url: item.kind === 'video' ? videoStreamUrl(mediaUrl(item.mediaUrl)) : mediaUrl(item.mediaUrl),
+      kind: item.kind === 'video' ? 'video' : 'image',
+    })).filter((item) => item.url);
+    prefetchMedia(upcoming);
+  }, [stories, si]);
 
   const next = useCallback(() => {
     if (!stories) return;

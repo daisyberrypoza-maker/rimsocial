@@ -8,7 +8,7 @@ export default function Avatar({ user, size = 40, ring = false }) {
   const [failedSrc, setFailedSrc] = useState(null);
   const showImage = Boolean(src) && failedSrc !== src;
   const inner = showImage
-    ? <img src={src} alt="" loading="lazy" onError={() => setFailedSrc(src)} />
+    ? <img src={src} alt="" decoding="async" onError={() => setFailedSrc(src)} />
     : <span className="avatar-initial" style={{ fontSize: size * 0.4 }}>{label}</span>;
 
   return (
