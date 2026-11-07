@@ -3832,6 +3832,7 @@ html, body, #root { min-height:100%; }
 
 /* ===== Reels header and bottom bar, matched to the Reels reference ===== */
 .reels-top { display:grid !important; grid-template-columns:50px 1fr 50px; align-items:center; padding:calc(env(safe-area-inset-top,0px) + 16px) 12px 10px !important; transition:transform .25s ease, opacity .25s ease; background:transparent !important; border:0 !important; }
+.reels-top.is-hidden { opacity:0 !important; transform:translateY(-100%); pointer-events:none; }
 .reels-top .reels-icon { width:46px !important; height:46px !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; padding:0 !important; display:grid; place-items:center; cursor:pointer; filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)); }
 .reels-top .reels-tabs { display:flex; justify-content:center; align-items:center; gap:18px; }
 .reels-top .reels-tabs a { color:rgba(255,255,255,.7) !important; font-size:21px; font-weight:600; text-decoration:none; text-shadow:0 1px 4px rgba(0,0,0,.6); }
