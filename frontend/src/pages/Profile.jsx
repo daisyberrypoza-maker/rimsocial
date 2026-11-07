@@ -414,7 +414,6 @@ export default function Profile() {
         </section>
       </div>, document.body)}
 
-      {profile.isMe && <button className="sc-post-float" onClick={() => navigate('/upload')}><span className="sc-post-float-icon"><Icon name="play" size={18} /></span><span>Post to Rimlight</span><Icon name="chevron-right" size={20} /></button>}
       <nav className="sc-tabs" role="tablist" aria-label="Profile content">
         <button role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}><Icon name="circle-play" size={18} />Stories</button>
         <button role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}><Icon name="clapperboard" size={18} />Rimlight</button>
@@ -424,7 +423,6 @@ export default function Profile() {
 
       {tab === 'posts' ? (
         <>
-          {posts.length > 0 && <div className="sc-watch"><button className="sc-pill" onClick={() => navigate(`/u/${username}/watch`)}><Icon name="play" size={16} />Watch like For You</button></div>}
           <div className="sc-grid">
             {posts.map((p) => (
               <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
