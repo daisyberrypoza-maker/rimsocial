@@ -249,7 +249,13 @@ export default function Profile() {
           </div>
           <div className="sc-hero-text">
             <h2 className="sc-name">{profile.displayName || profile.username}</h2>
-            <p className="sc-handle">@{profile.username}</p>{profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}{!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
+            <p className="sc-handle">@{profile.username}</p>
+            <div className="sc-inline-stats" aria-label="Followers and following">
+              <button type="button" onClick={() => openPeople('followers')}><strong>{formatCount(profile.followerCount || 0)}</strong> followers</button>
+              <button type="button" onClick={() => openPeople('following')}><strong>{formatCount(profile.followingCount || 0)}</strong> following</button>
+            </div>
+            {profile.isCreator && <span className="sc-creator-status is-creator"><Icon name="badge-check" size={13} />Creator</span>}
+            {!profile.isMe && profile.isCreator && profile.country && <p className="sc-profile-country"><Icon name="map-pin" size={14} />{profile.country}</p>}
           </div>
         </div>
         {profile.isMe ? (
@@ -272,7 +278,7 @@ export default function Profile() {
           <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
         </button>
         <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
-          <strong>{formatCount(profile.postCount ?? posts.length)}</strong><span>Creations</span>
+          <strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span>
         </button>
       </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
