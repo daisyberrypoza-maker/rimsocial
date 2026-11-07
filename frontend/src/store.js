@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { clearMediaCache } from './lib/prefetch.js';
+
+const STORY_CACHE_LIMIT = 60;
 
 // Only the first PERSIST_ITEMS posts of each list are saved on the device.
 // Keeping storage small keeps load times short. Lists longer than that are
@@ -18,13 +21,17 @@ export const useAppStore = create(
       feeds: {},        // { discover, following, explore, 'u:<username>': { items, nextCursor, activeIndex, updatedAt } }
       profiles: {},     // { [username | 'me']: { user, updatedAt } }
       storyRail: EMPTY_STORIES,
+      storyCache: {},   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
       uploadDraft: { caption: '' },
 
       setSession: (token, user) => set({ token, user }),
-      logout: () => set({
-        token: null, user: null, gifts: [], coinBalance: 0, feeds: {}, profiles: {},
-        storyRail: EMPTY_STORIES, lastPath: '/',
-      }),
+      logout: () => {
+        clearMediaCache();
+        set({
+          token: null, user: null, gifts: [], coinBalance: 0, feeds: {}, profiles: {},
+          storyRail: EMPTY_STORIES, storyCache: {}, lastPath: '/',
+        });
+      },
       setGifts: (gifts) => set({ gifts }),
       setCoins: (coinBalance) => set({ coinBalance }),
       setLastPath: (lastPath) => set({ lastPath }),
@@ -33,11 +40,17 @@ export const useAppStore = create(
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
       setStoryRail: (storyRail) => set({ storyRail }),
+      setStoryCache: (userId, entry) => set((s) => {
+        const next = { ...s.storyCache, [userId]: { ...entry, updatedAt: Date.now() } };
+        const keys = Object.keys(next);
+        if (keys.length > STORY_CACHE_LIMIT) keys.slice(0, keys.length - STORY_CACHE_LIMIT).forEach((k) => { delete next[k]; });
+        return { storyCache: next };
+      }),
       setUploadDraft: (uploadDraft) => set((s) => ({ uploadDraft: typeof uploadDraft === 'function' ? uploadDraft(s.uploadDraft) : uploadDraft })),
     }),
     {
       name: 'clipverse-app',
-      version: 2,
+      version: 3,
       partialize: (s) => ({
         token: s.token,
         user: s.user,
@@ -46,6 +59,7 @@ export const useAppStore = create(
         lastPath: s.lastPath,
         profiles: s.profiles,
         storyRail: s.storyRail,
+        storyCache: s.storyCache,
         uploadDraft: s.uploadDraft,
         feeds: Object.fromEntries(
           Object.entries(s.feeds).map(([key, f]) => {
