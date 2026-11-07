@@ -372,7 +372,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         <button type="button" className="sv-who" aria-label={`Open ${group.user.username}'s profile`} onClick={() => navigate(`/u/${group.user.username}`)}>
           <Avatar user={group.user} size={36} />
           <span className="sv-meta">
-            <span className="sv-name">{group.user.username}</span>
+            <span className="sv-name">{group.user.displayName || group.user.username}</span>
             <span className="sv-time">{timeAgo(current?.createdAt)}</span>
           </span>
         </button>
