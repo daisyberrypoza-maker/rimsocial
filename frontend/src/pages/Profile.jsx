@@ -39,6 +39,7 @@ export default function Profile() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [storyNotifications, setStoryNotifications] = useState(false);
   const [recommended, setRecommended] = useState(true);
@@ -232,7 +233,9 @@ export default function Profile() {
         </div>
         <div className="sc-hero-id">
           <div className="sc-hero-avatar">
-            <Avatar user={profile} size={96} ring />
+            <button type="button" className="sc-avatar-preview" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
+              <Avatar user={profile} size={96} ring />
+            </button>
             {profile.isMe && <button className="sc-avatar-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="sc-hero-text">
@@ -291,6 +294,12 @@ export default function Profile() {
           <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
         </aside>
+      </div>}
+
+      {imageViewerOpen && <div className="profile-image-viewer" role="dialog" aria-modal="true" aria-label={`@${profile.username} profile picture`} onClick={() => setImageViewerOpen(false)}>
+        <button type="button" className="profile-image-viewer-close" aria-label="Close profile picture" onClick={() => setImageViewerOpen(false)}><Icon name="x" size={24} /></button>
+        {profile.avatarUrl ? <img src={mediaUrl(profile.avatarUrl)} alt={`@${profile.username} profile picture`} onClick={(e) => e.stopPropagation()} /> : <div className="profile-image-viewer-empty" onClick={(e) => e.stopPropagation()}><Avatar user={profile} size={160} ring /><p>No profile picture yet</p></div>}
+        <span className="profile-image-viewer-name">@{profile.username}</span>
       </div>}
 
       {imageChoiceOpen && profile.isMe && <div className="sheet-backdrop image-choice-backdrop" onClick={() => setImageChoiceOpen(false)}>
