@@ -435,7 +435,7 @@ export default function Profile() {
               </div>
             ))}
           </div>
-          {!posts.length && <p className="sc-empty-note">No posts yet.</p>}
+          {!posts.length && <div className="sc-empty-grid" role="status"><strong>No posts yet</strong></div>}
           {nextCursor && (
             <div className="sc-more">
               <button className="sc-pill" onClick={loadMore} disabled={loadingMore}>
@@ -464,11 +464,11 @@ export default function Profile() {
       ) : tab === 'reposts' ? (
         <>
           {repostsLoading ? <p className="sc-empty-note">Loading reposts…</p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
-          {!repostsLoading && !reposts.length && <p className="sc-empty-note">No reposts yet.</p>}
+          {!repostsLoading && !reposts.length && <div className="sc-empty-grid" role="status"><strong>No reposts yet</strong></div>}
         </>
       ) : (
         <section className="sc-hashtag-panel" aria-label="Profile hashtags">
-          {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <p className="sc-empty-note">Hashtags from your Rimlight captions will appear here.</p>}
+          {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <div className="sc-empty-grid" role="status"><strong>No hashtags yet</strong></div>}
         </section>
       )}
     </div>
