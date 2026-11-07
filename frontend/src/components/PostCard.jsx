@@ -92,6 +92,7 @@ export default function PostCard({ post, active }) {
   const [repostBusy, setRepostBusy] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(Boolean(active));
   const [videoMuted, setVideoMuted] = useState(true);
+  const [authorFollowState, setAuthorFollowState] = useState(null);
   const username = post.author?.username || 'unknown';
   const src = mediaUrl(post.mediaUrl);
   const poster = mediaUrl(post.thumbUrl) || undefined;
@@ -103,6 +104,19 @@ export default function PostCard({ post, active }) {
     }).catch(() => {});
     return () => { alive = false; };
   }, [post.id]);
+
+  useEffect(() => {
+    if (typeof post.author?.isFollowing === 'boolean') {
+      setAuthorFollowState(post.author.isFollowing);
+      return undefined;
+    }
+    let alive = true;
+    if (!username || username === 'unknown') return undefined;
+    api(`/v1/users/${encodeURIComponent(username)}`)
+      .then((profile) => { if (alive) setAuthorFollowState(Boolean(profile.isFollowing)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [username, post.author?.isFollowing]);
 
   useEffect(() => {
     if (active && !countedViews.has(post.id)) {
@@ -179,7 +193,7 @@ export default function PostCard({ post, active }) {
     finally { setRepostBusy(false); }
   }
 
-  const isFollowingAuthor = Boolean(post.author?.isFollowing ?? post.author?.following ?? post.isFollowingAuthor ?? post.isFollowing);
+  const isFollowingAuthor = Boolean(post.author?.isMe || authorFollowState || post.author?.following || post.isFollowingAuthor || post.isFollowing);
 
   return <article className="post" data-id={post.id}>
     {post.kind === 'video' ? <>
