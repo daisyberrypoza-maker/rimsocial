@@ -270,25 +270,12 @@ export default function Profile() {
         <span><strong>{formatCount(profile.postCount || 0)}</strong> Posts</span>
         {profile.country && <span className="sc-country">{profile.country}</span>}
       </section>
-      {profile.isMe && (
-        <section className="sc-post-to" aria-label="Post to">
-          <div className="sc-post-head"><h3>Post to…</h3><button className="sc-pill" onClick={() => navigate('/upload?story=1')}><Icon name="plus" size={16} />New Story</button></div>
-          <button className="sc-row" onClick={() => navigate('/upload')}>
-            <span className="sc-row-icon sc-row-red"><Icon name="play" size={20} /></span>
-            <span className="sc-row-copy"><strong>Rimlight</strong><small>Reach people who follow you and beyond</small></span>
-          </button>
-          <button className="sc-row" onClick={() => navigate('/upload?story=1')}>
-            <span className="sc-row-icon"><Icon name="camera" size={22} /></span>
-            <span className="sc-row-copy"><strong>My Story</strong><small>Just for friends · 24 hours</small></span>
-            <span className="sc-row-more" aria-hidden="true">•••</span>
-          </button>
-        </section>
-      )}
       {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
           <div className="drawer-head"><h3>Profile & settings</h3><button className="icon-button" onClick={() => setDrawerOpen(false)} aria-label="Close settings"><Icon name="x" size={21} /></button></div>
+          <div className="profile-drawer-content">
           <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}><Icon name="plus" size={21} />Create post or story</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/friends'); }}><Icon name="users" size={21} />Find friends & creators</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}><Icon name="wallet" size={21} />Creator Studio · earnings & cashout</button>
