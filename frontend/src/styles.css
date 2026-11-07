@@ -4209,3 +4209,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .share-actions { display:flex; gap:22px; padding:14px 16px 4px; border-top:1px solid #1c1c1e; overflow-x:auto; }
 .share-actions button { display:flex !important; flex-direction:column; align-items:center; gap:8px; background:transparent !important; border:0 !important; border-radius:0 !important; padding:0 !important; color:#fff !important; font-size:12px; font-weight:600; box-shadow:none !important; min-width:72px; }
 .share-circle { width:52px; height:52px; border-radius:50%; background:#1c1c1e; display:grid; place-items:center; }
+
+/* Reels: round avatar with no dark box behind it; bolder icons in the rail and header. */
+.post .rail-avatar { background:transparent !important; border-radius:50% !important; padding:0 !important; box-shadow:none !important; }
+.post .rail-avatar .avatar, .post .rail-avatar img, .post .rail-avatar .avatar img { border-radius:50% !important; overflow:hidden; }
+.post .rail-btn svg { stroke-width:2.6 !important; }
+.reels-top svg { stroke-width:2.4 !important; }
