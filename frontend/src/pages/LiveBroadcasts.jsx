@@ -13,6 +13,7 @@ export default function LiveBroadcasts() {
   const [chatText, setChatText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [goLiveOpen, setGoLiveOpen] = useState(false);
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const chatTailRef = useRef(null);
@@ -176,10 +177,11 @@ export default function LiveBroadcasts() {
       {selected && <div className="live-toolbar"><h1>LIVE</h1><span><span className="live-dot" />Live broadcasts</span></div>}
       {error && <p className="live-error" role="alert">{error}</p>}
       {!selected ? <>
-        <form className="live-start-form" onSubmit={startBroadcast}>
+        {goLiveOpen && <form className="live-start-form" onSubmit={startBroadcast}>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="What are you going LIVE about?" aria-label="LIVE title" />
           <button className="live-primary" type="submit" disabled={busy}>{busy ? 'Connecting…' : 'Go LIVE'}</button>
-        </form>
+        </form>}
+        {!goLiveOpen && <button type="button" className="live-fab" onClick={() => setGoLiveOpen(true)}>Go LIVE</button>}
         <section className="live-list" aria-label="Current live broadcasts">
           {items.length ? items.map((item) => <article className="live-card" key={item.id}>
             <div className="live-tile-photo" style={item.host?.avatarUrl ? { backgroundImage: `url(${mediaUrl(item.host.avatarUrl)})` } : undefined} aria-hidden="true" />
