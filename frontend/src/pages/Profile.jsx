@@ -289,6 +289,7 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase" size={21} />Business hub</button>
           <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
+          </div>
         </aside>
       </div>}
 
