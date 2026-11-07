@@ -35,6 +35,7 @@ function playVideo(video) {
 }
 import Icon from './Icon.jsx';
 import ShareOptions from './ShareOptions.jsx';
+import ShareSheet from './ShareSheet.jsx';
 
 const countedViews = new Set();
 
@@ -148,6 +149,7 @@ export default function PostCard({ post, active }) {
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
   const [showGifts, setShowGifts] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showSend, setShowSend] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [reportReason, setReportReason] = useState('Spam or misleading');
@@ -371,7 +373,7 @@ export default function PostCard({ post, active }) {
       <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={() => setShowRepostSheet(true)} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
         <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
       </button>
-      <button className="rail-btn" onClick={copyPostLink} aria-label="Share post"><Icon name="send" /></button>
+      <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
       {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
     </aside>
@@ -416,5 +418,6 @@ export default function PostCard({ post, active }) {
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
+    {showSend && <ShareSheet url={postShareUrl(post.id)} caption={post.caption} onClose={() => setShowSend(false)} onCopy={() => { copyPostLink(); setShowSend(false); }} onMore={() => { setShowSend(false); sharePost(); }} />}
   </article>;
 }
