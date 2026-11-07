@@ -68,73 +68,74 @@ export default function Stories() {
   const others = rail.filter((group) => group.user?.id !== me?.id);
 
   return (
-    <main className="page sc-stories">
-      <header className="sc-top">
-        <button className="sc-round sc-avatar-btn" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
-          <Avatar user={me || {}} />
-        </button>
-        <span className="sc-top-spacer" />
-        <button className="sc-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}>
-          <Icon name="search" size={21} />
-        </button>
-        <button className="sc-round" aria-label="Notifications" onClick={() => navigate('/activity')}>
-          <Icon name="bell" size={21} />
-        </button>
+    <main className="page st-page">
+      <header className="st-top">
+        <div className="st-left">
+          <button className="st-round st-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
+            <Avatar user={me || {}} />
+          </button>
+          <button className="st-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={21} /></button>
+        </div>
+        <h1 className="st-title">Stories</h1>
+        <div className="st-right">
+          <button className="st-round" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={21} /></button>
+          <button className="st-round" aria-label="Find friends" onClick={() => navigate('/friends')}><Icon name="user-plus" size={21} /></button>
+          <button className="st-round" aria-label="More" onClick={() => navigate('/activity')}><Icon name="more-vertical" size={21} /></button>
+        </div>
       </header>
 
-      <section className="sc-block" aria-label="My stories">
-        <h2 className="sc-h2">My Stories</h2>
-        <div className="sc-ring-row">
-          <button className="sc-story-item" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
-            <span className={`sc-story-ring ${myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
-              <span className="sc-avatar sc-own-avatar">
+      <section className="st-section" aria-label="Friends">
+        <h2 className="st-h2">Friends <Icon name="chevron-right" size={18} /></h2>
+        <div className="st-row">
+          <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
+            <span className={`st-ring ${myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
+              <span className="st-face">
                 {myGroup ? <Avatar user={me || {}} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
               </span>
-              <span className="sc-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={14} /></span>
+              <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
-            <span className="sc-story-name">My Story</span>
+            <span className="st-name">My Story</span>
           </button>
-          <span className="sc-divider" aria-hidden="true" />
-          {loading && <p className="sc-state">Loading stories…</p>}
+          {loading && <p className="st-state">Loading stories…</p>}
           {!loading && others.map((group) => (
-            <button className="sc-story-item" key={group.user.id} onClick={() => openStories(group)}>
-              <span className={`sc-story-ring ${group.unseen ? 'unseen' : 'seen'}`}><Avatar user={group.user} /></span>
-              <span className="sc-story-name">{nameOf(group.user)}</span>
-              {group.user.username && <span className="sc-story-sub">@{group.user.username}</span>}
+            <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
+              <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><Avatar user={group.user} /></span></span>
+              <span className="st-name">{nameOf(group.user)}</span>
+              {group.user.username && <span className="st-handle">{group.user.username}</span>}
             </button>
           ))}
         </div>
         {!loading && others.length === 0 && !myGroup && (
-          <div className="sc-empty">
+          <div className="st-empty">
             <strong>No stories yet</strong>
             <p>Share a photo or video and your friends can see it for 24 hours.</p>
-            <button className="sc-pill" onClick={() => navigate('/upload?story=1')}>Create a story</button>
+            <button className="st-pill" onClick={() => navigate('/upload?story=1')}>Create a story</button>
           </div>
         )}
       </section>
 
       {others.length > 0 && (
-        <section className="sc-block" aria-label="Discover">
-          <h2 className="sc-h2">Discover <Icon name="chevron-right" size={20} /></h2>
-          <div className="sc-card-row">
+        <section className="st-section" aria-label="Discover">
+          <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
+          <div className="st-cards">
             {others.map((group) => (
-              <button className="sc-card" key={group.user.id} onClick={() => openStories(group)}>
+              <button className="st-card" key={group.user.id} onClick={() => openStories(group)} aria-label={`Open ${nameOf(group.user)}'s stories`}>
                 {group.user.avatarUrl
-                  ? <img className="sc-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
-                  : <span className="sc-card-img sc-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
-                <span className="sc-card-shade" />
-                <span className="sc-card-name">{nameOf(group.user)}</span>
+                  ? <img className="st-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
+                  : <span className="st-card-img st-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
+                <span className="st-card-shade" />
+                <span className="st-card-name">{nameOf(group.user)}{group.user.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
               </button>
             ))}
           </div>
-          <div className="sc-big-grid">
+          <div className="st-big-grid">
             {others.map((group) => (
-              <button className="sc-big" key={`big-${group.user.id}`} onClick={() => openStories(group)}>
+              <button className="st-big" key={`big-${group.user.id}`} onClick={() => openStories(group)} aria-label={`Open ${nameOf(group.user)}'s stories`}>
                 {group.user.avatarUrl
-                  ? <img className="sc-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
-                  : <span className="sc-card-img sc-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
-                <span className="sc-card-shade" />
-                <span className="sc-big-who"><Avatar user={group.user} /><span>{nameOf(group.user)}</span></span>
+                  ? <img className="st-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
+                  : <span className="st-card-img st-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
+                <span className="st-card-shade" />
+                <span className="st-card-name">{nameOf(group.user)}</span>
               </button>
             ))}
           </div>
