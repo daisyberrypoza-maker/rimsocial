@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 
@@ -14,6 +15,13 @@ export default function LiveBroadcasts() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [goLiveOpen, setGoLiveOpen] = useState(false);
+  const [params] = useSearchParams();
+  const searching = params.get('search') === '1';
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const visibleItems = searching && q
+    ? items.filter((item) => [item.title, item.host?.displayName, item.host?.username].some((v) => (v || '').toLowerCase().includes(q)))
+    : items;
   const videoRef = useRef(null);
   const roomRef = useRef(null);
   const chatTailRef = useRef(null);
@@ -182,14 +190,15 @@ export default function LiveBroadcasts() {
           <button className="live-primary" type="submit" disabled={busy}>{busy ? 'Connecting…' : 'Go LIVE'}</button>
         </form>}
         {!goLiveOpen && <button type="button" className="live-fab" onClick={() => setGoLiveOpen(true)}>Go LIVE</button>}
+        {searching && <input className="live-search" type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search who is live" aria-label="Search who is live" />}
         <section className="live-list" aria-label="Current live broadcasts">
-          {items.length ? items.map((item) => <article className="live-card" key={item.id}>
+          {visibleItems.length ? visibleItems.map((item) => <article className="live-card" key={item.id}>
             <div className="live-tile-photo" style={item.host?.avatarUrl ? { backgroundImage: `url(${mediaUrl(item.host.avatarUrl)})` } : undefined} aria-hidden="true" />
             <span className="live-tag"><span className="live-dot" />LIVE</span>
             <span className="live-count"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" /></svg>{item.viewerCount || 0}</span>
             <div className="live-card-copy"><strong>{item.title}</strong><small>@{item.host?.username || 'creator'}</small></div>
             <button type="button" className="live-watch" aria-label={`Watch LIVE: ${item.title}`} onClick={() => connectToBroadcast(item, false)} disabled={busy}>{busy ? 'Joining…' : 'Watch LIVE'}</button>
-          </article>) : <div className="live-empty">No one is live right now. Start a broadcast and invite your audience.</div>}
+          </article>) : <div className="live-empty">{searching && q ? 'No one live matches your search.' : 'No one is live right now. Start a broadcast and invite your audience.'}</div>}
         </section>
       </> : <>
         <div className="live-room">
