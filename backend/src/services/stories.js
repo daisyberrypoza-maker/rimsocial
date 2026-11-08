@@ -46,6 +46,8 @@ async function getStoryRail(viewerId) {
       user: dto.author, storyCount: 0, latestAt: dto.createdAt, expiresAt: dto.expiresAt, unseen: false,
     };
     g.storyCount += 1;
+    // Stories come newest first, so the first one seen is the latest: its picture shows on the ring
+    if (!g.preview) g.preview = { kind: dto.kind, mediaUrl: dto.mediaUrl, thumbUrl: dto.thumbUrl };
     if (!viewed.has(s.id)) g.unseen = true;
     if (dto.expiresAt > g.expiresAt) g.expiresAt = dto.expiresAt;
     groups.set(s.authorId, g);

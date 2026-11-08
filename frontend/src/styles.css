@@ -5124,7 +5124,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-ring.unseen { background:#a53ff5; }
 .st-ring.none { background:#d9d9de; }
 .st-face { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#f1f1f3; border:3px solid #fff; display:grid; place-items:center; box-sizing:border-box; }
-.st-face .sc-avatar, .st-face .avatar, .st-face img { width:100% !important; height:100% !important; }
+.st-face .sc-avatar, .st-face .avatar, .st-face img, .st-face video { width:100% !important; height:100% !important; }
+.st-face img, .st-face video { object-fit:cover; display:block; }
 .st-page .st-plus { position:absolute; right:-2px; bottom:-2px; width:24px; height:24px; border-radius:50%; background:#1e90ff; color:#fff; display:grid; place-items:center; border:2px solid #fff; }
 .st-name { max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:600; color:#111; }
 .st-handle { max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:#8a8a94; }
