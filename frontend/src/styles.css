@@ -5254,3 +5254,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-head .st-h2.on {
   font-weight: 500 !important;
 }
+
+/* Match the My Story ring to its blue add-story plus icon. */
+.st-page .st-friend:first-child .st-ring:not(.uploading) {
+  background: #1e90ff;
+}
