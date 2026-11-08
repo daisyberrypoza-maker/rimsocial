@@ -71,8 +71,6 @@ export default function Stories() {
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
-  // The row header reads "My Stories" at the start and "Friends" once the row has scrolled to the friends
-  const [friendsActive, setFriendsActive] = useState(false);
   const loading = false;
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
@@ -166,11 +164,8 @@ export default function Stories() {
       </header>
 
       <section className="st-section" aria-label="Friends">
-        <div className="st-head">
-          <span className={`st-h2 ${friendsActive ? '' : 'on'}`}>My Stories</span>
-          <span className={`st-h2 ${friendsActive ? 'on' : ''}`}>Friends</span>
-        </div>
-        <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
+        <h2 className="st-h2 st-friends-heading">Friends <Icon name="chevron-right" size={22} /></h2>
+        <div className="st-row">
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
@@ -183,7 +178,10 @@ export default function Stories() {
           
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
-              <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span></span>
+              <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
+                <span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span>
+                <span className="st-friend-badge" aria-hidden="true"><Icon name="user-plus" size={18} /></span>
+              </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
             </button>
