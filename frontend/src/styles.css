@@ -4119,7 +4119,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .post .rail-btn svg { width:27px !important; height:27px !important; }
 .reels-top .reels-icon { width:36px !important; height:36px !important; }
 .reels-top .reels-icon svg { width:24px !important; height:24px !important; }
-.post .post-seek { position:absolute; left:0; right:0; bottom:0; width:100%; height:24px; margin:0; z-index:5; -webkit-appearance:none; appearance:none; background:transparent; cursor:pointer; touch-action:none; }
+.post .post-seek { position:absolute; left:0; right:0; bottom:calc(56px + env(safe-area-inset-bottom, 0px)); width:100%; height:24px; margin:0; z-index:5; -webkit-appearance:none; appearance:none; background:transparent; cursor:pointer; touch-action:none; }
 .post .post-seek::-webkit-slider-runnable-track { height:3px; background:linear-gradient(to right,#fff var(--p,0%),rgba(255,255,255,.35) var(--p,0%)); }
 .post .post-seek::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#fff; margin-top:-4.5px; border:0; }
 .post .post-seek::-moz-range-track { height:3px; background:rgba(255,255,255,.35); }
