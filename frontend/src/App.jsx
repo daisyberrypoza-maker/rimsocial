@@ -48,6 +48,14 @@ export default function App() {
   const setLastPath = useAppStore((s) => s.setLastPath);
 
   // On a fresh load at "/", return to the last screen the user was on
+  // Status bar: white on Stories and Chat, dark everywhere else
+  useEffect(() => {
+    const light = location.pathname === '/stories' || location.pathname.startsWith('/chat');
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    meta.content = light ? '#ffffff' : '#171717';
+  }, [location.pathname]);
+
   useEffect(() => {
     if (token && location.pathname === '/' && lastPath && lastPath !== '/') {
       navigate(lastPath, { replace: true });
