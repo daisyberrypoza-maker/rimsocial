@@ -81,7 +81,8 @@ The native app lives in `mobile/` and mirrors these rules screen for screen. Its
 list of features not yet ported are in `mobile/README.md`. Every web fix to a screen should also be made there.
 
 ### Profile screens and story rings (latest)
-- The bottom bar stays visible on every profile screen (web: `/u/...`; mobile: the pushed profile screens).
+- Profile screens (mine and other people's, and their lists) have no bottom bar. They open from the Stories header.
+- Every profile has its own generated green cover (`lib/cover.js`, from the username). An uploaded cover replaces it.
 - A profile picture with a live story shows a purple ring. Tapping it opens the story viewer, not the picture.
 - Friend rings on Stories have no add-friend pill: everyone in that row is already followed.
 - Dark bar (Rimlight): the active tab is white. Light bar: the active tab is black.

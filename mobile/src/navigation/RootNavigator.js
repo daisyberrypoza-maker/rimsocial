@@ -31,9 +31,9 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="Upload" component={Upload} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="StoryViewer" component={StoryViewer} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-      {/* Profile screens keep the bottom bar, like the web app */}
-      <Stack.Screen name="Profile" component={withTabBar(Profile, 'ProfileTab')} />
-      <Stack.Screen name="ProfileList" component={withTabBar(ProfileList, 'ProfileTab')} />
+      {/* Profile screens have no bottom bar: they open from the Stories header */}
+      <Stack.Screen name="Profile" component={Profile} />
+      <Stack.Screen name="ProfileList" component={ProfileList} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="Conversation" component={Conversation} />
       <Stack.Screen name="NewMessage" component={NewMessage} />

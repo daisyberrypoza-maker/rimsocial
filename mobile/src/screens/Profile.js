@@ -10,6 +10,7 @@ import { formatCount } from '../lib/format';
 import { loadPage } from '../lib/paged';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
+import { defaultCover } from '../lib/cover';
 
 const COVER_H = 200;
 const COMPACT_AFTER = 150; // scroll distance before the white header with the name appears
@@ -59,6 +60,8 @@ export default function Profile() {
   const isMe = user?.isMe || me?.username === username;
   const name = user?.displayName || user?.username || '';
   const avatarRing = user?.hasStory ? styles.storyRing : null;
+  // Each person's own generated green cover, unless they have uploaded one
+  const cover = defaultCover(user?.username || username);
 
   // The white header fades in between 60px and 150px of scroll, like the web app
   const compactOpacity = Math.min(1, Math.max(0, (scrollY - 60) / (COMPACT_AFTER - 60)));
@@ -68,7 +71,8 @@ export default function Profile() {
 
   const header = (
     <View>
-      <View style={styles.cover}>
+      <View style={[styles.cover, { backgroundColor: cover.mid }]}>
+        {!!user?.coverUrl && <Image source={{ uri: mediaUrl(user.coverUrl) }} style={StyleSheet.absoluteFill} />}
         <View style={styles.coverTop}>
           <RoundBtn icon="arrow-left" label="Back" onPress={() => navigation.goBack()} />
           <View style={styles.coverRight}>
@@ -165,7 +169,7 @@ function Stat({ n, label }) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg },
-  cover: { height: COVER_H, backgroundColor: '#2b8a4a' },
+  cover: { height: COVER_H },
   coverTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingTop: 44 },
   coverRight: { flexDirection: 'row', gap: 10 },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(20,40,25,0.55)', alignItems: 'center', justifyContent: 'center' },
