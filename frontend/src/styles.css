@@ -5341,3 +5341,51 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   font-weight: 400 !important;
   color: #92929a !important;
 }
+
+
+/* Reference-matched Stories rail: one Friends heading and compact Snapchat-style labels. */
+.st-page .st-friends-heading {
+  display:flex !important;
+  align-items:center !important;
+  gap:4px !important;
+  margin:0 0 10px !important;
+  font-family:"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size:27px !important;
+  line-height:32px !important;
+  font-weight:700 !important;
+  color:#111 !important;
+}
+.st-page .st-friends-heading svg { color:#d9dce1 !important; stroke-width:3 !important; }
+.st-page .st-row { gap:6px !important; }
+.st-page .st-friend { gap:0 !important; }
+.st-page .st-name {
+  margin:0 !important;
+  font-family:"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size:16px !important;
+  line-height:19px !important;
+  font-weight:600 !important;
+}
+.st-page .st-handle {
+  margin:0 !important;
+  font-family:"Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size:14px !important;
+  line-height:17px !important;
+  font-weight:400 !important;
+  color:#92929a !important;
+}
+.st-page .st-friend-badge {
+  position:absolute;
+  z-index:2;
+  left:50%;
+  bottom:-2px;
+  transform:translateX(-50%);
+  width:44px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#b624f4;
+  color:#fff;
+  border:2px solid #fff;
+  box-sizing:content-box;
+}
