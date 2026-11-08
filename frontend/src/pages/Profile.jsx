@@ -14,8 +14,10 @@ import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 
+const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
+
 export default function Profile() {
-  const { username = 'me' } = useParams();
+  const { username = 'me', list = '' } = useParams();
   const navigate = useNavigate();
   const logout = useAppStore((s) => s.logout);
   const setProfile = useAppStore((s) => s.setProfile);
@@ -39,7 +41,8 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showCoins, setShowCoins] = useState(false);
-  const [listType, setListType] = useState('');
+  // The list is open when its address is open, so Back returns to it
+  const listType = LIST_TYPES.includes(list) ? list : '';
   const [people, setPeople] = useState([]);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
@@ -83,24 +86,34 @@ export default function Profile() {
     return () => { current = false; };
   }, [tab, profile]);
 
-  async function openPeople(type) {
-    setListType(type);
-    setPeopleQuery('');
-    try {
-      const data = await api(`/v1/users/${username}/${type}`);
-      setPeople(data.items || []);
-    } catch (e) { logError(e); setListType(''); }
+  function openPeople(type, replace = false) {
+    navigate(`/u/${username}/${type}`, { replace });
   }
 
-  async function openBlockedPeople() {
+  function openBlockedPeople() {
     setDrawerOpen(false);
-    setListType('blocked');
-    setPeopleQuery('');
-    try {
-      const data = await api('/v1/users/blocked');
-      setPeople(data.items || []);
-    } catch (e) { logError(e); setListType(''); }
+    navigate(`/u/${username}/blocked`);
   }
+
+  // Lists load from their address, so opening one again after Back reloads it
+  useEffect(() => {
+    if (!listType) return undefined;
+    let current = true;
+    if (listType === 'activity') {
+      setActivityLoading(true);
+      api('/v1/activity')
+        .then((data) => { if (current) setActivity(data.items || []); })
+        .catch((e) => logError(e))
+        .finally(() => { if (current) setActivityLoading(false); });
+    } else {
+      setPeopleQuery('');
+      const path = listType === 'blocked' ? '/v1/users/blocked' : `/v1/users/${username}/${listType}`;
+      api(path)
+        .then((data) => { if (current) setPeople(data.items || []); })
+        .catch((e) => logError(e));
+    }
+    return () => { current = false; };
+  }, [listType, username]);
 
   async function unblockPerson(person) {
     if (peopleBusy[person.id]) return;
@@ -113,14 +126,8 @@ export default function Profile() {
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
-  async function openActivity() {
-    setListType('activity');
-    setActivityLoading(true);
-    try {
-      const data = await api('/v1/activity');
-      setActivity(data.items || []);
-    } catch (e) { logError(e); setListType(''); }
-    finally { setActivityLoading(false); }
+  function openActivity(replace = false) {
+    navigate(`/u/${username}/activity`, { replace });
   }
 
   function activityText(item) {
@@ -389,17 +396,17 @@ export default function Profile() {
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
 
-      {listType && createPortal(<div className="pv-sheet-backdrop" role="presentation">
+      {listType && profile && createPortal(<div className="pv-sheet-backdrop" role="presentation">
         <section className="pv-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <header className="pv-sheet-top">
-            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => setListType('')}><Icon name="arrow-left" size={22} /></button>
+            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => goBack(navigate, `/u/${username}`)}><Icon name="arrow-left" size={22} /></button>
             <h2 className="pv-sheet-title">{listType === 'blocked' ? 'Blocked accounts' : listType === 'activity' ? 'Activity' : profile.username}</h2>
-            {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => { setListType(''); navigate('/explore'); }}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
+            {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => navigate('/explore')}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
           </header>
           {listType !== 'blocked' && <nav className="pv-sheet-tabs" role="tablist" aria-label="Connections">
-            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers'); }}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
-            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following'); }}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
-            {profile.isMe && <button type="button" role="tab" aria-selected={listType === 'activity'} className={listType === 'activity' ? 'on' : ''} onClick={() => { if (listType !== 'activity') openActivity(); }}><strong>{activity.length ? formatCount(activity.length) : '0'}</strong><span>Activity</span></button>}
+            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers', true); }}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following', true); }}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+            {profile.isMe && <button type="button" role="tab" aria-selected={listType === 'activity'} className={listType === 'activity' ? 'on' : ''} onClick={() => { if (listType !== 'activity') openActivity(true); }}><strong>{activity.length ? formatCount(activity.length) : '0'}</strong><span>Activity</span></button>}
           </nav>}
           {listType === 'activity' ? (
             <ul className="pv-list" aria-label="Activity">
@@ -407,7 +414,7 @@ export default function Profile() {
               {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
               {activity.map((item) => (
                 <li className="pv-row pv-activity-row" key={item.id}>
-                  <button type="button" className="pv-person" onClick={() => { setListType(''); if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
+                  <button type="button" className="pv-person" onClick={() => { if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
                     <Avatar user={item.actor || {}} size={44} />
                     <span className="pv-person-text"><strong>{activityText(item)}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</small></span>
                   </button>
@@ -420,7 +427,7 @@ export default function Profile() {
             <ul className="pv-list">
               {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) => (
                 <li className="pv-row" key={person.id}>
-                  <button type="button" className="pv-person" onClick={() => { setListType(''); navigate(`/u/${person.username}`); }}>
+                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
                     <Avatar user={person} size={52} />
                     <span className="pv-person-text"><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                   </button>
