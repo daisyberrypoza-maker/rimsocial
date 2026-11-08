@@ -23,7 +23,7 @@ test('follow-back users are excluded from suggestions without disappearing from 
   assert.equal(result.followBackIds.includes('inbound-only'), true);
 });
 
-test('suggestion and follow-back candidate sets never overlap', () => {
+test('every follow-back account is excluded from suggested candidates', () => {
   const result = buildSuggestionRelationshipSets({
     viewerId: 'viewer',
     followingIds: ['mutual', 'outgoing'],
