@@ -5418,3 +5418,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-sponsored-tag { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.45); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:6px; }
 .st-page .st-sponsor .st-cta { position:absolute; left:10px; right:10px; bottom:34px; display:block; text-align:center; background:#f1f1f3; color:#111; font-size:12px; font-weight:700; padding:6px 0; border-radius:999px; }
 .st-page .st-sponsor .st-card-name { bottom:10px; }
+
+/* Profile, matched to the reference: green default background, centred name in the scrolled header. */
+.sc-profile .pf-cover { background: linear-gradient(180deg, #17592d 0%, #2b8a4a 55%, #3aa95c 100%); }
+.sc-profile .sc-compact-name { flex:1 1 auto; text-align:center; font-size:17px; font-weight:700; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
