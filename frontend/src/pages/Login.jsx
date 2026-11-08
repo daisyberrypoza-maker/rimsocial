@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadAccount } from '../account.js';
@@ -13,7 +13,6 @@ const COUNTRIES = COUNTRY_CODES.map((code) => ({ code, name: countryNames.of(cod
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const setSession = useAppStore((s) => s.setSession);
   const googleButton = useRef(null);
   const [mode, setMode] = useState('login');
@@ -28,8 +27,8 @@ export default function Login() {
   async function finishSession(data) {
     setSession(data.token, data.user);
     await loadAccount();
-    const requestedPath = location.state?.from;
-    navigate(typeof requestedPath === 'string' && requestedPath.startsWith('/') ? requestedPath : '/', { replace: true });
+    // Every sign-in opens the default screen, Stories
+    navigate('/stories', { replace: true });
   }
 
   async function submit(e) {
