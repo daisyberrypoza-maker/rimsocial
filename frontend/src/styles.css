@@ -5164,3 +5164,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-top { padding-bottom:0 !important; }
 .st-page > section.st-section:first-of-type { padding-top:6px !important; }
 .bottomnav { border-top:1px solid rgba(0,0,0,.12) !important; }
+
+/* Bottom bar icons: outline when inactive, filled in the tab's active colour when active */
+.bottomnav a svg { fill:none !important; }
+.bottomnav a.active svg { fill:currentColor !important; }
