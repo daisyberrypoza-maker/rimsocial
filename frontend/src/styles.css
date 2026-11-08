@@ -5146,3 +5146,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Discover cards: 3px corners, as in the reference */
 .st-page .st-card, .st-page .st-big { border-radius:3px !important; }
+
+/* Add friends: slides up from the bottom and covers the bottom bar */
+@keyframes friends-sheet-up { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.ig-explore.friends-page { position:fixed !important; inset:0 !important; z-index:300 !important; background:#fff !important; overflow-y:auto !important; max-width:560px; margin:0 auto; padding-bottom:24px !important; animation:friends-sheet-up .32s cubic-bezier(.2,.8,.2,1) both; }
