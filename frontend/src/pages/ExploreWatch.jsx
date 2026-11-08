@@ -5,6 +5,7 @@ import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -25,7 +26,7 @@ export default function ExploreWatch() {
   const load = useCallback((reset = false) => {
     setLoading(true);
     return loadPage(KEY, PATH, reset)
-      .catch((e) => toast(e.message))
+      .catch((e) => logError(e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,7 +65,6 @@ export default function ExploreWatch() {
     <button className="profile-watch-back" onClick={() => goBack(navigate)} aria-label="Back to Explore">← Explore</button>
     <div className="feed profile-watch-feed" ref={container} onScroll={onScroll}>
       {items.map((post, index) => <PostCard key={post.id} post={post} active={index === active} />)}
-      {loading && <div className="slot"><p className="muted">Loading posts…</p></div>}
       {!items.length && !loading && <div className="slot"><p className="muted">Nothing to watch yet.</p></div>}
     </div>
   </main>;

@@ -11,6 +11,7 @@ import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
 import ActionSheet from '../components/ActionSheet.jsx';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -40,7 +41,7 @@ export default function PostDetail() {
       if (!alive) return;
       setPost(item); setComments(commentData.items || []);
       setLiked(Boolean(engagement.liked)); setReposted(Boolean(engagement.reposted));
-    }).catch((err) => { if (alive) toast(err.message); })
+    }).catch((err) => { if (alive) logError(err); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [postId]);
@@ -51,7 +52,7 @@ export default function PostDetail() {
     try {
       const r = await api(`/v1/posts/${postId}/like`, { method: 'POST' });
       setPost((p) => ({ ...p, likeCount: r.likeCount })); setLiked(Boolean(r.liked));
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
 
@@ -62,7 +63,7 @@ export default function PostDetail() {
       const r = await api(`/v1/posts/${postId}/repost`, { method: 'POST' });
       setReposted(Boolean(r.reposted)); setPost((p) => ({ ...p, repostCount: r.repostCount }));
       toast(r.reposted ? 'Post reposted' : 'Repost removed');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
 
@@ -77,7 +78,7 @@ export default function PostDetail() {
       await api(`/v1/posts/${encodeURIComponent(postId)}`, { method: 'DELETE' });
       toast('Post deleted');
       goBack(navigate);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   async function submitComment(e) {
@@ -87,11 +88,11 @@ export default function PostDetail() {
     try {
       const item = await api(`/v1/posts/${postId}/comments`, { method: 'POST', body: { body: comment.trim() } });
       setComments((items) => [...items, item]); setComment('');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setCommentBusy(false); }
   }
 
-  if (loading) return <main className="rv-page"><p className="rv-state">Loading…</p></main>;
+  if (loading) return <main className="rv-page"><p className="rv-state"></p></main>;
   if (!post) return <main className="rv-page"><button className="rv-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button><p className="rv-state">This post is unavailable or has been deleted.</p></main>;
 
   const username = post.author?.username || 'creator';

@@ -37,6 +37,7 @@ import Icon from './Icon.jsx';
 import ShareOptions from './ShareOptions.jsx';
 import ShareSheet from './ShareSheet.jsx';
 import PostOptionsSheet from './PostOptionsSheet.jsx';
+import { logError } from '../toast.js';
 
 const countedViews = new Set();
 
@@ -62,7 +63,7 @@ function GiftSheet({ post, onClose }) {
       const { coinBalance } = await api('/v1/wallet');
       setCoins(coinBalance);
       onClose();
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setBusy(null); }
   }
   return <div className="sheet-backdrop" onClick={onClose}><div className="sheet" onClick={(e) => e.stopPropagation()}>
@@ -79,7 +80,7 @@ function CommentsSheet({ post, onClose }) {
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/comments`).then((r) => { if (alive) setItems(r.items || []); })
-      .catch((e) => toast(e.message)).finally(() => { if (alive) setLoading(false); });
+      .catch((e) => logError(e)).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [post.id]);
   async function submit(e) {
@@ -90,14 +91,14 @@ function CommentsSheet({ post, onClose }) {
       const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: { body: body.trim() } });
       setItems((current) => [...current, comment]);
       setBody('');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setSending(false); }
   }
   async function remove(comment) {
     try {
       await api(`/v1/posts/${post.id}/comments/${comment.id}`, { method: 'DELETE' });
       setItems((current) => current.filter((item) => item.id !== comment.id));
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
   const username = post.author?.username || 'creator';
   const emojis = ['❤️', '😍', '😂', '😭', '🔥', '🙏', '😊'];
@@ -106,7 +107,7 @@ function CommentsSheet({ post, onClose }) {
       <div className="rv-handle" aria-hidden="true" />
       <header className="rv-sheet-head"><strong>Comments</strong></header>
       <div className="rv-comments">
-        {loading ? <p className="rv-empty">Loading comments…</p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
+        {loading ? <p className="rv-empty"></p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
           <Avatar user={item.author} size={40} />
           <div className="rv-comment-body">
             <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {timeAgo(item.createdAt)}</span></div>
@@ -203,7 +204,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/users/${post.author.id}/follow`, { method: 'POST' });
       setFollowing(Boolean(r.isFollowing ?? true));
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setFollowBusy(false); }
   }
 
@@ -286,7 +287,7 @@ export default function PostCard({ post, active }) {
       const r = await api(`/v1/posts/${post.id}/like`, { method: 'POST' });
       setLikes(r.likeCount); setLiked(Boolean(r.liked));
       // The like endpoint already updates the recommendation score; do not score this twice.
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setLikeBusy(false); }
   }
 
@@ -308,7 +309,7 @@ export default function PostCard({ post, active }) {
     try {
       await api(`/v1/users/${post.author.id}/block`, { method: 'POST' });
       setHidden(true); setShowMenu(false); toast(`@${username} blocked`);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   async function reportPost(reason = reportReason) {
@@ -317,7 +318,7 @@ export default function PostCard({ post, active }) {
     try {
       await api(`/v1/posts/${post.id}/report`, { method: 'POST', body: { reason } });
       toast('Report submitted for review'); setShowMenu(false);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setReporting(false); }
   }
   async function repost() {
@@ -329,7 +330,7 @@ export default function PostCard({ post, active }) {
       // The repost endpoint already updates the recommendation score; do not score this twice.
       toast(r.reposted ? 'Post reposted to your profile' : 'Repost removed');
       return true;
-    } catch (err) { toast(err.message); return false; }
+    } catch (err) { logError(err); return false; }
     finally { setRepostBusy(false); }
   }
 
@@ -400,7 +401,7 @@ export default function PostCard({ post, active }) {
       onNotInterested={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}
       onBlock={() => { setShowMenu(false); blockCreator(); }}
       onReport={(reason) => { setReportReason(reason); reportPost(reason); }}
-      onDelete={async () => { setShowMenu(false); if (!window.confirm('Delete this post? This cannot be undone.')) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { toast(e.message); } }}
+      onDelete={async () => { setShowMenu(false); if (!window.confirm('Delete this post? This cannot be undone.')) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { logError(e); } }}
     />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}

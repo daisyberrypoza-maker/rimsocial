@@ -5,6 +5,7 @@ import Avatar from '../components/Avatar.jsx';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 export default function Recommended() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function Recommended() {
   useEffect(() => {
     api('/v1/users/suggestions')
       .then((data) => setPeople(data.suggested || []))
-      .catch((e) => toast(e.message))
+      .catch((e) => logError(e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -29,7 +30,7 @@ export default function Recommended() {
       setPeople((current) => current.map((item) => item.id === person.id
         ? { ...item, isFollowing: r.isFollowing, followerCount: r.followerCount }
         : item));
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy((current) => ({ ...current, [person.id]: false })); }
   }
 

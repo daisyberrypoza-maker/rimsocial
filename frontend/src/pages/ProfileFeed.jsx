@@ -4,6 +4,7 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
+import { logError } from '../toast.js';
 
 export default function ProfileFeed() {
   const { username } = useParams();
@@ -20,7 +21,7 @@ export default function ProfileFeed() {
   const load = useCallback((reset = false) => {
     setLoading(true);
     return loadPage(key, `/v1/users/${encodeURIComponent(username)}/posts`, reset)
-      .catch((e) => toast(e.message))
+      .catch((e) => logError(e))
       .finally(() => setLoading(false));
   }, [key, username]);
 
@@ -47,7 +48,6 @@ export default function ProfileFeed() {
     <button className="profile-watch-back" onClick={() => navigate(`/u/${username}`)} aria-label="Back to profile">← @{username}</button>
     <div className="feed profile-watch-feed" ref={container} onScroll={onScroll}>
       {items.map((post, index) => <PostCard key={post.id} post={post} active={index === active} />)}
-      {loading && <div className="slot"><p className="muted">Loading posts…</p></div>}
       {!items.length && !loading && <div className="slot"><p className="muted">This profile has no public posts yet.</p></div>}
     </div>
   </main>;

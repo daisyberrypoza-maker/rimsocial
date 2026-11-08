@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
+import { logError } from '../toast.js';
 
 const money = (minor, currency = 'NGN') => new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 }).format((Number(minor) || 0) / 100);
 
@@ -37,33 +38,33 @@ export default function CreatorStudio() {
       setBanks([]);
     }
   }
-  useEffect(() => { load().catch((e) => toast(e.message)); }, []);
+  useEffect(() => { load().catch((e) => logError(e)); }, []);
 
   async function apply() {
     setBusy(true); try { await api('/v1/creator/apply', { method: 'POST', body: {} }); await load(); toast('Creator tools enabled'); }
-    catch (e) { toast(e.message); } finally { setBusy(false); }
+    catch (e) { logError(e); } finally { setBusy(false); }
   }
   async function setupPayout(e) {
     e.preventDefault(); setBusy(true); setAccountVerified(null);
     try { const result = await api('/v1/creator/payout-profile', { method: 'POST', body: { accountNumber, bankCode } }); setAccountVerified(result); setAccountNumber(''); await load(); toast('Payout destination verified'); }
-    catch (e) { toast(e.message); } finally { setBusy(false); }
+    catch (e) { logError(e); } finally { setBusy(false); }
   }
   async function payout(e) {
     e.preventDefault(); setBusy(true);
     try { const amountMinor = Math.round(Number(amount) * 100); await api('/v1/creator/payouts', { method: 'POST', body: { amountMinor } }); setAmount(''); await load(); toast('Withdrawal request submitted'); }
-    catch (e) { toast(e.message); } finally { setBusy(false); }
+    catch (e) { logError(e); } finally { setBusy(false); }
   }
   async function createMatch(e) {
     e.preventDefault(); setBusy(true);
     try { await api('/v1/creator/matches', { method: 'POST', body: { opponentId: opponent } }); setOpponent(''); await load(); toast('Match invitation sent'); }
-    catch (e) { toast(e.message); } finally { setBusy(false); }
+    catch (e) { logError(e); } finally { setBusy(false); }
   }
   async function respond(id, accept) {
     try { await api(`/v1/creator/matches/${id}/respond`, { method: 'POST', body: { accept } }); await load(); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
   }
 
-  if (!data) return <main className="page"><p className="muted center">Loading Creator Studio…</p></main>;
+  if (!data) return <main className="page"><p className="muted center"></p></main>;
   const currency = data.wallet.currency || 'NGN';
   return <main className="page creator-page">
     <header className="creator-hero"><div><span className="chip">CLIPVERSE CREATOR</span><h1>Creator Studio</h1><p>Publish, grow your audience and track your earnings in one place.</p></div><Link className="studio-share" to="/upload">＋ Create</Link></header>

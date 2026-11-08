@@ -9,6 +9,7 @@ import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -37,7 +38,7 @@ export default function Explore() {
   function more(reset = false) {
     setLoading(true);
     return loadPage(KEY, PATH, reset)
-      .catch((e) => toast(e.message))
+      .catch((e) => logError(e))
       .finally(() => setLoading(false));
   }
 
@@ -67,7 +68,7 @@ export default function Explore() {
     try {
       if (results && query.trim()) setResults(await api(`/v1/search?q=${encodeURIComponent(query.trim())}&type=${searchType}`));
       else await more(true);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setRefreshing(false); }
   }
 
@@ -77,7 +78,7 @@ export default function Explore() {
     if (!q) { setResults(null); return; }
     setSearching(true);
     try { setResults(await api(`/v1/search?q=${encodeURIComponent(q)}&type=${searchType}`)); }
-    catch (err) { toast(err.message); }
+    catch (err) { logError(err); }
     finally { setSearching(false); }
   }
 
@@ -96,14 +97,14 @@ export default function Explore() {
         suggested: current.suggested.map(updatePerson),
         followBack: current.followBack.map(updatePerson),
       }));
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setFollowBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
   function searchHashtag(tag) {
     setQuery(`#${tag}`);
     setSearchType('hashtags');
-    setTimeout(() => api(`/v1/search?q=${encodeURIComponent(`#${tag}`)}&type=hashtags`).then(setResults).catch((e) => toast(e.message)), 0);
+    setTimeout(() => api(`/v1/search?q=${encodeURIComponent(`#${tag}`)}&type=hashtags`).then(setResults).catch((e) => logError(e)), 0);
   }
 
   useEffect(() => {
@@ -111,12 +112,11 @@ export default function Explore() {
     if (!initial) return;
     const type = initial.startsWith('#') ? 'hashtags' : 'all';
     setQuery(initial); setSearchType(type);
-    api(`/v1/search?q=${encodeURIComponent(initial)}&type=${type}`).then(setResults).catch((e) => toast(e.message));
+    api(`/v1/search?q=${encodeURIComponent(initial)}&type=${type}`).then(setResults).catch((e) => logError(e));
   }, [searchParams]);
 
   return (
     <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
-      {refreshing && <div className="pull-refresh-indicator"><span className="refresh-spinner" /> Refreshing…</div>}
       {peopleMode && !searchMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
@@ -127,7 +127,7 @@ export default function Explore() {
         </form>
       </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
-        {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => toast(e.message)); }}>{label}</button>)}
+        {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('comedy')}>Comedy</button>
       </div>}
@@ -164,7 +164,7 @@ export default function Explore() {
             <span className="xp-media">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
             <span className="xp-author">@{p.author?.username || 'creator'}</span>
           </button>)}</div>}
-          {!searchMode && <><div ref={sentinel} className="sentinel" />{loading && <p className="ig-empty">Loading…</p>}{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}</>}
+          {!searchMode && <><div ref={sentinel} className="sentinel" />{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}</>}
           {searchMode && !query.trim() && <p className="rim-search-hint">Search for people, posts or hashtags</p>}
         </>}
       </>}

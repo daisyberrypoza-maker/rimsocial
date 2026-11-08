@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import StoryViewer from '../components/StoryViewer.jsx';
+import { logError } from '../toast.js';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
@@ -66,7 +67,7 @@ export default function Stories() {
       const result = await api('/v1/stories/rail');
       setRail(result.items || []);
     } catch (error) {
-      toast(error.message);
+      logError(error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +125,7 @@ export default function Stories() {
             </span>
             <span className="st-name">My Story</span>
           </button>
-          {loading && <p className="st-state">Loading stories…</p>}
+          
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><Avatar user={group.user} /></span></span>

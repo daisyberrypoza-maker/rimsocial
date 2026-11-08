@@ -5,6 +5,7 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 // Edit the owner's profile details: name, bio, website and city.
 export default function EditProfile() {
@@ -20,7 +21,7 @@ export default function EditProfile() {
         setForm({ displayName: u.displayName || '', bio: u.bio || '', website: u.website || '', city: u.city || '' });
         setLoaded(true);
       })
-      .catch((e) => toast(e.message));
+      .catch((e) => logError(e));
   }, []);
 
   function set(key) {
@@ -35,7 +36,7 @@ export default function EditProfile() {
       toast('Profile updated');
       navigate(`/u/${me?.username || 'me'}`);
     } catch (error) {
-      toast(error.message);
+      logError(error);
     } finally {
       setSaving(false);
     }

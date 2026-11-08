@@ -255,7 +255,7 @@ export default function LiveMatchRoom() {
   return <main className="page live-room-page">
     <header className="section-heading"><div><span className="chip">RIM SOCIAL LIVE</span><h1>Creator Match</h1><p className="muted">Private creator-to-creator video connection</p></div><Link className="studio-share" to="/creator">Back to studio</Link></header>
     {error && <p className="error" role="alert">{error}</p>}
-    {!match ? <p className="muted">Loading match…</p> : <>
+    {!match ? <p className="muted"></p> : <>
       <section className="live-room-videos">
         <article><video ref={localVideo} autoPlay muted playsInline/><span>You</span></article>
         <article><video ref={remoteVideo} autoPlay playsInline onClick={() => remoteVideo.current?.play?.().catch(() => {})}/><span>Opponent</span></article>
@@ -268,7 +268,7 @@ export default function LiveMatchRoom() {
       {match.status === 'active' && <section className="panel live-match-gifts">
         <h2>Send a LIVE gift</h2>
         <p className="muted">Gifts deduct coins from your wallet and add their value to this match's verified score.</p>
-        <p><strong>Coins:</strong> {coinBalance === null ? 'Loading…' : coinBalance} · <strong>Score:</strong> {Number(match.hostScore || 0)} – {Number(match.opponentScore || 0)}</p>
+        <p><strong>Coins:</strong> {coinBalance === null ? '' : coinBalance} · <strong>Score:</strong> {Number(match.hostScore || 0)} – {Number(match.opponentScore || 0)}</p>
         {giftOptions.gifts.length > 0 ? <>
           <label htmlFor="live-gift-choice">Choose a gift</label>
           <select id="live-gift-choice" value={selectedGift} onChange={(event) => setSelectedGift(event.target.value)} disabled={sendingGift}>

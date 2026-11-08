@@ -43,7 +43,7 @@ export default function Messages() {
         <button type="button" className={filter === 'unread' ? 'dm-chip on' : 'dm-chip'} onClick={() => setFilter('unread')}>Unread</button>
       </div>
       {error && <p className="dm-error" role="alert">{error}</p>}
-      {items === null ? <p className="dm-empty">Loading…</p>
+      {items === null ? <p className="dm-empty"></p>
         : shown.length ? (
           <ul className="dm-list">
             {shown.map((item) => {

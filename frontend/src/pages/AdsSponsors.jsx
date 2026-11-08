@@ -33,7 +33,7 @@ export default function AdsSponsors() {
     </header>
     <section className="ads-sponsors-content">
       <div className="ads-section-heading"><div><h2>Your sponsored posts</h2><p>Only posts you published with the paid partnership label appear here.</p></div><button className="ghost small" onClick={() => { setRefreshing(true); load(); }} disabled={refreshing}><Icon name="refresh" size={16} /> Refresh</button></div>
-      {loading ? <div className="ads-empty"><span className="activity-spinner" /><p>Loading sponsored posts…</p></div> :
+      {loading ? <div className="ads-empty"><p></p></div> :
         posts.length ? <div className="ads-post-list">{posts.map((post) => <article className="ads-post-card" key={post.id}>
           <div className="ads-post-avatar"><Avatar user={post.author || user} size={42} /></div>
           <div className="ads-post-main"><div className="ads-post-title"><strong>{post.sponsorName || 'Sponsored post'}</strong><span className="ads-label">Ad</span></div><p>{post.sponsorDescription || post.caption || 'Paid partnership'}</p><small>{post.sponsorCta || 'Shop Now'}{post.sponsorUrl ? ' · ' + post.sponsorUrl : ''}</small></div>

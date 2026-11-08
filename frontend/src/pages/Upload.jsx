@@ -7,6 +7,7 @@ import { toast } from '../toast.js';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 export default function Upload() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export default function Upload() {
       if (!item.allowRemix) { toast('The creator has not allowed remixing this post'); setSourcePost(null); return; }
       setSourcePost(item);
       setDraft((current) => ({ ...current, caption: item.caption ? `Remix of @${item.author?.username || 'creator'}: ` : '' }));
-    }).catch((error) => { if (active) toast(error.message); });
+    }).catch((error) => { if (active) logError(error); });
     return () => { active = false; };
   }, [remixId, setDraft]);
 
@@ -61,7 +62,7 @@ export default function Upload() {
     } catch (error) {
       setFile(null);
       setRawFile(null);
-      toast(error.message);
+      logError(error);
     } finally {
       setTrimming(false);
     }
@@ -155,7 +156,7 @@ export default function Upload() {
       }
       toast(asStory ? 'Public story posted. It disappears in 24 hours.' : visibility === 'public' ? 'Post published publicly' : 'Post saved as Only me');
       navigate('/');
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setBusy(false); }
   }
 
@@ -196,7 +197,7 @@ export default function Upload() {
         <span className="ig-count">{(draft.caption || '').length}/{asStory ? 200 : 500}</span>
       </div>
       {!asStory && mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="ig-mentions" role="listbox" aria-label="People to mention">
-        {mentionLoading ? <p className="ig-empty">Finding people…</p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="ig-mention" onClick={() => insertMention(person)}><span className="ig-mention-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.username}</strong><small>{person.displayName}</small></span></button>)}
+        {mentionLoading ? <p className="ig-empty"></p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="ig-mention" onClick={() => insertMention(person)}><span className="ig-mention-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.username}</strong><small>{person.displayName}</small></span></button>)}
       </div>}
 
       <div className="ig-rows">
