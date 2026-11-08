@@ -39,7 +39,8 @@ function TabBar({ state, navigation }) {
     return () => { alive = false; clearInterval(timer); };
   }, []);
 
-  const tint = (focused) => (dark ? (focused ? '#fff' : colors.darkMuted) : (focused ? colors.text : colors.muted));
+  // Light bar: active tab black, others grey. Dark bar (Rimlight): white and grey.
+  const tint = (focused) => (dark ? (focused ? '#fff' : colors.darkMuted) : (focused ? colors.activeTab : colors.muted));
   const tabs = [
     { name: 'Stories', icon: 'stories', label: 'Stories' },
     { name: 'Chat', icon: 'message-circle', label: 'Chat' },
@@ -69,7 +70,7 @@ function TabBar({ state, navigation }) {
           >
             {tab.name === 'ProfileTab'
               ? <Avatar user={me || {}} size={26} style={focused ? styles.avatarOn : null} />
-              : <Icon name={tab.icon} size={26} color={tint(focused)} filled={focused} strokeWidth={1.8} />}
+              : <Icon name={tab.icon} size={24} color={tint(focused)} filled={focused} strokeWidth={1.8} />}
             {tab.name === 'Chat' && unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text></View>}
             <Text style={[styles.label, { color: tint(focused) }]}>{tab.label}</Text>
           </Pressable>
