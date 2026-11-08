@@ -5259,3 +5259,17 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-friend:first-child .st-ring:not(.uploading) {
   background: #1e90ff;
 }
+
+/* Bottom navigation: smaller icons and true black for the active tab. */
+.bottomnav a svg,
+.bottomnav svg {
+  width:24px !important;
+  height:24px !important;
+}
+.bottomnav a.active {
+  color:#000 !important;
+}
+.bottomnav a.active svg {
+  color:#000 !important;
+  stroke:#000 !important;
+}
