@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Image, Animated, Easing, StyleSheet } from 'react-native';
 import Avatar from './Avatar';
 import Icon from './Icon';
@@ -8,11 +8,12 @@ import { colors } from '../theme';
 // Ring around a story picture. The picture is the latest story (a video shows its first frame),
 // the profile picture when there is no story. While uploading, the ring turns.
 export function StoryFace({ preview, fallbackUser, size }) {
-  if (!preview?.mediaUrl) return <Avatar user={fallbackUser} size={size - 8} />;
-  const uri = mediaUrl(preview.thumbUrl || preview.mediaUrl);
-  // Same as the web: a video with no saved frame shows the profile picture, not an empty frame
-  if (preview.kind === 'video' && !preview.thumbUrl) return <Avatar user={fallbackUser} size={size - 8} />;
-  return <Image source={{ uri }} style={{ width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }} />;
+  const [failed, setFailed] = useState(false);
+  const uri = preview?.mediaUrl ? mediaUrl(preview.thumbUrl || preview.mediaUrl) : null;
+  useEffect(() => setFailed(false), [uri]);
+  // No story, a video with no saved frame, or a picture that failed to load: the profile picture shows instead
+  if (!uri || failed || (preview.kind === 'video' && !preview.thumbUrl)) return <Avatar user={fallbackUser} size={size - 8} />;
+  return <Image source={{ uri }} onError={() => setFailed(true)} style={{ width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }} />;
 }
 
 // state: 'unseen' | 'seen' | 'none' | 'mine' (My Story, blue). badge: draws the purple add-friend pill.
