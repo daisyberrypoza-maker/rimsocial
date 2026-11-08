@@ -52,6 +52,7 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverBusy, setCoverBusy] = useState(false);
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -172,20 +173,33 @@ export default function Profile() {
     if (delta > 90 && e.currentTarget.scrollTop <= 0) refreshProfile();
   }
 
+  // The chosen picture shows at once. The saved one is loaded in the background and then swapped in once,
+  // and every place that shows your picture (this screen, the Stories header, the bottom bar) is updated.
   async function uploadAvatar(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('Choose a JPG, PNG or WebP image');
+    const preview = URL.createObjectURL(file);
+    setAvatarPreview(preview);
     const form = new FormData();
     form.append('media', file);
-    setAvatarBusy(true);
     try {
       const result = await api('/v1/users/me/avatar', { method: 'POST', body: form });
-      setProfile(username, { user: { ...profile, avatarUrl: result.avatarUrl } });
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = mediaUrl(result.avatarUrl);
+      });
+      const store = useAppStore.getState();
+      const updated = { ...profile, avatarUrl: result.avatarUrl };
+      setProfile(username, { user: updated, updatedAt: Date.now() });
+      setProfile('me', { user: updated, updatedAt: Date.now() });
+      if (store.user) store.setSession(store.token, { ...store.user, avatarUrl: result.avatarUrl });
       toast('Profile photo updated');
-    } catch (e) { logError(e); }
-    finally { setAvatarBusy(false); }
+    } catch (e) { logError(e); toast('Could not update the photo'); }
+    finally { setAvatarPreview(null); URL.revokeObjectURL(preview); }
   }
 
   async function uploadCover(event) {
@@ -300,7 +314,7 @@ export default function Profile() {
         <div className="pf-id">
           <div className="pf-avatar">
             <button type="button" className={profile.hasStory ? 'pf-avatar-btn has-story' : 'pf-avatar-btn'} aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={profile} size={92} ring />
+              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} ring />
             </button>
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
