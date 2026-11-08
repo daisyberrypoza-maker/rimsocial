@@ -42,7 +42,6 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const token = useAppStore((s) => s.token);
-  const lastPath = useAppStore((s) => s.lastPath);
   const setSession = useAppStore((s) => s.setSession);
   const setLastPath = useAppStore((s) => s.setLastPath);
 
@@ -55,9 +54,10 @@ export default function App() {
     meta.content = light ? '#ffffff' : '#171717';
   }, [location.pathname]);
 
+  // A fresh open of the app (not a return from minimized) starts on the default screen, Stories
   useEffect(() => {
-    if (token && location.pathname === '/' && lastPath && lastPath !== '/') {
-      navigate(lastPath, { replace: true });
+    if (token && location.pathname === '/') {
+      navigate('/stories', { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
