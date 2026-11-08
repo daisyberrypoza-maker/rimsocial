@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Image, Animated, Easing, StyleSheet } from 'react-native';
-import Video from 'react-native-video';
 import Avatar from './Avatar';
 import Icon from './Icon';
 import { mediaUrl } from '../config';
@@ -11,9 +10,8 @@ import { colors } from '../theme';
 export function StoryFace({ preview, fallbackUser, size }) {
   if (!preview?.mediaUrl) return <Avatar user={fallbackUser} size={size - 8} />;
   const uri = mediaUrl(preview.thumbUrl || preview.mediaUrl);
-  if (preview.kind === 'video' && !preview.thumbUrl) {
-    return <Video source={{ uri: mediaUrl(preview.mediaUrl) }} style={{ width: size - 8, height: size - 8 }} paused muted resizeMode="cover" />;
-  }
+  // Same as the web: a video with no saved frame shows the profile picture, not an empty frame
+  if (preview.kind === 'video' && !preview.thumbUrl) return <Avatar user={fallbackUser} size={size - 8} />;
   return <Image source={{ uri }} style={{ width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }} />;
 }
 

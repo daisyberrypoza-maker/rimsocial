@@ -5111,7 +5111,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-top { display:flex; align-items:center; justify-content:space-between; padding:10px 14px 4px; }
 .st-left, .st-right { display:flex; align-items:center; gap:8px; flex:1 1 0; }
 .st-right { justify-content:flex-end; }
-.st-title { margin:0; flex:0 0 auto; font-size:17px; font-weight:600; color:#111; }
+.st-title { margin:0; flex:0 0 auto; font-size:17px; font-weight:600; color:#111; padding:0 12px; }
 .st-page .st-round { width:42px !important; height:42px !important; border-radius:50% !important; border:0 !important; background:#f1f1f3 !important; color:#111 !important; padding:0 !important; display:grid !important; place-items:center !important; cursor:pointer; box-shadow:none !important; flex:0 0 42px; }
 .st-page .st-avatar { background:transparent !important; overflow:hidden; }
 .st-page .st-avatar .sc-avatar, .st-page .st-avatar .avatar { width:42px !important; height:42px !important; }
