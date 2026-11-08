@@ -74,3 +74,8 @@ These rules describe how each screen must behave. They apply to the web app, the
 ## Story and post viewers
 - Share sheet: reactions row, Send Snap, then extra rows (Favorites, Block, Copy link).
 - Lists and viewers close by going back in history, not by sending the person somewhere else.
+
+## React Native app
+
+The native app lives in `mobile/` and mirrors these rules screen for screen. Its setup and the
+list of features not yet ported are in `mobile/README.md`. Every web fix to a screen should also be made there.
