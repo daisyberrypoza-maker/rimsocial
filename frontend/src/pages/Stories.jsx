@@ -38,6 +38,18 @@ class ViewerBoundary extends Component {
   }
 }
 
+// The ring shows the latest story's picture; the profile picture only when there is no story
+function StoryFace({ group, fallback }) {
+  const preview = group?.preview;
+  if (!preview?.mediaUrl) return fallback;
+  if (preview.kind === 'video') {
+    return preview.thumbUrl
+      ? <img src={mediaUrl(preview.thumbUrl)} alt="" />
+      : <video src={`${mediaUrl(preview.mediaUrl)}#t=0.1`} muted playsInline preload="metadata" />;
+  }
+  return <img src={mediaUrl(preview.mediaUrl)} alt="" />;
+}
+
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
@@ -150,7 +162,7 @@ export default function Stories() {
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
-                {myGroup ? <Avatar user={me || {}} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
+                {myGroup ? <StoryFace group={myGroup} fallback={<Avatar user={me || {}} />} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
@@ -160,7 +172,7 @@ export default function Stories() {
           
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
-              <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><Avatar user={group.user} /></span></span>
+              <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span></span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
             </button>
