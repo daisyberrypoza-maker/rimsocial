@@ -88,9 +88,10 @@ export default function Profile() {
 
       <View style={[styles.idRow, { top: COVER_H + insets.top - 46 }]}>
         <View style={styles.avatarBox}>
-          <Pressable style={avatarRing} onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }} accessibilityLabel={user?.hasStory ? 'View story' : undefined}>
+          {/* The ring shows a live story; a tap does not open the story viewer */}
+          <View style={avatarRing}>
             <Avatar user={user || {}} size={92} />
-          </Pressable>
+          </View>
           {user?.isOnline && <View style={styles.online} accessibilityLabel="Online now" />}
         </View>
         <View style={styles.nameBlock}>

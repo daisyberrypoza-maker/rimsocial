@@ -5432,3 +5432,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 html:not(.bleed-top) .app { padding-top: env(safe-area-inset-top, 0px); }
 html.bleed-top .sc-profile .pf-top { padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important; }
 html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important; }
+
+/* Stories header title 17px (was 19px); "My Stories" heading 12.5px. */
+.st-page .st-title { font-size:17px !important; }
+.st-page .st-friends-heading { font-size:12.5px !important; line-height:16px !important; }
