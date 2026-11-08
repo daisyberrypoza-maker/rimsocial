@@ -5248,3 +5248,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .post .rail-btn svg path ~ path { fill:none; }
 .post .rail-btn.repost-btn svg { fill:none; }
 .post .rail-btn.liked svg { fill:#ff3040; stroke:#ff3040; }
+
+/* Stories and Friends section headings: enforce medium weight */
+.st-page .st-head .st-h2,
+.st-page .st-head .st-h2.on {
+  font-weight: 500 !important;
+}
