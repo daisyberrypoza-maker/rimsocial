@@ -42,10 +42,9 @@ class ViewerBoundary extends Component {
 function StoryFace({ group, fallback }) {
   const preview = group?.preview;
   if (!preview?.mediaUrl) return fallback;
+  // A video with no saved frame shows the profile picture: an empty video frame looks like a blank ring on phones
   if (preview.kind === 'video') {
-    return preview.thumbUrl
-      ? <img src={mediaUrl(preview.thumbUrl)} alt="" />
-      : <video src={`${mediaUrl(preview.mediaUrl)}#t=0.1`} muted playsInline preload="metadata" />;
+    return preview.thumbUrl ? <img src={mediaUrl(preview.thumbUrl)} alt="" /> : fallback;
   }
   return <img src={mediaUrl(preview.mediaUrl)} alt="" />;
 }

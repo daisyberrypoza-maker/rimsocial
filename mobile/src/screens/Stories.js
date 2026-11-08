@@ -81,7 +81,7 @@ export default function Stories() {
           </Pressable>
           <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { search: true })} accessibilityLabel="Search"><Icon name="search" size={21} /></Pressable>
         </View>
-        <Text style={styles.title}>Stories</Text>
+        <View pointerEvents="none" style={styles.titleWrap}><Text style={styles.title}>Stories</Text></View>
         <View style={styles.right}>
           <Pressable style={styles.round} onPress={() => navigation.navigate('Activity')} accessibilityLabel="Notifications"><Icon name="bell" size={21} /></Pressable>
           <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { friends: true })} accessibilityLabel="Find friends"><Icon name="user-plus" size={21} /></Pressable>
@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
   left: { flexDirection: 'row', gap: 8 },
   right: { flexDirection: 'row', gap: 8 },
   round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
+  titleWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 17, fontWeight: '600', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
   friendsHeading: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
