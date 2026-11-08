@@ -19,6 +19,7 @@ const httpError = require('../utils/httpError');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup } = require('../services/mediaCleanup');
+const { buildSuggestionRelationshipSets } = require('../services/suggestionRelations');
 
 const PUBLIC_ATTRS = ['id', 'username', 'displayName', 'avatarUrl', 'coverUrl', 'country', 'followerCount', 'isCreator'];
 
@@ -131,11 +132,16 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const followingIds = followingRows.map((row) => row.followeeId);
     const followerIds = followerRows.map((row) => row.followerId);
-    const excludedIds = [...new Set([req.user.id, ...followingIds, ...blockedIds])];
+    const { suggestedExcludedIds, followBackIds } = buildSuggestionRelationshipSets({
+      viewerId: req.user.id,
+      followingIds,
+      followerIds,
+      blockedIds,
+    });
 
     // Recommend second-degree connections first, ranked by shared follows.
     const mutualRows = followingIds.length ? await Follow.findAll({
-      where: { followerId: { [Op.in]: followingIds }, followeeId: { [Op.notIn]: excludedIds } },
+      where: { followerId: { [Op.in]: followingIds }, followeeId: { [Op.notIn]: suggestedExcludedIds } },
       attributes: ['followeeId'], raw: true,
     }) : [];
     const mutualCounts = new Map();
@@ -151,9 +157,9 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     }).filter(Boolean);
 
     const [popular, followBackRows] = await Promise.all([
-      User.findAll({ where: { id: { [Op.notIn]: excludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
-      followerIds.length ? User.findAll({
-        where: { id: { [Op.in]: followerIds, [Op.notIn]: excludedIds } },
+      User.findAll({ where: { id: { [Op.notIn]: suggestedExcludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
+      followBackIds.length ? User.findAll({
+        where: { id: { [Op.in]: followBackIds } },
         attributes: PUBLIC_ATTRS, limit: 24,
       }) : [],
     ]);
