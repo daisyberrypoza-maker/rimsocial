@@ -54,7 +54,7 @@ export default function BottomNav() {
     <nav className={className} aria-label="Main navigation">
       <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /><span className="tab-label">Stories</span></NavLink>
       <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}<span className="tab-label">Chat</span></NavLink>
-      <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span className="tab-label">Add</span></NavLink>
+      <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
       <NavLink to="/" end replace aria-label="Rimlight"><RimlightIcon /><span className="tab-label">Rimlight</span></NavLink>
       <NavLink to="/u/me" replace aria-label="Profile"><span className="tab-avatar"><Avatar user={me || {}} size={26} /></span><span className="tab-label">Profile</span></NavLink>
     </nav>
