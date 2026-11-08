@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
+import { startWhenReady } from '../lib/playVideo.js';
 import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
@@ -159,7 +160,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     const v = videoRef.current;
     if (!v || !isVideo) return undefined;
     if (frozen) { v.pause(); return undefined; }
-    v.play().catch(() => {
+    startWhenReady(v).catch(() => {
       setMuted(true);
       v.muted = true;
       v.play().catch(() => {});
@@ -179,7 +180,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (isVideo) {
       const v = videoRef.current;
       if (!v) return;
-      if (v.paused) { v.play().catch(() => {}); setPaused(false); flashIcon('play'); }
+      if (v.paused) { startWhenReady(v).catch(() => {}); setPaused(false); flashIcon('play'); }
       else { v.pause(); setPaused(true); flashIcon('pause'); }
     } else {
       setPaused((p) => !p);
