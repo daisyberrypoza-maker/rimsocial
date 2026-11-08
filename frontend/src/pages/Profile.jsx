@@ -10,6 +10,7 @@ import { mediaUrl } from '../lib/config.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
+import { defaultCover } from '../lib/cover.js';
 import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
@@ -285,7 +286,7 @@ export default function Profile() {
         </div>
       </div>
       <header className="pf-hero">
-        <div className="pf-cover" aria-hidden="true" style={(profile.coverUrl || profile.avatarUrl) ? { backgroundImage: `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` } : undefined} />
+        <div className="pf-cover" aria-hidden="true" style={profile.coverUrl ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` } : { background: defaultCover(profile.username).css }} />
         <span className="pf-shade" aria-hidden="true" />
         <div className="pf-top">
           <button type="button" className="pf-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
