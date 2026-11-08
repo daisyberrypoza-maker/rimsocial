@@ -38,15 +38,23 @@ class ViewerBoundary extends Component {
   }
 }
 
+// If a story picture fails to load, the profile picture shows instead (never a blank ring)
+function FaceImg({ src, fallback }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (failed) return fallback;
+  return <img src={src} alt="" onError={() => setFailed(true)} />;
+}
+
 // The ring shows the latest story's picture; the profile picture only when there is no story
 function StoryFace({ group, fallback }) {
   const preview = group?.preview;
   if (!preview?.mediaUrl) return fallback;
   // A video with no saved frame shows the profile picture: an empty video frame looks like a blank ring on phones
   if (preview.kind === 'video') {
-    return preview.thumbUrl ? <img src={mediaUrl(preview.thumbUrl)} alt="" /> : fallback;
+    return preview.thumbUrl ? <FaceImg src={mediaUrl(preview.thumbUrl)} fallback={fallback} /> : fallback;
   }
-  return <img src={mediaUrl(preview.mediaUrl)} alt="" />;
+  return <FaceImg src={mediaUrl(preview.mediaUrl)} fallback={fallback} />;
 }
 
 // While a story uploads, the picture being sent shows inside the ring, which spins
