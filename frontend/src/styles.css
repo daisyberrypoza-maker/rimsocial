@@ -5439,3 +5439,6 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 
 /* Header avatar: the story ring must win over the round-button rule that removes shadows. */
 .st-page .st-avatar.has-story { box-shadow:0 0 0 2px #fff, 0 0 0 4px #a53ff5 !important; }
+
+/* "My Stories" heading at 12.5px. A more specific rule, because the section heading rule above sets 27px with !important. */
+.st-page .st-section > .st-h2.st-friends-heading { font-size:12.5px !important; line-height:16px !important; }
