@@ -5399,3 +5399,11 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .bottomnav a svg, .bottomnav svg { width:35px !important; height:35px !important; }
 .bottomnav.bottomnav-dark a.active, .bottomnav.bottomnav-dark a.active svg { color:#fff !important; stroke:#fff !important; }
 .pf-avatar-btn.has-story { border-radius:50%; box-shadow:0 0 0 3px #fff, 0 0 0 6px #a53ff5; }
+
+/* Stories: match the reference. Header icons grey, names 12px with a little more space above them,
+   the header and tab-bar avatars carry the story ring, tab icons 2px smaller. */
+.st-page .st-round { color:#5f6066 !important; }
+.st-page .st-name { font-size:12px !important; line-height:14px !important; margin-top:1.5px !important; }
+.st-page .st-handle { font-size:12px !important; line-height:14px !important; }
+.bottomnav a svg, .bottomnav svg { width:33px !important; height:33px !important; }
+.st-avatar.has-story, .tab-avatar.has-story { border-radius:50%; box-shadow:0 0 0 2px #fff, 0 0 0 4px #a53ff5; }

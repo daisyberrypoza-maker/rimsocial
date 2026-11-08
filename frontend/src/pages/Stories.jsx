@@ -71,6 +71,8 @@ export default function Stories() {
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
   const loading = false;
+  // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
+  const [friendsActive, setFriendsActive] = useState(false);
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
@@ -149,7 +151,7 @@ export default function Stories() {
     <main className="page st-page">
       <header className="st-top">
         <div className="st-left">
-          <button className="st-round st-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
+          <button className={`st-round st-avatar${myGroup ? ' has-story' : ''}`} aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
             <Avatar user={me || {}} />
           </button>
           <button className="st-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={21} /></button>
@@ -163,8 +165,8 @@ export default function Stories() {
       </header>
 
       <section className="st-section" aria-label="Friends">
-        <h2 className="st-h2 st-friends-heading">Friends <Icon name="chevron-right" size={22} /></h2>
-        <div className="st-row">
+        <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
+        <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
