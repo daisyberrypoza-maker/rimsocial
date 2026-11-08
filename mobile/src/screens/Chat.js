@@ -28,8 +28,9 @@ export default function Chat() {
   return (
     <View style={styles.page}>
       <View style={styles.head}>
+        <View style={styles.side} />
         <Text style={styles.title}>Chat</Text>
-        <View style={styles.actions}>
+        <View style={[styles.actions, styles.side, { justifyContent: 'flex-end' }]}>
           <Pressable onPress={() => navigation.navigate('Activity')} accessibilityLabel="Activity"><Icon name="bell" size={24} /></Pressable>
           <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message"><Icon name="pencil" size={24} /></Pressable>
         </View>
@@ -52,9 +53,9 @@ export default function Chat() {
               <Avatar user={item.user} size={56} />
               <View style={styles.text}>
                 <Text style={styles.name} numberOfLines={1}>{item.user.displayName || item.user.username}</Text>
-                <Text style={styles.last} numberOfLines={1}>{mine ? 'Sent: ' : ''}{item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</Text>
+                <Text style={styles.last} numberOfLines={1}>{mine ? 'Sent' : item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</Text>
               </View>
-              {item.unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{item.unread}</Text></View>}
+              {item.unread > 0 && <View style={styles.dot} />}
             </Pressable>
           );
         }}
@@ -66,18 +67,18 @@ export default function Chat() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
-  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
+  side: { width: 64 },
   actions: { flexDirection: 'row', gap: 16 },
   filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
   chip: { borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
-  chipOn: { backgroundColor: colors.text, borderColor: colors.text },
-  chipText: { color: colors.muted, fontWeight: '600' },
-  chipTextOn: { color: '#fff' },
+  chipOn: { backgroundColor: '#e8eefc', borderColor: '#e8eefc' },
+  chipText: { color: colors.text, fontWeight: '600' },
+  chipTextOn: { color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10 },
   text: { flex: 1, gap: 3 },
   name: { fontSize: 16, fontWeight: '700', color: colors.text },
   last: { fontSize: 14, color: colors.muted },
-  badge: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.unseen, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#3797f0' },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40, paddingHorizontal: 24 },
 });

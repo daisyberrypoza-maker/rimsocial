@@ -54,9 +54,9 @@ export default function Messages() {
                     <Avatar user={item.user} size={56} />
                     <span className="dm-text">
                       <strong>{item.user.displayName || item.user.username}</strong>
-                      <small>{mine ? 'Sent: ' : ''}{item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</small>
+                      <small>{mine ? 'Sent' : item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</small>
                     </span>
-                    {item.unread > 0 && <span className="dm-unread" aria-label={`${item.unread} unread`}>{item.unread}</span>}
+                    {item.unread > 0 && <span className="dm-unread" aria-label="Unread" />}
                   </Link>
                 </li>
               );

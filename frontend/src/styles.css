@@ -4035,18 +4035,18 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .dm-page { padding-bottom:calc(var(--nav-height,56px) + 8px); }
 .dm-convo { display:flex; flex-direction:column; height:100dvh; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px); }
 .dm-head { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; padding:8px 12px 12px; }
-.dm-head h1 { margin:0; font-size:22px; font-weight:800; text-align:center; }
+.dm-head h1 { margin:0; font-size:17px; font-weight:700; text-align:center; }
 .dm-page button.dm-icon, .dm-convo button.dm-icon { width:40px !important; height:40px !important; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#111 !important; display:grid; place-items:center; box-shadow:none !important; }
 .dm-filters { display:flex; gap:8px; padding:0 12px 12px; }
 .dm-page button.dm-chip { border-radius:999px !important; padding:8px 16px !important; font-size:14px !important; font-weight:600; background:#f0f0f2 !important; color:#111 !important; border:0 !important; }
-.dm-page button.dm-chip.on { background:#111 !important; color:#fff !important; }
+.dm-page button.dm-chip.on { background:#e8eefc !important; color:#111 !important; }
 .dm-list { list-style:none; margin:0; padding:0; }
 .dm-page a.dm-row, .dm-page button.dm-row { display:flex; align-items:center; gap:12px; padding:10px 14px; width:100%; box-sizing:border-box; text-decoration:none; color:#111; background:transparent; border:0; text-align:left; }
 .dm-text { display:flex; flex-direction:column; min-width:0; flex:1; }
 .dm-text strong { font-size:15px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dm-text small { font-size:14px; color:#8e8e93; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dm-row.unread .dm-text strong, .dm-row.unread .dm-text small { color:#111; font-weight:700; }
-.dm-unread { min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:#3797f0; color:#fff; font-size:12px; font-weight:700; display:grid; place-items:center; }
+.dm-unread { width:9px; height:9px; border-radius:50%; background:#3797f0; flex:none; }
 .dm-empty { text-align:center; color:#8e8e93; font-size:15px; padding:40px 24px; }
 .dm-error { color:#c62828; font-size:14px; text-align:center; margin:8px 14px; }
 .dm-to { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid #efefef; font-size:16px; }
