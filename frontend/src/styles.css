@@ -5169,7 +5169,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-head .st-h2 { margin:0; color:#b4b4bb !important; transition:color .2s ease; }
 .st-page .st-head .st-h2.on { color:#111 !important; }
 /* My Story's circle lines up with the heading's left edge */
-.st-page .st-row { margin:0 -14px !important; padding-left:14px !important; padding-right:14px !important; gap:6px !important; }
+.st-page .st-top, .st-page .st-section { padding-left:9px; padding-right:9px; }
+.st-page .st-row { margin:0 -9px !important; padding-left:9px !important; padding-right:9px !important; gap:6px !important; }
 .st-page .st-row > .st-friend:first-child { margin-left:-2px; }
 
 /* Add: Snapchat-style gallery ("Post To Story") and media editor with side tools and send buttons */
