@@ -179,7 +179,6 @@ export default function Stories() {
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
                 <span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span>
-                <span className="st-friend-badge" aria-hidden="true"><Icon name="user-plus" size={18} /></span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
