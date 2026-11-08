@@ -52,7 +52,6 @@ export default function Profile() {
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const [avatarBusy, setAvatarBusy] = useState(false);
-  const [storyOpen, setStoryOpen] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -300,10 +299,9 @@ export default function Profile() {
         </div>
         <div className="pf-id">
           <div className="pf-avatar">
-            <button type="button" className={profile.hasStory ? 'pf-avatar-btn has-story' : 'pf-avatar-btn'} aria-label={profile.hasStory ? 'View story' : profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => (profile.hasStory ? setStoryOpen(true) : setImageViewerOpen(true))}>
+            <button type="button" className={profile.hasStory ? 'pf-avatar-btn has-story' : 'pf-avatar-btn'} aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
               <Avatar user={profile} size={92} ring />
             </button>
-            {storyOpen && <StoryViewer groups={[{ user: profile }]} startIndex={0} onClose={() => setStoryOpen(false)} />}
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
