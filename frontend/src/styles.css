@@ -5229,3 +5229,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Bottom bar icons: outline when inactive, filled in the tab's active colour when active */
 .bottomnav a svg { fill:none !important; }
 .bottomnav a.active svg { fill:currentColor !important; }
+
+/* Rimlight: the progress bar sits just above the bottom bar so it is visible */
+.post > .post-seek { bottom:calc(86px + env(safe-area-inset-bottom, 0px)) !important; }
