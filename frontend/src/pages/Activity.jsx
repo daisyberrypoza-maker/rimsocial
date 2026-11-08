@@ -74,7 +74,7 @@ export default function Activity() {
       )}
     </div>
     {unread > 0 && <div className="activity-read-row"><span>{unread} new {unread === 1 ? 'activity' : 'activities'}</span><button className="ghost small" onClick={markRead}>Mark all read</button></div>}
-    {loading ? <div className="activity-state"><span className="activity-spinner" />Loading activity…</div> :
+    {loading ? <div className="activity-state"></div> :
       error ? <div className="activity-state"><p>{error}</p><button onClick={load}>Try again</button></div> :
       filtered.length === 0 ? <div className="activity-empty"><div className="activity-empty-icon"><Icon name="bell" size={30} /></div><h2>You’re all caught up</h2><p>Mentions, likes, comments, reposts and new followers will show up here.</p></div> :
       <div className="activity-list">{filtered.map((item) => {

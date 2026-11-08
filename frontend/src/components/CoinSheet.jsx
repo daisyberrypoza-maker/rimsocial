@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
+import { logError } from '../toast.js';
 
 const COIN_PACKS = [
   { id: 'ngn-80', coins: 80, price: 1100, label: 'Starter', bonus: 'Try gifting' },
@@ -25,7 +26,7 @@ export default function CoinSheet({ onClose }) {
     try {
       const data = await api('/v1/wallet/topup', { method: 'POST', body: { packId: pack.id, ...(email.trim() ? { email: email.trim() } : {}) } });
       window.location.href = data.authorizationUrl;
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setBusy(false); }
   }
 

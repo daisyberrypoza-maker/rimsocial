@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
+import { logError } from '../toast.js';
 
 const LANES = [
   { id: 'find', title: 'Find', subtitle: 'Discover real businesses and verified opportunities', action: 'Find opportunity' },
@@ -44,12 +45,12 @@ export default function BusinessHub() {
       const path = tab === 'mine' ? '/v1/business/opportunities/mine' : '/v1/business/opportunities?lane=' + encodeURIComponent(lane);
       const result = await api(path);
       setItems(result.items || []);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setLoading(false); }
   }
   async function loadProfiles() {
     try { const result = await api('/v1/business/profiles/me'); setProfiles(result.items || []); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
   }
   async function openDetail(item) {
     setSelected(item);
@@ -61,7 +62,7 @@ export default function BusinessHub() {
       setActualSale(response.opportunity.actualSalePriceMinor == null ? '' : String(response.opportunity.actualSalePriceMinor / 100));
       setActualCosts(response.opportunity.actualCostMinor == null ? '' : String(response.opportunity.actualCostMinor / 100));
       setFinancialNote('');
-    } catch (e) { toast(e.message); setSelected(null); }
+    } catch (e) { logError(e); setSelected(null); }
   }
   async function refreshDetail() {
     if (selected) await openDetail(selected);
@@ -80,7 +81,7 @@ export default function BusinessHub() {
       setShowProfile(false);
       setProfileForm({ name: '', category: '', description: '', country: user?.country || 'NG', city: '', website: '' });
       toast(result.message || 'Business profile submitted');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function createOpportunity(e) {
@@ -98,7 +99,7 @@ export default function BusinessHub() {
       toast(result.message || 'Opportunity submitted for review');
       setShowCreate(false); setTab('mine'); setLane(form.lane);
       setForm(blankOpportunity(user?.country || 'NG'));
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function sendOffer(e) {
@@ -112,25 +113,25 @@ export default function BusinessHub() {
       });
       setOfferMessage(''); toast('Offer sent. No payment has been taken.');
       await refreshDetail();
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function respondOffer(offerId, decision) {
     setBusy(true);
     try { const r = await api('/v1/business/offers/' + encodeURIComponent(offerId) + '/respond', { method: 'POST', body: { decision } }); toast(r.message); await refreshDetail(); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function withdrawOffer(offerId) {
     setBusy(true);
     try { await api('/v1/business/offers/' + encodeURIComponent(offerId) + '/withdraw', { method: 'POST', body: {} }); toast('Offer withdrawn'); await refreshDetail(); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function completeOffer(offerId) {
     setBusy(true);
     try { const r = await api('/v1/business/offers/' + encodeURIComponent(offerId) + '/complete', { method: 'POST', body: {} }); toast(r.message); await refreshDetail(); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function recordFinancials(e) {
@@ -148,7 +149,7 @@ export default function BusinessHub() {
       toast(result.message || 'Realized profit recorded');
       setFinancialNote('');
       await refreshDetail();
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function sendWorkUpdate(e) {
@@ -157,13 +158,13 @@ export default function BusinessHub() {
     try {
       const r = await api('/v1/business/opportunities/' + encodeURIComponent(selected.id) + '/updates', { method: 'POST', body: { kind: updateKind, body: updateBody, evidenceUrl: updateEvidence || null } });
       toast(r.message); setUpdateBody(''); setUpdateEvidence(''); await refreshDetail();
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function pauseOpportunity(item) {
     setBusy(true);
     try { await api('/v1/business/opportunities/' + encodeURIComponent(item.id) + '/pause', { method: 'POST', body: {} }); toast('Listing status updated'); await loadItems(); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function loadAdminQueue() {
@@ -175,7 +176,7 @@ export default function BusinessHub() {
         api('/v1/business/admin/profiles?status=pending', { headers: { 'X-Admin-Api-Key': adminKey } }),
       ]);
       setAdminItems(r.items || []); setAdminProfiles(p.items || []); setAdminOpen(true);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function reviewOpportunity(id, decision) {
@@ -184,7 +185,7 @@ export default function BusinessHub() {
       await api('/v1/business/admin/opportunities/' + encodeURIComponent(id) + '/review', { method: 'PATCH', headers: { 'X-Admin-Api-Key': adminKey }, body: { decision } });
       setAdminItems((current) => current.filter((item) => item.id !== id));
       toast('Review saved');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
   async function reviewProfile(id, decision) {
@@ -193,7 +194,7 @@ export default function BusinessHub() {
       await api('/v1/business/admin/profiles/' + encodeURIComponent(id) + '/review', { method: 'PATCH', headers: { 'X-Admin-Api-Key': adminKey }, body: { decision } });
       setAdminProfiles((current) => current.filter((item) => item.id !== id));
       toast('Business profile review saved');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setBusy(false); }
   }
 
@@ -240,7 +241,7 @@ export default function BusinessHub() {
       <p className="muted">Your listing is not publicly discoverable until an operator approves it. Prices are stored in minor units. Creating a listing does not collect or hold money.</p>
       <button disabled={busy}>{busy ? 'Submitting…' : 'Submit for review'}</button>
     </form>}
-    {loading ? <p className="muted center">Loading opportunities…</p> : items.length === 0 ? <section className="panel business-empty"><h2>{tab === 'mine' ? 'No listings yet' : 'No approved opportunities yet'}</h2><p className="muted">{tab === 'mine' ? 'Create a Find, Flip or Fix listing and track its review here.' : 'Try another workflow, or create a listing for operator review.'}</p><button onClick={() => { setForm({ ...blankOpportunity(user?.country || 'NG'), lane }); setShowCreate(true); }}>Create listing</button></section> : <section className="business-list">
+    {loading ? <p className="muted center"></p> : items.length === 0 ? <section className="panel business-empty"><h2>{tab === 'mine' ? 'No listings yet' : 'No approved opportunities yet'}</h2><p className="muted">{tab === 'mine' ? 'Create a Find, Flip or Fix listing and track its review here.' : 'Try another workflow, or create a listing for operator review.'}</p><button onClick={() => { setForm({ ...blankOpportunity(user?.country || 'NG'), lane }); setShowCreate(true); }}>Create listing</button></section> : <section className="business-list">
       {items.map((item) => <article className="panel business-card" key={item.id}>
         <div className="business-card-top"><span className={'business-lane lane-' + item.lane}>{item.lane.toUpperCase()}</span><span className={'business-status status-' + item.reviewStatus}>{item.reviewStatus === 'approved' ? item.status.replace('_', ' ') : 'review ' + item.reviewStatus}</span></div>
         <h2>{item.title}</h2><p className="muted">{item.category} · {item.city}, {item.country}</p><p className="business-description">{item.description}</p>
@@ -256,7 +257,7 @@ export default function BusinessHub() {
     {selected && <div className="sheet-backdrop business-backdrop" onClick={() => { setSelected(null); setDetail(null); }}>
       <section className="sheet business-detail" role="dialog" aria-modal="true" aria-label="Opportunity details" onClick={(e) => e.stopPropagation()}>
         <div className="business-detail-heading"><div><span className={'business-lane lane-' + selected.lane}>{selected.lane.toUpperCase()}</span><h2>{selected.title}</h2></div><button className="ghost small" onClick={() => { setSelected(null); setDetail(null); }}>Close</button></div>
-        {!detail ? <p className="muted">Loading details…</p> : <>
+        {!detail ? <p className="muted"></p> : <>
           <p>{detail.opportunity.description}</p><p className="muted">{detail.opportunity.category} · {detail.opportunity.city}, {detail.opportunity.country}</p>
           <p className="muted">Review: {detail.opportunity.reviewStatus}. Status: {detail.opportunity.status.replace('_', ' ')}. Currency: {detail.opportunity.currency}. No payment is processed in this version.</p>
           {detail.opportunity.evidenceUrl && <p><a href={detail.opportunity.evidenceUrl} target="_blank" rel="noreferrer">Open evidence link</a></p>}

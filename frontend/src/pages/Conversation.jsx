@@ -69,7 +69,7 @@ export default function Conversation() {
         <span className="dm-cname">{partner ? (partner.displayName || partner.username) : ''}</span>
       </header>
       <div className="dm-thread">
-        {messages === null ? <p className="dm-empty">Loading…</p>
+        {messages === null ? <p className="dm-empty"></p>
           : messages.length === 0 ? <p className="dm-empty">Say hello to start the conversation.</p>
           : messages.map((m) => (
             <div key={m.id} className={m.senderId === me?.id ? 'dm-bubble mine' : 'dm-bubble theirs'}>{m.body}</div>

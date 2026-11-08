@@ -8,6 +8,7 @@ import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import ActionSheet from './ActionSheet.jsx';
 import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
+import { logError } from '../toast.js';
 
 const PHOTO_MS = 5000;
 const SWIPE_PX = 60;
@@ -216,7 +217,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       updateCurrent(id, { liked: r.liked, likeCount: r.likeCount });
     } catch (e) {
       updateCurrent(id, { liked, likeCount });
-      toast(e.message);
+      logError(e);
     }
   }
 
@@ -229,7 +230,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       toast(wanted ? `Subscribed to ${creatorName}` : `Unsubscribed from ${creatorName}`);
     } catch (e) {
       setSubscribed(!wanted);
-      toast(e.message);
+      logError(e);
     }
   }
 
@@ -240,7 +241,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body } });
       toast('Sent');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   function submitReply() {
@@ -316,7 +317,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/stories/${current.id}/repost`, { method: 'POST' });
       toast('Story remixed to your public story for 24 hours');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setResharing(false); }
   }
 
@@ -325,7 +326,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/stories/${current.id}/report`, { method: 'POST', body: { reason } });
       toast('Thanks. We will review this story');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   function toggleFavorite() {
@@ -347,7 +348,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       await api(`/v1/users/${group.user.id}/block`, { method: 'POST' });
       toast(`@${group.user.username} blocked`);
       closeRef.current();
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   function shareLocation() {
@@ -378,7 +379,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       setStories(rest);
       setSi((i) => Math.min(i, Math.max(0, rest.length - 1)));
       toast('Story deleted');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   return (
@@ -444,7 +445,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
             <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
           )
         ) : (
-          <p className="sv-empty">{stories ? 'No stories' : 'Loading…'}</p>
+          <p className="sv-empty">{stories ? 'No stories' : ''}</p>
         )}
         {current?.caption && <p className="sv-caption">{current.caption}</p>}
         {flash && <span key={flash.key} className="sv-flash" aria-hidden="true"><Icon name={flash.icon} size={34} /></span>}

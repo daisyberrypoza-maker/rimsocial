@@ -3,6 +3,7 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
+import { logError } from '../toast.js';
 
 const STALE_AFTER_MS = 60 * 1000;
 const WINDOW = 1; // render the current post and one on each side
@@ -27,7 +28,7 @@ export default function Feed({ tab }) {
   const run = useCallback((reset) => {
     setLoading(true);
     return loadPage(tab, path, reset)
-      .catch((e) => toast(e.message))
+      .catch((e) => logError(e))
       .finally(() => setLoading(false));
   }, [tab, path]);
 
@@ -71,13 +72,12 @@ export default function Feed({ tab }) {
   return (
     <>
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
-        {refreshing && <div className="feed-refresh-indicator"><span className="refresh-spinner" /> Refreshing</div>}
+        {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
         {items.map((p, i) =>
           Math.abs(i - active) <= WINDOW
             ? <PostCard key={p.id} post={p} active={i === active} />
             : <div key={p.id} className="slot" />
         )}
-        {loading && <div className="slot"><p className="muted">Loading…</p></div>}
         {!items.length && !loading && (
           <div className="slot"><p className="muted">Nothing here yet. Post something or follow creators.</p></div>
         )}

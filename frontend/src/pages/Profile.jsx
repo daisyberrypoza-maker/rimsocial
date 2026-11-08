@@ -12,6 +12,7 @@ import Avatar from '../components/Avatar.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
 import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
+import { logError } from '../toast.js';
 
 export default function Profile() {
   const { username = 'me' } = useParams();
@@ -59,8 +60,8 @@ export default function Profile() {
   useEffect(() => {
     api(`/v1/users/${username}`)
       .then((user) => setProfile(username, { user, updatedAt: Date.now() }))
-      .catch((e) => toast(e.message));
-    loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => toast(e.message));
+      .catch((e) => logError(e));
+    loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => logError(e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
@@ -88,7 +89,7 @@ export default function Profile() {
     try {
       const data = await api(`/v1/users/${username}/${type}`);
       setPeople(data.items || []);
-    } catch (e) { toast(e.message); setListType(''); }
+    } catch (e) { logError(e); setListType(''); }
   }
 
   async function openBlockedPeople() {
@@ -98,7 +99,7 @@ export default function Profile() {
     try {
       const data = await api('/v1/users/blocked');
       setPeople(data.items || []);
-    } catch (e) { toast(e.message); setListType(''); }
+    } catch (e) { logError(e); setListType(''); }
   }
 
   async function unblockPerson(person) {
@@ -108,7 +109,7 @@ export default function Profile() {
       await api(`/v1/users/${person.id}/block`, { method: 'DELETE' });
       setPeople((current) => current.filter((item) => item.id !== person.id));
       toast(`@${person.username} unblocked`);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
@@ -118,7 +119,7 @@ export default function Profile() {
     try {
       const data = await api('/v1/activity');
       setActivity(data.items || []);
-    } catch (e) { toast(e.message); setListType(''); }
+    } catch (e) { logError(e); setListType(''); }
     finally { setActivityLoading(false); }
   }
 
@@ -143,7 +144,7 @@ export default function Profile() {
       setPeople((current) => current.map((item) => item.id === person.id
         ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
         : item));
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
@@ -154,7 +155,7 @@ export default function Profile() {
       const user = await api(`/v1/users/${username}`);
       setProfile(username, { user, updatedAt: Date.now() });
       await loadPage(feedKey, `/v1/users/${username}/posts`, true);
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setRefreshing(false); }
   }
 
@@ -175,7 +176,7 @@ export default function Profile() {
       const result = await api('/v1/users/me/avatar', { method: 'POST', body: form });
       setProfile(username, { user: { ...profile, avatarUrl: result.avatarUrl } });
       toast('Profile photo updated');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setAvatarBusy(false); }
   }
 
@@ -192,7 +193,7 @@ export default function Profile() {
       setProfile(username, { user: { ...profile, coverUrl: result.coverUrl } });
       setDrawerOpen(false);
       toast('Profile cover updated');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setCoverBusy(false); }
   }
 
@@ -203,7 +204,7 @@ export default function Profile() {
       setOptionsOpen(false);
       toast(`@${profile.username} blocked`);
       navigate('/explore', { replace: true });
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
   }
 
   async function toggleNotify() {
@@ -214,7 +215,7 @@ export default function Profile() {
       const r = await api(`/v1/users/${profile.id}/follow/notify`, { method: 'PUT', body: { enabled: !profile.isNotifying } });
       setProfile(username, { user: { ...profile, isNotifying: r.isNotifying } });
       toast(r.isNotifying ? 'You will be notified when they post' : 'Post notifications off');
-    } catch (err) { toast(err.message); }
+    } catch (err) { logError(err); }
     finally { setNotifyBusy(false); }
   }
 
@@ -227,7 +228,7 @@ export default function Profile() {
         : await api(`/v1/users/${profile.id}/follow`, { method: 'POST' });
       setProfile(username, { user: { ...profile, isFollowing: r.isFollowing, followerCount: r.followerCount, ...(r.isFollowing ? {} : { isNotifying: false }) } });
     } catch (err) {
-      toast(err.message);
+      logError(err);
     } finally {
       setBusy(false);
     }
@@ -240,14 +241,14 @@ export default function Profile() {
       await api(`/v1/posts/${post.id}`, { method: 'DELETE' });
       setFeed(feedKey, { items: posts.filter((p) => p.id !== post.id) });
       toast('Post deleted');
-    } catch (e) { toast(e.message); }
+    } catch (e) { logError(e); }
     finally { setDeleting(null); }
   }
 
   async function loadMore() {
     setLoadingMore(true);
     try { await loadPage(feedKey, `/v1/users/${username}/posts`); }
-    catch (e) { toast(e.message); }
+    catch (e) { logError(e); }
     finally { setLoadingMore(false); }
   }
 
@@ -259,7 +260,7 @@ export default function Profile() {
     } catch { /* share cancelled */ }
   }
 
-  if (!profile) return <div className="page profile-page"><p className="muted center">Loading…</p></div>;
+  if (!profile) return <div className="page profile-page" />;
 
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
@@ -402,7 +403,7 @@ export default function Profile() {
           </nav>}
           {listType === 'activity' ? (
             <ul className="pv-list" aria-label="Activity">
-              {activityLoading && <li className="pv-empty-row">Loading activity…</li>}
+              
               {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
               {activity.map((item) => (
                 <li className="pv-row pv-activity-row" key={item.id}>
@@ -458,7 +459,7 @@ export default function Profile() {
           {nextCursor && (
             <div className="sc-more">
               <button className="sc-pill" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? 'Loading…' : 'Load more'}
+                {loadingMore ? '' : 'Load more'}
               </button>
             </div>
           )}
@@ -482,7 +483,7 @@ export default function Profile() {
         </>
       ) : tab === 'reposts' ? (
         <>
-          {repostsLoading ? <p className="sc-empty-note">Loading reposts…</p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
+          {repostsLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
           {!repostsLoading && !reposts.length && <div className="sc-empty-grid" role="status"><strong>No reposts yet</strong></div>}
         </>
       ) : (
