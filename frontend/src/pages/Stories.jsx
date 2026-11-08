@@ -50,6 +50,8 @@ export default function Stories() {
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
+  // The row header reads "My Stories" at the start and "Friends" once the row has scrolled to the friends
+  const [friendsActive, setFriendsActive] = useState(false);
   const loading = false;
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
@@ -140,8 +142,11 @@ export default function Stories() {
       </header>
 
       <section className="st-section" aria-label="Friends">
-        <h2 className="st-h2">Friends <Icon name="chevron-right" size={18} /></h2>
-        <div className="st-row">
+        <div className="st-head">
+          <span className={`st-h2 ${friendsActive ? '' : 'on'}`}>My Stories</span>
+          <span className={`st-h2 ${friendsActive ? 'on' : ''}`}>Friends</span>
+        </div>
+        <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
@@ -151,6 +156,7 @@ export default function Stories() {
             </span>
             <span className="st-name">My Story</span>
           </button>
+          <span className="st-divider" aria-hidden="true" />
           
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
