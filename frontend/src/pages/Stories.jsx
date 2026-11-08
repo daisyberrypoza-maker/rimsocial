@@ -41,8 +41,10 @@ class ViewerBoundary extends Component {
 export default function Stories() {
   const navigate = useNavigate();
   const me = useAppStore((s) => s.user);
-  const [rail, setRail] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Show the last loaded stories straight away; the list refreshes quietly in the background
+  const storedRail = useAppStore((s) => s.storyRail);
+  const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
+  const loading = false;
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState([]);
   const [ranking, setRanking] = useState({ friends: {}, discoverOrder: [] });
@@ -62,14 +64,13 @@ export default function Stories() {
   }, [suggested]);
 
   const loadRail = useCallback(async () => {
-    setLoading(true);
     try {
       const result = await api('/v1/stories/rail');
-      setRail(result.items || []);
+      const items = result.items || [];
+      setRail(items);
+      useAppStore.getState().setStoryRail(items);
     } catch (error) {
       logError(error);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
