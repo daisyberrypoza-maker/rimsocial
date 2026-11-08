@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 // Main tabs in bottom-bar order. Swipe left for the next tab, right for the previous one.
-export const TAB_PATHS = ['/stories', '/', '/chat', '/upload', '/explore'];
+export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/u/me'];
 
 // Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
 const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';

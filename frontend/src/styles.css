@@ -5150,3 +5150,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Add friends: slides up from the bottom and covers the bottom bar */
 @keyframes friends-sheet-up { from { transform:translateY(100%); } to { transform:translateY(0); } }
 .ig-explore.friends-page { position:fixed !important; inset:0 !important; z-index:300 !important; background:#fff !important; overflow-y:auto !important; max-width:560px; margin:0 auto; padding-bottom:24px !important; animation:friends-sheet-up .32s cubic-bezier(.2,.8,.2,1) both; }
+
+/* Bottom bar: Stories, Chat, Add (centre), Rimlight, Profile, with 11px labels */
+.bottomnav a { gap:3px !important; justify-content:center; }
+.bottomnav .tab-label { font-size:11px; line-height:1; font-weight:500; }
+.bottomnav .tab-avatar { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; overflow:hidden; }
+.bottomnav .tab-avatar .avatar, .bottomnav .tab-avatar > span { width:26px !important; height:26px !important; font-size:12px; }
