@@ -5156,3 +5156,6 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .bottomnav .tab-label { font-size:11px; line-height:1; font-weight:500; }
 .bottomnav .tab-avatar { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; overflow:hidden; }
 .bottomnav .tab-avatar .avatar, .bottomnav .tab-avatar > span { width:26px !important; height:26px !important; font-size:12px; }
+
+/* Bottom bar labels: 10px, weight 400; the Add button has no label */
+.bottomnav .tab-label { font-size:10px !important; font-weight:400 !important; }
