@@ -5273,3 +5273,20 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   color:#000 !important;
   stroke:#000 !important;
 }
+
+
+/* Stories: compact display-name/username stack with a Snapchat-style Avenir font stack. */
+.st-page {
+  font-family: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.st-page .st-friend { gap: 2px !important; }
+.st-page .st-name {
+  font-size: 12px !important;
+  line-height: 14px !important;
+  font-weight: 500 !important;
+}
+.st-page .st-handle {
+  font-size: 10px !important;
+  line-height: 12px !important;
+  font-weight: 400 !important;
+}
