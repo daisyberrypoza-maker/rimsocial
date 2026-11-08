@@ -368,8 +368,8 @@ export default function PostCard({ post, active }) {
       onChange={(e) => { const v = videoRef.current; const ratio = Number(e.target.value) / 1000; setProgress(ratio); if (v && Number.isFinite(v.duration)) v.currentTime = ratio * v.duration; }} />}
     {flash && flash.kind !== 'pause' && <span key={flash.key} className="post-flash" style={{ color: flash.kind === 'heart' ? '#ff3040' : '#fff' }} aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause', heart: 'heart' }[flash.kind]} size={34} /></span>}
     {post.kind === 'video' && paused && <div className="post-paused">
-      <span className="post-paused-play" aria-hidden="true"><Icon name="play" size={56} /></span>
       <button type="button" className="post-paused-sound" onPointerDown={(e) => e.stopPropagation()} onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={32} /></button>
+      <span className="post-paused-play" aria-hidden="true"><Icon name="play" size={56} /></span>
     </div>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
