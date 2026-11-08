@@ -5426,3 +5426,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Profile: green online dot on the picture (active in the last 5 minutes), like the reference. */
 .sc-profile .pf-avatar { position:relative; }
 .sc-profile .pf-online { position:absolute; right:4px; bottom:4px; width:18px; height:18px; border-radius:50%; background:#22c55e; border:3px solid #fff; box-sizing:border-box; }
+
+/* Status bar: every page keeps clear of it, except the full-bleed pages (profile, Rimlight, LIVE)
+   which set the class bleed-top on <html> and draw behind the status bar. */
+html:not(.bleed-top) .app { padding-top: env(safe-area-inset-top, 0px); }
+html.bleed-top .sc-profile .pf-top { padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important; }
+html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important; }
