@@ -5232,3 +5232,9 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Rimlight: the progress bar sits just above the bottom bar so it is visible */
 .post > .post-seek { bottom:calc(86px + env(safe-area-inset-bottom, 0px)) !important; }
+
+/* Rimlight right-side controls: filled icons by default (liked is red, reposted is yellow) */
+.post .rail-btn svg { fill:currentColor; }
+.post .rail-btn svg path ~ path { fill:none; }
+.post .rail-btn.repost-btn svg { fill:none; }
+.post .rail-btn.liked svg { fill:#ff3040; stroke:#ff3040; }
