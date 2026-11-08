@@ -5444,3 +5444,8 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 
 /* "Stories" header title: 12.5px, weight 500. Written with the element as well, so it wins over the earlier title rules. */
 .st-page h1.st-title { font-size:14px !important; font-weight:500 !important; }
+
+/* Followers list (matches reference): blue Follow back, grey Message, more menu */
+.pv-follow.primary { background:#4f5bfa !important; color:#fff !important; }
+.pv-follow.added { background:#efefef !important; color:#111 !important; }
+.pv-more { border:0; background:none; color:#111; padding:6px; cursor:pointer; flex:none; }

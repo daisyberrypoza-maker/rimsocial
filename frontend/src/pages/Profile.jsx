@@ -450,7 +450,12 @@ export default function Profile() {
                   </button>
                   {listType === 'blocked'
                     ? <button type="button" className="pv-follow" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
-                    : <button type="button" className={person.isFollowing ? 'pv-follow added' : 'pv-follow'} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Add'}</button>}
+                    : listType === 'followers' && !person.isFollowing
+                      ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
+                      : <>
+                          <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>
+                          {listType === 'following' && <button type="button" className="pv-more" aria-label={`More options for ${person.username}`} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="more-vertical" size={18} /></button>}
+                        </>}
                 </li>
               ))}
             </ul>
