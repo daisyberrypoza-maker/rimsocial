@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   titleWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '500', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
-  friendsHeading: { fontFamily: FONT, fontSize: 12.5, lineHeight: 16, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
+  friendsHeading: { fontFamily: FONT, fontSize: 14, lineHeight: 18, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
   row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
