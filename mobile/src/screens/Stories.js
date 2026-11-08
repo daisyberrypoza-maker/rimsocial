@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
@@ -9,6 +9,9 @@ import { useAppStore } from '../store';
 import { mediaUrl } from '../config';
 import { logError } from '../lib/toast';
 import { colors, SIDE } from '../theme';
+
+// Snapchat reference: Avenir-style type where the device has it
+const FONT = Platform.OS === 'ios' ? 'Avenir Next' : undefined;
 
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
@@ -22,7 +25,6 @@ export default function Stories() {
   const storedRail = useAppStore((s) => s.storyRail);
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const pending = useAppStore((s) => s.pendingUpload);
-  const [friendsActive, setFriendsActive] = useState(false);
   const [suggested, setSuggested] = useState(storedDiscover.suggested || []);
   const [ranking, setRanking] = useState(storedDiscover.ranking || { friends: {}, discoverOrder: [] });
   const rail = storedRail.items || [];
@@ -88,19 +90,14 @@ export default function Stories() {
 
       <View style={styles.section}>
         {/* Header reads "My Stories" at the start and "Friends" once the row scrolls to the friends */}
-        <View style={styles.headRow}>
-          <Text style={[styles.h2, !friendsActive && styles.h2On]}>My Stories</Text>
-          <Text style={[styles.h2, friendsActive && styles.h2On]}>Friends</Text>
-        </View>
+        <Text style={styles.friendsHeading}>Friends <Icon name="chevron-right" size={22} color="#d9dce1" strokeWidth={3} /></Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.row}
-          onScroll={(e) => setFriendsActive(e.nativeEvent.contentOffset.x > 60)}
-          scrollEventThrottle={16}
         >
           <Pressable style={styles.friend} onPress={() => (myGroup ? openViewer(me.id) : navigation.navigate('Upload', { story: true }))} accessibilityLabel={myGroup ? 'View my story' : 'Create a story'}>
-            <StoryRing state={myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'} uploading={pending?.kind === 'story'}>
+            <StoryRing state={myGroup ? 'mine' : 'none'} uploading={pending?.kind === 'story'}>
               {pending?.kind === 'story'
                 ? <Image source={{ uri: pending.thumb }} style={styles.fill} />
                 : myGroup ? <StoryFace preview={myGroup.preview} fallbackUser={me} size={72} /> : <Avatar user={me || {}} size={64} />}
@@ -113,7 +110,7 @@ export default function Stories() {
 
           {others.map((group) => (
             <Pressable key={group.user.id} style={styles.friend} onPress={() => openViewer(group.user.id)} accessibilityLabel={`View ${nameOf(group.user)}'s story`}>
-              <StoryRing state={group.unseen ? 'unseen' : 'seen'}>
+              <StoryRing state={group.unseen ? 'unseen' : 'seen'} badge>
                 <StoryFace preview={group.preview} fallbackUser={group.user} size={72} />
               </StoryRing>
               <Text style={styles.name} numberOfLines={1}>{nameOf(group.user)}</Text>
@@ -157,14 +154,13 @@ const styles = StyleSheet.create({
   round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
-  headRow: { flexDirection: 'row', gap: 16, marginBottom: 8 },
-  h2: { fontSize: 15, fontWeight: '400', color: '#b4b4bb' },
-  h2On: { color: colors.text },
+  friendsHeading: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text, marginBottom: 10 },
+  h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
   row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
-  friend: { width: 80, alignItems: 'center' },
-  plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.unseen, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
-  name: { marginTop: 6, fontSize: 12, color: colors.text, maxWidth: 80 },
-  handle: { fontSize: 11, color: colors.muted, maxWidth: 80 },
+  friend: { width: 92, alignItems: 'center' },
+  plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  name: { fontFamily: FONT, marginTop: 0, fontSize: 16, lineHeight: 19, fontWeight: '600', letterSpacing: -0.2, color: colors.text, maxWidth: 92 },
+  handle: { fontFamily: FONT, fontSize: 14, lineHeight: 17, fontWeight: '400', color: colors.handle, maxWidth: 92 },
   empty: { paddingVertical: 16, paddingRight: SIDE },
   emptyTitle: { fontWeight: '700', color: colors.text, marginBottom: 4 },
   emptyText: { color: colors.muted, fontSize: 14 },
