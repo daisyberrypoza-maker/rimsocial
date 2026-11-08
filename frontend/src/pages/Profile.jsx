@@ -303,6 +303,7 @@ export default function Profile() {
               <Avatar user={profile} size={92} ring />
             </button>
             {storyOpen && <StoryViewer groups={[{ user: profile }]} startIndex={0} onClose={() => setStoryOpen(false)} />}
+            {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
           </div>
           <div className="pf-name-block">

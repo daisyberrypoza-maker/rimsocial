@@ -25,7 +25,7 @@ export default function Profile() {
   const me = useAppStore((s) => s.user);
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [compact, setCompact] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const key = `u:${username}`;
   const posts = useAppStore((s) => s.feeds[key]);
 
@@ -60,9 +60,10 @@ export default function Profile() {
   const name = user?.displayName || user?.username || '';
   const avatarRing = user?.hasStory ? styles.storyRing : null;
 
+  // The white header fades in between 60px and 150px of scroll, like the web app
+  const compactOpacity = Math.min(1, Math.max(0, (scrollY - 60) / (COMPACT_AFTER - 60)));
   function onScroll(e) {
-    const on = e.nativeEvent.contentOffset.y > COMPACT_AFTER;
-    if (on !== compact) setCompact(on);
+    setScrollY(e.nativeEvent.contentOffset.y);
   }
 
   const header = (
@@ -80,9 +81,12 @@ export default function Profile() {
       </View>
 
       <View style={styles.idRow}>
-        <Pressable style={avatarRing} onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }} accessibilityLabel={user?.hasStory ? 'View story' : undefined}>
-          <Avatar user={user || {}} size={92} />
-        </Pressable>
+        <View style={styles.avatarBox}>
+          <Pressable style={avatarRing} onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }} accessibilityLabel={user?.hasStory ? 'View story' : undefined}>
+            <Avatar user={user || {}} size={92} />
+          </Pressable>
+          {user?.isOnline && <View style={styles.online} accessibilityLabel="Online now" />}
+        </View>
         <View style={styles.nameBlock}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
           <Text style={styles.handle} numberOfLines={1}>{user?.username || username}</Text>
@@ -136,8 +140,8 @@ export default function Profile() {
       />
 
       {/* White header that appears once the cover has scrolled away, with the name centred */}
-      {compact && (
-        <View style={styles.compactBar} pointerEvents="box-none">
+      {compactOpacity > 0 && (
+        <View style={[styles.compactBar, { opacity: compactOpacity }]} pointerEvents={compactOpacity > 0.5 ? 'auto' : 'none'}>
           <Pressable style={styles.compactBtn} onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={22} color={colors.text} /></Pressable>
           <Text style={styles.compactName} numberOfLines={1}>{name}</Text>
           <Pressable style={styles.compactBtn} onPress={shareProfile} accessibilityLabel="Share profile"><Icon name="share" size={20} color={colors.text} /></Pressable>
@@ -171,6 +175,8 @@ const styles = StyleSheet.create({
   handle: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
   sub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   storyRing: { padding: 3, borderRadius: 999, borderWidth: 3, borderColor: colors.unseen },
+  avatarBox: { position: 'relative' },
+  online: { position: 'absolute', right: 4, bottom: 4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#22c55e', borderWidth: 3, borderColor: '#fff' },
   body: { paddingTop: 58, paddingHorizontal: 16, gap: 12 },
   bio: { fontSize: 14, color: colors.text },
   actions: { flexDirection: 'row', gap: 8 },
