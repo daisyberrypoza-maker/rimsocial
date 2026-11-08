@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
 import { playChime } from '../lib/notify.js';
+import { useAppStore } from '../store.js';
+import Avatar from './Avatar.jsx';
 
 // Icons drawn to match the reference: outline chat, sparkle, two cards, and a filled play shape.
 const ICON_PROPS = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
@@ -22,10 +24,11 @@ function RimlightIcon() {
   return <svg {...ICON_PROPS} fill="currentColor" stroke="none"><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
 }
 
-// Stories, Rimlight, Chat, Add post, Explore: Add post stays in the centre.
+// Stories, Chat, Add post (centre), Rimlight, Profile.
 export default function BottomNav() {
   // Dark on Rimlight and Following; white with dark text on LIVE.
   const { pathname } = useLocation();
+  const me = useAppStore((s) => s.user);
   const [unread, setUnread] = useState(0);
   const lastCount = useRef(null);
   // Unread chat messages: badge on the Chat tab, and a chime when the count goes up.
@@ -49,11 +52,11 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /></NavLink>
-      <NavLink to="/" replace end aria-label="Rimlight"><RimlightIcon /></NavLink>
-      <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}</NavLink>
-      <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span></NavLink>
-      <NavLink to="/explore" replace aria-label="Explore"><ExploreIcon /></NavLink>
+      <NavLink to="/stories" replace aria-label="Stories"><StoriesIcon /><span className="tab-label">Stories</span></NavLink>
+      <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}><ChatIcon />{unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}<span className="tab-label">Chat</span></NavLink>
+      <NavLink to="/upload" replace aria-label="Add post"><span className="add-btn" aria-hidden="true"><span className="add-face"><PlusIcon /></span></span><span className="tab-label">Add</span></NavLink>
+      <NavLink to="/" end replace aria-label="Rimlight"><RimlightIcon /><span className="tab-label">Rimlight</span></NavLink>
+      <NavLink to="/u/me" replace aria-label="Profile"><span className="tab-avatar"><Avatar user={me || {}} size={26} /></span><span className="tab-label">Profile</span></NavLink>
     </nav>
   );
 }
