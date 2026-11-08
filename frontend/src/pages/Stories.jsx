@@ -43,6 +43,12 @@ export default function Stories() {
   const [rail, setRail] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openAt, setOpenAt] = useState(null);
+  const [suggested, setSuggested] = useState([]);
+
+  // Discover: people you don't follow yet
+  useEffect(() => {
+    api('/v1/users/suggestions').then((d) => setSuggested(d.items || [])).catch(() => setSuggested([]));
+  }, []);
 
   const loadRail = useCallback(async () => {
     setLoading(true);
@@ -65,6 +71,13 @@ export default function Stories() {
   }
 
   const myGroup = rail.find((group) => group.user?.id === me?.id);
+
+  // A suggested person with stories opens the viewer; otherwise their profile opens
+  function openSuggested(person) {
+    const i = rail.findIndex((item) => item.user?.id === person.id);
+    if (i >= 0) setOpenAt(i);
+    else navigate('/u/' + person.username);
+  }
   const others = rail.filter((group) => group.user?.id !== me?.id);
 
   return (
@@ -114,28 +127,28 @@ export default function Stories() {
         )}
       </section>
 
-      {others.length > 0 && (
+      {suggested.filter((u) => u.id !== me?.id).length > 0 && (
         <section className="st-section" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
           <div className="st-cards">
-            {others.map((group) => (
-              <button className="st-card" key={group.user.id} onClick={() => openStories(group)} aria-label={`Open ${nameOf(group.user)}'s stories`}>
-                {group.user.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
+            {suggested.filter((u) => u.id !== me?.id).map((person) => (
+              <button className="st-card" key={person.id} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
+                {person.avatarUrl
+                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
+                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
                 <span className="st-card-shade" />
-                <span className="st-card-name">{nameOf(group.user)}{group.user.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                <span className="st-card-name">{nameOf(person)}{person.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
               </button>
             ))}
           </div>
           <div className="st-big-grid">
-            {others.map((group) => (
-              <button className="st-big" key={`big-${group.user.id}`} onClick={() => openStories(group)} aria-label={`Open ${nameOf(group.user)}'s stories`}>
-                {group.user.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(group.user.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(group.user).slice(0, 1).toUpperCase()}</span>}
+            {suggested.filter((u) => u.id !== me?.id).map((person) => (
+              <button className="st-big" key={`big-${person.id}`} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
+                {person.avatarUrl
+                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
+                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
                 <span className="st-card-shade" />
-                <span className="st-card-name">{nameOf(group.user)}</span>
+                <span className="st-card-name">{nameOf(person)}</span>
               </button>
             ))}
           </div>
