@@ -85,16 +85,29 @@ export default function App() {
 
   // Minimised or closed: stop all playback immediately
   useEffect(() => {
-    const stopMedia = () => {
-      if (document.hidden) document.querySelectorAll('video, audio').forEach((media) => media.pause());
-    };
+    const pauseAll = () => document.querySelectorAll('video, audio').forEach((media) => media.pause());
+    const stopMedia = () => { if (document.hidden) pauseAll(); };
     document.addEventListener('visibilitychange', stopMedia);
-    window.addEventListener('pagehide', stopMedia);
+    window.addEventListener('pagehide', pauseAll);
     return () => {
       document.removeEventListener('visibilitychange', stopMedia);
-      window.removeEventListener('pagehide', stopMedia);
+      window.removeEventListener('pagehide', pauseAll);
     };
   }, []);
+
+  // Only one video or audio plays at a time: starting one pauses every other
+  useEffect(() => {
+    const onPlay = (event) => {
+      document.querySelectorAll('video, audio').forEach((media) => { if (media !== event.target) media.pause(); });
+    };
+    document.addEventListener('play', onPlay, true);
+    return () => document.removeEventListener('play', onPlay, true);
+  }, []);
+
+  // Leaving a screen stops its media
+  useEffect(() => {
+    document.querySelectorAll('video, audio').forEach((media) => media.pause());
+  }, [location.pathname]);
 
   // Device connectivity: the Connection Failed screen replaces the content when the network is gone
   useEffect(() => {

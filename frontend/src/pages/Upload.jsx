@@ -50,7 +50,21 @@ export default function Upload() {
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
   const [mentionLoading, setMentionLoading] = useState(false);
   const captionRef = useRef(null);
+  const previewRef = useRef(null);
   const isVideo = Boolean(file && String(file.type).startsWith('video/'));
+
+  // The preview starts paused: tap to play or pause. It stops when replaced or left.
+  function togglePreview() {
+    const video = previewRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  }
+
+  useEffect(() => {
+    const video = previewRef.current;
+    return () => { video?.pause(); };
+  }, [preview, view]);
 
   useEffect(() => {
     if (!remixId) { setSourcePost(null); return undefined; }
@@ -219,7 +233,7 @@ export default function Upload() {
 
   return <main className="up-page up-editor">
     <div className="up-media">
-      {isVideo ? <video src={preview} autoPlay loop muted={!soundOn} playsInline /> : preview && <img src={preview} alt="Selected media" />}
+      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
     </div>
     <header className="up-editor-top">
       <button type="button" className="up-icon" onClick={() => setView('gallery')} aria-label="Back to gallery"><Icon name="x" size={28} /></button>
