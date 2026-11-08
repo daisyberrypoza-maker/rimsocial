@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import { mediaUrl, postShareUrl, videoStreamUrl } from '../lib/config.js';
+import { startWhenReady } from '../lib/playVideo.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 
@@ -24,7 +25,7 @@ function timeAgo(iso) {
 
 function playVideo(video) {
   video.muted = !feedSoundOn;
-  const attempt = video.play();
+  const attempt = startWhenReady(video);
   if (attempt && attempt.catch) attempt.catch(() => {
     video.muted = true;
     video.play().catch(() => {});
