@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Image, Pressable, FlatList, Share, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Image, Pressable, FlatList, Share, StatusBar, StyleSheet, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -23,6 +24,7 @@ export default function Profile() {
   const focused = useIsFocused();
   const username = route.params?.username || 'me';
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const me = useAppStore((s) => s.user);
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -71,9 +73,9 @@ export default function Profile() {
 
   const header = (
     <View>
-      <View style={[styles.cover, { backgroundColor: cover.mid }]}>
+      <View style={[styles.cover, { backgroundColor: cover.mid, height: COVER_H + insets.top }]}>
         {!!user?.coverUrl && <Image source={{ uri: mediaUrl(user.coverUrl) }} style={StyleSheet.absoluteFill} />}
-        <View style={styles.coverTop}>
+        <View style={[styles.coverTop, { paddingTop: insets.top + 6 }]}>
           <RoundBtn icon="arrow-left" label="Back" onPress={() => navigation.goBack()} />
           <View style={styles.coverRight}>
             <RoundBtn icon="share" label="Share profile" onPress={shareProfile} />
@@ -84,7 +86,7 @@ export default function Profile() {
         </View>
       </View>
 
-      <View style={styles.idRow}>
+      <View style={[styles.idRow, { top: COVER_H + insets.top - 46 }]}>
         <View style={styles.avatarBox}>
           <Pressable style={avatarRing} onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }} accessibilityLabel={user?.hasStory ? 'View story' : undefined}>
             <Avatar user={user || {}} size={92} />
@@ -127,6 +129,8 @@ export default function Profile() {
 
   return (
     <View style={styles.page}>
+      {/* The cover is drawn behind the status bar; its icons are white on the green */}
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <FlatList
         data={posts?.items || []}
         numColumns={3}
@@ -145,7 +149,7 @@ export default function Profile() {
 
       {/* White header that appears once the cover has scrolled away, with the name centred */}
       {compactOpacity > 0 && (
-        <View style={[styles.compactBar, { opacity: compactOpacity }]} pointerEvents={compactOpacity > 0.5 ? 'auto' : 'none'}>
+        <View style={[styles.compactBar, { opacity: compactOpacity, paddingTop: insets.top + 4, height: 56 + insets.top }]} pointerEvents={compactOpacity > 0.5 ? 'auto' : 'none'}>
           <Pressable style={styles.compactBtn} onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={22} color={colors.text} /></Pressable>
           <Text style={styles.compactName} numberOfLines={1}>{name}</Text>
           <Pressable style={styles.compactBtn} onPress={shareProfile} accessibilityLabel="Share profile"><Icon name="share" size={20} color={colors.text} /></Pressable>

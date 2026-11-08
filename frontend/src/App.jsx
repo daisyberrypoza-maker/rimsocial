@@ -52,6 +52,11 @@ export default function App() {
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
     meta.content = light ? '#ffffff' : '#171717';
+    // Android app: dark status bar icons on light pages, white on dark ones (see MainActivity)
+    window.RimStatus?.setLightBackground?.(light);
+    // Full-bleed pages draw behind the status bar; every other page keeps clear of it
+    const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/live';
+    document.documentElement.classList.toggle('bleed-top', bleed);
   }, [location.pathname]);
 
   // A fresh open of the app (not a return from minimized) starts on the default screen, Stories
