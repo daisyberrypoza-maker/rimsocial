@@ -5166,7 +5166,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page > section.st-section:first-of-type { padding-top:12px !important; }
 /* Stories: "My Stories" and "Friends" headers swap as the row scrolls; thin divider after My Story */
 .st-page .st-head { display:flex; align-items:center; gap:26px; margin:0 0 10px; }
-.st-page .st-head .st-h2 { margin:0; font-size:15px; font-weight:400; color:#b4b4bb !important; transition:color .2s ease; }
+.st-page .st-head .st-h2 { margin:0; font-size:15px; font-weight:500; color:#b4b4bb !important; transition:color .2s ease; }
 .st-page .st-head .st-h2.on { color:#111 !important; }
 /* My Story's circle lines up with the heading's left edge */
 .st-page .st-top, .st-page .st-section { padding-left:9px; padding-right:9px; }
