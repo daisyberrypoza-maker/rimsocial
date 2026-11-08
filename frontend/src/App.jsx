@@ -26,7 +26,6 @@ import Recommended from './pages/Recommended.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 import ExploreWatch from './pages/ExploreWatch.jsx';
-import ConnectionFailed from './components/ConnectionFailed.jsx';
 import EditProfile from './pages/EditProfile.jsx';
 import { useTabSwipe } from './lib/tabSwipe.js';
 
@@ -80,9 +79,9 @@ export default function App() {
   const immersive = IMMERSIVE_PATHS.includes(location.pathname) || profileWatch;
   const exploreWatch = location.pathname.startsWith('/explore/watch/');
   const showChrome = Boolean(token) && location.pathname !== '/login';
-  const offline = useAppStore((s) => s.offline);
   const setOffline = useAppStore((s) => s.setOffline);
-  useTabSwipe(navigate, location.pathname, showChrome && !offline);
+  // Moving between screens never waits on the network: screens draw from saved data
+  useTabSwipe(navigate, location.pathname, showChrome);
 
   // Minimised or closed: stop all playback immediately
   useEffect(() => {
@@ -110,7 +109,6 @@ export default function App() {
   return (
     <div className="app">
       {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
-      {showChrome && offline ? <ConnectionFailed /> : (
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -138,9 +136,9 @@ export default function App() {
         <Route path="/creator/live/:matchId" element={<RequireAuth><LiveMatchRoom /></RequireAuth>} />
         <Route path="/u/me/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route path="/u/:username/:list" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      )}
       {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && <BottomNav />}
       <Toast />
     </div>
