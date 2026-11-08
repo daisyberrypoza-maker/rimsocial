@@ -5310,3 +5310,34 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   line-height: 11px !important;
   font-weight: 400 !important;
 }
+
+
+/* Stories typography aligned to the supplied Snapchat reference. */
+.st-page .st-head .st-h2,
+.st-page .st-head .st-h2.on,
+.st-page .st-section > .st-h2 {
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 27px !important;
+  line-height: 32px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.45px !important;
+}
+.st-page .st-friend {
+  gap: 0 !important;
+}
+.st-page .st-name {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 16px !important;
+  line-height: 19px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.2px !important;
+}
+.st-page .st-handle {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 17px !important;
+  font-weight: 400 !important;
+  color: #92929a !important;
+}
