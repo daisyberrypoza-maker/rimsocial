@@ -38,6 +38,8 @@ export const useAppStore = create(
       setOffline: (offline) => set((s) => (s.offline === offline ? s : { offline })),
       storyRail: EMPTY_STORIES,
       storyCache: loadStoryCache(),   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
+      pendingUpload: null,            // not saved: { kind: 'post' | 'story', thumb, mediaKind } while an upload is running
+      setPendingUpload: (pendingUpload) => set({ pendingUpload }),
       storyRailAt: 0,                 // when the saved rail was last loaded from the server
       storyDiscover: { suggested: [], ranking: { friends: {}, discoverOrder: [] }, updatedAt: 0 },
       uploadDraft: { caption: '' },

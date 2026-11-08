@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
+import { trimVideo, POST_MAX_SECONDS } from '../lib/videoTrim.js';
+import { startUpload } from '../lib/uploader.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
@@ -21,8 +22,6 @@ export default function Upload() {
   const remixId = searchParams.get('remix');
   const draft = useAppStore((s) => s.uploadDraft);
   const setDraft = useAppStore((s) => s.setUploadDraft);
-  const setFeed = useAppStore((s) => s.setFeed);
-  const setStoryRail = useAppStore((s) => s.setStoryRail);
   const asStory = searchParams.get('story') === '1';
   const [view, setView] = useState('gallery');
   const [tab, setTab] = useState('Camera Roll');
@@ -42,7 +41,6 @@ export default function Upload() {
   const [sponsorDescription, setSponsorDescription] = useState('');
   const [sponsorCta, setSponsorCta] = useState('Shop Now');
   const [sponsorUrl, setSponsorUrl] = useState('');
-  const [busy, setBusy] = useState(false);
   const [topic, setTopic] = useState(draft.topic || '');
   const [aiLabel, setAiLabel] = useState(Boolean(draft.aiLabel));
   const [shareToStory, setShareToStory] = useState(Boolean(draft.shareToStory));
@@ -105,10 +103,6 @@ export default function Upload() {
     }
   }
 
-  function mediaFor(maxSeconds) {
-    return trimVideo(rawFile || file, maxSeconds);
-  }
-
   useEffect(() => {
     if (!file) { setPreview(''); return undefined; }
     const url = URL.createObjectURL(file);
@@ -157,53 +151,29 @@ export default function Upload() {
     link.click();
   }
 
-  // Post (toStory false) or My Story (toStory true), using the same options
-  async function publish(toStory) {
-    if (busy || trimming) return;
+  // Post (toStory false) or My Story (toStory true): checked here, then uploaded in the background
+  // while the person goes straight to Rimlight or Stories.
+  function publish(toStory) {
+    if (trimming) return;
     if (!file) return toast('Choose a photo or video first');
     if (remixId && !sourcePost) return toast('This post cannot be remixed. Choose a post whose creator allows remixing.');
-    const fd = new FormData();
-    fd.append('caption', draft.caption || '');
-    fd.append('topic', topic.trim());
-    fd.append('aiLabel', String(aiLabel));
-    fd.append('allowRemix', String(!toStory && allowRemix));
-    if (sourcePost) fd.append('sourcePostId', sourcePost.id);
-    if (!toStory) fd.append('visibility', visibility);
+    let sponsor = null;
     if (!toStory && isSponsored) {
       if (!sponsorName.trim()) return toast('Enter the sponsor or business name');
       if (!/^https?:\/\//i.test(sponsorUrl.trim())) return toast('Enter a valid sponsor destination URL');
-      fd.append('isSponsored', 'true');
-      fd.append('sponsorName', sponsorName.trim());
-      fd.append('sponsorDescription', sponsorDescription.trim());
-      fd.append('sponsorCta', sponsorCta.trim() || 'Shop Now');
-      fd.append('sponsorUrl', sponsorUrl.trim());
+      sponsor = { name: sponsorName.trim(), description: sponsorDescription.trim(), cta: sponsorCta.trim() || 'Shop Now', url: sponsorUrl.trim() };
     }
-    setBusy(true);
-    try {
-      fd.append('media', toStory ? await mediaFor(STORY_MAX_SECONDS) : file);
-      await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
-      if (!toStory && shareToStory) {
-        const storyFd = new FormData();
-        storyFd.append('media', await mediaFor(STORY_MAX_SECONDS));
-        storyFd.append('caption', (draft.caption || '').slice(0, 200));
-        try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
-        catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
-      }
-      setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
-      setTopic(''); setAiLabel(false); setShareToStory(false);
-      setFile(null);
-      setRawFile(null);
-      setSourcePost(null);
-      setSheetOpen(false);
-      if (toStory) setStoryRail({ items: [], updatedAt: 0 });
-      else {
-        setFeed('discover', { updatedAt: 0 });
-        setFeed('following', { updatedAt: 0 });
-      }
-      toast(toStory ? 'Public story posted. It disappears in 24 hours.' : visibility === 'public' ? 'Post published publicly' : 'Post saved as Only me');
-      navigate(toStory ? '/stories' : '/');
-    } catch (err) { logError(err); }
-    finally { setBusy(false); }
+    startUpload({
+      toStory, file, rawFile, caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
+      sourcePostId: sourcePost?.id, sponsor, shareToStory,
+    });
+    setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
+    setTopic(''); setAiLabel(false); setShareToStory(false);
+    setFile(null);
+    setRawFile(null);
+    setSourcePost(null);
+    setSheetOpen(false);
+    navigate(toStory ? '/stories' : '/');
   }
 
   if (view === 'gallery') {
@@ -248,8 +218,8 @@ export default function Upload() {
     </div>
     <footer className="up-bottom">
       <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
-      <button type="button" className="up-pill up-post" onClick={() => publish(false)} disabled={busy || trimming}>{busy ? 'Sharing…' : '+ Post'}</button>
-      <button type="button" className="up-pill up-story" onClick={() => publish(true)} disabled={busy || trimming}>My Story <Icon name="send" size={20} /></button>
+      <button type="button" className="up-pill up-post" onClick={() => publish(false)} disabled={trimming}>+ Post</button>
+      <button type="button" className="up-pill up-story" onClick={() => publish(true)} disabled={trimming}>My Story <Icon name="send" size={20} /></button>
     </footer>
 
     {sheetOpen && <div className="up-sheet-backdrop" role="presentation" onClick={() => setSheetOpen(false)}>
