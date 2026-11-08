@@ -19,11 +19,12 @@ export function defaultCover(seed = '') {
     hash = Math.imul(hash, 16777619);
   }
   hash >>>= 0;
-  const hue = 105 + (hash % 70);              // green to teal
-  const sat = 42 + ((hash >> 8) % 18);        // 42 to 59 percent
-  const light = 22 + ((hash >> 16) % 8);      // a little lighter or darker per person
+  // Wide spread so people look different: lime and green through teal, from light to deep
+  const hue = 85 + (hash % 95);               // 85 to 179 degrees
+  const sat = 50 + ((hash >> 8) % 25);        // 50 to 74 percent
+  const light = 30 + ((hash >> 16) % 16);     // 30 to 45 percent
   const top = hslToHex(hue, sat, light);
-  const bottom = hslToHex(hue + 10, sat + 6, light + 16);
-  const mid = hslToHex(hue + 5, sat + 3, light + 8); // solid colour for places without gradients
+  const bottom = hslToHex(hue + 14, sat + 5, light + 14);
+  const mid = hslToHex(hue + 7, sat + 2, light + 7); // solid colour for places without gradients
   return { top, bottom, mid, css: `linear-gradient(180deg, ${top} 0%, ${bottom} 100%)` };
 }
