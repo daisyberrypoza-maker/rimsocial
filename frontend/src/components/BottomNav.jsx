@@ -21,7 +21,7 @@ function PlusIcon() {
   return <svg {...ICON_PROPS}><path d="M12 5v14M5 12h14" /></svg>;
 }
 function RimlightIcon() {
-  return <svg {...ICON_PROPS} fill="currentColor" stroke="none"><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
+  return <svg {...ICON_PROPS}><path d="M7 5.6v12.8c0 .9 1 1.4 1.8.9l10-6.4a1 1 0 0 0 0-1.7l-10-6.4C8 4.2 7 4.7 7 5.6z" /></svg>;
 }
 
 // Stories, Chat, Add post (centre), Rimlight, Profile.
