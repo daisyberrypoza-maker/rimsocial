@@ -5233,6 +5233,13 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Rimlight: the progress bar sits just above the bottom bar so it is visible */
 .post > .post-seek { bottom:calc(86px + env(safe-area-inset-bottom, 0px)) !important; }
 
+/* Rimlight paused: a white play icon in the middle with the sound button just below it */
+.post .post-paused { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:6; display:flex; flex-direction:column; align-items:center; gap:14px; pointer-events:none; }
+.post .post-paused-play { display:grid; place-items:center; color:#fff; }
+.post .post-paused-sound { pointer-events:auto; display:grid; place-items:center; width:48px; height:48px; padding:0 !important; border:0 !important; border-radius:50% !important; background:transparent !important; color:#fff !important; cursor:pointer; }
+.post .post-paused svg { fill:#fff; stroke:#fff; color:#fff; filter:drop-shadow(0 1px 4px rgba(0,0,0,.55)); }
+.post .post-paused svg path ~ path { fill:none; }
+
 /* Rimlight right-side controls: filled icons by default (liked is red, reposted is yellow) */
 .post .rail-btn svg { fill:currentColor; }
 .post .rail-btn svg path ~ path { fill:none; }

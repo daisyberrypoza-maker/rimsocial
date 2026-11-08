@@ -366,7 +366,11 @@ export default function PostCard({ post, active }) {
     {post.kind === 'video' && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
       onPointerDown={() => { seekingRef.current = true; }} onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}
       onChange={(e) => { const v = videoRef.current; const ratio = Number(e.target.value) / 1000; setProgress(ratio); if (v && Number.isFinite(v.duration)) v.currentTime = ratio * v.duration; }} />}
-    {flash && <span key={flash.key} className="post-flash" aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause', heart: 'heart' }[flash.kind]} size={34} /></span>}
+    {flash && flash.kind !== 'pause' && <span key={flash.key} className="post-flash" style={{ color: flash.kind === 'heart' ? '#ff3040' : '#fff' }} aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause', heart: 'heart' }[flash.kind]} size={34} /></span>}
+    {post.kind === 'video' && paused && <div className="post-paused">
+      <span className="post-paused-play" aria-hidden="true"><Icon name="play" size={56} /></span>
+      <button type="button" className="post-paused-sound" onPointerDown={(e) => e.stopPropagation()} onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={32} /></button>
+    </div>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
     {post.isSponsored && <div className="sponsored-label">Ad</div>}
@@ -383,7 +387,6 @@ export default function PostCard({ post, active }) {
         <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
       </button>
       <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
-      {post.kind === 'video' && <button className="rail-btn" onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} /></button>}
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
     </aside>
     <div className="info">
