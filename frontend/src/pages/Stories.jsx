@@ -73,6 +73,23 @@ export default function Stories() {
   const loading = false;
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
   const [friendsActive, setFriendsActive] = useState(false);
+  // Badge on the add-friend icon: people who followed you since you last opened it
+  const [newFollows, setNewFollows] = useState(0);
+  const feedItems = useAppStore((s) => s.feeds.discover?.items || []);
+  // Sponsored posts shown first in the Discover grid, like the reference
+  const sponsored = feedItems.filter((p) => p.isSponsored).slice(0, 2);
+  useEffect(() => {
+    let seen = 0;
+    try { seen = Number(localStorage.getItem('rimsocial-follow-seen-at') || 0); } catch { /* storage unavailable */ }
+    api('/v1/activity')
+      .then((d) => setNewFollows((d.items || []).filter((i) => i.type === 'follow' && new Date(i.createdAt).getTime() > seen).length))
+      .catch(() => {});
+  }, []);
+  function openFriends() {
+    try { localStorage.setItem('rimsocial-follow-seen-at', String(Date.now())); } catch { /* storage unavailable */ }
+    setNewFollows(0);
+    navigate('/friends');
+  }
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
@@ -159,7 +176,10 @@ export default function Stories() {
         <h1 className="st-title">Stories</h1>
         <div className="st-right">
           <button className="st-round" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={21} /></button>
-          <button className="st-round" aria-label="Find friends" onClick={() => navigate('/friends')}><Icon name="user-plus" size={21} /></button>
+          <button className="st-round st-badged" aria-label={newFollows ? `Find friends, ${newFollows} new` : 'Find friends'} onClick={openFriends}>
+            <Icon name="user-plus" size={21} />
+            {newFollows > 0 && <span className="st-count">{newFollows > 99 ? '99+' : newFollows}</span>}
+          </button>
           <button className="st-round" aria-label="More" onClick={() => navigate('/activity')}><Icon name="more-vertical" size={21} /></button>
         </div>
       </header>
@@ -211,6 +231,15 @@ export default function Stories() {
             ))}
           </div>
           <div className="st-big-grid">
+            {sponsored.map((post) => (
+              <button className="st-big st-sponsor" key={`sp-${post.id}`} onClick={() => navigate('/p/' + post.id)} aria-label={`Sponsored: ${post.sponsorName || 'ad'}`}>
+                {post.thumbUrl || post.kind === 'image' ? <img className="st-card-img" src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" /> : <span className="st-card-img st-card-fallback" />}
+                <span className="st-card-shade" />
+                <span className="st-sponsored-tag">Sponsored</span>
+                <span className="st-card-name">{post.sponsorName || post.author?.username}</span>
+                <span className="st-cta">{post.sponsorCta || 'Learn more'}</span>
+              </button>
+            ))}
             {discoverList.map((person) => (
               <button className="st-big" key={`big-${person.id}`} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
                 {person.avatarUrl

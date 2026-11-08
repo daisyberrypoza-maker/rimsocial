@@ -5411,3 +5411,10 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Match the reference: the bar has no text labels, and the Stories title is medium weight at 19px. */
 .bottomnav .tab-label, .bottomnav .add-btn { display:none !important; }
 .st-page .st-title { font-size:19px !important; font-weight:500 !important; }
+
+/* Stories header badge (new followers) and sponsored tiles in Discover, like the reference. */
+.st-page .st-badged { position:relative; }
+.st-page .st-count { position:absolute; top:-2px; right:-2px; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#ff3040; color:#fff; font-size:11px; font-weight:700; line-height:18px; text-align:center; box-sizing:border-box; }
+.st-page .st-sponsored-tag { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.45); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:6px; }
+.st-page .st-sponsor .st-cta { position:absolute; left:10px; right:10px; bottom:34px; display:block; text-align:center; background:#f1f1f3; color:#111; font-size:12px; font-weight:700; padding:6px 0; border-radius:999px; }
+.st-page .st-sponsor .st-card-name { bottom:10px; }
