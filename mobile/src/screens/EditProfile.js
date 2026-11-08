@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import { api } from '../api';
+import { mediaUrl } from '../config';
 import { useAppStore } from '../store';
 import { toast, logError } from '../lib/toast';
 import { colors } from '../theme';
@@ -26,8 +27,16 @@ export default function EditProfile() {
     const fd = new FormData();
     fd.append('media', { uri: asset.uri, name: asset.fileName || 'avatar.jpg', type: asset.type || 'image/jpeg' });
     try {
+      // The chosen photo already shows above. The saved one is loaded first, then every screen that shows it is updated at once.
       const { avatarUrl } = await api('/v1/users/me/avatar', { method: 'POST', body: fd });
-      useAppStore.getState().setSession(useAppStore.getState().token, { ...me, avatarUrl });
+      await Image.prefetch(mediaUrl(avatarUrl)).catch(() => {});
+      const store = useAppStore.getState();
+      const updated = { ...(store.user || me), avatarUrl };
+      store.setSession(store.token, updated);
+      if (updated.username) {
+        store.setProfile(updated.username, { user: { ...(store.profiles[updated.username]?.user || {}), avatarUrl }, updatedAt: Date.now() });
+      }
+      store.setProfile('me', { user: { ...(store.profiles.me?.user || {}), avatarUrl }, updatedAt: Date.now() });
       toast('Profile photo updated');
     } catch (e) { logError(e); toast('Could not update the photo'); }
   }
