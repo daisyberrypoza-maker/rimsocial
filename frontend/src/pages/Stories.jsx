@@ -180,7 +180,6 @@ export default function Stories() {
             </span>
             <span className="st-name">My Story</span>
           </button>
-          <span className="st-divider" aria-hidden="true" />
           
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
