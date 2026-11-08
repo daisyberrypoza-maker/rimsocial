@@ -276,6 +276,7 @@ export default function Profile() {
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
         <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+        <div className="sc-compact-name">{profile.displayName || profile.username}</div>
         <div className="sc-compact-actions">
           <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
           {profile.isMe
@@ -284,7 +285,7 @@ export default function Profile() {
         </div>
       </div>
       <header className="pf-hero">
-        <div className="pf-cover" aria-hidden="true" style={{ backgroundImage: (profile.coverUrl || profile.avatarUrl) ? `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` : 'none' }} />
+        <div className="pf-cover" aria-hidden="true" style={(profile.coverUrl || profile.avatarUrl) ? { backgroundImage: `url(${mediaUrl(profile.coverUrl || profile.avatarUrl)})` } : undefined} />
         <span className="pf-shade" aria-hidden="true" />
         <div className="pf-top">
           <button type="button" className="pf-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
@@ -316,8 +317,8 @@ export default function Profile() {
         </div>
         {profile.isMe ? (
           <div className="pf-actions">
-            <button type="button" className="pf-btn pf-btn-on" onClick={() => navigate('/u/me/edit')}>My Account</button>
-            <button type="button" className="pf-btn" onClick={() => navigate('/u/' + profile.username)}>Public Profile</button>
+            <button type="button" className="pf-btn pf-btn-on" onClick={() => navigate('/u/me/edit')}>Edit</button>
+            <button type="button" className="pf-btn" onClick={shareProfile}>Share</button>
           </div>
         ) : (
           <div className="pf-actions">

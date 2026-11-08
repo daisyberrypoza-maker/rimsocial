@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Image, Pressable, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Image, Pressable, FlatList, Share, StyleSheet, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -11,8 +11,11 @@ import { loadPage } from '../lib/paged';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
 
-// Profile. username 'me' is the signed-in user. Followers, Following and Blocked open as pushed screens,
-// so Back returns here.
+const COVER_H = 200;
+const COMPACT_AFTER = 150; // scroll distance before the white header with the name appears
+
+// Profile, matched to the reference: green cover with round buttons, the picture and name over it.
+// On your own profile the buttons are Edit and Share. On other profiles they stay Follow and Message.
 export default function Profile() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -22,6 +25,7 @@ export default function Profile() {
   const me = useAppStore((s) => s.user);
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [compact, setCompact] = useState(false);
   const key = `u:${username}`;
   const posts = useAppStore((s) => s.feeds[key]);
 
@@ -48,54 +52,81 @@ export default function Profile() {
     finally { setBusy(false); }
   }
 
+  function shareProfile() {
+    Share.share({ message: `@${user?.username || username} on RimSocial` }).catch(logError);
+  }
+
   const isMe = user?.isMe || me?.username === username;
   const name = user?.displayName || user?.username || '';
+  const avatarRing = user?.hasStory ? styles.storyRing : null;
+
+  function onScroll(e) {
+    const on = e.nativeEvent.contentOffset.y > COMPACT_AFTER;
+    if (on !== compact) setCompact(on);
+  }
+
+  const header = (
+    <View>
+      <View style={styles.cover}>
+        <View style={styles.coverTop}>
+          <RoundBtn icon="arrow-left" label="Back" onPress={() => navigation.goBack()} />
+          <View style={styles.coverRight}>
+            <RoundBtn icon="share" label="Share profile" onPress={shareProfile} />
+            {isMe
+              ? <RoundBtn icon="settings" label="Profile settings" onPress={() => navigation.navigate('EditProfile')} />
+              : <RoundBtn icon="more-vertical" label="More options" onPress={() => {}} />}
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.idRow}>
+        <Pressable style={avatarRing} onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }} accessibilityLabel={user?.hasStory ? 'View story' : undefined}>
+          <Avatar user={user || {}} size={92} />
+        </Pressable>
+        <View style={styles.nameBlock}>
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          <Text style={styles.handle} numberOfLines={1}>{user?.username || username}</Text>
+          <Pressable onPress={() => navigation.navigate('ProfileList', { username, list: 'followers' })}>
+            <Text style={styles.sub}>{formatCount(user?.followerCount || 0)} Followers</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.body}>
+        {!!user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
+        <View style={styles.actions}>
+          {isMe ? (
+            <>
+              <Pressable style={[styles.btn, styles.btnOn]} onPress={() => navigation.navigate('EditProfile')}><Text style={styles.btnOnText}>Edit</Text></Pressable>
+              <Pressable style={styles.btn} onPress={shareProfile}><Text style={styles.btnText}>Share</Text></Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable style={[styles.btn, user?.isFollowing ? styles.btn : styles.btnOn]} onPress={toggleFollow} disabled={busy}>
+                <Text style={user?.isFollowing ? styles.btnText : styles.btnOnText}>{user?.isFollowing ? 'Added' : 'Add'}</Text>
+              </Pressable>
+              <Pressable style={styles.btn} onPress={() => navigation.navigate('Conversation', { userId: user?.id, user })}><Text style={styles.btnText}>Message</Text></Pressable>
+            </>
+          )}
+        </View>
+        <View style={styles.stats}>
+          <Stat n={user?.postCount} label="Posts" />
+          <Pressable onPress={() => navigation.navigate('ProfileList', { username, list: 'following' })}><Stat n={user?.followingCount} label="Following" /></Pressable>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.page}>
-      <View style={styles.top}>
-        {!isMe && <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={24} /></Pressable>}
-        <Text style={styles.handle}>@{user?.username || username}</Text>
-        {isMe
-          ? <Pressable onPress={() => navigation.navigate('EditProfile')} accessibilityLabel="Edit profile"><Icon name="pencil" size={22} /></Pressable>
-          : <View style={{ width: 24 }} />}
-      </View>
-
       <FlatList
         data={posts?.items || []}
         numColumns={3}
         keyExtractor={(p) => String(p.id)}
+        ListHeaderComponent={header}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         onEndReached={() => { if (posts?.nextCursor) loadPage(key, `/v1/users/${username}/posts`).catch(logError); }}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Pressable
-            style={user?.hasStory ? styles.storyRing : null}
-            onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }}
-            accessibilityLabel={user?.hasStory ? 'View story' : undefined}
-          >
-            <Avatar user={user || {}} size={84} />
-          </Pressable>
-            <Text style={styles.name}>{name}</Text>
-            {!!user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
-            <View style={styles.stats}>
-              <Stat n={user?.postCount} label="Posts" />
-              <Pressable onPress={() => navigation.navigate('ProfileList', { username, list: 'followers' })}><Stat n={user?.followerCount} label="Followers" /></Pressable>
-              <Pressable onPress={() => navigation.navigate('ProfileList', { username, list: 'following' })}><Stat n={user?.followingCount} label="Following" /></Pressable>
-            </View>
-            <View style={styles.actions}>
-              {isMe
-                ? <Pressable style={styles.btn} onPress={() => navigation.navigate('EditProfile')}><Text style={styles.btnText}>Edit profile</Text></Pressable>
-                : <>
-                    <Pressable style={[styles.btn, user?.isFollowing ? styles.btnGhost : styles.btnDark]} onPress={toggleFollow} disabled={busy}>
-                      <Text style={[styles.btnText, user?.isFollowing && styles.btnTextGhost]}>{user?.isFollowing ? 'Following' : 'Follow'}</Text>
-                    </Pressable>
-                    <Pressable style={[styles.btn, styles.btnGhost]} onPress={() => navigation.navigate('Conversation', { userId: user?.id, user })}>
-                      <Text style={styles.btnTextGhost}>Message</Text>
-                    </Pressable>
-                  </>}
-            </View>
-          </View>
-        }
         renderItem={({ item }) => (
           <Pressable style={{ width: width / 3, aspectRatio: 1 }} onPress={() => navigation.navigate('PostDetail', { postId: item.id })}>
             <Image source={{ uri: mediaUrl(item.thumbUrl || item.mediaUrl) }} style={styles.cell} />
@@ -103,7 +134,24 @@ export default function Profile() {
         )}
         ListEmptyComponent={<Text style={styles.empty}>No posts yet.</Text>}
       />
+
+      {/* White header that appears once the cover has scrolled away, with the name centred */}
+      {compact && (
+        <View style={styles.compactBar} pointerEvents="box-none">
+          <Pressable style={styles.compactBtn} onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={22} color={colors.text} /></Pressable>
+          <Text style={styles.compactName} numberOfLines={1}>{name}</Text>
+          <Pressable style={styles.compactBtn} onPress={shareProfile} accessibilityLabel="Share profile"><Icon name="share" size={20} color={colors.text} /></Pressable>
+        </View>
+      )}
     </View>
+  );
+}
+
+function RoundBtn({ icon, label, onPress }) {
+  return (
+    <Pressable style={styles.round} onPress={onPress} accessibilityLabel={label}>
+      <Icon name={icon} size={20} color="#fff" />
+    </Pressable>
   );
 }
 
@@ -112,24 +160,31 @@ function Stat({ n, label }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
-  handle: { fontSize: 17, fontWeight: '700', color: colors.text },
-  header: { alignItems: 'center', paddingHorizontal: 16, gap: 8, paddingBottom: 16 },
-  name: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 6 },
-  // Purple story ring around the avatar (web: .pf-avatar-btn.has-story)
+  page: { flex: 1, backgroundColor: colors.bg },
+  cover: { height: COVER_H, backgroundColor: '#2b8a4a' },
+  coverTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingTop: 44 },
+  coverRight: { flexDirection: 'row', gap: 10 },
+  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(20,40,25,0.55)', alignItems: 'center', justifyContent: 'center' },
+  idRow: { position: 'absolute', top: COVER_H - 46, left: 16, right: 16, flexDirection: 'row', alignItems: 'flex-end', gap: 14 },
+  nameBlock: { flex: 1, paddingBottom: 6, gap: 1 },
+  name: { fontSize: 20, fontWeight: '700', color: '#fff', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 4 },
+  handle: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
+  sub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   storyRing: { padding: 3, borderRadius: 999, borderWidth: 3, borderColor: colors.unseen },
-  bio: { fontSize: 14, color: colors.text, textAlign: 'center' },
-  stats: { flexDirection: 'row', gap: 28, marginTop: 8 },
-  stat: { alignItems: 'center' },
-  statN: { fontSize: 17, fontWeight: '700', color: colors.text },
+  body: { paddingTop: 58, paddingHorizontal: 16, gap: 12 },
+  bio: { fontSize: 14, color: colors.text },
+  actions: { flexDirection: 'row', gap: 8 },
+  btn: { flex: 1, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+  btnOn: { backgroundColor: colors.text },
+  btnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  btnOnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  stats: { flexDirection: 'row', gap: 28 },
+  stat: { alignItems: 'flex-start' },
+  statN: { fontSize: 16, fontWeight: '700', color: colors.text },
   statL: { fontSize: 12, color: colors.muted },
-  actions: { flexDirection: 'row', gap: 8, width: '100%', marginTop: 8 },
-  btn: { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center', backgroundColor: colors.surface },
-  btnDark: { backgroundColor: colors.text },
-  btnGhost: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.line },
-  btnText: { color: '#fff', fontWeight: '700' },
-  btnTextGhost: { color: colors.text, fontWeight: '700' },
   cell: { width: '100%', height: '100%', backgroundColor: colors.surface },
   empty: { textAlign: 'center', color: colors.muted, padding: 24 },
+  compactBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 96, paddingTop: 44, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: colors.line },
+  compactBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  compactName: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
 });
