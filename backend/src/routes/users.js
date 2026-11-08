@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const redis = require('../redis');
 
 // Post-notification bell state, read with SQL so the app works before migration 025 adds the column
 async function readNotify(followerId, followeeId) {
@@ -240,7 +241,8 @@ router.get('/:username', requireAuth, async (req, res, next) => {
       Follow.count({ where: { followerId: user.id } }),
       Post.count({ where: { authorId: user.id, status: 'live', isStory: true, expiresAt: { [Op.gt]: new Date() } } }),
     ]);
-    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
+    const isOnline = Boolean(await redis.get('presence:' + user.id).catch(() => null));
+    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), isOnline, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
 });
 
