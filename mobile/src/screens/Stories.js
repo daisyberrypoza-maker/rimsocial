@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
@@ -27,6 +28,26 @@ export default function Stories() {
   const pending = useAppStore((s) => s.pendingUpload);
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
   const [friendsActive, setFriendsActive] = useState(false);
+  // Badge on the add-friend icon: people who followed you since you last opened it
+  const [newFollows, setNewFollows] = useState(0);
+  const feedItems = useAppStore((s) => s.feeds.discover?.items || []);
+  // Sponsored posts first in the Discover grid, like the reference
+  const sponsored = feedItems.filter((p) => p.isSponsored).slice(0, 2);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const seen = Number((await AsyncStorage.getItem('rimsocial-follow-seen-at').catch(() => null)) || 0);
+      api('/v1/activity')
+        .then((d) => { if (alive) setNewFollows((d.items || []).filter((i) => i.type === 'follow' && new Date(i.createdAt).getTime() > seen).length); })
+        .catch(() => {});
+    })();
+    return () => { alive = false; };
+  }, []);
+  function openFriends() {
+    AsyncStorage.setItem('rimsocial-follow-seen-at', String(Date.now())).catch(() => {});
+    setNewFollows(0);
+    navigation.navigate('Explore', { friends: true });
+  }
   const [suggested, setSuggested] = useState(storedDiscover.suggested || []);
   const [ranking, setRanking] = useState(storedDiscover.ranking || { friends: {}, discoverOrder: [] });
   const rail = storedRail.items || [];
@@ -86,7 +107,10 @@ export default function Stories() {
         <View pointerEvents="none" style={styles.titleWrap}><Text style={styles.title}>Stories</Text></View>
         <View style={styles.right}>
           <Pressable style={styles.round} onPress={() => navigation.navigate('Activity')} accessibilityLabel="Notifications"><Icon name="bell" size={21} color={colors.navIcon} /></Pressable>
-          <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { friends: true })} accessibilityLabel="Find friends"><Icon name="user-plus" size={21} color={colors.navIcon} /></Pressable>
+          <Pressable style={styles.round} onPress={openFriends} accessibilityLabel={newFollows ? `Find friends, ${newFollows} new` : 'Find friends'}>
+            <Icon name="user-plus" size={21} color={colors.navIcon} />
+            {newFollows > 0 && <View style={styles.count}><Text style={styles.countText}>{newFollows > 99 ? '99+' : newFollows}</Text></View>}
+          </Pressable>
         </View>
       </View>
 
@@ -130,12 +154,32 @@ export default function Stories() {
         )}
       </View>
 
-      {discover.length > 0 && (
+      {(discover.length > 0 || sponsored.length > 0) && (
         <ScrollView contentContainerStyle={{ paddingHorizontal: SIDE, paddingBottom: 24 }}>
           <Text style={styles.h2}>Discover</Text>
-          <View style={styles.grid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
             {discover.map((person) => (
-              <Pressable key={person.id} style={styles.card} onPress={() => openSuggested(person)} accessibilityLabel={`Open ${nameOf(person)}`}>
+              <Pressable key={`row-${person.id}`} style={styles.rowCard} onPress={() => openSuggested(person)} accessibilityLabel={`Open ${nameOf(person)}`}>
+                {person.avatarUrl
+                  ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
+                  : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
+                <View style={styles.shade} />
+                <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={styles.grid}>
+            {sponsored.map((post) => (
+              <Pressable key={`sp-${post.id}`} style={styles.big} onPress={() => navigation.navigate('PostDetail', { postId: post.id })} accessibilityLabel={`Sponsored: ${post.sponsorName || 'ad'}`}>
+                <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.fill} />
+                <View style={styles.shade} />
+                <View style={styles.sponsoredTag}><Text style={styles.sponsoredText}>Sponsored</Text></View>
+                <Text style={styles.cardName} numberOfLines={2}>{post.sponsorName || post.author?.username}</Text>
+                <View style={styles.cta}><Text style={styles.ctaText}>{post.sponsorCta || 'Learn more'}</Text></View>
+              </Pressable>
+            ))}
+            {discover.map((person) => (
+              <Pressable key={`big-${person.id}`} style={styles.big} onPress={() => openSuggested(person)} accessibilityLabel={`Open ${nameOf(person)}`}>
                 {person.avatarUrl
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
@@ -173,6 +217,15 @@ const styles = StyleSheet.create({
   emptyText: { color: colors.muted, fontSize: 14 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginTop: 8 },
   card: { width: '48.5%', aspectRatio: 0.8, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface },
+  big: { width: '48.5%', aspectRatio: 0.7, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface },
+  cardRow: { gap: 6, marginTop: 8, paddingRight: SIDE },
+  rowCard: { width: 120, height: 190, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface },
+  sponsoredTag: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
+  sponsoredText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  cta: { position: 'absolute', left: 10, right: 10, bottom: 34, backgroundColor: colors.surface, borderRadius: 999, paddingVertical: 6, alignItems: 'center' },
+  ctaText: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  count: { position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.heart, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  countText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   fill: { width: '100%', height: '100%' },
   cardFallback: { alignItems: 'center', justifyContent: 'center' },
   cardInitial: { fontSize: 32, fontWeight: '700', color: colors.muted },
