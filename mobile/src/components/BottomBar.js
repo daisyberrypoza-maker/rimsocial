@@ -11,6 +11,8 @@ import { colors } from '../theme';
 // profile screens. The bar is dark on Rimlight (white active tab) and light everywhere else (black active tab).
 export default function BottomBar({ activeTab, onPress }) {
   const me = useAppStore((s) => s.user);
+  // A live story of mine in the saved rail: the profile picture carries the story ring
+  const hasStory = useAppStore((s) => (s.storyRail?.items || []).some((g) => g.user?.id === s.user?.id));
   const [unread, setUnread] = useState(0);
   const dark = activeTab === 'Rimlight';
 
@@ -55,8 +57,8 @@ export default function BottomBar({ activeTab, onPress }) {
         return (
           <Pressable key={tab.name} style={styles.item} accessibilityLabel={tab.label} onPress={() => onPress(tab.name)}>
             {tab.name === 'ProfileTab'
-              ? <Avatar user={me || {}} size={26} style={focused ? styles.avatarOn : null} />
-              : <Icon name={tab.icon} size={27} color={tint(focused)} filled={focused} strokeWidth={1.8} />}
+              ? <Avatar user={me || {}} size={26} style={hasStory ? styles.storyBorder : focused ? styles.avatarOn : null} />
+              : <Icon name={tab.icon} size={25} color={tint(focused)} filled={focused} strokeWidth={1.8} />}
             {tab.name === 'Chat' && unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text></View>}
             <Text style={[styles.label, { color: tint(focused) }]}>{tab.label}</Text>
           </Pressable>
@@ -73,6 +75,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 11 },
   addFace: { width: 44, height: 32, borderRadius: 10, backgroundColor: '#FFFC00', alignItems: 'center', justifyContent: 'center' },
   avatarOn: { borderWidth: 2, borderColor: colors.text },
+  storyBorder: { borderWidth: 2, borderColor: colors.unseen },
   badge: { position: 'absolute', top: 6, left: '56%', minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.heart, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });

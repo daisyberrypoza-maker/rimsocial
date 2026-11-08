@@ -25,6 +25,8 @@ export default function Stories() {
   const storedRail = useAppStore((s) => s.storyRail);
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const pending = useAppStore((s) => s.pendingUpload);
+  // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
+  const [friendsActive, setFriendsActive] = useState(false);
   const [suggested, setSuggested] = useState(storedDiscover.suggested || []);
   const [ranking, setRanking] = useState(storedDiscover.ranking || { friends: {}, discoverOrder: [] });
   const rail = storedRail.items || [];
@@ -77,24 +79,26 @@ export default function Stories() {
       <View style={styles.top}>
         <View style={styles.left}>
           <Pressable style={styles.round} onPress={() => me?.username && navigation.navigate('Profile', { username: me.username })} accessibilityLabel="Your profile">
-            <Avatar user={me || {}} size={40} />
+            <Avatar user={me || {}} size={40} style={myGroup ? styles.storyBorder : null} />
           </Pressable>
-          <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { search: true })} accessibilityLabel="Search"><Icon name="search" size={21} /></Pressable>
+          <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { search: true })} accessibilityLabel="Search"><Icon name="search" size={21} color={colors.navIcon} /></Pressable>
         </View>
         <View pointerEvents="none" style={styles.titleWrap}><Text style={styles.title}>Stories</Text></View>
         <View style={styles.right}>
-          <Pressable style={styles.round} onPress={() => navigation.navigate('Activity')} accessibilityLabel="Notifications"><Icon name="bell" size={21} /></Pressable>
-          <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { friends: true })} accessibilityLabel="Find friends"><Icon name="user-plus" size={21} /></Pressable>
+          <Pressable style={styles.round} onPress={() => navigation.navigate('Activity')} accessibilityLabel="Notifications"><Icon name="bell" size={21} color={colors.navIcon} /></Pressable>
+          <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { friends: true })} accessibilityLabel="Find friends"><Icon name="user-plus" size={21} color={colors.navIcon} /></Pressable>
         </View>
       </View>
 
       <View style={styles.section}>
         {/* Header reads "My Stories" at the start and "Friends" once the row scrolls to the friends */}
-        <Text style={styles.friendsHeading}>Friends <Icon name="chevron-right" size={22} color="#d9dce1" strokeWidth={3} /></Text>
+        <Text style={styles.friendsHeading}>{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} color="#d9dce1" strokeWidth={3} /></Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.row}
+          onScroll={(e) => setFriendsActive(e.nativeEvent.contentOffset.x > 60)}
+          scrollEventThrottle={16}
         >
           <Pressable style={styles.friend} onPress={() => (myGroup ? openViewer(me.id) : navigation.navigate('Upload', { story: true }))} accessibilityLabel={myGroup ? 'View my story' : 'Create a story'}>
             <StoryRing state={myGroup ? 'mine' : 'none'} uploading={pending?.kind === 'story'}>
@@ -160,8 +164,10 @@ const styles = StyleSheet.create({
   row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
   plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
-  name: { fontFamily: FONT, marginTop: 0, fontSize: 14, lineHeight: 17, fontWeight: '600', color: colors.text, maxWidth: 92 },
-  handle: { fontFamily: FONT, fontSize: 12, lineHeight: 15, fontWeight: '400', color: colors.handle, maxWidth: 92 },
+  // Name 12px, with a little space above it so it does not sit tight against the ring
+  name: { fontFamily: FONT, marginTop: 1.5, fontSize: 12, lineHeight: 14, fontWeight: '600', color: colors.text, maxWidth: 92 },
+  handle: { fontFamily: FONT, fontSize: 12, lineHeight: 14, fontWeight: '400', color: colors.handle, maxWidth: 92 },
+  storyBorder: { borderWidth: 2, borderColor: colors.unseen },
   empty: { paddingVertical: 16, paddingRight: SIDE },
   emptyTitle: { fontWeight: '700', color: colors.text, marginBottom: 4 },
   emptyText: { color: colors.muted, fontSize: 14 },

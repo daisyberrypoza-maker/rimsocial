@@ -9,6 +9,7 @@ export const colors = {
   myRing: '#1e90ff',   // My Story ring and its plus icon (web: blue)
   friendBadge: '#b624f4', // purple add-friend pill on friend rings
   handle: '#92929a',
+  navIcon: '#5f6066',  // Stories header icons (grey, like the reference)
   activeTab: '#000',  // active bottom tab on the light bar
   seen: '#d9d9de',     // story ring watched
   heart: '#ff3040',
