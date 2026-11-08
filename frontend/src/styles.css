@@ -5290,3 +5290,23 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   line-height: 12px !important;
   font-weight: 400 !important;
 }
+
+
+/* Stories: tighten the name/username stack and use Snapchat's light Avenir-style typography. */
+.st-page .st-friend {
+  gap: 0 !important;
+}
+.st-page .st-name {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 11px !important;
+  line-height: 12px !important;
+  font-weight: 400 !important;
+}
+.st-page .st-handle {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 10px !important;
+  line-height: 11px !important;
+  font-weight: 400 !important;
+}
