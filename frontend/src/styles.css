@@ -5443,4 +5443,4 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .st-page .st-section > .st-h2.st-friends-heading { font-size:12.5px !important; line-height:16px !important; }
 
 /* "Stories" header title: 12.5px, weight 500. Written with the element as well, so it wins over the earlier title rules. */
-.st-page h1.st-title { font-size:12.5px !important; font-weight:500 !important; }
+.st-page h1.st-title { font-size:14px !important; font-weight:500 !important; }
