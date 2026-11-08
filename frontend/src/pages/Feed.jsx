@@ -13,6 +13,7 @@ const WINDOW = 1; // render the current post and one on each side
 export default function Feed({ tab }) {
   const cached = useAppStore((s) => s.feeds[tab]);
   const setFeed = useAppStore((s) => s.setFeed);
+  const pending = useAppStore((s) => s.pendingUpload);
   const containerRef = useRef(null);
   const saveTimer = useRef(null);
   const scrollHideTimer = useRef(null);
@@ -71,6 +72,9 @@ export default function Feed({ tab }) {
 
   return (
     <>
+      {pending?.kind === 'post' && <span className="feed-uploading" aria-hidden="true">
+        {pending.mediaKind === 'video' ? <video src={pending.thumb} muted playsInline preload="metadata" /> : <img src={pending.thumb} alt="" />}
+      </span>}
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
         {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
         {items.map((p, i) =>

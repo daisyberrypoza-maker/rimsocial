@@ -50,6 +50,13 @@ function StoryFace({ group, fallback }) {
   return <img src={mediaUrl(preview.mediaUrl)} alt="" />;
 }
 
+// While a story uploads, the picture being sent shows inside the ring, which spins
+function PendingFace({ pending }) {
+  return pending.mediaKind === 'video'
+    ? <video src={pending.thumb} muted playsInline preload="metadata" />
+    : <img src={pending.thumb} alt="" />;
+}
+
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
@@ -59,6 +66,8 @@ export default function Stories() {
   // Everything shows from saved data at once; the server is asked again only when that data is old
   const storedRail = useAppStore((s) => s.storyRail);
   const storedRailAt = useAppStore((s) => s.storyRailAt);
+  const pending = useAppStore((s) => s.pendingUpload);
+  const uploading = pending?.kind === 'story';
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
@@ -68,6 +77,9 @@ export default function Stories() {
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
+
+  // The saved rail changes when a story finishes uploading
+  useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
 
   // Discover and ordering: people you don't follow yet, ranked Snapchat-style by the server
   useEffect(() => {
@@ -160,9 +172,9 @@ export default function Stories() {
         </div>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
-            <span className={`st-ring ${myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
+            <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
-                {myGroup ? <StoryFace group={myGroup} fallback={<Avatar user={me || {}} />} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
+                {uploading ? <PendingFace pending={pending} /> : myGroup ? <StoryFace group={myGroup} fallback={<Avatar user={me || {}} />} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
