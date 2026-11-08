@@ -13,7 +13,11 @@ export default function withTabBar(Screen, activeTab) {
         <View style={{ flex: 1 }}><Screen {...props} /></View>
         <BottomBar
           activeTab={activeTab}
-          onPress={(name) => (name === 'Add' ? navigation.navigate('Upload') : navigation.navigate('Main', { screen: name }))}
+          onPress={(name) => {
+            if (name === 'Add') navigation.navigate('Upload');
+            else if (name === 'Explore') navigation.navigate('Explore');
+            else navigation.navigate('Main', { screen: name });
+          }}
         />
       </View>
     );

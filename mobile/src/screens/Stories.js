@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   right: { flexDirection: 'row', gap: 8 },
   round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   titleWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 17, fontWeight: '600', color: colors.text },
+  title: { fontSize: 19, fontWeight: '500', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
   friendsHeading: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },

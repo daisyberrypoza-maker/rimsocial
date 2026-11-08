@@ -16,7 +16,7 @@ export default function MainTabs() {
       tabBar={({ state, navigation }) => (
         <BottomBar
           activeTab={state.routes[state.index].name}
-          onPress={(name) => (name === 'Add' ? navigation.navigate('Upload') : navigation.navigate(name))}
+          onPress={(name) => navigation.navigate(name === 'Add' ? 'Upload' : name === 'Explore' ? 'Explore' : name)}
         />
       )}
       screenOptions={{ headerShown: false }}

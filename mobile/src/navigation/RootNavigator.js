@@ -37,7 +37,7 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="Conversation" component={Conversation} />
       <Stack.Screen name="NewMessage" component={NewMessage} />
-      <Stack.Screen name="Explore" component={withTabBar(Explore, 'Stories')} />
+      <Stack.Screen name="Explore" component={withTabBar(Explore, 'Explore')} />
       <Stack.Screen name="Activity" component={withTabBar(Activity, 'Stories')} />
       <Stack.Screen name="PostDetail" component={withTabBar(PostDetail, 'Rimlight')} />
     </Stack.Navigator>

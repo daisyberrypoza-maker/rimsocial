@@ -85,3 +85,8 @@ list of features not yet ported are in `mobile/README.md`. Every web fix to a sc
 - A profile picture with a live story shows a purple ring. Tapping it opens the story viewer, not the picture.
 - Friend rings on Stories have no add-friend pill: everyone in that row is already followed.
 - Dark bar (Rimlight): the active tab is white. Light bar: the active tab is black.
+
+### Bottom bar (matches the reference)
+- Five icons, no text labels: Explore (map pin), Chat (with unread badge), Add (camera), Stories (friends), Rimlight (play).
+- The active icon is filled. Light bar: black. Dark bar (Rimlight): white.
+- Profile opens from the avatar in the Stories header, not from the bar.
