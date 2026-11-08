@@ -110,7 +110,7 @@ export default function Stories() {
 
           {others.map((group) => (
             <Pressable key={group.user.id} style={styles.friend} onPress={() => openViewer(group.user.id)} accessibilityLabel={`View ${nameOf(group.user)}'s story`}>
-              <StoryRing state={group.unseen ? 'unseen' : 'seen'} badge>
+              <StoryRing state={group.unseen ? 'unseen' : 'seen'}>
                 <StoryFace preview={group.preview} fallbackUser={group.user} size={72} />
               </StoryRing>
               <Text style={styles.name} numberOfLines={1}>{nameOf(group.user)}</Text>
@@ -155,13 +155,13 @@ const styles = StyleSheet.create({
   titleWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 17, fontWeight: '600', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
-  friendsHeading: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text, marginBottom: 10 },
+  friendsHeading: { fontFamily: FONT, fontSize: 22, lineHeight: 26, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
   row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
   plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
-  name: { fontFamily: FONT, marginTop: 0, fontSize: 16, lineHeight: 19, fontWeight: '600', letterSpacing: -0.2, color: colors.text, maxWidth: 92 },
-  handle: { fontFamily: FONT, fontSize: 14, lineHeight: 17, fontWeight: '400', color: colors.handle, maxWidth: 92 },
+  name: { fontFamily: FONT, marginTop: 0, fontSize: 14, lineHeight: 17, fontWeight: '600', color: colors.text, maxWidth: 92 },
+  handle: { fontFamily: FONT, fontSize: 12, lineHeight: 15, fontWeight: '400', color: colors.handle, maxWidth: 92 },
   empty: { paddingVertical: 16, paddingRight: SIDE },
   emptyTitle: { fontWeight: '700', color: colors.text, marginBottom: 4 },
   emptyText: { color: colors.muted, fontSize: 14 },

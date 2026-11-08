@@ -68,7 +68,13 @@ export default function Profile() {
         onEndReached={() => { if (posts?.nextCursor) loadPage(key, `/v1/users/${username}/posts`).catch(logError); }}
         ListHeaderComponent={
           <View style={styles.header}>
+            <Pressable
+            style={user?.hasStory ? styles.storyRing : null}
+            onPress={() => { if (user?.hasStory) navigation.navigate('StoryViewer', { startUserId: user.id, user }); }}
+            accessibilityLabel={user?.hasStory ? 'View story' : undefined}
+          >
             <Avatar user={user || {}} size={84} />
+          </Pressable>
             <Text style={styles.name}>{name}</Text>
             {!!user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
             <View style={styles.stats}>
@@ -111,6 +117,8 @@ const styles = StyleSheet.create({
   handle: { fontSize: 17, fontWeight: '700', color: colors.text },
   header: { alignItems: 'center', paddingHorizontal: 16, gap: 8, paddingBottom: 16 },
   name: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 6 },
+  // Purple story ring around the avatar (web: .pf-avatar-btn.has-story)
+  storyRing: { padding: 3, borderRadius: 999, borderWidth: 3, borderColor: colors.unseen },
   bio: { fontSize: 14, color: colors.text, textAlign: 'center' },
   stats: { flexDirection: 'row', gap: 28, marginTop: 8 },
   stat: { alignItems: 'center' },

@@ -234,12 +234,13 @@ router.get('/:username', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
     if (!user) throw httpError(404, 'User not found');
     await assertNotBlocked(req.user.id, user.id);
-    const [postCount, follow, followingCount] = await Promise.all([
+    const [postCount, follow, followingCount, storyCount] = await Promise.all([
       Post.count({ where: { authorId: user.id, status: 'live', isStory: false } }),
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
       Follow.count({ where: { followerId: user.id } }),
+      Post.count({ where: { authorId: user.id, status: 'live', isStory: true, expiresAt: { [Op.gt]: new Date() } } }),
     ]);
-    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id });
+    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
 });
 

@@ -15,11 +15,13 @@ const PHOTO_MS = 5000;
 // Full-screen story viewer: tap right for next, left for previous, the story stops when this screen loses focus.
 export default function StoryViewer() {
   const navigation = useNavigation();
-  const { startUserId } = useRoute().params;
+  const { startUserId, user: passedUser } = useRoute().params;
   const focused = useIsFocused();
   const { width, height } = useWindowDimensions();
   const rail = useAppStore((s) => s.storyRail.items || []);
-  const groups = rail.filter((g) => g.user);
+  const railGroups = rail.filter((g) => g.user);
+  // Opened from a profile: a person outside the rail still plays their own stories
+  const groups = passedUser && !railGroups.some((g) => g.user.id === startUserId) ? [{ user: passedUser }] : railGroups;
   const [groupIndex, setGroupIndex] = useState(() => Math.max(0, groups.findIndex((g) => g.user.id === startUserId)));
   const [stories, setStories] = useState([]);
   const [storyIndex, setStoryIndex] = useState(0);

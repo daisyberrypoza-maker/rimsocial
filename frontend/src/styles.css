@@ -5389,3 +5389,13 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
   border:2px solid #fff;
   box-sizing:content-box;
 }
+
+/* Stories and bottom bar fixes: smaller Friends heading and names, no add-friend pill on rail rings
+   (rail friends are already followed), larger tab icons (+3px), white active tab on the dark bar,
+   and a story ring around profile pictures that have a live story. */
+.st-page .st-friends-heading { font-size:22px !important; line-height:26px !important; }
+.st-page .st-name { font-size:14px !important; line-height:17px !important; }
+.st-page .st-handle { font-size:12px !important; line-height:15px !important; }
+.bottomnav a svg, .bottomnav svg { width:35px !important; height:35px !important; }
+.bottomnav.bottomnav-dark a.active, .bottomnav.bottomnav-dark a.active svg { color:#fff !important; stroke:#fff !important; }
+.pf-avatar-btn.has-story { border-radius:50%; box-shadow:0 0 0 3px #fff, 0 0 0 6px #a53ff5; }
