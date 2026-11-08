@@ -38,6 +38,8 @@ export const useAppStore = create(
       setOffline: (offline) => set((s) => (s.offline === offline ? s : { offline })),
       storyRail: EMPTY_STORIES,
       storyCache: loadStoryCache(),   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
+      storyRailAt: 0,                 // when the saved rail was last loaded from the server
+      storyDiscover: { suggested: [], ranking: { friends: {}, discoverOrder: [] }, updatedAt: 0 },
       uploadDraft: { caption: '' },
 
       setSession: (token, user) => set({ token, user }),
@@ -46,6 +48,7 @@ export const useAppStore = create(
         set({
           token: null, user: null, gifts: [], coinBalance: 0, feeds: {}, profiles: {},
           storyRail: EMPTY_STORIES, storyCache: {}, lastPath: '/',
+          storyRailAt: 0, storyDiscover: { suggested: [], ranking: { friends: {}, discoverOrder: [] }, updatedAt: 0 },
         });
         saveStoryCache({});
       },
@@ -58,7 +61,8 @@ export const useAppStore = create(
       },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
-      setStoryRail: (storyRail) => set({ storyRail }),
+      setStoryRail: (storyRail) => set({ storyRail, storyRailAt: Date.now() }),
+      setStoryDiscover: (storyDiscover) => set({ storyDiscover }),
       setStoryCache: (userId, entry) => set((s) => {
         const next = { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, STORY_STORE_ITEMS), updatedAt: Date.now() } };
         const keys = Object.keys(next);
@@ -79,6 +83,8 @@ export const useAppStore = create(
         lastPath: s.lastPath,
         profiles: s.profiles,
         storyRail: s.storyRail,
+        storyRailAt: s.storyRailAt,
+        storyDiscover: s.storyDiscover,
         uploadDraft: s.uploadDraft,
         feeds: Object.fromEntries(
           Object.entries(s.feeds).map(([key, f]) => {
