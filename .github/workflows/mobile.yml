@@ -1,0 +1,37 @@
+name: Check React Native app
+
+# Bundles the React Native app (mobile/) for Android on every push to main, so a broken
+# import or a missing file shows up here instead of on the phone.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Bundle the Android app
+        working-directory: mobile
+        run: |
+          npx --yes @react-native-community/cli@13 bundle \
+            --platform android --dev false \
+            --entry-file index.js \
+            --bundle-output /tmp/rimsocial.android.bundle \
+            --assets-dest /tmp/rimsocial-assets
