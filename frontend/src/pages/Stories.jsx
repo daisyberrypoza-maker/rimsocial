@@ -38,30 +38,49 @@ class ViewerBoundary extends Component {
   }
 }
 
+const RAIL_FRESH_MS = 30 * 1000;
+const DISCOVER_FRESH_MS = 10 * 60 * 1000;
+
 export default function Stories() {
   const navigate = useNavigate();
   const me = useAppStore((s) => s.user);
-  // Show the last loaded stories straight away; the list refreshes quietly in the background
+  // Everything shows from saved data at once; the server is asked again only when that data is old
   const storedRail = useAppStore((s) => s.storyRail);
+  const storedRailAt = useAppStore((s) => s.storyRailAt);
+  const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
+  const [loaded, setLoaded] = useState(() => storedRailAt > 0);
   const loading = false;
   const [openAt, setOpenAt] = useState(null);
-  const [suggested, setSuggested] = useState([]);
-  const [ranking, setRanking] = useState({ friends: {}, discoverOrder: [] });
+  const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
+  const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
-  // Discover: people you don't follow yet
+  // Discover and ordering: people you don't follow yet, ranked Snapchat-style by the server
   useEffect(() => {
-    api('/v1/users/suggestions').then((d) => setSuggested(d.items || [])).catch(() => setSuggested([]));
+    const saved = useAppStore.getState().storyDiscover;
+    if (Date.now() - (saved?.updatedAt || 0) < DISCOVER_FRESH_MS) return undefined;
+    let current = true;
+    (async () => {
+      try {
+        const items = (await api('/v1/users/suggestions')).items || [];
+        let ranked = saved?.ranking || { friends: {}, discoverOrder: [] };
+        const ids = items.map((u) => u.id).slice(0, 60).join(',');
+        if (ids) {
+          try {
+            const r = await api(`/v1/stories/ranking?discover=${encodeURIComponent(ids)}`);
+            ranked = { friends: r.friends || {}, discoverOrder: r.discoverOrder || [] };
+          } catch (error) { logError(error); }
+        }
+        if (!current) return;
+        setSuggested(items);
+        setRanking(ranked);
+        useAppStore.getState().setStoryDiscover({ suggested: items, ranking: ranked, updatedAt: Date.now() });
+      } catch (error) {
+        logError(error);
+      }
+    })();
+    return () => { current = false; };
   }, []);
-
-  // Snapchat-style ordering from the server: friends by interaction and recency, discover by behaviour and variety
-  useEffect(() => {
-    const ids = suggested.map((u) => u.id).slice(0, 60).join(',');
-    if (!ids) return;
-    api(`/v1/stories/ranking?discover=${encodeURIComponent(ids)}`)
-      .then((r) => setRanking({ friends: r.friends || {}, discoverOrder: r.discoverOrder || [] }))
-      .catch(() => {});
-  }, [suggested]);
 
   const loadRail = useCallback(async () => {
     try {
@@ -71,10 +90,16 @@ export default function Stories() {
       useAppStore.getState().setStoryRail(items);
     } catch (error) {
       logError(error);
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
-  useEffect(() => { loadRail(); }, [loadRail]);
+  // Reopening the page reuses the saved rail; it is requested again only when it is old
+  useEffect(() => {
+    if (Date.now() - (useAppStore.getState().storyRailAt || 0) < RAIL_FRESH_MS) { setLoaded(true); return; }
+    loadRail();
+  }, [loadRail]);
 
   // Every story opens in the shared StoryViewer, so photos, videos and controls behave the same everywhere.
   function openStories(group) {
@@ -135,7 +160,7 @@ export default function Stories() {
             </button>
           ))}
         </div>
-        {!loading && others.length === 0 && !myGroup && (
+        {!loading && loaded && others.length === 0 && !myGroup && (
           <div className="st-empty">
             <strong>No stories yet</strong>
             <p>Share a photo or video and your friends can see it for 24 hours.</p>
