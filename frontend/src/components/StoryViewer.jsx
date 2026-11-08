@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
@@ -59,6 +59,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const tapRef = useRef({ time: 0, middle: false });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // Closing the viewer stops its video at once (a removed video can otherwise keep playing sound)
+  useLayoutEffect(() => () => { videoRef.current?.pause(); }, []);
 
   const group = groups[gi] || { user: {} };
   const creatorName = group.user?.displayName || group.user?.username;

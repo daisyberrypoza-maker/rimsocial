@@ -182,6 +182,12 @@ export default function PostCard({ post, active }) {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
+  // Leaving Rimlight: stop this video at once (a removed video can otherwise keep playing sound)
+  useEffect(() => {
+    const video = videoRef.current;
+    return () => { video?.pause(); };
+  }, []);
+
   function toggleSound() {
     feedSoundOn = !feedSoundOn;
     setSoundOn(feedSoundOn);
