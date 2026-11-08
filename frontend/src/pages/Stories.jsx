@@ -44,11 +44,21 @@ export default function Stories() {
   const [loading, setLoading] = useState(true);
   const [openAt, setOpenAt] = useState(null);
   const [suggested, setSuggested] = useState([]);
+  const [ranking, setRanking] = useState({ friends: {}, discoverOrder: [] });
 
   // Discover: people you don't follow yet
   useEffect(() => {
     api('/v1/users/suggestions').then((d) => setSuggested(d.items || [])).catch(() => setSuggested([]));
   }, []);
+
+  // Snapchat-style ordering from the server: friends by interaction and recency, discover by behaviour and variety
+  useEffect(() => {
+    const ids = suggested.map((u) => u.id).slice(0, 60).join(',');
+    if (!ids) return;
+    api(`/v1/stories/ranking?discover=${encodeURIComponent(ids)}`)
+      .then((r) => setRanking({ friends: r.friends || {}, discoverOrder: r.discoverOrder || [] }))
+      .catch(() => {});
+  }, [suggested]);
 
   const loadRail = useCallback(async () => {
     setLoading(true);
@@ -79,6 +89,11 @@ export default function Stories() {
     else navigate('/u/' + person.username);
   }
   const others = rail.filter((group) => group.user?.id !== me?.id);
+  const orderedOthers = [...others].sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
+  const byId = new Map(suggested.map((u) => [u.id, u]));
+  const discoverList = (ranking.discoverOrder.length
+    ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean)
+    : suggested).filter((u) => u.id !== me?.id);
 
   return (
     <main className="page st-page">
@@ -110,7 +125,7 @@ export default function Stories() {
             <span className="st-name">My Story</span>
           </button>
           {loading && <p className="st-state">Loading stories…</p>}
-          {!loading && others.map((group) => (
+          {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}><span className="st-face"><Avatar user={group.user} /></span></span>
               <span className="st-name">{nameOf(group.user)}</span>
@@ -127,11 +142,11 @@ export default function Stories() {
         )}
       </section>
 
-      {suggested.filter((u) => u.id !== me?.id).length > 0 && (
+      {discoverList.length > 0 && (
         <section className="st-section" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
           <div className="st-cards">
-            {suggested.filter((u) => u.id !== me?.id).map((person) => (
+            {discoverList.map((person) => (
               <button className="st-card" key={person.id} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
                 {person.avatarUrl
                   ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
@@ -142,7 +157,7 @@ export default function Stories() {
             ))}
           </div>
           <div className="st-big-grid">
-            {suggested.filter((u) => u.id !== me?.id).map((person) => (
+            {discoverList.map((person) => (
               <button className="st-big" key={`big-${person.id}`} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
                 {person.avatarUrl
                   ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />

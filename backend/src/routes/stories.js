@@ -7,6 +7,8 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
+const ranking = require('../services/ranking');
+const { User: UserModel } = require('../db');
 const { assertNotBlocked } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
@@ -176,6 +178,27 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
       console.error('Removed story media cleanup deferred:', cleanupError.message);
     }
     res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+// GET /v1/stories/ranking?discover=id1,id2  -> scores for Friends (followed creators) and the given Discover people
+router.get('/ranking', requireAuth, async (req, res, next) => {
+  try {
+    const followed = await Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true });
+    const friendIds = followed.map((row) => row.followeeId).slice(0, 500);
+    const discoverIds = String(req.query.discover || '').split(',').filter(Boolean).slice(0, 60);
+    const [friends, people] = await Promise.all([
+      ranking.friendScores(req.user.id, friendIds),
+      discoverIds.length ? UserModel.findAll({ where: { id: discoverIds }, attributes: ['id', 'country', 'isCreator'], raw: true }) : [],
+    ]);
+    const viewer = { id: req.user.id, country: req.user.country };
+    const discover = await ranking.discoverScores(viewer, people);
+    // Keep the order the client sent (mutual connections first) as a small tie-breaker
+    discoverIds.forEach((id, index) => { if (id in discover) discover[id] += (discoverIds.length - index) * 0.01; });
+    res.json({ friends, discover, discoverOrder: ranking.varied(
+      [...discoverIds].filter((id) => id in discover).sort((a, b) => discover[b] - discover[a]),
+      new Map(people.map((p) => [p.id, p.country])),
+    ) });
   } catch (e) { next(e); }
 });
 
