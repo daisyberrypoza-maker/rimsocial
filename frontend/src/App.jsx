@@ -104,10 +104,8 @@ export default function App() {
     return () => document.removeEventListener('play', onPlay, true);
   }, []);
 
-  // Leaving a screen stops its media
-  useEffect(() => {
-    document.querySelectorAll('video, audio').forEach((media) => media.pause());
-  }, [location.pathname]);
+  // Feed cards manage their own active playback. Do not pause all media on route changes:
+  // that can pause a newly mounted Rimlight video immediately after it starts.
 
   // Device connectivity: the Connection Failed screen replaces the content when the network is gone
   useEffect(() => {
