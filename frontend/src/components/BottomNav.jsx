@@ -41,6 +41,7 @@ export default function BottomNav() {
       <NavLink to="/upload" replace aria-label="Add post"><Icon name="camera" /></NavLink>
       <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
       <NavLink to="/" end replace aria-label="Rimlight"><Icon name="play" /></NavLink>
+      <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
     </nav>
   );
 }
