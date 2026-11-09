@@ -23,8 +23,8 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Stories" component={Stories} />
       <Tab.Screen name="Chat" component={Chat} />
-      <Tab.Screen name="Rimlight" component={Rimlight} />
       <Tab.Screen name="Search" component={Discover} />
+      <Tab.Screen name="Rimlight" component={Rimlight} />
     </Tab.Navigator>
   );
 }
