@@ -84,7 +84,7 @@ export default function Activity({ onBack }) {
               <Icon name="arrow-left" size={22} color={INK} />
             </Pressable>
           )}
-          <Text style={styles.title}>Activity</Text>
+          <Text style={styles.title}>Notifications</Text>
         </View>
         <Pressable onPress={load} accessibilityLabel="Refresh activity" style={styles.refresh}>
           <Icon name="refresh" size={19} color={INK} />
@@ -120,7 +120,7 @@ export default function Activity({ onBack }) {
         <View style={styles.empty}>
           <View style={styles.emptyIcon}><Icon name="bell" size={30} color={BRAND} /></View>
           <Text style={styles.emptyTitle}>You’re all caught up</Text>
-          <Text style={styles.emptyText}>Mentions, likes, comments, reposts and new followers will show up here.</Text>
+          <Text style={styles.emptyText}>New notifications will appear here.</Text>
         </View>
       )}
       renderItem={({ item }) => {

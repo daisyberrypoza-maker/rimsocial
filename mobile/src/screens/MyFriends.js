@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, SectionList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -23,6 +23,7 @@ export default function MyFriends() {
   const me = useAppStore((s) => s.user);
   const [people, setPeople] = useState(null);
   const [query, setQuery] = useState('');
+  const listRef = useRef(null);
 
   useEffect(() => {
     if (!me?.username) return;
@@ -50,7 +51,10 @@ export default function MyFriends() {
         <Search size={20} color={colors.muted} />
         <TextInput style={styles.input} placeholder="Find friends" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} autoCapitalize="none" />
       </View>
+      <View style={styles.body}>
       <SectionList
+        ref={listRef}
+        style={{ flex: 1 }}
         sections={sections}
         keyExtractor={(p) => String(p.id)}
         stickySectionHeadersEnabled={false}
@@ -67,6 +71,14 @@ export default function MyFriends() {
         ListEmptyComponent={<Text style={styles.empty}>{people === null ? '' : 'No friends yet. Find people on Add Friends.'}</Text>}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       />
+      <View style={styles.index} pointerEvents="box-none">
+        {sections.map((section, sectionIndex) => (
+          <Pressable key={section.title} onPress={() => listRef.current?.scrollToLocation({ sectionIndex, itemIndex: 0, animated: false, viewOffset: 0 })} hitSlop={4}>
+            <Text style={styles.indexLetter}>{section.title}</Text>
+          </Pressable>
+        ))}
+      </View>
+      </View>
     </View>
   );
 }
@@ -84,4 +96,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600', color: colors.text },
   handle: { fontSize: 13, color: colors.muted, marginTop: 1 },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40, paddingHorizontal: 24 },
+  body: { flex: 1, flexDirection: 'row' },
+  index: { position: 'absolute', right: 4, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  indexLetter: { fontSize: 12, color: colors.text, paddingVertical: 1.5, fontWeight: '600' },
 });

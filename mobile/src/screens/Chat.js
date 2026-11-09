@@ -4,7 +4,7 @@ import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl } from 'rea
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
-import { MoreHorizontal, SquarePen, Search, Bell, UserPlus, Camera, ChevronRight } from 'lucide-react-native';
+import { MoreHorizontal, SquarePen, Search, Bell, UserPlus, Camera, ChevronRight, Plus } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
@@ -28,6 +28,10 @@ export default function Chat() {
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
+  const [newRequests, setNewRequests] = useState(0);
+  useEffect(() => {
+    api('/v1/users/suggestions').then((d) => setNewRequests((d.followBack || []).filter((p) => !p.isFollowing).length)).catch(() => {});
+  }, []);
   const [pulling, setPulling] = useState(false);
   async function pullRefresh() {
     setPulling(true);
@@ -77,6 +81,7 @@ export default function Chat() {
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Explore')} accessibilityLabel="Add friends" hitSlop={8} style={[styles.iconBtn, styles.addFriend]}>
             <UserPlus size={22} color={colors.text} strokeWidth={2.2} />
+            {newRequests > 0 && <View style={styles.reqBadge}><Text style={styles.reqBadgeText}>{newRequests > 99 ? '99+' : newRequests}</Text></View>}
           </Pressable>
           <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8} style={styles.iconBtn}>
             <MoreHorizontal size={24} color={colors.text} />
@@ -92,7 +97,7 @@ export default function Chat() {
           {storyCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{storyCount}</Text></View>}
         </Pressable>
         <Pressable style={styles.chip}><Text style={styles.chipText}>Near Me</Text></Pressable>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>New</Text></Pressable>
+        <Pressable onPress={() => navigation.navigate('NewMessage')} style={styles.chip}><Text style={styles.chipText}>New</Text><Plus size={16} color={colors.text} strokeWidth={2.4} /></Pressable>
         {GROUPS.map(([key, label]) => (
           <Pressable key={key} onPress={() => toggle(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
             <Text style={styles.chipText}>{label}{key === 'requests' ? '  ' : ''}</Text>
@@ -125,9 +130,16 @@ export default function Chat() {
                 </View>
                 {unread && <View style={styles.dot} accessibilityLabel="Unread" />}
               </Pressable>
-              <Pressable onPress={open} accessibilityLabel={`Message ${item.user.displayName || item.user.username}`} hitSlop={8} style={styles.cam}>
-                <Camera size={26} color={colors.text} strokeWidth={2} />
-              </Pressable>
+              {item.group === 'primary' ? (
+                <Pressable onPress={open} accessibilityLabel={`Snap ${item.user.displayName || item.user.username}`} style={styles.snap}>
+                  <Camera size={22} color={colors.text} strokeWidth={2.2} />
+                  <Text style={styles.snapText}>Snap</Text>
+                </Pressable>
+              ) : (
+                <Pressable onPress={open} accessibilityLabel={`Message ${item.user.displayName || item.user.username}`} hitSlop={8} style={styles.cam}>
+                  <Camera size={26} color={colors.text} strokeWidth={2} />
+                </Pressable>
+              )}
             </View>
           );
         }}
@@ -149,7 +161,7 @@ const styles = StyleSheet.create({
   title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: colors.text },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  addFriend: { backgroundColor: YELLOW, borderRadius: 20 },
+  addFriend: { backgroundColor: YELLOW, borderRadius: 20, position: 'relative' },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
   chip: { height: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
   chipOn: { backgroundColor: CHIP_ON },
@@ -170,6 +182,10 @@ const styles = StyleSheet.create({
   tag: { color: '#7b3ff2', fontSize: 13, fontWeight: '700', marginTop: 2 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: BLUE },
   cam: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  snap: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 16, borderRadius: 999, backgroundColor: YELLOW },
+  snapText: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  reqBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#ff3b5c', alignItems: 'center', justifyContent: 'center' },
+  reqBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   fab: { position: 'absolute', right: 16, width: 58, height: 58, borderRadius: 29, backgroundColor: YELLOW, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, padding: 40 },
 });
