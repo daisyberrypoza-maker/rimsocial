@@ -1,5 +1,6 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage } = require('../db');
+const { Op, User, DirectMessage, Follow, Post } = require('../db');
+const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { blockedUserIds } = require('../lib/blocks');
 
@@ -25,12 +26,22 @@ router.get('/conversations', async (req, res, next) => {
       if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0 });
       if (String(row.recipientId) === me && !row.readAt) byPartner.get(partner).unread += 1;
     }
-    const users = byPartner.size ? await User.findAll({ where: { id: [...byPartner.keys()] }, attributes: PUBLIC_USER, raw: true }) : [];
+    const partners = [...byPartner.keys()];
+    const users = partners.length ? await User.findAll({ where: { id: partners }, attributes: PUBLIC_USER, raw: true }) : [];
     const userById = new Map(users.map((u) => [String(u.id), u]));
+    // Inbox groups like Instagram: Primary = people you follow, Requests = wrote to you and you never replied, General = the rest
+    const following = partners.length ? new Set((await Follow.findAll({ where: { followerId: me, followeeId: partners }, attributes: [followeeId], raw: true })).map((r) => String(r.followeeId))) : new Set();
+    const replied = new Set(rows.filter((r) => String(r.senderId) === me).map((r) => String(r.recipientId)));
+    const storyAuthors = partners.length ? new Set((await Post.findAll({ where: { authorId: partners, isStory: true, status: live, expiresAt: { [Op.gt]: new Date() } }, attributes: [authorId], raw: true })).map((r) => String(r.authorId))) : new Set();
+    const online = await Promise.all(partners.map((id) => redis.get('presence:' + id).then(Boolean).catch(() => false)));
+    const onlineIds = new Set(partners.filter((_, i) => online[i]));
     const items = [...byPartner.entries()]
       .filter(([partner]) => userById.has(partner))
       .map(([partner, entry]) => ({
         user: userById.get(partner),
+        group: following.has(partner) ? 'primary' : (!replied.has(partner) && String(entry.last.senderId) !== me ? 'requests' : 'general'),
+        hasStory: storyAuthors.has(partner),
+        isOnline: onlineIds.has(partner),
         lastMessage: { body: entry.last.body, senderId: entry.last.senderId, createdAt: entry.last.createdAt },
         unread: entry.unread,
       }));
