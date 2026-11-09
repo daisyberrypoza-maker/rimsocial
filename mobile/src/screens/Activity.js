@@ -72,7 +72,15 @@ export default function Activity() {
   const header = (
     <View>
       <View style={styles.heading}>
-        <Text style={styles.title}>Activity</Text>
+        <View style={styles.titleRow}>
+          {navigation.canGoBack() && (
+            // Opened from another screen: Back returns to where the user came from
+            <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back" style={styles.refresh}>
+              <Icon name="arrow-left" size={22} color={INK} />
+            </Pressable>
+          )}
+          <Text style={styles.title}>Activity</Text>
+        </View>
         <Pressable onPress={load} accessibilityLabel="Refresh activity" style={styles.refresh}>
           <Icon name="refresh" size={19} color={INK} />
         </Pressable>
@@ -139,6 +147,7 @@ export default function Activity() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   title: { fontSize: 22, fontWeight: '600', color: INK },
   refresh: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
