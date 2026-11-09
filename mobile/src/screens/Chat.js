@@ -47,7 +47,6 @@ export default function Chat() {
     <View style={styles.page}>
       <View style={styles.head}>
         <View style={styles.side}>
-          <Pressable onPress={() => navigation.navigate('BusinessHub')} accessibilityLabel="Business"><Icon name="wallet" size={24} /></Pressable>
           <Pressable onPress={() => navigation.navigate('Algorithm')} accessibilityLabel="Your algorithm"><Icon name="compass" size={24} /></Pressable>
         </View>
         <Pressable style={styles.account} onPress={() => me?.username && navigation.navigate('Profile', { username: me.username })} accessibilityLabel="Your profile">

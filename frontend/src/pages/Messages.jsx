@@ -46,9 +46,6 @@ export default function Messages() {
     <main className="dm-page">
       <header className="dm-head">
         <div className="dm-head-actions">
-          <button type="button" className="dm-icon" onClick={() => navigate('/business')} aria-label="Business">
-            <Icon name="briefcase" size={24} />
-          </button>
           <button type="button" className="dm-icon" onClick={() => navigate('/algorithm')} aria-label="Your algorithm">
             <Icon name="compass" size={24} />
           </button>
