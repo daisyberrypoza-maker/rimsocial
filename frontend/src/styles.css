@@ -5571,3 +5571,8 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sr-pending-dot { width:10px; height:10px; border-radius:50%; background:#4f5bfa; margin-left:auto; animation:sr-pulse 1s ease-in-out infinite; }
 @keyframes sr-pulse { 0%,100% { opacity:.25; } 50% { opacity:1; } }
 .sr-upload-note { font-size:13px; color:#737373; }
+
+/* Stories row: stays inside the screen, so scrolling stops with the last story at the edge (no extra empty scroll) */
+.st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
+.st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
+.st-page .st-row::after { content:''; flex:0 0 1px; }
