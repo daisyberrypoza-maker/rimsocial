@@ -98,7 +98,7 @@ export default function Stories() {
   }
 
   return (
-    <View style={styles.page}>
+    <ScrollView style={styles.page} contentContainerStyle={{ paddingBottom: 24 }} refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}>
       <View style={styles.top}>
         <View style={styles.left}>
           {navigation.canGoBack() ? (
@@ -165,7 +165,7 @@ export default function Stories() {
       </View>
 
       {discover.length > 0 && (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: SIDE, paddingBottom: 24 }} refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}>
+        <View style={{ paddingHorizontal: SIDE, paddingBottom: 24 }}>
           <View style={styles.h2Row}><Text style={styles.h2}>Discover</Text><Icon name="chevron-right" size={18} color={colors.text} /></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
             {discover.map((person) => (
@@ -198,9 +198,9 @@ export default function Stories() {
               </Pressable>
             ))}
           </View>
-        </ScrollView>
+        </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
