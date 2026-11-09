@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
+import Video from 'react-native-video';
+import { Music } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -16,7 +18,7 @@ import { colors } from '../theme';
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
 const BLUE = '#4f5bfa';
-const TABS = [['foryou', 'For you'], ['accounts', 'Accounts'], ['tags', 'Tags']];
+const TABS = [['foryou', 'For you'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
 
 // Hashtags found in the captions of the matching posts, with how many posts use each one
 function tagsFrom(posts, term) {
@@ -40,6 +42,8 @@ export default function Discover() {
   const [tab, setTab] = useState('foryou');
   const [search, setSearch] = useState(null);
   const [busy, setBusy] = useState({});
+  const [playingId, setPlayingId] = useState(null);
+  const [tracks, setTracks] = useState([]);
   const feed = useAppStore((s) => s.feeds[KEY]);
   const explore = feed?.items || [];
   const term = query.trim();
@@ -62,9 +66,22 @@ export default function Discover() {
 
   const posts = term ? (search?.posts || []) : explore;
   const people = search?.people || [];
+  const audio = tracks;
   const tags = useMemo(() => tagsFrom(search?.posts || [], term), [search, term]);
   const showTabs = !tagPage && Boolean(term);
   const activeTab = showTabs ? tab : 'foryou';
+
+  // Music library: newest tracks, or the ones matching the search
+  useEffect(() => {
+    if (tagPage) return undefined;
+    let alive = true;
+    const timer = setTimeout(() => {
+      api(`/v1/audio/search?q=${encodeURIComponent(term)}`)
+        .then((data) => { if (alive) setTracks(data.items || []); })
+        .catch(logError);
+    }, term ? 300 : 0);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [term, tagPage]);
 
   async function toggleFollow(person) {
     if (busy[person.id]) return;
@@ -148,6 +165,34 @@ export default function Discover() {
     );
   }
 
+  if (activeTab === 'audio') {
+    return (
+      <FlatList
+        key="audio"
+        style={styles.page}
+        data={audio}
+        keyExtractor={(t) => String(t.id)}
+        ListHeaderComponent={header}
+        ListEmptyComponent={<Text style={styles.empty}>No music found.</Text>}
+        renderItem={({ item }) => {
+          const playing = playingId === item.id;
+          return (
+            <Pressable style={styles.person} onPress={() => setPlayingId(playing ? null : item.id)} accessibilityLabel={`${playing ? 'Pause' : 'Play'} ${item.title}`}>
+              <View style={styles.hash}><Music size={22} color={colors.text} /></View>
+              <View style={styles.personText}>
+                <Text style={[styles.name, playing && styles.playingName]} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.sub} numberOfLines={1}>{item.artist}</Text>
+              </View>
+              {playing && (
+                <Video source={{ uri: mediaUrl(item.mediaUrl) }} audioOnly paused={false} onEnd={() => setPlayingId(null)} style={styles.hidden} />
+              )}
+            </Pressable>
+          );
+        }}
+      />
+    );
+  }
+
   if (activeTab === 'tags') {
     return (
       <FlatList
@@ -213,4 +258,6 @@ const styles = StyleSheet.create({
   hash: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: '#e5e5e5', alignItems: 'center', justifyContent: 'center' },
   hashText: { fontSize: 22, color: colors.text },
   empty: { textAlign: 'center', color: colors.muted, padding: 40 },
+  playingName: { color: BLUE },
+  hidden: { width: 1, height: 1 },
 });

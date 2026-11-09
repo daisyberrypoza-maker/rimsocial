@@ -4,11 +4,11 @@ import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
-import { logError } from '../toast.js';
+import { logError, toast } from '../toast.js';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
-const TABS = [['foryou', 'For you'], ['accounts', 'Accounts'], ['tags', 'Tags']];
+const TABS = [['foryou', 'For you'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
 
 function tagsFrom(posts, term) {
   const needle = term.replace(/^#/, '').toLowerCase();
@@ -31,6 +31,11 @@ export default function Search() {
   const [search, setSearch] = useState(null);
   const [explore, setExplore] = useState([]);
   const [busy, setBusy] = useState({});
+  const [tracks, setTracks] = useState([]);
+  const [reload, setReload] = useState(0);
+  const [trackTitle, setTrackTitle] = useState('');
+  const [trackArtist, setTrackArtist] = useState('');
+  const [trackFile, setTrackFile] = useState(null);
   const term = query.trim();
 
   useEffect(() => {
@@ -49,11 +54,38 @@ export default function Search() {
     return () => { alive = false; clearTimeout(timer); };
   }, [term, tagPage]);
 
+  // Music library: newest tracks, or the ones matching the search
+  useEffect(() => {
+    if (tagPage) return undefined;
+    let alive = true;
+    const timer = setTimeout(() => {
+      api(`/v1/audio/search?q=${encodeURIComponent(term)}`)
+        .then((data) => { if (alive) setTracks(data.items || []); })
+        .catch(logError);
+    }, term ? 300 : 0);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [term, tagPage, reload]);
+
+  async function uploadTrack(event) {
+    event.preventDefault();
+    if (!trackFile || !trackTitle.trim()) return;
+    const body = new FormData();
+    body.append('media', trackFile);
+    body.append('title', trackTitle.trim());
+    body.append('artist', trackArtist.trim());
+    try {
+      await api('/v1/audio', { method: 'POST', body });
+      setTrackTitle(''); setTrackArtist(''); setTrackFile(null);
+      setReload((n) => n + 1);
+      toast('Track added');
+    } catch (e) { logError(e); toast('Could not add the track'); }
+  }
+
   const posts = term ? (search?.posts || []) : explore;
   const people = search?.people || [];
   const tags = useMemo(() => tagsFrom(search?.posts || [], term), [search, term]);
-  const showTabs = !tagPage && Boolean(term);
-  const activeTab = showTabs ? tab : 'foryou';
+  const showTabs = !tagPage;
+  const activeTab = tagPage ? 'foryou' : tab;
 
   async function toggleFollow(person) {
     if (busy[person.id]) return;
@@ -102,7 +134,30 @@ export default function Search() {
               </li>
             ))}
           </ul>
-        ) : <p className="sr-empty">No accounts found.</p>
+        ) : <p className="sr-empty">{term ? 'No accounts found.' : 'Search to find accounts.'}</p>
+      )}
+
+      {activeTab === 'audio' && (
+        <section className="sr-audio">
+          <form className="sr-upload" onSubmit={uploadTrack}>
+            <strong>Add music</strong>
+            <input value={trackTitle} onChange={(e) => setTrackTitle(e.target.value)} placeholder="Title" maxLength={80} />
+            <input value={trackArtist} onChange={(e) => setTrackArtist(e.target.value)} placeholder="Artist (optional)" maxLength={80} />
+            <input type="file" accept="audio/*" onChange={(e) => setTrackFile(e.target.files?.[0] || null)} />
+            <button type="submit" disabled={!trackFile || !trackTitle.trim()}>Add music</button>
+          </form>
+          {tracks.length ? (
+            <ul className="sr-list">
+              {tracks.map((track) => (
+                <li key={track.id} className="sr-track">
+                  <span className="sr-music" aria-hidden="true">♪</span>
+                  <span className="sr-person-text"><strong>{track.title}</strong><small>{track.artist}</small></span>
+                  <audio controls preload="none" src={mediaUrl(track.mediaUrl)} />
+                </li>
+              ))}
+            </ul>
+          ) : <p className="sr-empty">{term ? 'No music found.' : 'No music yet. Add the first track.'}</p>}
+        </section>
       )}
 
       {activeTab === 'tags' && (
@@ -120,7 +175,7 @@ export default function Search() {
               </li>
             ))}
           </ul>
-        ) : <p className="sr-empty">No tags found.</p>
+        ) : <p className="sr-empty">{term ? 'No tags found.' : 'Search to find tags.'}</p>
       )}
 
       {activeTab === 'foryou' && (

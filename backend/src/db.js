@@ -81,6 +81,15 @@ const Follow = sequelize.define('Follow', {
   // notifyPosts column is added by migrations/025 — the model field is enabled once it is applied (see routes/users.js)
 }, { tableName: 'follows', indexes: [{ fields: ['followeeId'] }] });
 
+// Music library: uploaded audio tracks (migrations/029)
+const AudioTrack = sequelize.define('AudioTrack', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  uploadedById: { type: DataTypes.UUID, allowNull: false },
+  title: { type: DataTypes.STRING(80), allowNull: false },
+  artist: { type: DataTypes.STRING(80), allowNull: false },
+  mediaUrl: { type: DataTypes.STRING(512), allowNull: false },
+}, { tableName: 'audio_tracks' });
+
 // One row per viewer per story, so story view counts are not inflated
 const StoryView = sequelize.define('StoryView', {
   storyId: { type: DataTypes.UUID, primaryKey: true },
@@ -326,6 +335,7 @@ const DirectMessage = sequelize.define('DirectMessage', {
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
 module.exports = {
+  AudioTrack,
   DirectMessage,
   MediaCleanupJob,
   BusinessFinancialRecord,
