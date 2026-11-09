@@ -3,21 +3,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
-import Icon from '../components/Icon';
 import Activity from './Activity';
-import { ChevronDown, MoreHorizontal, SquarePen } from 'lucide-react-native';
+import { MoreHorizontal, SquarePen, Search, Bell, UserPlus, Camera, ChevronRight } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
 import { colors } from '../theme';
 
-// Inbox laid out like the reference: account header, Primary / General / Requests filters, rows with story rings.
-// Activity lives on this same screen: the more (⋮) icon switches to it.
+// Chat to the Snapchat reference: profile and search on the left, centred title, bell / add-friend / more on the right,
+// chips My AI / Games / Stories (count) / Near Me / New and the inbox groups, a camera on each row,
+// and a floating yellow compose button. Activity lives on this same screen: the bell or more icon switches to it.
 const BLUE = '#3797f0';
 const GREY = '#8e8e93';
 const CHIP = '#f0f0f2';
 const CHIP_ON = '#e8eefc';
-const FILTERS = [['all', 'All'], ['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
+const YELLOW = '#fffc00';
+const GROUPS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
 
 export default function Chat() {
   const insets = useSafeAreaInsets();
@@ -43,27 +44,54 @@ export default function Chat() {
   if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
 
   const all = items || [];
-  const shown = all.filter((i) => filter === 'all' || i.group === filter);
+  const storyCount = all.filter((i) => i.hasStory).length;
+  const shown = all.filter((i) => {
+    if (filter === 'all') return true;
+    if (filter === 'stories') return i.hasStory;
+    return i.group === filter;
+  });
   const totalUnread = all.reduce((sum, i) => sum + (i.unread || 0), 0);
+  const toggle = (key) => setFilter(filter === key ? 'all' : key);
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.head}>
-        <View style={styles.account}>
-          <Text style={styles.title} numberOfLines={1}>{me?.username || 'Chat'}</Text>
-          <ChevronDown size={16} color={colors.text} strokeWidth={2.4} />
-          {totalUnread > 0 && <View style={styles.accountDot} />}
+        <View style={styles.headLeft}>
+          <Pressable onPress={() => navigation.navigate('Profile', { username: me?.username })} accessibilityLabel="Your profile" hitSlop={6} style={styles.avatarBtn}>
+            <Avatar user={me || {}} size={36} />
+            {totalUnread > 0 && <View style={styles.accountDot} />}
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Explore', { search: true })} accessibilityLabel="Search" hitSlop={8} style={styles.iconBtn}>
+            <Search size={22} color={colors.text} strokeWidth={2.4} />
+          </Pressable>
         </View>
+        <Text style={styles.title}>Chat</Text>
         <View style={styles.actions}>
-          <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8}><MoreHorizontal size={26} color={colors.text} /></Pressable>
-          <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message" hitSlop={8}><SquarePen size={24} color={colors.text} strokeWidth={2} /></Pressable>
+          <Pressable onPress={() => setView('activity')} accessibilityLabel="Notifications" hitSlop={8} style={styles.iconBtn}>
+            <Bell size={24} color={colors.text} strokeWidth={2.2} />
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Explore')} accessibilityLabel="Add friends" hitSlop={8} style={[styles.iconBtn, styles.addFriend]}>
+            <UserPlus size={22} color={colors.text} strokeWidth={2.2} />
+          </Pressable>
+          <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8} style={styles.iconBtn}>
+            <MoreHorizontal size={24} color={colors.text} />
+          </Pressable>
         </View>
       </View>
 
       <View style={styles.filters}>
-        {FILTERS.map(([key, label]) => (
-          <Pressable key={key} onPress={() => setFilter(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
-            <Text style={styles.chipText}>{label}{key === 'requests' ? '  ›' : ''}</Text>
+        <Pressable style={styles.chip}><Text style={styles.chipText}>My AI</Text></Pressable>
+        <Pressable style={styles.chip}><Text style={styles.chipText}>Games</Text></Pressable>
+        <Pressable onPress={() => toggle('stories')} accessibilityRole="tab" accessibilityState={{ selected: filter === 'stories' }} style={[styles.chip, filter === 'stories' && styles.chipOn]}>
+          <Text style={styles.chipText}>Stories</Text>
+          {storyCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{storyCount}</Text></View>}
+        </Pressable>
+        <Pressable style={styles.chip}><Text style={styles.chipText}>Near Me</Text></Pressable>
+        <Pressable style={styles.chip}><Text style={styles.chipText}>New</Text></Pressable>
+        {GROUPS.map(([key, label]) => (
+          <Pressable key={key} onPress={() => toggle(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
+            <Text style={styles.chipText}>{label}{key === 'requests' ? '  ' : ''}</Text>
+            {key === 'requests' && <ChevronRight size={14} color={colors.text} />}
           </Pressable>
         ))}
       </View>
@@ -71,43 +99,59 @@ export default function Chat() {
       <FlatList
         data={shown}
         keyExtractor={(i) => String(i.user.id)}
-        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'all' ? 'No messages yet. Tap the compose icon to start one.' : `No ${FILTERS.find(([k]) => k === filter)[1].toLowerCase()} messages.`}</Text>}
+        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</Text>}
         renderItem={({ item }) => {
           const mine = item.lastMessage.senderId === me?.id;
           const unread = item.unread > 0;
           const subtitle = item.isOnline ? 'Active now' : mine ? `Sent · ${messageTime(item.lastMessage.createdAt)}` : `${item.lastMessage.body} · ${messageTime(item.lastMessage.createdAt)}`;
+          const open = () => navigation.navigate('Conversation', { userId: item.user.id, user: item.user });
           return (
-            <Pressable style={styles.row} onPress={() => navigation.navigate('Conversation', { userId: item.user.id, user: item.user })}>
-              <View style={[styles.ring, item.hasStory && styles.ringStory]}>
-                <View style={styles.ringFace}><Avatar user={item.user} size={54} /></View>
-                {item.isOnline && <View style={styles.online} accessibilityLabel="Online" />}
-              </View>
-              <View style={styles.text}>
-                <Text style={[styles.name, unread && styles.nameUnread]} numberOfLines={1}>{item.user.displayName || item.user.username}</Text>
-                <Text style={[styles.last, unread && styles.lastUnread]} numberOfLines={1}>{subtitle}</Text>
-                {item.group === 'requests' && <Text style={styles.tag}>Request</Text>}
-              </View>
-              {unread && <View style={styles.dot} accessibilityLabel="Unread" />}
-            </Pressable>
+            <View style={styles.rowWrap}>
+              <Pressable style={styles.row} onPress={open}>
+                <View style={[styles.ring, item.hasStory && styles.ringStory]}>
+                  <View style={styles.ringFace}><Avatar user={item.user} size={54} /></View>
+                  {item.isOnline && <View style={styles.online} accessibilityLabel="Online" />}
+                </View>
+                <View style={styles.text}>
+                  <Text style={[styles.name, unread && styles.nameUnread]} numberOfLines={1}>{item.user.displayName || item.user.username}</Text>
+                  <Text style={[styles.last, unread && styles.lastUnread]} numberOfLines={1}>{subtitle}</Text>
+                  {item.group === 'requests' && <Text style={styles.tag}>Request</Text>}
+                </View>
+                {unread && <View style={styles.dot} accessibilityLabel="Unread" />}
+              </Pressable>
+              <Pressable onPress={open} accessibilityLabel={`Message ${item.user.displayName || item.user.username}`} hitSlop={8} style={styles.cam}>
+                <Camera size={26} color={colors.text} strokeWidth={2} />
+              </Pressable>
+            </View>
           );
         }}
       />
+
+      <Pressable style={[styles.fab, { bottom: insets.bottom + 90 }]} onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message">
+        <SquarePen size={26} color="#111" strokeWidth={2.2} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  account: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  title: { fontSize: 20, fontWeight: '600', color: colors.text, maxWidth: 220 },
-  accountDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.heart, marginLeft: 2 },
-  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
-  chip: { height: 34, justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
+  page: { flex: 1, backgroundColor: colors.bg },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12 },
+  headLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  avatarBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  accountDot: { position: 'absolute', top: 0, right: 0, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.heart },
+  title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: colors.text },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  addFriend: { backgroundColor: YELLOW, borderRadius: 20 },
+  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
+  chip: { height: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
   chipOn: { backgroundColor: CHIP_ON },
   chipText: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
+  badge: { marginLeft: 6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  rowWrap: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  row: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   ring: { width: 62, height: 62, borderRadius: 31, padding: 3, borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
   ringStory: { borderColor: '#dc2743' },
   ringFace: { width: 54, height: 54, borderRadius: 27, overflow: 'hidden', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
@@ -119,5 +163,7 @@ const styles = StyleSheet.create({
   lastUnread: { fontWeight: '700', color: colors.text },
   tag: { color: '#7b3ff2', fontSize: 13, fontWeight: '700', marginTop: 2 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: BLUE },
+  cam: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  fab: { position: 'absolute', right: 16, width: 58, height: 58, borderRadius: 29, backgroundColor: YELLOW, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, padding: 40 },
 });
