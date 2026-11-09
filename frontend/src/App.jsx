@@ -25,6 +25,7 @@ import Recommended from './pages/Recommended.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 import ExploreWatch from './pages/ExploreWatch.jsx';
+import Search from './pages/Search.jsx';
 import EditProfile from './pages/EditProfile.jsx';
 import { useTabSwipe } from './lib/tabSwipe.js';
 
@@ -129,12 +130,14 @@ export default function App() {
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/search') && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><ExploreRedirect /></RequireAuth>} />
+        <Route path="/search" element={<RequireAuth><Search /></RequireAuth>} />
+        <Route path="/search/tag/:tag" element={<RequireAuth><Search /></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><Explore /></RequireAuth>} />
         <Route path="/explore/watch/:postId" element={<RequireAuth><ExploreWatch /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />

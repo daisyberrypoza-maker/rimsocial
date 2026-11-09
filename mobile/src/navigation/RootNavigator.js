@@ -13,6 +13,7 @@ import Explore from '../screens/Explore';
 import Activity from '../screens/Activity';
 import PostDetail from '../screens/PostDetail';
 import ExploreWatch from '../screens/ExploreWatch';
+import Discover from '../screens/Discover';
 import Recommended from '../screens/Recommended';
 import Algorithm from '../screens/Algorithm';
 import CreatorStudio from '../screens/CreatorStudio';
@@ -48,6 +49,7 @@ export default function RootNavigator({ signedIn }) {
       {/* Full-screen pages: no bottom bar, like the web */}
       <Stack.Screen name="PostDetail" component={PostDetail} />
       <Stack.Screen name="ExploreWatch" component={ExploreWatch} />
+      <Stack.Screen name="SearchTag" component={Discover} />
       <Stack.Screen name="Recommended" component={Recommended} />
       <Stack.Screen name="Algorithm" component={Algorithm} />
       <Stack.Screen name="CreatorStudio" component={CreatorStudio} />
