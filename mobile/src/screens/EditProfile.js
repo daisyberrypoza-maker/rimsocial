@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -15,11 +15,12 @@ import { colors } from '../theme';
 export default function EditProfile() {
   const navigation = useNavigation();
   const me = useAppStore((s) => s.user);
-  const [form, setForm] = useState({ displayName: '', bio: '', website: '', city: '' });
+  const [form, setForm] = useState({ displayName: '', pronouns: '', bio: '', website: '', city: '', gender: '' });
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
+  const websiteRef = useRef(null);
 
   // Current details from the server, so the form always starts from what is saved
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function EditProfile() {
     api('/v1/users/me')
       .then((u) => {
         if (!active) return;
-        setForm({ displayName: u.displayName || '', bio: u.bio || '', website: u.website || '', city: u.city || '' });
+        setForm({ displayName: u.displayName || '', pronouns: u.pronouns || '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
         setLoaded(true);
       })
       .catch((e) => logError(e));
@@ -64,7 +65,7 @@ export default function EditProfile() {
     try {
       await api('/v1/users/me/profile', { method: 'PUT', body: form });
       const store = useAppStore.getState();
-      const updated = { ...(store.user || me), displayName: form.displayName.trim(), bio: form.bio.trim(), website: form.website.trim(), city: form.city.trim() };
+      const updated = { ...(store.user || me), displayName: form.displayName.trim(), bio: form.bio.trim(), website: form.website.trim(), city: form.city.trim(), pronouns: form.pronouns.trim(), gender: form.gender };
       store.setSession(store.token, updated);
       store.setProfile('me', { user: { ...(store.profiles.me?.user || {}), ...updated }, updatedAt: Date.now() });
       if (updated.username) {
@@ -90,9 +91,24 @@ export default function EditProfile() {
         </View>
         <Field label="Name" value={form.displayName} onChangeText={set('displayName')} maxLength={64} />
         <Field label="Username" value={me?.username ? `@${me.username}` : ''} editable={false} />
+        <Field label="Pronouns" value={form.pronouns} onChangeText={set('pronouns')} maxLength={40} placeholder="e.g. she/her" />
         <Field label="Bio" value={form.bio} onChangeText={set('bio')} maxLength={150} multiline counter={`${form.bio.length}/150`} />
-        <Field label="Website" value={form.website} onChangeText={set('website')} maxLength={200} placeholder="yourwebsite.com" autoCapitalize="none" keyboardType="url" />
+        <Pressable style={styles.linksRow} onPress={() => websiteRef.current?.focus()} accessibilityLabel="Links">
+          <Text style={styles.linksText}>Links</Text>
+          <Text style={styles.linksValue}>{form.website ? 1 : 0}  ›</Text>
+        </Pressable>
+        <Field inputRef={websiteRef} label="Website" value={form.website} onChangeText={set('website')} maxLength={200} placeholder="yourwebsite.com" autoCapitalize="none" keyboardType="url" />
         <Field label="City" value={form.city} onChangeText={set('city')} maxLength={80} />
+        <View style={styles.field}>
+          <Text style={styles.label}>Gender</Text>
+          <View style={styles.genderRow}>
+            {[['', 'Prefer not to say'], ['Female', 'Female'], ['Male', 'Male'], ['Custom', 'Custom']].map(([value, label]) => (
+              <Pressable key={label} onPress={() => set('gender')(value)} style={[styles.genderChip, form.gender === value && styles.genderChipOn]} accessibilityState={{ selected: form.gender === value }}>
+                <Text style={[styles.genderText, form.gender === value && styles.genderTextOn]}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
         <Pressable style={[styles.save, !canSave && styles.dim]} onPress={save} disabled={!canSave} accessibilityLabel="Save">
           <Text style={styles.saveText}>Save</Text>
         </Pressable>
@@ -102,11 +118,12 @@ export default function EditProfile() {
 }
 
 // Label sits inside the box above the value, as in the reference
-function Field({ label, counter, editable = true, ...props }) {
+function Field({ label, counter, editable = true, inputRef, ...props }) {
   return (
     <View style={[styles.field, !editable && styles.fieldLocked]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        ref={inputRef}
         style={[styles.input, props.multiline && styles.multiline, !editable && styles.lockedText]}
         placeholderTextColor={colors.muted}
         editable={editable}
@@ -135,4 +152,12 @@ const styles = StyleSheet.create({
   save: { height: 48, borderRadius: 12, backgroundColor: '#4f5bfa', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   saveText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   dim: { opacity: 0.5 },
+  linksRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 2 },
+  linksText: { fontSize: 17, color: colors.text },
+  linksValue: { fontSize: 17, color: colors.muted },
+  genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
+  genderChip: { borderWidth: 1, borderColor: '#dbdbdb', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  genderChipOn: { backgroundColor: '#e8eefc', borderColor: '#4f5bfa' },
+  genderText: { fontSize: 14, color: colors.text },
+  genderTextOn: { color: '#4f5bfa', fontWeight: '600' },
 });
