@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import Activity from './Activity';
+import { ChevronDown, MoreHorizontal, SquarePen } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
@@ -46,17 +47,14 @@ export default function Chat() {
   return (
     <View style={styles.page}>
       <View style={styles.head}>
-        <View style={styles.side}>
-          <Pressable onPress={() => navigation.navigate('Algorithm')} accessibilityLabel="Your algorithm"><Icon name="compass" size={24} /></Pressable>
-        </View>
-        <Pressable style={styles.account} onPress={() => me?.username && navigation.navigate('Profile', { username: me.username })} accessibilityLabel="Your profile">
+        <View style={styles.account}>
           <Text style={styles.title} numberOfLines={1}>{me?.username || 'Chat'}</Text>
-          <Icon name="chevron-down" size={16} color={colors.text} />
+          <ChevronDown size={16} color={colors.text} strokeWidth={2.4} />
           {totalUnread > 0 && <View style={styles.accountDot} />}
-        </Pressable>
-        <View style={[styles.side, styles.actions]}>
-          <Pressable onPress={() => setView('activity')} accessibilityLabel="Activity"><Icon name="more-vertical" size={24} /></Pressable>
-          <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message"><Icon name="pencil" size={24} /></Pressable>
+        </View>
+        <View style={styles.actions}>
+          <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8}><MoreHorizontal size={26} color={colors.text} /></Pressable>
+          <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message" hitSlop={8}><SquarePen size={24} color={colors.text} strokeWidth={2} /></Pressable>
         </View>
       </View>
 
@@ -98,16 +96,15 @@ export default function Chat() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
-  head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
-  side: { width: 76, flexDirection: 'row', gap: 14, alignItems: 'center' },
-  actions: { justifyContent: 'flex-end' },
-  account: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  title: { fontSize: 18, fontWeight: '700', color: colors.text, maxWidth: 170 },
-  accountDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.heart },
-  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 14 },
-  chip: { backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  account: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  title: { fontSize: 20, fontWeight: '600', color: colors.text, maxWidth: 220 },
+  accountDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.heart, marginLeft: 2 },
+  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
+  chip: { height: 34, justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
   chipOn: { backgroundColor: CHIP_ON },
-  chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  chipText: { color: colors.text, fontSize: 15, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   ring: { width: 62, height: 62, borderRadius: 31, padding: 3, borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
   ringStory: { borderColor: '#dc2743' },

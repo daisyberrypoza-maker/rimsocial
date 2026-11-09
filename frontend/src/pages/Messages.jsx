@@ -45,22 +45,17 @@ export default function Messages() {
   return (
     <main className="dm-page">
       <header className="dm-head">
-        <div className="dm-head-actions">
-          <button type="button" className="dm-icon" onClick={() => navigate('/algorithm')} aria-label="Your algorithm">
-            <Icon name="compass" size={24} />
-          </button>
-        </div>
-        <button type="button" className="dm-account" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/me')} aria-label="Your profile">
+        <div className="dm-account">
           <span>{me?.username || 'Chat'}</span>
-          <Icon name="chevron-down" size={16} />
+          <Icon name="chevron-down" size={16} strokeWidth={2.4} />
           {totalUnread > 0 && <span className="dm-account-dot" aria-label="Unread" />}
-        </button>
+        </div>
         <div className="dm-head-actions">
-          <button type="button" className="dm-icon" onClick={() => setView('activity')} aria-label="Activity">
-            <Icon name="bell" size={24} />
+          <button type="button" className="dm-icon" onClick={() => setView('activity')} aria-label="More">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
           </button>
           <button type="button" className="dm-icon" onClick={() => navigate('/chat/new')} aria-label="New message">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
         </div>
       </header>
