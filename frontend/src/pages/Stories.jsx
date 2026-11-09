@@ -195,6 +195,13 @@ export default function Stories() {
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
+          <button className="st-friend st-private" aria-label="Private story" onClick={() => navigate('/upload?story=1')}>
+            <span className="st-ring none st-private-ring">
+              <span className="st-face st-private-face"><Icon name="camera" size={26} /></span>
+              <span className="st-lock" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg></span>
+            </span>
+            <span className="st-name">{me?.displayName || me?.username || ''}</span>
+          </button>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
@@ -234,7 +241,10 @@ export default function Stories() {
                   ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
                   : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
                 <span className="st-card-shade" />
-                <span className="st-card-name">{nameOf(person)}{person.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                <span className="st-card-foot">
+                  <span className="st-card-avatar">{person.avatarUrl ? <img src={mediaUrl(person.avatarUrl)} alt="" /> : nameOf(person).slice(0, 1).toUpperCase()}</span>
+                  <span className="st-card-name">{nameOf(person)}{person.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                </span>
               </button>
             ))}
           </div>
