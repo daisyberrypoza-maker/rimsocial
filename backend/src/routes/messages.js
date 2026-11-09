@@ -30,7 +30,7 @@ router.get('/conversations', async (req, res, next) => {
     const users = partners.length ? await User.findAll({ where: { id: partners }, attributes: PUBLIC_USER, raw: true }) : [];
     const userById = new Map(users.map((u) => [String(u.id), u]));
     // Inbox groups like Instagram: Primary = people you follow, Requests = wrote to you and you never replied, General = the rest
-    const following = partners.length ? new Set((await Follow.findAll({ where: { followerId: me, followeeId: partners }, attributes: [followeeId], raw: true })).map((r) => String(r.followeeId))) : new Set();
+    const following = partners.length ? new Set((await Follow.findAll({ where: { followerId: me, followeeId: partners }, attributes: ['followeeId'], raw: true })).map((r) => String(r.followeeId))) : new Set();
     const replied = new Set(rows.filter((r) => String(r.senderId) === me).map((r) => String(r.recipientId)));
     const storyAuthors = partners.length ? new Set((await Post.findAll({ where: { authorId: partners, isStory: true, status: live, expiresAt: { [Op.gt]: new Date() } }, attributes: [authorId], raw: true })).map((r) => String(r.authorId))) : new Set();
     const online = await Promise.all(partners.map((id) => redis.get('presence:' + id).then(Boolean).catch(() => false)));
