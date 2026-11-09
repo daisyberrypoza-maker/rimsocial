@@ -72,3 +72,5 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_id }}
+
+# Public repository: trigger a fresh Pages deployment after visibility was changed.
