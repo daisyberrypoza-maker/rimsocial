@@ -5576,3 +5576,17 @@ html, body, #root { width:100% !important; height:100% !important; }
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
 .st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
 .st-page .st-row::after { content:''; flex:0 0 1px; }
+
+/* Camera first (Add opens the live viewfinder, Snapchat-style) */
+.cam-page { position: fixed; inset: 0; background: #000; color: #fff; z-index: 50; overflow: hidden; }
+.cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cam-video.mirror { transform: scaleX(-1); }
+.cam-error { position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%); text-align: center; font-size: 16px; color: #fff; margin: 0; }
+.cam-close { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 16px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(0,0,0,0.35); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.cam-side { position: absolute; right: 14px; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 22px; }
+.cam-side button { width: 40px; height: 40px; border: 0; background: transparent; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+.cam-bottom { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 36px); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+.cam-side-btn { width: 46px; height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,0.35); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.cam-spacer { width: 46px; }
+.cam-shutter { width: 78px; height: 78px; border-radius: 50%; border: 5px solid #fff; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cam-shutter span { width: 60px; height: 60px; border-radius: 50%; background: #fff; display: block; }
