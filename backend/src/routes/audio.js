@@ -64,7 +64,8 @@ router.post('/', audioUpload.single('media'), async (req, res, next) => {
       const user = await User.findByPk(req.user.id, { attributes: ['displayName', 'username'] });
       artist = user?.displayName || user?.username || 'Unknown artist';
     }
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/audio');
+    // Tracks are kept to 60 seconds: Cloudinary keeps only the first 60 seconds of the file
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/audio', { maxSeconds: 60 });
     const track = await AudioTrack.create({ uploadedById: req.user.id, title, artist, mediaUrl: asset.url });
     res.status(201).json(toDTO(track));
   } catch (e) { next(e); }

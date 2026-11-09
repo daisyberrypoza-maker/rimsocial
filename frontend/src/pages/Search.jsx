@@ -22,6 +22,18 @@ function tagsFrom(posts, term) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([tag, count]) => ({ tag, count }));
 }
 
+// Length of a music file in seconds (NaN if the browser cannot read it)
+function audioLength(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(audio.duration); };
+    audio.onerror = () => { URL.revokeObjectURL(url); resolve(NaN); };
+    audio.src = url;
+  });
+}
+
 export default function Search() {
   const navigate = useNavigate();
   const { tag: routeTag } = useParams();
@@ -70,6 +82,8 @@ export default function Search() {
   async function uploadTrack(event) {
     event.preventDefault();
     if (!trackFile || !trackTitle.trim()) return;
+    const seconds = await audioLength(trackFile);
+    if (seconds > 60.5) { toast('Music must be 60 seconds or less'); return; }
     const title = trackTitle.trim();
     const artist = trackArtist.trim();
     const file = trackFile;
@@ -154,6 +168,7 @@ export default function Search() {
             <input value={trackTitle} onChange={(e) => setTrackTitle(e.target.value)} placeholder="Title" maxLength={80} />
             <input value={trackArtist} onChange={(e) => setTrackArtist(e.target.value)} placeholder="Artist (optional)" maxLength={80} />
             <input type="file" accept="audio/*" onChange={(e) => setTrackFile(e.target.files?.[0] || null)} />
+            <small className="sr-upload-note">Up to 60 seconds</small>
             <button type="submit" disabled={!trackFile || !trackTitle.trim()}>Add music</button>
           </form>
           {tracks.length ? (

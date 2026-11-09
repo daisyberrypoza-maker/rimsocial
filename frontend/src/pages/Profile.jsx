@@ -54,6 +54,7 @@ export default function Profile() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverBusy, setCoverBusy] = useState(false);
+  const [coverPreview, setCoverPreview] = useState(null);
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -209,14 +210,17 @@ export default function Profile() {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('Choose a JPG, PNG or WebP image');
     const form = new FormData();
     form.append('media', file);
+    // The new cover shows at once; it is kept only if the upload succeeds
+    const preview = URL.createObjectURL(file);
+    setCoverPreview(preview);
     setCoverBusy(true);
     try {
       const result = await api('/v1/users/me/cover', { method: 'POST', body: form });
       setProfile(username, { user: { ...profile, coverUrl: result.coverUrl } });
       setDrawerOpen(false);
       toast('Profile cover updated');
-    } catch (e) { logError(e); }
-    finally { setCoverBusy(false); }
+    } catch (e) { logError(e); toast('Could not update the cover'); }
+    finally { setCoverBusy(false); setCoverPreview(null); URL.revokeObjectURL(preview); }
   }
 
   async function blockProfile() {
@@ -299,7 +303,7 @@ export default function Profile() {
         </div>
       </div>
       <header className="pf-hero">
-        <div className="pf-cover" aria-hidden="true" style={profile.coverUrl ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` } : { background: defaultCover(profile.username).css }} />
+        <div className="pf-cover" aria-hidden="true" style={coverPreview ? { backgroundImage: `url(${coverPreview})` } : profile.coverUrl ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` } : { background: defaultCover(profile.username).css }} />
         <span className="pf-shade" aria-hidden="true" />
         <div className="pf-top">
           <button type="button" className="pf-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
