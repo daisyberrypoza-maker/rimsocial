@@ -12,7 +12,14 @@ import NewMessage from '../screens/NewMessage';
 import Explore from '../screens/Explore';
 import Activity from '../screens/Activity';
 import PostDetail from '../screens/PostDetail';
-import withTabBar from './withTabBar';
+import ExploreWatch from '../screens/ExploreWatch';
+import Recommended from '../screens/Recommended';
+import Algorithm from '../screens/Algorithm';
+import BusinessHub from '../screens/BusinessHub';
+import CreatorStudio from '../screens/CreatorStudio';
+import AdsSponsors from '../screens/AdsSponsors';
+import LiveBroadcasts from '../screens/LiveBroadcasts';
+import LiveMatchRoom from '../screens/LiveMatchRoom';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,7 +46,16 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="NewMessage" component={NewMessage} />
       <Stack.Screen name="Explore" component={withTabBar(Explore, 'Explore')} />
       <Stack.Screen name="Activity" component={withTabBar(Activity, 'Stories')} />
-      <Stack.Screen name="PostDetail" component={withTabBar(PostDetail, 'Rimlight')} />
+      {/* Full-screen pages: no bottom bar, like the web */}
+      <Stack.Screen name="PostDetail" component={PostDetail} />
+      <Stack.Screen name="ExploreWatch" component={ExploreWatch} />
+      <Stack.Screen name="Recommended" component={Recommended} />
+      <Stack.Screen name="Algorithm" component={Algorithm} />
+      <Stack.Screen name="BusinessHub" component={BusinessHub} />
+      <Stack.Screen name="CreatorStudio" component={CreatorStudio} />
+      <Stack.Screen name="Ads" component={AdsSponsors} />
+      <Stack.Screen name="Live" component={LiveBroadcasts} />
+      <Stack.Screen name="LiveMatchRoom" component={LiveMatchRoom} />
     </Stack.Navigator>
   );
 }

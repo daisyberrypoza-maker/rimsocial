@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
-import StoryRing, { StoryFace } from '../components/StoryRing';
+import StoryRing, { StoryFace, railItems } from '../components/StoryRing';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { mediaUrl } from '../config';
@@ -50,10 +50,10 @@ export default function Stories() {
   }
   const [suggested, setSuggested] = useState(storedDiscover.suggested || []);
   const [ranking, setRanking] = useState(storedDiscover.ranking || { friends: {}, discoverOrder: [] });
-  const rail = storedRail.items || [];
+  const rail = railItems(storedRail);
 
   const loadRail = useCallback(() => {
-    api('/v1/stories/rail').then((r) => useAppStore.getState().setStoryRail(r.items || [])).catch(logError);
+    api('/v1/stories/rail').then((r) => useAppStore.getState().setStoryRail({ items: r.items || [], updatedAt: Date.now() })).catch(logError);
   }, []);
 
   useEffect(() => {
@@ -150,13 +150,14 @@ export default function Stories() {
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No stories yet</Text>
             <Text style={styles.emptyText}>Share a photo or video and your friends can see it for 24 hours.</Text>
+            <Pressable style={styles.pill} onPress={() => navigation.navigate('Upload', { story: true })}><Text style={styles.pillText}>Create a story</Text></Pressable>
           </View>
         )}
       </View>
 
-      {(discover.length > 0 || sponsored.length > 0) && (
+      {discover.length > 0 && (
         <ScrollView contentContainerStyle={{ paddingHorizontal: SIDE, paddingBottom: 24 }}>
-          <Text style={styles.h2}>Discover</Text>
+          <View style={styles.h2Row}><Text style={styles.h2}>Discover</Text><Icon name="chevron-right" size={18} color={colors.text} /></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
             {discover.map((person) => (
               <Pressable key={`row-${person.id}`} style={styles.rowCard} onPress={() => openSuggested(person)} accessibilityLabel={`Open ${nameOf(person)}`}>
@@ -164,7 +165,7 @@ export default function Stories() {
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
                 <View style={styles.shade} />
-                <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}</Text>
+                <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}{person.isCreator ? ' ★' : ''}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -205,6 +206,9 @@ const styles = StyleSheet.create({
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
   friendsHeading: { fontFamily: FONT, fontSize: 14, lineHeight: 18, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
+  h2Row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  pill: { alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: colors.text, justifyContent: 'center' },
+  pillText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
   plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },

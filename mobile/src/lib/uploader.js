@@ -40,7 +40,7 @@ export function startUpload(job) {
 
     if (toStory) {
       const rail = await api('/v1/stories/rail');
-      useAppStore.getState().setStoryRail(rail.items || []);
+      useAppStore.getState().setStoryRail({ items: rail.items || [], updatedAt: Date.now() });
     } else {
       useAppStore.getState().setFeed('following', { updatedAt: 0 });
       await loadPage('discover', '/v1/feed/discover', true);
