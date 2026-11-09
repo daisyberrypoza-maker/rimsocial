@@ -14,7 +14,7 @@ export default function withTabBar(Screen, activeTab) {
         <BottomBar
           activeTab={activeTab}
           onPress={(name) => {
-            if (name === 'Add') navigation.navigate('Upload');
+            if (name === 'Add') navigation.navigate('Camera');
             else if (name === 'Explore') navigation.navigate('Explore');
             else navigation.navigate('Main', { screen: name });
           }}
