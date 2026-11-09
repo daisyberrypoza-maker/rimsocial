@@ -22,6 +22,7 @@ export default function EditProfile() {
   const [username, setUsername] = useState(me?.username || '');
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [brokenAvatar, setBrokenAvatar] = useState('');
 
   useEffect(() => {
     api('/v1/users/me')
@@ -80,7 +81,9 @@ export default function EditProfile() {
       <form className="ep-form" onSubmit={save}>
         <div className="ep-avatar-block">
           <button type="button" className="ep-avatar" onClick={() => fileRef.current?.click()} aria-label="Change profile picture">
-            {avatarUrl ? <img src={mediaUrl(avatarUrl)} alt="" /> : <Avatar user={me || {}} size={96} />}
+            {avatarUrl && brokenAvatar !== avatarUrl
+              ? <img src={mediaUrl(avatarUrl)} alt="" onError={() => setBrokenAvatar(avatarUrl)} />
+              : <Avatar user={{ ...(me || {}), avatarUrl: '' }} size={96} />}
           </button>
           <button type="button" className="ep-avatar-link" onClick={() => fileRef.current?.click()}>Edit picture or avatar</button>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={pickAvatar} />
