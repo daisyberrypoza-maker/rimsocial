@@ -36,6 +36,7 @@ export default function Explore() {
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState({});
   const [pulling, setPulling] = useState(false);
+  const newCount = recs.followBack.filter((p) => !dismissed[p.id] && !p.isFollowing).length;
   async function pullRefresh() {
     setPulling(true);
     try { await Promise.all([more(true), api('/v1/users/suggestions').then(setRecs).catch(() => {})]); } finally { setPulling(false); }
@@ -90,7 +91,7 @@ export default function Explore() {
     const followBackIds = new Set(recs.followBack.map((p) => p.id));
     const suggestedOnly = recs.suggested.filter((p) => !p.isFollowing && !followBackIds.has(p.id));
     const people = [...recs.followBack, ...suggestedOnly].filter((p) => !dismissed[p.id]);
-    people.forEach((p) => rows.push({ type: 'add', id: `p-${p.id}`, person: p }));
+    people.forEach((p) => rows.push({ type: 'add', id: `p-${p.id}`, person: p, isNew: followBackIds.has(p.id) && !p.isFollowing }));
     if (!people.length) rows.push({ type: 'empty', id: 'none', text: 'Search for people by name or username.' });
   } else if (!searchOpen) {
     for (let i = 0; i < items.length; i += 3) rows.push({ type: 'grid', id: `g-${i}`, items: items.slice(i, i + 3) });
@@ -102,7 +103,7 @@ export default function Explore() {
     if (item.type === 'add') {
       const p = item.person;
       return (
-        <View style={styles.addRow}>
+        <View style={[styles.addRow, item.isNew && styles.addRowNew]}>
           <Pressable style={styles.addMain} onPress={() => navigation.navigate('Profile', { username: p.username })}>
             <View style={styles.addAvatar}><Avatar user={p} size={56} />{p.isOnline && <View style={styles.online} />}</View>
             <View style={styles.text}>
@@ -173,7 +174,7 @@ export default function Explore() {
           <View style={styles.afHead}>
             <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" hitSlop={10} style={styles.afIcon}><ChevronDown size={26} color={colors.text} /></Pressable>
             <Text style={styles.afTitle}>Add Friends</Text>
-            <Pressable accessibilityLabel="More" hitSlop={10} style={styles.afIcon}><MoreHorizontal size={24} color={colors.text} /></Pressable>
+            <Pressable accessibilityLabel="My friends" hitSlop={10} style={styles.afIcon} onPress={() => navigation.navigate('MyFriends')}><MoreHorizontal size={24} color={colors.text} /></Pressable>
           </View>
         </>
       )}
@@ -221,7 +222,10 @@ export default function Explore() {
             <Text style={styles.inviteText}>Invite your friends!</Text>
           </Pressable>
           <View style={styles.findHead}>
-            <Text style={styles.findTitle}>Find Friends</Text>
+            <View style={styles.findTitleRow}>
+              <Text style={styles.findTitle}>Find Friends</Text>
+              {newCount > 0 && <View style={styles.newPill}><Text style={styles.newPillText}>{newCount} New</Text></View>}
+            </View>
             <View style={styles.allContacts}><Text style={styles.allContactsText}>All Contacts</Text><ChevronRight size={16} color={colors.muted} /></View>
           </View>
         </>
@@ -283,6 +287,10 @@ const styles = StyleSheet.create({
   findTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
   allContacts: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   allContactsText: { fontSize: 15, color: colors.muted },
+  findTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  newPill: { paddingHorizontal: 10, height: 26, borderRadius: 13, backgroundColor: '#ff3b5c', alignItems: 'center', justifyContent: 'center' },
+  newPillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  addRowNew: { backgroundColor: '#fffde4' },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eeeeee' },
   addMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
   addAvatar: { width: 56, height: 56 },

@@ -4,6 +4,7 @@ import MainTabs from './MainTabs';
 import Login from '../screens/Login';
 import Upload from '../screens/Upload';
 import Camera from '../screens/Camera';
+import MyFriends from '../screens/MyFriends';
 import StoryViewer from '../screens/StoryViewer';
 import Profile from '../screens/Profile';
 import ProfileList from '../screens/ProfileList';
@@ -38,6 +39,7 @@ export default function RootNavigator({ signedIn }) {
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="Upload" component={Upload} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="MyFriends" component={MyFriends} />
       <Stack.Screen name="Camera" component={Camera} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="StoryViewer" component={StoryViewer} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
       {/* Profile screens have no bottom bar: they open from the Stories header */}
