@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, Post, Follow, UserBlock } = require('../db');
+const { Op, User, Post, Follow, UserBlock, AudioTrack } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { toPostDTO } = require('../lib/serialize');
 
@@ -9,8 +9,12 @@ router.use(requireAuth);
 router.get('/', async (req, res, next) => {
   try {
     const raw = String(req.query.q || '').trim().slice(0, 80);
-    const type = ['all', 'people', 'posts', 'hashtags'].includes(req.query.type) ? req.query.type : 'all';
-    if (!raw) return res.json({ people: [], posts: [] });
+    const type = ['all', 'people', 'posts', 'hashtags', 'audio'].includes(req.query.type) ? req.query.type : 'all';
+    if (!raw) return res.json({ people: [], posts: [], audio: [] });
+    const audioPromise = type === 'all' || type === 'audio' ? AudioTrack.findAll({
+      where: { [Op.or]: [{ title: { [Op.like]: `%${raw}%` } }, { artist: { [Op.like]: `%${raw}%` } }] },
+      order: [['createdAt', 'DESC']], limit: 30,
+    }) : Promise.resolve([]);
     const tag = raw.replace(/^#/, '').replace(/[^a-zA-Z0-9_]/g, '');
     const blocksPromise = UserBlock.findAll({ where: { [Op.or]: [{ blockerId: req.user.id }, { blockedUserId: req.user.id }] }, attributes: ['blockerId', 'blockedUserId'], raw: true });
     const peoplePromise = type === 'posts' || type === 'hashtags' ? Promise.resolve([]) : User.findAll({
@@ -33,7 +37,7 @@ router.get('/', async (req, res, next) => {
       include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }],
       order: [['createdAt', 'DESC']], limit: 40,
     });
-    const [people, posts, blockRows] = await Promise.all([peoplePromise, postsPromise, blocksPromise]);
+    const [people, posts, blockRows, audio] = await Promise.all([peoplePromise, postsPromise, blocksPromise, audioPromise]);
     const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const visiblePeople = people.filter((person) => !blockedIds.includes(person.id));
     const visiblePosts = posts.filter((post) => !blockedIds.includes(post.authorId));
@@ -48,6 +52,7 @@ router.get('/', async (req, res, next) => {
     res.json({
       people: visiblePeople.map((person) => ({ ...person.toJSON(), isFollowing: followingIds.has(person.id) })),
       posts: visiblePosts.map(toPostDTO),
+      audio: audio.map((track) => ({ id: track.id, title: track.title, artist: track.artist, mediaUrl: track.mediaUrl, createdAt: track.createdAt })),
     });
   } catch (e) { next(e); }
 });

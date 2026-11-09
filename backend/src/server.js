@@ -78,6 +78,7 @@ app.use('/v1/users', require('./routes/users'));
 app.use('/v1/activity', require('./routes/activity'));
 app.use('/v1/messages', require('./routes/messages'));
 app.use('/v1/search', require('./routes/search'));
+app.use('/v1/audio', require('./routes/audio'));
 app.use('/v1', require('./routes/gifts'));
 app.use('/v1/creator', require('./routes/creator'));
 app.use('/v1/business', require('./routes/business'));
