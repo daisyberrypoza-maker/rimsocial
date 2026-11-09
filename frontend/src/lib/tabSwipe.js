@@ -8,6 +8,8 @@ const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-
 const LOCK_PX = 10;          // movement needed before we decide the direction
 const SETTLE_MS = 230;       // length of the slide or spring-back
 const busyRef = { current: false };
+// Runs once the new tab has actually mounted, so the slide-in never starts on a blank frame
+const afterMount = { current: null };
 
 function appEl() { return document.querySelector('.app'); }
 function setOffset(px) { appEl()?.style.setProperty('--swipe-x', `${px}px`); }
@@ -82,21 +84,28 @@ export function useTabSwipe(navigate, pathname, enabled) {
       settle(outTo, () => {
         // The new screen starts off to the side the finger came from, then slides in
         setClass('swipe-anim', false);
-        // Replace, not push: moving between bottom tabs never adds a Back step
-        navigate(target, { replace: true });
+        // Park the new tab off to the side (hidden) until it has mounted, then slide it in
         setOffset(-outTo);
-        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        const slideIn = () => {
+          afterMount.current = null;
           settle(0, () => {
             setClass('swipe-anim', false);
             setClass('swiping', false);
             setOffset(0);
             busyRef.current = false;
           });
-        }));
+        };
+        afterMount.current = slideIn;
+        // Fallback so the swipe can never get stuck if the route does not change
+        window.setTimeout(() => { if (afterMount.current === slideIn) slideIn(); }, 700);
+        // Replace, not push: moving between bottom tabs never adds a Back step
+        navigate(target, { replace: true });
       });
       void event;
     }
 
+    // The new tab has mounted: wait two frames so its first paint is done, then slide it in
+    if (afterMount.current) window.requestAnimationFrame(() => window.requestAnimationFrame(() => { const fn = afterMount.current; if (fn) fn(); }));
     window.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: true });
     // A cancelled touch ends the gesture too, so the page is never left pushed to the side
