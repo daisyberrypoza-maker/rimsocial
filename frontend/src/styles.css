@@ -5454,3 +5454,7 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .pv-sheet-tabs, .pv-row, .pv-list, .ig-person, .ig-explore .ig-person, .ig-section, .ig-section-head, .ig-explore .ig-section, .people-discovery-heading { border:0 !important; border-bottom:0 !important; border-top:0 !important; box-shadow:none !important; }
 .pv-row { padding:10px 0 !important; }
 .ig-person { padding:10px 16px !important; }
+
+/* Following list row: Message and the three-dot button sit on the same line; the dots are a plain icon, not a black bar */
+.pv-row { grid-template-columns: 1fr auto auto !important; gap: 8px !important; }
+.pv-row .pv-more { width: auto !important; min-width: 0 !important; height: auto !important; background: transparent !important; color: #111 !important; border: 0 !important; border-radius: 50% !important; padding: 6px !important; margin: 0 !important; display: grid; place-items: center; }
