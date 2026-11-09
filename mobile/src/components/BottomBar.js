@@ -5,14 +5,14 @@ import { api } from '../api';
 import { playChime } from '../lib/chime';
 import { colors } from '../theme';
 
-// Bottom bar: Chat, Add (camera), Stories (friends), Rimlight (play), Search (discovery). The Explore screen is now Find friends, opened from the user+ icon.
+// Bottom bar: Stories, Chat, Add (camera), Search (discovery), Rimlight (play). The Explore screen is now Find friends, opened from the user+ icon.
 // No text labels. The active icon is filled: black on the light bar, white on the dark Rimlight bar.
 const TABS = [
+  { name: 'Stories', icon: 'users' },
   { name: 'Chat', icon: 'message-circle' },
   { name: 'Add', icon: 'camera' },
-  { name: 'Stories', icon: 'users' },
-  { name: 'Rimlight', icon: 'play' },
   { name: 'Search', icon: 'search' },
+  { name: 'Rimlight', icon: 'play' },
 ];
 
 export default function BottomBar({ activeTab, onPress }) {
