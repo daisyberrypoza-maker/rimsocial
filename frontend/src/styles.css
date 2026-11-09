@@ -5575,8 +5575,8 @@ html, body, #root { width:100% !important; height:100% !important; }
 /* Stories row: stays inside the screen, so scrolling stops with the last story at the edge (no extra empty scroll) */
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
 .st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
-/* End spacer: 16px so the last story can scroll fully into view, even when only one is left (Safari ignores trailing padding on flex rows) */
-.st-page .st-row::after { content:''; flex:0 0 16px; width:16px; }
+/* End spacer: as wide as the screen minus one story tile, so the row can scroll until only the last story is left (Safari ignores trailing padding on flex rows) */
+.st-page .st-row::after { content:''; flex:0 0 calc(100% + 32px - 90px); width:calc(100% + 32px - 90px); min-width:0; }
 
 /* Camera first (Add opens the live viewfinder, Snapchat-style) */
 .cam-page { position: fixed; inset: 0; background: #000; color: #fff; z-index: 50; overflow: hidden; }
