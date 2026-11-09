@@ -5570,3 +5570,4 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sr-track.pending { opacity:.6; }
 .sr-pending-dot { width:10px; height:10px; border-radius:50%; background:#4f5bfa; margin-left:auto; animation:sr-pulse 1s ease-in-out infinite; }
 @keyframes sr-pulse { 0%,100% { opacity:.25; } 50% { opacity:1; } }
+.sr-upload-note { font-size:13px; color:#737373; }

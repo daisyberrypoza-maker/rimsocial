@@ -36,6 +36,9 @@ export default function Profile() {
   const username = route.params?.username || 'me';
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  // The chosen picture or cover shows at once; it is kept only if the upload succeeds
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
   const me = useAppStore((s) => s.user);
   const storyRail = useAppStore((s) => s.storyRail);
   const key = `u:${username}`;
@@ -153,6 +156,7 @@ export default function Profile() {
     const r = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }).catch(logError);
     const asset = r?.assets?.[0];
     if (!asset) return;
+    if (kind === 'avatar') setAvatarPreview(asset.uri); else setCoverPreview(asset.uri);
     const fd = new FormData();
     fd.append('media', { uri: asset.uri, name: asset.fileName || `${kind}.jpg`, type: asset.type || 'image/jpeg' });
     try {
@@ -174,6 +178,8 @@ export default function Profile() {
     } catch (e) {
       logError(e);
       toast(kind === 'avatar' ? 'Could not update the photo' : 'Could not update the cover');
+    } finally {
+      if (kind === 'avatar') setAvatarPreview(null); else setCoverPreview(null);
     }
   }
 
@@ -217,7 +223,7 @@ export default function Profile() {
   const header = (
     <View>
       <View style={[styles.cover, { backgroundColor: cover.mid, height: COVER_H + insets.top }]}>
-        {!!user?.coverUrl && <Image source={{ uri: mediaUrl(user.coverUrl) }} style={StyleSheet.absoluteFill} />}
+        {(!!coverPreview || !!user?.coverUrl) && <Image source={{ uri: coverPreview || mediaUrl(user.coverUrl) }} style={StyleSheet.absoluteFill} />}
         <View style={[styles.coverTop, { paddingTop: insets.top + 6 }]}>
           <RoundBtn icon="arrow-left" label="Back" onPress={() => navigation.goBack()} />
           <View style={styles.coverRight}>
@@ -242,8 +248,8 @@ export default function Profile() {
           {/* A story shows a ring around the picture. Tapping the picture opens it full size (web). */}
           <Pressable style={styles.avatarSlot} onPress={() => setPicture(true)} accessibilityLabel={user?.avatarUrl ? 'View profile picture' : 'View profile avatar'}>
             {ringState
-              ? <StoryRing state={ringState} size={102}><Avatar user={user || {}} size={88} /></StoryRing>
-              : <Avatar user={user || {}} size={92} />}
+              ? <StoryRing state={ringState} size={102}><Avatar user={avatarPreview ? { ...(user || {}), avatarUrl: avatarPreview } : (user || {})} size={88} /></StoryRing>
+              : <Avatar user={avatarPreview ? { ...(user || {}), avatarUrl: avatarPreview } : (user || {})} size={92} />}
           </Pressable>
           {!!user?.isOnline && <View style={styles.online} accessibilityLabel="Online now" />}
           {isMe && (
@@ -446,7 +452,7 @@ export default function Profile() {
             ? <Image source={{ uri: mediaUrl(user.avatarUrl) }} style={styles.viewerImage} resizeMode="contain" />
             : (
               <View style={styles.viewerEmpty} pointerEvents="none">
-                <Avatar user={user || {}} size={160} />
+                <Avatar user={avatarPreview ? { ...(user || {}), avatarUrl: avatarPreview } : (user || {})} size={160} />
                 <Text style={styles.viewerEmptyText}>No profile picture yet</Text>
               </View>
             )}
