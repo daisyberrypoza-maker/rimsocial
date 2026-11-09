@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
+import Activity from './Activity';
 import Icon from '../components/Icon';
 import { api } from '../api';
 import { useAppStore } from '../store';
@@ -17,9 +18,16 @@ const CHIP_ON = '#e8eefc';
 // Chat list: people you have messages with, newest first. Refreshes every few seconds.
 export default function Chat() {
   const navigation = useNavigation();
+  const route = useRoute();
   const me = useAppStore((s) => s.user);
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
+  // Messages and Activity live on this one screen; the bell switches to Activity
+  const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
+
+  useEffect(() => {
+    if (route.params?.view === 'activity') setView('activity');
+  }, [route.params?.view]);
 
   useEffect(() => {
     let alive = true;
@@ -31,13 +39,15 @@ export default function Chat() {
 
   const shown = (items || []).filter((i) => filter === 'all' || i.unread > 0);
 
+  if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
+
   return (
     <View style={styles.page}>
       <View style={styles.head}>
         <View style={styles.side} />
         <Text style={styles.title}>Chat</Text>
         <View style={[styles.actions, styles.side]}>
-          <Pressable onPress={() => navigation.navigate('Activity')} accessibilityLabel="Activity"><Icon name="bell" size={24} /></Pressable>
+          <Pressable onPress={() => setView('activity')} accessibilityLabel="Activity"><Icon name="bell" size={24} /></Pressable>
           <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message"><Icon name="pencil" size={24} /></Pressable>
         </View>
       </View>

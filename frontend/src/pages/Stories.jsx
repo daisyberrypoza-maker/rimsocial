@@ -183,12 +183,12 @@ export default function Stories() {
         </div>
         <h1 className="st-title">Stories</h1>
         <div className="st-right">
-          <button className="st-round" aria-label="Notifications" onClick={() => navigate('/activity')}><Icon name="bell" size={21} /></button>
+          <button className="st-round" aria-label="Notifications" onClick={() => navigate('/chat', { state: { view: 'activity' } })}><Icon name="bell" size={21} /></button>
           <button className="st-round st-badged" aria-label={newFollows ? `Find friends, ${newFollows} new` : 'Find friends'} onClick={openFriends}>
             <Icon name="user-plus" size={21} />
             {newFollows > 0 && <span className="st-count">{newFollows > 99 ? '99+' : newFollows}</span>}
           </button>
-          <button className="st-round" aria-label="More" onClick={() => navigate('/activity')}><Icon name="more-vertical" size={21} /></button>
+          <button className="st-round" aria-label="More" onClick={() => navigate('/chat', { state: { view: 'activity' } })}><Icon name="more-vertical" size={21} /></button>
         </div>
       </header>
 
