@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -15,6 +16,7 @@ const BUBBLE_THEIRS = '#efefef';
 
 // One chat. Messages refresh every few seconds, oldest at the top and newest at the bottom.
 export default function Conversation() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { userId, user: passedUser } = useRoute().params;
   const me = useAppStore((s) => s.user);
@@ -65,7 +67,7 @@ export default function Conversation() {
   const canSend = Boolean(body.trim()) && !sending;
 
   return (
-    <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.page, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.head}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={26} /></Pressable>
         {partner && <Avatar user={partner} size={38} />}
@@ -109,7 +111,7 @@ export default function Conversation() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44, paddingBottom: 6 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0, paddingBottom: 6 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#efefef' },
   name: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   thread: { flex: 1 },

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -11,6 +12,7 @@ const GREY = '#8e8e93';
 
 // New message: search people, then open a conversation with them.
 export default function NewMessage() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const me = useAppStore((s) => s.user);
   const [query, setQuery] = useState('');
@@ -52,7 +54,7 @@ export default function NewMessage() {
   } else if (!searching) body = <Text style={styles.empty}>No one found.</Text>;
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.head}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={26} /></Pressable>
         <Text style={styles.title}>New message</Text>
@@ -78,7 +80,7 @@ export default function NewMessage() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
   title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
   spacer: { width: 26 },

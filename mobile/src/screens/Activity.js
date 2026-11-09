@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, Image, FlatList, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +38,7 @@ function timeAgo(value) {
 
 // Shown inside the Chat screen (onBack returns to messages); also still works as its own screen.
 export default function Activity({ onBack }) {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [items, setItems] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -107,7 +109,7 @@ export default function Activity({ onBack }) {
 
   return (
     <FlatList
-      style={styles.page}
+      style={[styles.page, { paddingTop: insets.top }]}
       data={filtered}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={header}
@@ -147,7 +149,7 @@ export default function Activity({ onBack }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   title: { fontSize: 22, fontWeight: '600', color: INK },

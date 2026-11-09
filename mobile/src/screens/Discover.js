@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
 import Video from 'react-native-video';
 import { Music } from 'lucide-react-native';
@@ -34,6 +35,7 @@ function tagsFrom(posts, term) {
 }
 
 export default function Discover() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   // Opened from a tag: this screen shows that tag's posts
@@ -139,7 +141,7 @@ export default function Discover() {
     return (
       <FlatList
         key="accounts"
-        style={styles.page}
+        style={[styles.page, { paddingTop: insets.top }]}
         data={people}
         keyExtractor={(p) => String(p.id)}
         ListHeaderComponent={header}
@@ -169,7 +171,7 @@ export default function Discover() {
     return (
       <FlatList
         key="audio"
-        style={styles.page}
+        style={[styles.page, { paddingTop: insets.top }]}
         data={audio}
         keyExtractor={(t) => String(t.id)}
         ListHeaderComponent={header}
@@ -197,7 +199,7 @@ export default function Discover() {
     return (
       <FlatList
         key="tags"
-        style={styles.page}
+        style={[styles.page, { paddingTop: insets.top }]}
         data={tags}
         keyExtractor={(t) => t.tag}
         ListHeaderComponent={header}
@@ -219,7 +221,7 @@ export default function Discover() {
   return (
     <FlatList
       key="grid"
-      style={styles.page}
+      style={[styles.page, { paddingTop: insets.top }]}
       data={posts}
       numColumns={3}
       keyExtractor={(p) => String(p.id)}
@@ -235,7 +237,7 @@ export default function Discover() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 10, gap: 8 },
   back: { paddingRight: 4 },
   field: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#efefef', borderRadius: 12, paddingHorizontal: 12, height: 40 },

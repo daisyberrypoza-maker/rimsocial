@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -13,6 +14,7 @@ import { colors } from '../theme';
 // Edit profile, the same fields as the web page: name, bio, website and city.
 // The picture can be changed from the link under the avatar.
 export default function EditProfile() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const me = useAppStore((s) => s.user);
   const [form, setForm] = useState({ displayName: '', pronouns: '', bio: '', website: '', city: '', gender: '' });
@@ -78,7 +80,7 @@ export default function EditProfile() {
   }
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.top}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back" hitSlop={10}><ArrowLeft size={22} color={colors.text} /></Pressable>
         <Text style={styles.title}>Edit profile</Text>
@@ -135,7 +137,7 @@ function Field({ label, counter, editable = true, inputRef, ...props }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, paddingTop: 4, borderBottomWidth: 1, borderBottomColor: colors.line },
   spacer: { width: 22 },
   title: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
