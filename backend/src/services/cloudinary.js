@@ -29,6 +29,7 @@ function request(url, body, contentType) {
         try { payload = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return reject(new Error('Cloudinary returned an invalid response')); }
         if (res.statusCode < 200 || res.statusCode >= 300) {
           const error = new Error(payload.error?.message || 'Cloudinary request failed');
+          console.error('Cloudinary rejected the upload:', res.statusCode, payload.error?.message || 'no message');
           error.status = 502;
           error.expose = true;
           return reject(error);
