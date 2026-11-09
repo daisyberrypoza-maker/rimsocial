@@ -157,7 +157,6 @@ export default function Stories() {
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No stories yet</Text>
             <Text style={styles.emptyText}>Share a photo or video and your friends can see it for 24 hours.</Text>
-            <Pressable style={styles.pill} onPress={() => navigation.navigate('Upload', { story: true })}><Text style={styles.pillText}>Create a story</Text></Pressable>
           </View>
         )}
       </View>

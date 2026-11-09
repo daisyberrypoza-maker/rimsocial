@@ -219,7 +219,6 @@ export default function Stories() {
           <div className="st-empty">
             <strong>No stories yet</strong>
             <p>Share a photo or video and your friends can see it for 24 hours.</p>
-            <button className="st-pill" onClick={() => navigate('/upload?story=1')}>Create a story</button>
           </div>
         )}
       </section>
