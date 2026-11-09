@@ -4,54 +4,90 @@ import { useNavigation } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import { api } from '../api';
-import { logError } from '../lib/toast';
+import { useAppStore } from '../store';
 import { colors } from '../theme';
 
-// Pick someone to message: search by name or username
+const GREY = '#8e8e93';
+
+// New message: search people, then open a conversation with them.
 export default function NewMessage() {
   const navigation = useNavigation();
-  const [q, setQ] = useState('');
+  const me = useAppStore((s) => s.user);
+  const [query, setQuery] = useState('');
   const [people, setPeople] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
-    const term = q.trim();
-    if (!term) { setPeople([]); return undefined; }
+    const q = query.trim();
+    if (!q) { setPeople([]); setSearching(false); return undefined; }
+    let alive = true;
+    setSearching(true);
     const timer = setTimeout(() => {
-      api(`/v1/search?type=people&q=${encodeURIComponent(term)}`)
-        .then((d) => setPeople(d.people || []))
-        .catch(logError);
+      api(`/v1/search?q=${encodeURIComponent(q)}&type=people`)
+        .then((data) => { if (alive) setPeople((data.people || []).filter((person) => String(person.id) !== String(me?.id))); })
+        .catch(() => { if (alive) setPeople([]); })
+        .finally(() => { if (alive) setSearching(false); });
     }, 250);
-    return () => clearTimeout(timer);
-  }, [q]);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [query, me?.id]);
 
-  return (
-    <View style={styles.page}>
-      <View style={styles.head}>
-        <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={24} /></Pressable>
-        <TextInput style={styles.input} placeholder="Search people" placeholderTextColor={colors.muted} value={q} onChangeText={setQ} autoFocus autoCapitalize="none" />
-      </View>
+  let body;
+  if (!query.trim()) body = <Text style={styles.empty}>Search for someone to message.</Text>;
+  else if (people.length) {
+    body = (
       <FlatList
         data={people}
         keyExtractor={(p) => String(p.id)}
         renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => navigation.replace('Conversation', { userId: item.id, user: item })}>
-            <Avatar user={item} size={44} />
-            <View>
-              <Text style={styles.name}>{item.displayName || item.username}</Text>
-              <Text style={styles.handle}>@{item.username}</Text>
+          <Pressable style={styles.row} onPress={() => navigation.navigate('Conversation', { userId: item.id, user: item })}>
+            <Avatar user={item} size={48} />
+            <View style={styles.text}>
+              <Text style={styles.name} numberOfLines={1}>{item.displayName || item.username}</Text>
+              <Text style={styles.handle} numberOfLines={1}>@{item.username}</Text>
             </View>
           </Pressable>
         )}
       />
+    );
+  } else if (!searching) body = <Text style={styles.empty}>No one found.</Text>;
+
+  return (
+    <View style={styles.page}>
+      <View style={styles.head}>
+        <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={26} /></Pressable>
+        <Text style={styles.title}>New message</Text>
+        <View style={styles.spacer} />
+      </View>
+      <View style={styles.to}>
+        <Text style={styles.toLabel}>To:</Text>
+        <TextInput
+          style={styles.input}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search"
+          placeholderTextColor={GREY}
+          autoFocus
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Search people"
+        />
+      </View>
+      {body}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingBottom: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16, color: colors.text },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  handle: { fontSize: 14, color: colors.muted },
+  head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
+  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
+  spacer: { width: 26 },
+  to: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#efefef' },
+  toLabel: { fontSize: 16, fontWeight: '600', color: colors.text },
+  input: { flex: 1, fontSize: 16, color: colors.text, paddingVertical: 0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  text: { flex: 1, minWidth: 0 },
+  name: { fontSize: 15, fontWeight: '600', color: colors.text },
+  handle: { fontSize: 14, color: GREY },
+  empty: { textAlign: 'center', color: GREY, fontSize: 15, paddingVertical: 40, paddingHorizontal: 24 },
 });

@@ -126,7 +126,7 @@ export default function Explore() {
       return (
         <View style={styles.gridRow}>
           {item.items.map((p) => (
-            <Pressable key={p.id} style={styles.cell} onPress={() => navigation.navigate('PostDetail', { postId: p.id })}>
+            <Pressable key={p.id} style={styles.cell} onPress={() => navigation.navigate('ExploreWatch', { postId: p.id })}>
               <Image source={{ uri: mediaUrl(p.thumbUrl || p.mediaUrl) }} style={styles.fill} />
               <View style={styles.views}><Icon name="play" size={12} color="#fff" /><Text style={styles.viewsText}>{formatCount(p.viewCount)}</Text></View>
             </Pressable>

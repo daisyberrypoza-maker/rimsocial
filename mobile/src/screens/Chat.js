@@ -8,6 +8,12 @@ import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
 import { colors } from '../theme';
 
+// Same colours as the web Chat page (.dm-* rules in styles.css)
+const BLUE = '#3797f0';
+const GREY = '#8e8e93';
+const CHIP = '#f0f0f2';
+const CHIP_ON = '#e8eefc';
+
 // Chat list: people you have messages with, newest first. Refreshes every few seconds.
 export default function Chat() {
   const navigation = useNavigation();
@@ -30,7 +36,7 @@ export default function Chat() {
       <View style={styles.head}>
         <View style={styles.side} />
         <Text style={styles.title}>Chat</Text>
-        <View style={[styles.actions, styles.side, { justifyContent: 'flex-end' }]}>
+        <View style={[styles.actions, styles.side]}>
           <Pressable onPress={() => navigation.navigate('Activity')} accessibilityLabel="Activity"><Icon name="bell" size={24} /></Pressable>
           <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message"><Icon name="pencil" size={24} /></Pressable>
         </View>
@@ -38,24 +44,25 @@ export default function Chat() {
       <View style={styles.filters}>
         {['all', 'unread'].map((f) => (
           <Pressable key={f} onPress={() => setFilter(f)} style={[styles.chip, filter === f && styles.chipOn]}>
-            <Text style={[styles.chipText, filter === f && styles.chipTextOn]}>{f === 'all' ? 'All' : 'Unread'}</Text>
+            <Text style={styles.chipText}>{f === 'all' ? 'All' : 'Unread'}</Text>
           </Pressable>
         ))}
       </View>
       <FlatList
         data={shown}
         keyExtractor={(i) => String(i.user.id)}
-        ListEmptyComponent={<Text style={styles.empty}>{items === null ? '' : filter === 'unread' ? 'No unread messages.' : 'No messages yet. Tap the compose icon to start one.'}</Text>}
+        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'unread' ? 'No unread messages.' : 'No messages yet. Tap the compose icon to start one.'}</Text>}
         renderItem={({ item }) => {
           const mine = item.lastMessage.senderId === me?.id;
+          const unread = item.unread > 0;
           return (
             <Pressable style={styles.row} onPress={() => navigation.navigate('Conversation', { userId: item.user.id, user: item.user })}>
               <Avatar user={item.user} size={56} />
               <View style={styles.text}>
-                <Text style={styles.name} numberOfLines={1}>{item.user.displayName || item.user.username}</Text>
-                <Text style={styles.last} numberOfLines={1}>{mine ? 'Sent' : item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</Text>
+                <Text style={[styles.name, unread && styles.nameUnread]} numberOfLines={1}>{item.user.displayName || item.user.username}</Text>
+                <Text style={[styles.last, unread && styles.lastUnread]} numberOfLines={1}>{mine ? 'Sent' : item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</Text>
               </View>
-              {item.unread > 0 && <View style={styles.dot} />}
+              {unread && <View style={styles.dot} accessibilityLabel="Unread" />}
             </Pressable>
           );
         }}
@@ -66,19 +73,20 @@ export default function Chat() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
   title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
   side: { width: 64 },
-  actions: { flexDirection: 'row', gap: 16 },
-  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
-  chipOn: { backgroundColor: '#e8eefc', borderColor: '#e8eefc' },
-  chipText: { color: colors.text, fontWeight: '600' },
-  chipTextOn: { color: colors.text },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10 },
-  text: { flex: 1, gap: 3 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  last: { fontSize: 14, color: colors.muted },
-  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#3797f0' },
-  empty: { textAlign: 'center', color: colors.muted, marginTop: 40, paddingHorizontal: 24 },
+  actions: { flexDirection: 'row', gap: 16, justifyContent: 'flex-end' },
+  filters: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
+  chip: { backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
+  chipOn: { backgroundColor: CHIP_ON },
+  chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  text: { flex: 1, minWidth: 0 },
+  name: { fontSize: 15, fontWeight: '600', color: colors.text },
+  nameUnread: { fontWeight: '700', color: colors.text },
+  last: { fontSize: 14, color: GREY, marginTop: 2 },
+  lastUnread: { fontWeight: '700', color: colors.text },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: BLUE },
+  empty: { textAlign: 'center', color: GREY, fontSize: 15, marginTop: 40, paddingHorizontal: 24 },
 });

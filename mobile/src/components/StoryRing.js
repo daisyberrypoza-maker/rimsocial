@@ -5,6 +5,11 @@ import Icon from './Icon';
 import { mediaUrl } from '../config';
 import { colors } from '../theme';
 
+// The saved story rail is { items } (store default) or a plain list (some saves); both give the list
+export function railItems(rail) {
+  return Array.isArray(rail) ? rail : (rail?.items || []);
+}
+
 // Ring around a story picture. The picture is the latest story (a video shows its first frame),
 // the profile picture when there is no story. While uploading, the ring turns.
 export function StoryFace({ preview, fallbackUser, size }) {
