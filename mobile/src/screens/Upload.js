@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, PermissionsAndroid, Platform, useWindowDimensions, Switch, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
@@ -32,6 +33,7 @@ function fromAsset(asset) {
 // (preview, caption tool, Save, Post or My Story). Story mode comes from route.params.story.
 // route.params.remix (a post id) opens the remix flow.
 export default function Upload() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   const toStory = Boolean(route.params?.story);
@@ -181,7 +183,7 @@ export default function Upload() {
 
   if (view === 'gallery') {
     return (
-      <View style={styles.gallery}>
+      <View style={[styles.gallery, { paddingTop: insets.top }]}>
         <View style={styles.galleryTop}>
           <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" hitSlop={10}><Icon name="chevron-down" size={30} color={colors.text} /></Pressable>
           <Text style={styles.title}>{toStory ? 'Post To Story' : 'Post'}</Text>
@@ -222,7 +224,7 @@ export default function Upload() {
 
   const captionText = caption.trim() ? caption.trim().slice(0, 28) : 'Add a caption';
   return (
-    <View style={styles.editor}>
+    <View style={[styles.editor, { paddingTop: insets.top }]}>
       <View style={styles.editorTop}>
         <Pressable onPress={() => setView('gallery')} accessibilityLabel="Back to gallery" hitSlop={10}><Icon name="x" size={28} color="#fff" /></Pressable>
         <Pressable style={styles.captionPill} onPress={() => setSheetOpen(true)}>
@@ -352,7 +354,7 @@ function Field({ label, ...props }) {
 }
 
 const styles = StyleSheet.create({
-  gallery: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  gallery: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   galleryTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 56, paddingHorizontal: 12 },
   title: { fontSize: 19, fontWeight: '600', color: colors.text },
   tabs: { flexDirection: 'row', justifyContent: 'center', gap: 36, paddingVertical: 8 },
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
   pickTile: { backgroundColor: colors.surface },
   fill: { width: '100%', height: '100%' },
 
-  editor: { flex: 1, backgroundColor: '#000', paddingTop: 44 },
+  editor: { flex: 1, backgroundColor: '#000', paddingTop: 0 },
   editorTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, height: 52 },
   spacer: { width: 28 },
   captionPill: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '62%', height: 44, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(30,30,30,0.72)' },

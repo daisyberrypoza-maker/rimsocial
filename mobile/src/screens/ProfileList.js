@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Shield } from 'lucide-react-native';
@@ -32,6 +33,7 @@ function activityText(item) {
 }
 
 export default function ProfileList() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { username, list = 'followers' } = useRoute().params;
   const me = useAppStore((s) => s.user);
@@ -115,7 +117,7 @@ export default function ProfileList() {
     ) : null);
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.top}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back" hitSlop={8}><Icon name="arrow-left" size={24} color={colors.text} /></Pressable>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -213,7 +215,7 @@ function Tab({ on, count, label, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 10 },
   title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
   tabs: { flexDirection: 'row' },

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -20,6 +21,7 @@ const BLUE = '#4f5bfa';
 const TABS = [['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']];
 
 export default function Explore() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   // Explore is Find friends only: the user+ icon and search open it
@@ -144,7 +146,7 @@ export default function Explore() {
   const showSearchBar = searchOpen || Boolean(results) || Boolean(query.trim());
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       {peopleMode && !searchOpen && (
         <View style={styles.heading}>
           <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={24} /></Pressable>
@@ -205,7 +207,7 @@ export default function Explore() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 8 },
   headingText: { flex: 1 },
   h1: { fontSize: 22, fontWeight: '700', color: colors.text },

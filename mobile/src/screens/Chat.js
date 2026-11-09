@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -19,6 +20,7 @@ const CHIP_ON = '#e8eefc';
 const FILTERS = [['all', 'All'], ['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
 
 export default function Chat() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   const me = useAppStore((s) => s.user);
@@ -45,7 +47,7 @@ export default function Chat() {
   const totalUnread = all.reduce((sum, i) => sum + (i.unread || 0), 0);
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.head}>
         <View style={styles.account}>
           <Text style={styles.title} numberOfLines={1}>{me?.username || 'Chat'}</Text>
@@ -95,7 +97,7 @@ export default function Chat() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
+  page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   account: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },

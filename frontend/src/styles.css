@@ -5557,3 +5557,13 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .sr-track audio { width:100%; }
 .sr-music { width:52px; height:52px; border-radius:12px; background:#efefef; display:grid; place-items:center; font-size:22px; flex:none; }
 .sr-track .sr-person-text { flex:1; min-width:0; }
+
+/* Full-screen, app-like layout: every screen fills the whole viewport (no centred card width, no side borders).
+   Bottom sheets and pop-ups keep their own sizes. */
+html, body, #root { width:100% !important; height:100% !important; }
+.app { width:100% !important; max-width:none !important; margin:0 !important; border:0 !important; }
+.page, .activity-page, .activity-page-wrap, .dm-page, .dm-convo, .sr-page, .ep-page, .st-page, .stories-page,
+.sc-stories, .sc-profile, .profile-page, .rec-page, .live-page, .ads-sponsors-content, .creator-page, .auth, .auth-card {
+  max-width:none !important; width:100% !important; margin-left:0 !important; margin-right:0 !important; box-sizing:border-box;
+}
+.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; }

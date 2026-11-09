@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -11,6 +12,7 @@ const SNAP_YELLOW = '#FFFC00'; // Add button, as on the web
 
 // Suggested people to follow. Same list and buttons as the web Recommended page.
 export default function Recommended() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function Recommended() {
   }
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingTop: insets.top }]}>
       <View style={styles.top}>
         <Pressable style={styles.topBtn} onPress={() => navigation.goBack()} accessibilityLabel="Back">
           <Icon name="chevron-down" size={26} color={colors.text} />
@@ -76,7 +78,7 @@ export default function Recommended() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.surface, paddingTop: 48 },
+  page: { flex: 1, backgroundColor: colors.surface, paddingTop: 0 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: colors.bg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   topBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   title: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '700', color: colors.text },
