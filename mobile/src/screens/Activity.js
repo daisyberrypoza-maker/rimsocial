@@ -35,7 +35,8 @@ function timeAgo(value) {
   return new Date(value).toLocaleDateString();
 }
 
-export default function Activity() {
+// Shown inside the Chat screen (onBack returns to messages); also still works as its own screen.
+export default function Activity({ onBack }) {
   const navigation = useNavigation();
   const [items, setItems] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -73,9 +74,9 @@ export default function Activity() {
     <View>
       <View style={styles.heading}>
         <View style={styles.titleRow}>
-          {navigation.canGoBack() && (
-            // Opened from another screen: Back returns to where the user came from
-            <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back" style={styles.refresh}>
+          {(onBack || navigation.canGoBack()) && (
+            // Back returns to messages (or to the screen the user came from)
+            <Pressable onPress={() => (onBack ? onBack() : navigation.goBack())} accessibilityLabel="Back" style={styles.refresh}>
               <Icon name="arrow-left" size={22} color={INK} />
             </Pressable>
           )}

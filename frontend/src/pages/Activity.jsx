@@ -24,7 +24,8 @@ function timeAgo(value) {
   return new Date(value).toLocaleDateString();
 }
 
-export default function Activity() {
+// Shown inside the Chat page when onBack is given (Back returns to messages)
+export default function Activity({ onBack } = {}) {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,8 +64,10 @@ export default function Activity() {
     else navigate('/u/' + encodeURIComponent(item.actor.username));
   }
 
-  return <main className="page activity-page">
+  const Wrap = onBack ? 'div' : 'main';
+  return <Wrap className="page activity-page">
     <div className="activity-heading">
+      {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
       <button className="ghost activity-refresh" onClick={load} aria-label="Refresh activity" title="Refresh"><Icon name="refresh" size={19} /></button>
     </div>
@@ -87,5 +90,5 @@ export default function Activity() {
           {isUnread && <span className="activity-unread-dot" />}
         </button>;
       })}</div>}
-  </main>;
+  </Wrap>;
 }

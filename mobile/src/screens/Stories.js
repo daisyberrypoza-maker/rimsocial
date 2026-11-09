@@ -113,7 +113,7 @@ export default function Stories() {
         </View>
         <View pointerEvents="none" style={styles.titleWrap}><Text style={styles.title}>Stories</Text></View>
         <View style={styles.right}>
-          <Pressable style={styles.round} onPress={() => navigation.navigate('Activity')} accessibilityLabel="Notifications"><Icon name="bell" size={21} color={colors.navIcon} /></Pressable>
+          <Pressable style={styles.round} onPress={() => navigation.navigate('Chat', { view: 'activity' })} accessibilityLabel="Notifications"><Icon name="bell" size={21} color={colors.navIcon} /></Pressable>
           <Pressable style={styles.round} onPress={openFriends} accessibilityLabel={newFollows ? `Find friends, ${newFollows} new` : 'Find friends'}>
             <Icon name="user-plus" size={21} color={colors.navIcon} />
             {newFollows > 0 && <View style={styles.count}><Text style={styles.countText}>{newFollows > 99 ? '99+' : newFollows}</Text></View>}

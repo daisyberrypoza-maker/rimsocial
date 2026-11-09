@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import { useAppStore } from '../store.js';
 import { messageTime } from '../lib/notify.js';
+import Activity from './Activity.jsx';
 
 // Chat list: people you have messages with, newest first. Refreshes every few seconds.
+// Activity lives on this same page: the bell switches to it.
 export default function Messages() {
   const navigate = useNavigate();
+  const location = useLocation();
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
+  const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+
+  useEffect(() => {
+    if (location.state?.view === 'activity') setView('activity');
+  }, [location.state]);
 
   useEffect(() => {
     let alive = true;
@@ -25,12 +33,16 @@ export default function Messages() {
 
   const shown = (items || []).filter((item) => filter === 'all' || item.unread > 0);
 
+  if (view === 'activity') {
+    return <main className="page activity-page-wrap"><Activity onBack={() => setView('messages')} /></main>;
+  }
+
   return (
     <main className="dm-page">
       <header className="dm-head">
         <h1>Chat</h1>
         <div className="dm-head-actions">
-          <button type="button" className="dm-icon" onClick={() => navigate('/activity')} aria-label="Activity">
+          <button type="button" className="dm-icon" onClick={() => setView('activity')} aria-label="Activity">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>
           </button>
           <button type="button" className="dm-icon" onClick={() => navigate('/chat/new')} aria-label="New message">
