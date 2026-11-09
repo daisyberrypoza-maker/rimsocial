@@ -32,6 +32,7 @@ export default function Explore() {
   const sentinel = useRef(null);
   const touchStartY = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [dismissed, setDismissed] = useState({});
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
   // One place per person: anyone who follows you or you follow is never under Suggested
@@ -120,7 +121,7 @@ export default function Explore() {
 
   return (
     <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
-      {peopleMode && !searchMode && <header className="people-discovery-heading"><button type="button" className="friends-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={23} /></button><div><h1>Find friends</h1><p>Discover people and creators you may know</p></div></header>}
+      {peopleMode && !searchMode && <header className="af-head"><button type="button" className="af-icon" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={24} /></button><h1>Add Friends</h1><button type="button" className="af-icon" aria-label="More"><Icon name="ellipsis" size={24} /></button></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
@@ -129,6 +130,10 @@ export default function Explore() {
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
       </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
+      {peopleMode && !searchMode && !results && <>
+        <button type="button" className="af-invite"><Icon name="users" size={20} /><span>Invite your friends!</span></button>
+        <div className="af-section-head"><h3>Find Friends</h3><span>All Contacts <Icon name="chevron-right" size={16} /></span></div>
+      </>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
@@ -146,14 +151,25 @@ export default function Explore() {
         {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3>{results.posts.map((p) => <button key={p.id} className="rim-search-post" onClick={() => navigate(`/p/${p.id}`)}><span className="rim-search-post-thumb">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</span><span className="rim-search-post-copy"><strong>@{p.author?.username || 'creator'}</strong><small>{p.caption || 'Post'} · {formatCount(p.viewCount)} views</small></span></button>)}</section>}
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
-        {peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
+        {peopleMode && !results && (() => {
+          const people = [...recommendations.followBack, ...suggestedOnly].filter((person) => !dismissed[person.id]);
+          return people.length > 0 && <ul className="af-list">{people.map((person) => <li className="af-row" key={person.id}>
+            <button type="button" className="af-main" onClick={() => navigate(`/u/${person.username}`)}>
+              <span className="af-avatar"><Avatar user={person} size={56} />{person.isOnline && <span className="af-online" aria-label="Online" />}</span>
+              <span className="af-text"><strong>{person.displayName || person.username}</strong><small>{person.username}</small></span>
+            </button>
+            <button type="button" className={person.isFollowing ? 'af-add added' : 'af-add'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Added' : <><span aria-hidden="true">+</span> Add</>}</button>
+            <button type="button" className="af-dismiss" aria-label={`Remove ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}>×</button>
+          </li>)}</ul>;
+        })()}
+        {!peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        {peopleMode && suggestedOnly.length > 0 && <section className="ig-section">
+        {!peopleMode && suggestedOnly.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3></div>
           {suggestedOnly.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={48} /><span><strong>{person.username}</strong><small>{person.mutualCount ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'} · ` : ''}${person.displayName || 'Suggested creator'}</small></span></button>
