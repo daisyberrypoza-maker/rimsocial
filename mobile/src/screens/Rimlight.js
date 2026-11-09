@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, FlatList, Text, Pressable, Image, StyleSheet, useWindowDimensions, RefreshControl } from 'react-native';
 import Video from 'react-native-video';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { Search, UserPlus, Plus } from 'lucide-react-native';
+import Avatar from '../components/Avatar';
 import PostCard from '../components/PostCard';
 import { useAppStore } from '../store';
 import { loadPage } from '../lib/paged';
@@ -20,6 +22,7 @@ export default function Rimlight() {
   const [tab, setTab] = useState('discover');
   const feed = useAppStore((s) => s.feeds[tab]);
   const pending = useAppStore((s) => s.pendingUpload);
+  const me = useAppStore((s) => s.user);
   const { height: winHeight } = useWindowDimensions();
   const [height, setHeight] = useState(0);
   const [active, setActive] = useState(() => (isStale(feed) ? 0 : feed?.activeIndex || 0));
@@ -68,6 +71,13 @@ export default function Rimlight() {
             : <Image source={{ uri: pending.thumb }} style={styles.uploadThumb} />}
         </View>
       )}
+      <View style={styles.spTop} pointerEvents="box-none">
+        <Pressable onPress={() => navigation.navigate('Profile', { username: me?.username })} accessibilityLabel="Your profile" style={styles.spRound}><Avatar user={me || {}} size={34} /></Pressable>
+        <Pressable onPress={() => navigation.navigate('Search')} accessibilityLabel="Search" style={styles.spRound}><Search size={20} color="#fff" strokeWidth={2.4} /></Pressable>
+        <Text style={styles.spTitle}>Spotlight</Text>
+        <Pressable onPress={() => navigation.navigate('Explore')} accessibilityLabel="Find friends" style={styles.spRound}><UserPlus size={20} color="#fff" strokeWidth={2.2} /></Pressable>
+        <Pressable onPress={() => navigation.navigate('Upload')} accessibilityLabel="Create" style={styles.spRound}><Plus size={22} color="#fff" strokeWidth={2.4} /></Pressable>
+      </View>
       <View style={styles.tabs} pointerEvents="box-none">
         {TABS.map(([key, label]) => (
           <Pressable key={key} onPress={() => setTab(key)} accessibilityLabel={label} style={styles.tab}>
@@ -118,6 +128,9 @@ const styles = StyleSheet.create({
   tab: { alignItems: 'center', paddingVertical: 4 },
   tabText: { color: 'rgba(255,255,255,0.65)', fontSize: 16, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   tabOn: { color: '#fff' },
+  spTop: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8 },
+  spRound: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  spTitle: { flex: 1, textAlign: 'center', color: '#fff', fontSize: 17, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
   tabLine: { alignSelf: 'stretch', height: 3, marginTop: 4, borderRadius: 2, backgroundColor: SNAP_YELLOW },
   upload: { position: 'absolute', top: 72, right: 14, zIndex: 6, width: 46, height: 46, borderRadius: 23, padding: 3, backgroundColor: 'rgba(255,255,255,0.28)', overflow: 'hidden' },
   uploadThumb: { width: '100%', height: '100%', borderRadius: 20 },
