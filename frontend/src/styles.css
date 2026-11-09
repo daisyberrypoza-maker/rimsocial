@@ -5413,7 +5413,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-round { color:#5f6066 !important; }
 .st-page .st-name { font-size:12px !important; line-height:14px !important; margin-top:1.5px !important; }
 .st-page .st-handle { font-size:12px !important; line-height:14px !important; }
-.bottomnav a svg, .bottomnav svg { width:33px !important; height:33px !important; }
+.bottomnav a svg, .bottomnav svg { width:31px !important; height:31px !important; }
 .st-avatar.has-story, .tab-avatar.has-story { border-radius:50%; box-shadow:0 0 0 2px #fff, 0 0 0 4px #a53ff5; }
 
 /* Match the reference: the bar has no text labels, and the Stories title is medium weight at 19px. */
