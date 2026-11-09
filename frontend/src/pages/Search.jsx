@@ -66,19 +66,29 @@ export default function Search() {
     return () => { alive = false; clearTimeout(timer); };
   }, [term, tagPage, reload]);
 
+  // The track shows at once as pending; it stays until the upload succeeds, and is removed if it fails
   async function uploadTrack(event) {
     event.preventDefault();
     if (!trackFile || !trackTitle.trim()) return;
+    const title = trackTitle.trim();
+    const artist = trackArtist.trim();
+    const file = trackFile;
+    const tempId = `pending-${Date.now()}`;
+    setTracks((list) => [{ id: tempId, title, artist: artist || 'You', mediaUrl: '', pending: true }, ...list]);
+    setTrackTitle(''); setTrackArtist(''); setTrackFile(null);
     const body = new FormData();
-    body.append('media', trackFile);
-    body.append('title', trackTitle.trim());
-    body.append('artist', trackArtist.trim());
+    body.append('media', file);
+    body.append('title', title);
+    body.append('artist', artist);
     try {
-      await api('/v1/audio', { method: 'POST', body });
-      setTrackTitle(''); setTrackArtist(''); setTrackFile(null);
-      setReload((n) => n + 1);
+      const track = await api('/v1/audio', { method: 'POST', body });
+      setTracks((list) => list.map((t) => (t.id === tempId ? track : t)));
       toast('Track added');
-    } catch (e) { logError(e); toast('Could not add the track'); }
+    } catch (e) {
+      logError(e);
+      setTracks((list) => list.filter((t) => t.id !== tempId));
+      toast('Could not add the track');
+    }
   }
 
   const posts = term ? (search?.posts || []) : explore;
@@ -149,10 +159,10 @@ export default function Search() {
           {tracks.length ? (
             <ul className="sr-list">
               {tracks.map((track) => (
-                <li key={track.id} className="sr-track">
+                <li key={track.id} className={track.pending ? 'sr-track pending' : 'sr-track'}>
                   <span className="sr-music" aria-hidden="true">♪</span>
                   <span className="sr-person-text"><strong>{track.title}</strong><small>{track.artist}</small></span>
-                  <audio controls preload="none" src={mediaUrl(track.mediaUrl)} />
+                  {track.pending ? <span className="sr-pending-dot" aria-hidden="true" /> : <audio controls preload="none" src={mediaUrl(track.mediaUrl)} />}
                 </li>
               ))}
             </ul>
