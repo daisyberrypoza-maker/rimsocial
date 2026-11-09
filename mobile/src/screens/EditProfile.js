@@ -72,7 +72,7 @@ export default function EditProfile() {
       }
       toast('Profile updated');
       navigation.goBack();
-    } catch (e) { logError(e); }
+    } catch (e) { logError(e); toast('Could not save. Try again.'); }
     finally { setSaving(false); }
   }
 
@@ -89,6 +89,7 @@ export default function EditProfile() {
           <Pressable onPress={pickPhoto} accessibilityLabel="Edit picture or avatar"><Text style={styles.link}>Edit picture or avatar</Text></Pressable>
         </View>
         <Field label="Name" value={form.displayName} onChangeText={set('displayName')} maxLength={64} />
+        <Field label="Username" value={me?.username ? `@${me.username}` : ''} editable={false} />
         <Field label="Bio" value={form.bio} onChangeText={set('bio')} maxLength={150} multiline counter={`${form.bio.length}/150`} />
         <Field label="Website" value={form.website} onChangeText={set('website')} maxLength={200} placeholder="yourwebsite.com" autoCapitalize="none" keyboardType="url" />
         <Field label="City" value={form.city} onChangeText={set('city')} maxLength={80} />
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#d7d7dc', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: colors.text },
   multiline: { minHeight: 80, textAlignVertical: 'top' },
   counter: { alignSelf: 'flex-end', fontSize: 12, color: '#8a8a94' },
-  save: { height: 44, borderRadius: 999, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  save: { height: 48, borderRadius: 12, backgroundColor: '#4f5bfa', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   saveText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   dim: { opacity: 0.5 },
 });
