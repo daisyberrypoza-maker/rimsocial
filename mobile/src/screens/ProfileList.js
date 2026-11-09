@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 10 },
   title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.text },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
+  tabs: { flexDirection: 'row' },
   tab: { flex: 1, alignItems: 'center', paddingTop: 8, paddingBottom: 10 },
   tabCount: { fontSize: 16, fontWeight: '700', color: colors.muted },
   tabText: { fontSize: 13, color: colors.muted, fontWeight: '500', marginTop: 1 },

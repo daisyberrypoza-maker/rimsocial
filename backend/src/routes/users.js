@@ -132,10 +132,12 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     const followingIds = followingRows.map((row) => row.followeeId);
     const followerIds = followerRows.map((row) => row.followerId);
     const excludedIds = [...new Set([req.user.id, ...followingIds, ...blockedIds])];
+    // A person is in one place only: people who follow you appear under Follow back, never under Suggested.
+    const suggestExcludedIds = [...new Set([...excludedIds, ...followerIds])];
 
     // Recommend second-degree connections first, ranked by shared follows.
     const mutualRows = followingIds.length ? await Follow.findAll({
-      where: { followerId: { [Op.in]: followingIds }, followeeId: { [Op.notIn]: excludedIds } },
+      where: { followerId: { [Op.in]: followingIds }, followeeId: { [Op.notIn]: suggestExcludedIds } },
       attributes: ['followeeId'], raw: true,
     }) : [];
     const mutualCounts = new Map();
@@ -151,7 +153,7 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     }).filter(Boolean);
 
     const [popular, followBackRows] = await Promise.all([
-      User.findAll({ where: { id: { [Op.notIn]: excludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
+      User.findAll({ where: { id: { [Op.notIn]: suggestExcludedIds } }, attributes: PUBLIC_ATTRS, order: [['followerCount', 'DESC']], limit: 24 }),
       followerIds.length ? User.findAll({
         where: { id: { [Op.in]: followerIds, [Op.notIn]: excludedIds } },
         attributes: PUBLIC_ATTRS, limit: 24,

@@ -34,6 +34,9 @@ export default function Explore() {
   const [refreshing, setRefreshing] = useState(false);
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
+  // One place per person: anyone who follows you or you follow is never under Suggested
+  const followBackIds = new Set(recommendations.followBack.map((person) => person.id));
+  const suggestedOnly = recommendations.suggested.filter((person) => !person.isFollowing && !followBackIds.has(person.id));
 
   function more(reset = false) {
     setLoading(true);
@@ -150,14 +153,14 @@ export default function Explore() {
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        {peopleMode && recommendations.suggested.length > 0 && <section className="ig-section">
+        {peopleMode && suggestedOnly.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3></div>
-          {recommendations.suggested.map((person) => <div className="ig-person" key={person.id}>
+          {suggestedOnly.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={48} /><span><strong>{person.username}</strong><small>{person.mutualCount ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'} · ` : ''}${person.displayName || 'Suggested creator'}</small></span></button>
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
           </div>)}
         </section>}
-        {peopleMode && !recommendations.suggested.length && !recommendations.followBack.length && <p className="ig-empty">Search for people by name or username.</p>}
+        {peopleMode && !suggestedOnly.length && !recommendations.followBack.length && <p className="ig-empty">Search for people by name or username.</p>}
         {!peopleMode && <>
           {!searchMode && <div className="xp-title">Explore</div>}
           {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
