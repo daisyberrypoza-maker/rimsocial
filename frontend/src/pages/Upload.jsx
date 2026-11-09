@@ -15,6 +15,62 @@ function DownloadGlyph() {
   return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="M7 10.5l5 5 5-5" /><path d="M5 19h14" /></svg>;
 }
 
+// Camera first, as in Snapchat: a live viewfinder opens when you tap Add.
+// Flip, flash-free photo capture; the gallery icon opens the older picker. Photos go to the same editor.
+function CameraView({ onCapture, onGallery, onClose }) {
+  const videoRef = useRef(null);
+  const [facing, setFacing] = useState("user");
+  const [error, setError] = useState("");
+  const [streamKey, setStreamKey] = useState(0);
+
+  useEffect(() => {
+    let stream = null;
+    let alive = true;
+    if (!navigator.mediaDevices?.getUserMedia) { setError("The camera is not available in this browser."); return undefined; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false })
+      .then((s) => {
+        if (!alive) { s.getTracks().forEach((t) => t.stop()); return; }
+        stream = s;
+        if (videoRef.current) videoRef.current.srcObject = s;
+        setError("");
+      })
+      .catch(() => { if (alive) setError("Allow camera access to take a photo, or choose one from your gallery."); });
+    return () => { alive = false; stream?.getTracks().forEach((t) => t.stop()); };
+  }, [facing, streamKey]);
+
+  function capture() {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (facing === "user") { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      onCapture(new File([blob], "capture.jpg", { type: "image/jpeg" }));
+    }, "image/jpeg", 0.92);
+  }
+
+  return (
+    <main className="cam-page">
+      <video ref={videoRef} className={facing === "user" ? "cam-video mirror" : "cam-video"} autoPlay playsInline muted />
+      {error && <p className="cam-error">{error}</p>}
+      <button type="button" className="cam-close" onClick={onClose} aria-label="Close"><Icon name="x" size={26} /></button>
+      <div className="cam-side">
+        <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} aria-label="Flip camera"><Icon name="refresh" size={26} /></button>
+        <button type="button" onClick={() => setStreamKey((k) => k + 1)} aria-label="Restart camera"><Icon name="chevron-down" size={24} /></button>
+      </div>
+      <div className="cam-bottom">
+        <button type="button" className="cam-side-btn" onClick={onGallery} aria-label="Choose from gallery"><Icon name="image" size={28} /></button>
+        <button type="button" className="cam-shutter" onClick={capture} aria-label="Take photo"><span /></button>
+        <span className="cam-spacer" aria-hidden="true" />
+      </div>
+    </main>
+  );
+}
+
 // Gallery (choose), then editor (preview, tools, Post or My Story)
 export default function Upload() {
   const navigate = useNavigate();
@@ -23,7 +79,7 @@ export default function Upload() {
   const draft = useAppStore((s) => s.uploadDraft);
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const asStory = searchParams.get('story') === '1';
-  const [view, setView] = useState('gallery');
+  const [view, setView] = useState(remixId || asStory ? 'gallery' : 'camera');
   const [tab, setTab] = useState('Camera Roll');
   const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
@@ -175,6 +231,8 @@ export default function Upload() {
     setSheetOpen(false);
     navigate(toStory ? '/stories' : '/');
   }
+
+  if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} onClose={() => goBack(navigate)} />;
 
   if (view === 'gallery') {
     return <main className="up-page up-gallery">
