@@ -115,6 +115,12 @@ export default function Upload() {
     return () => { active = false; };
   }, [mention?.query]);
 
+  // Opened from the camera with a photo or video already taken: go straight to the editor
+  useEffect(() => {
+    if (route.params?.captured) choose(fromAsset(route.params.captured));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.params?.captured]);
+
   function choose(item) {
     setFile(item);
     setPlaying(false);
