@@ -5609,3 +5609,27 @@ html, body, #root { width:100% !important; height:100% !important; }
 .dm-page .dm-item > a.dm-row { flex:1; min-width:0; }
 .dm-page a.dm-cam { flex:none; width:44px; height:44px; display:grid; place-items:center; color:#111; border-radius:50%; text-decoration:none; }
 .dm-page .dm-fab { position:fixed; right:16px; bottom:calc(var(--nav-height,56px) + 16px + env(safe-area-inset-bottom,0px)); width:58px; height:58px; border:0; border-radius:50%; background:#fffc00; color:#111; display:grid; place-items:center; box-shadow:0 4px 12px rgba(0,0,0,.18); cursor:pointer; z-index:25; }
+
+/* Add Friends screen to the latest Snapchat reference: top bar with down-chevron and ⋯, invite pill,
+   "Find Friends" heading, rows with a yellow Add pill and a grey dismiss. Friends mode only. */
+.ig-explore.friends-page { background:#fff; color:#111; min-height:100dvh; padding-top:calc(env(safe-area-inset-top,0px) + 6px); box-sizing:border-box; }
+.af-head { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; padding:6px 12px 10px; }
+.af-head h1 { margin:0; text-align:center; font-size:18px; font-weight:700; color:#111; }
+.af-icon { width:40px; height:40px; border:0; background:transparent; color:#111; border-radius:50%; display:grid; place-items:center; cursor:pointer; padding:0; }
+.af-invite { display:flex; align-items:center; justify-content:center; gap:10px; width:calc(100% - 32px); margin:10px 16px 14px; height:46px; border:0; border-radius:999px; background:#f0f0f2; color:#111; font-size:16px; font-weight:600; cursor:pointer; }
+.af-section-head { display:flex; align-items:center; justify-content:space-between; padding:4px 16px 8px; }
+.af-section-head h3 { margin:0; font-size:18px; font-weight:700; color:#111; }
+.af-section-head span { display:inline-flex; align-items:center; gap:2px; color:#737373; font-size:15px; }
+.af-list { list-style:none; margin:0; padding:0 0 calc(var(--nav-height,56px) + 16px); }
+.af-row { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #eeeeee; }
+.af-main { flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0; background:transparent; padding:0; text-align:left; cursor:pointer; color:#111; }
+.af-avatar { position:relative; width:56px; height:56px; flex:none; display:inline-grid; }
+.af-avatar .av, .af-avatar img { width:56px !important; height:56px !important; border-radius:50% !important; }
+.af-online { position:absolute; right:0; bottom:0; width:14px; height:14px; border-radius:50%; background:#2bd35a; border:2px solid #fff; }
+.af-text { display:flex; flex-direction:column; min-width:0; }
+.af-text strong { font-size:16px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.af-text small { font-size:13px; color:#737373; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-explore.friends-page .af-add { flex:none; height:38px; min-width:84px; padding:0 16px; border:0; border-radius:999px; background:#fffc00; color:#111; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:3px; }
+.ig-explore.friends-page .af-add.added { background:#f0f0f2; }
+.af-add:disabled { opacity:.6; cursor:default; }
+.af-dismiss { flex:none; width:32px; height:32px; border:0; background:transparent; color:#bdbdbd; font-size:24px; line-height:1; cursor:pointer; padding:0; display:grid; place-items:center; }
