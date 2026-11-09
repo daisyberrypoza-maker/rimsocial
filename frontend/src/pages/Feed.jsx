@@ -1,7 +1,4 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Avatar from '../components/Avatar.jsx';
-import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
@@ -17,8 +14,6 @@ export default function Feed({ tab }) {
   const cached = useAppStore((s) => s.feeds[tab]);
   const setFeed = useAppStore((s) => s.setFeed);
   const pending = useAppStore((s) => s.pendingUpload);
-  const me = useAppStore((s) => s.user);
-  const navigate = useNavigate();
   const containerRef = useRef(null);
   const saveTimer = useRef(null);
   const scrollHideTimer = useRef(null);
@@ -80,13 +75,6 @@ export default function Feed({ tab }) {
       {pending?.kind === 'post' && <span className="feed-uploading" aria-hidden="true">
         {pending.mediaKind === 'video' ? <video src={pending.thumb} muted playsInline preload="metadata" /> : <img src={pending.thumb} alt="" />}
       </span>}
-      <header className="sp-top" aria-label="Spotlight">
-        <button type="button" className="sp-round sp-avatar" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Your profile"><Avatar user={me || {}} size={34} /></button>
-        <button type="button" className="sp-round" onClick={() => navigate('/search')} aria-label="Search"><Icon name="search" size={20} /></button>
-        <h1 className="sp-title">Spotlight</h1>
-        <button type="button" className="sp-round" onClick={() => navigate('/friends')} aria-label="Find friends"><Icon name="user-plus" size={20} /></button>
-        <button type="button" className="sp-round" onClick={() => navigate('/upload')} aria-label="Create"><Icon name="plus" size={22} /></button>
-      </header>
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
         {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
         {items.map((p, i) =>
