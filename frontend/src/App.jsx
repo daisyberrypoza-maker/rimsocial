@@ -38,6 +38,12 @@ function RequireAuth({ children }) {
 
 const IMMERSIVE_PATHS = ['/', '/following', '/live'];
 
+// /explore is now Find friends; keeps any search in the address
+function ExploreRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/friends${location.search}`} replace />;
+}
+
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,7 +135,7 @@ export default function App() {
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
-        <Route path="/explore" element={<RequireAuth><Explore /></RequireAuth>} />
+        <Route path="/explore" element={<RequireAuth><ExploreRedirect /></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><Explore /></RequireAuth>} />
         <Route path="/explore/watch/:postId" element={<RequireAuth><ExploreWatch /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
