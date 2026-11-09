@@ -5140,7 +5140,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-card-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.65) 100%); }
 .st-card-name { position:absolute; left:8px; right:8px; bottom:8px; color:#fff; font-size:13px; font-weight:600; text-align:left; text-shadow:0 1px 4px rgba(0,0,0,.4); display:flex; align-items:center; gap:4px; }
 .st-star { display:inline-grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#ffd60a; color:#111; font-size:9px; line-height:1; }
-.st-empty { margin:12px 0 0; padding:24px 16px; border-radius:14px; background:#f6f6f8; text-align:center; color:#6e6e73; }
+.st-empty { margin:12px 0 0; padding:8px 0 0; background:transparent; text-align:left; color:#6e6e73; }
 .st-empty strong { display:block; color:#111; font-size:16px; font-weight:600; margin-bottom:6px; }
 .st-empty p { margin:0 0 12px; font-size:14px; }
 .st-page .st-pill { height:40px; padding:0 18px; border-radius:999px; border:0 !important; background:#111 !important; color:#fff !important; font-size:14px; font-weight:600; cursor:pointer; }
@@ -5258,6 +5258,12 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 /* Match the My Story ring to its blue add-story plus icon. */
 .st-page .st-friend:first-child .st-ring:not(.uploading) {
   background: #1e90ff;
+}
+
+/* No story: no ring at all, the profile picture shows on its own */
+.st-page .st-friend .st-ring.none,
+.st-page .st-friend:first-child .st-ring.none {
+  background: transparent !important;
 }
 
 /* Bottom navigation: smaller icons and true black for the active tab. */
