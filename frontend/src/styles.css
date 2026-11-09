@@ -5506,3 +5506,17 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .dm-page a.dm-row { padding:12px 16px !important; }
 .dm-text small { display:block; }
 .dm-tag { font-style:normal; color:#7b3ff2; font-size:13px; font-weight:700; margin-top:2px; display:inline-flex; align-items:center; gap:4px; }
+
+/* Chat header and filters: match the reference (plain username with dropdown and red dot, ⋯ and compose icons, four filter chips) */
+.dm-page .dm-head { display:flex !important; justify-content:space-between; align-items:center; padding:14px 16px 12px !important; }
+.dm-page .dm-account { display:inline-flex; align-items:center; gap:6px; background:transparent !important; border:0 !important; box-shadow:none !important; border-radius:0 !important; padding:0 !important; color:#111 !important; font-size:20px; font-weight:600; position:relative; min-width:0; }
+.dm-page .dm-account span:first-child { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-page .dm-account-dot { width:8px; height:8px; border-radius:50%; background:#fe2c55; margin-left:2px; position:static !important; }
+.dm-page .dm-head-actions { display:flex; align-items:center; gap:14px; }
+.dm-page button.dm-icon { width:36px !important; height:36px !important; padding:0 !important; border:0 !important; background:transparent !important; color:#111 !important; display:grid; place-items:center; box-shadow:none !important; }
+.dm-page .dm-filters { display:flex; gap:8px; padding:0 16px 14px; overflow-x:auto; scrollbar-width:none; }
+.dm-page .dm-filters::-webkit-scrollbar { display:none; }
+.dm-page button.dm-chip { height:34px !important; padding:0 16px !important; font-size:15px !important; font-weight:600 !important; background:#f0f0f2 !important; color:#111 !important; border:0 !important; border-radius:999px !important; display:inline-flex; align-items:center; gap:2px; white-space:nowrap; flex:none; box-shadow:none !important; }
+.dm-page button.dm-chip.on { background:#e8eefc !important; color:#111 !important; }
+.dm-page a.dm-row { padding:12px 16px !important; }
+.dm-page .dm-text strong { font-size:15px; font-weight:600; }
