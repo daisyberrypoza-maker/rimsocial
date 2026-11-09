@@ -15,7 +15,6 @@ import PostDetail from '../screens/PostDetail';
 import ExploreWatch from '../screens/ExploreWatch';
 import Recommended from '../screens/Recommended';
 import Algorithm from '../screens/Algorithm';
-import BusinessHub from '../screens/BusinessHub';
 import CreatorStudio from '../screens/CreatorStudio';
 import AdsSponsors from '../screens/AdsSponsors';
 import LiveBroadcasts from '../screens/LiveBroadcasts';
@@ -51,7 +50,6 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="ExploreWatch" component={ExploreWatch} />
       <Stack.Screen name="Recommended" component={Recommended} />
       <Stack.Screen name="Algorithm" component={Algorithm} />
-      <Stack.Screen name="BusinessHub" component={BusinessHub} />
       <Stack.Screen name="CreatorStudio" component={CreatorStudio} />
       <Stack.Screen name="Ads" component={AdsSponsors} />
       <Stack.Screen name="Live" component={LiveBroadcasts} />

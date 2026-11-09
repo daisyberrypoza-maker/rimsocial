@@ -376,7 +376,6 @@ export default function Profile() {
           <button onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} disabled={avatarBusy || coverBusy}><Icon name="image" size={21} />Change profile or background image</button>
           <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
           <button onClick={() => { setDrawerOpen(false); setShowCoins(true); }}><Icon name="gift" size={21} />Get coins</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/business'); }}><Icon name="briefcase" size={21} />Business hub</button>
           <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
           <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
           </div>

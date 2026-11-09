@@ -3,7 +3,7 @@ import { View, Text, Image, Pressable, FlatList, ScrollView, Share, StatusBar, S
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { Hash, Megaphone, Shield, Briefcase, Ban, Flag } from 'lucide-react-native';
+import { Hash, Megaphone, Shield, Ban, Flag } from 'lucide-react-native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
 import StoryRing, { railItems } from '../components/StoryRing';
@@ -417,7 +417,6 @@ export default function Profile() {
         <SheetRow icon={<Icon name="image" size={22} color={colors.text} />} label="Change profile or background image" onPress={() => setSheet('images')} />
         <SheetRow icon={<Icon name="video" size={22} color={colors.text} />} label="LIVE broadcasts" onPress={() => go('Live')} />
         <SheetRow icon={<Icon name="gift" size={22} color={colors.text} />} label="Get coins" onPress={() => go('Coins')} />
-        <SheetRow icon={<Briefcase size={22} color={colors.text} />} label="Business hub" onPress={() => go('Business')} />
         <SheetRow icon={<Icon name="arrow-right" size={22} color="#e0245e" />} label="Log out" danger onPress={() => { setSheet(null); useAppStore.getState().logout(); }} />
       </Sheet>
 
