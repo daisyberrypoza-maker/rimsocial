@@ -5576,7 +5576,7 @@ html, body, #root { width:100% !important; height:100% !important; }
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
 .st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
 /* End spacer: as wide as the screen minus one story tile, so the row can scroll until only the last story is left (Safari ignores trailing padding on flex rows) */
-.st-page .st-row::after { content:''; flex:0 0 calc(100% + 32px - 90px); width:calc(100% + 32px - 90px); min-width:0; }
+.st-page .st-row::after { content:''; flex:0 0 calc(100% - 90px); width:calc(100% - 90px); min-width:0; }
 
 /* Camera first (Add opens the live viewfinder, Snapchat-style) */
 .cam-page { position: fixed; inset: 0; background: #000; color: #fff; z-index: 50; overflow: hidden; }
@@ -5648,3 +5648,9 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sp-avatar { background:transparent; overflow:hidden; }
 .sp-avatar .av, .sp-avatar img { width:34px !important; height:34px !important; border-radius:50% !important; }
 .sp-title { flex:1; margin:0; text-align:center; color:#fff; font-size:17px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.45); }
+
+/* Stories row: full width, no side gutter, so the first story sits at the screen's left edge and the row scrolls smoothly
+   to the last story. The heading keeps its section padding. "My Stories" is 2px larger and sits 2px lower. */
+.st-page .st-row { margin:0 -14px !important; padding:6px 0 8px !important; scroll-padding:0 !important; -webkit-overflow-scrolling:touch; touch-action:pan-x; }
+.st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
+.st-page .st-section > .st-h2.st-friends-heading { font-size:16px !important; line-height:20px !important; margin-top:2px !important; }
