@@ -80,11 +80,14 @@ export default function Explore() {
       rows.push({ type: 'header', id: 'h-fb', title: 'Follows you' });
       recs.followBack.forEach((p) => rows.push({ type: 'person', id: `f-${p.id}`, person: p, followLabel: p.isFollowing ? 'Following' : 'Follow back', sub: p.displayName || 'Follows you' }));
     }
-    if (recs.suggested.length) {
+    // One place per person: anyone who follows you or you follow is never under Suggested
+    const followBackIds = new Set(recs.followBack.map((p) => p.id));
+    const suggestedOnly = recs.suggested.filter((p) => !p.isFollowing && !followBackIds.has(p.id));
+    if (suggestedOnly.length) {
       rows.push({ type: 'header', id: 'h-sug', title: 'Suggested for you' });
-      recs.suggested.forEach((p) => rows.push({ type: 'person', id: `s-${p.id}`, person: p, followLabel: p.isFollowing ? 'Following' : 'Follow', sub: p.mutualCount ? `${p.mutualCount} mutual connection${p.mutualCount === 1 ? '' : 's'}` : (p.displayName || 'Suggested creator') }));
+      suggestedOnly.forEach((p) => rows.push({ type: 'person', id: `s-${p.id}`, person: p, followLabel: p.isFollowing ? 'Following' : 'Follow', sub: p.mutualCount ? `${p.mutualCount} mutual connection${p.mutualCount === 1 ? '' : 's'}` : (p.displayName || 'Suggested creator') }));
     }
-    if (!recs.followBack.length && !recs.suggested.length) rows.push({ type: 'empty', id: 'none', text: 'Search for people by name or username.' });
+    if (!recs.followBack.length && !suggestedOnly.length) rows.push({ type: 'empty', id: 'none', text: 'Search for people by name or username.' });
   } else if (!searchOpen) {
     for (let i = 0; i < items.length; i += 3) rows.push({ type: 'grid', id: `g-${i}`, items: items.slice(i, i + 3) });
     if (!items.length && !loading) rows.push({ type: 'empty', id: 'none', text: 'Nothing to explore yet.' });

@@ -5449,3 +5449,8 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .pv-follow.primary { background:#4f5bfa !important; color:#fff !important; }
 .pv-follow.added { background:#efefef !important; color:#111 !important; }
 .pv-more { border:0; background:none; color:#111; padding:6px; cursor:pointer; flex:none; }
+
+/* Redesign: no dividing borders on followers, following and Discover lists (matches reference) */
+.pv-sheet-tabs, .pv-row, .pv-list, .ig-person, .ig-explore .ig-person, .ig-section, .ig-section-head, .ig-explore .ig-section, .people-discovery-heading { border:0 !important; border-bottom:0 !important; border-top:0 !important; box-shadow:none !important; }
+.pv-row { padding:10px 0 !important; }
+.ig-person { padding:10px 16px !important; }
