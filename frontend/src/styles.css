@@ -4030,6 +4030,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 
 /* Chat: Instagram-style inbox, conversation and new message screens. */
 .bottomnav a { position:relative; }
+.bottomnav a .tab-badge, .bottomnav .tab-badge { color:#fff !important; background:#fe2c55 !important; }
 .bottomnav .tab-badge { position:absolute; top:4px; left:calc(50% + 8px); min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:#fe2c55; color:#fff; font-size:11px; font-weight:800; line-height:18px; text-align:center; box-sizing:border-box; }
 .dm-page, .dm-convo { min-height:100dvh; background:#fff; color:#111; box-sizing:border-box; padding-top:calc(env(safe-area-inset-top,0px) + 8px); }
 .dm-page { padding-bottom:calc(var(--nav-height,56px) + 8px); }
@@ -5140,9 +5141,10 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-card-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.65) 100%); }
 .st-card-name { position:absolute; left:8px; right:8px; bottom:8px; color:#fff; font-size:13px; font-weight:600; text-align:left; text-shadow:0 1px 4px rgba(0,0,0,.4); display:flex; align-items:center; gap:4px; }
 .st-star { display:inline-grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#ffd60a; color:#111; font-size:9px; line-height:1; }
-.st-empty { margin:12px 0 0; padding:8px 0 0; background:transparent; text-align:left; color:#6e6e73; }
-.st-empty strong { display:block; color:#111; font-size:16px; font-weight:600; margin-bottom:6px; }
-.st-empty p { margin:0 0 12px; font-size:14px; }
+.st-empty { margin:36px 0 0; padding:0 24px; background:transparent; text-align:center; color:#6e6e73; display:flex; flex-direction:column; align-items:center; }
+.st-empty-icon { width:64px; height:64px; border-radius:50%; border:1.5px solid #dbdbdb; display:grid; place-items:center; color:#111; margin-bottom:14px; }
+.st-empty strong { display:block; color:#111; font-size:17px; font-weight:700; margin-bottom:6px; }
+.st-empty p { margin:0; font-size:14px; line-height:20px; max-width:280px; }
 .st-page .st-pill { height:40px; padding:0 18px; border-radius:999px; border:0 !important; background:#111 !important; color:#fff !important; font-size:14px; font-weight:600; cursor:pointer; }
 
 /* Discover cards: 3px corners, as in the reference */
