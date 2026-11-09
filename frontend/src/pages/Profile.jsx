@@ -17,6 +17,7 @@ import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
+const PROFILE_TABS = ['posts', 'stories', 'reposts'];
 
 export default function Profile() {
   const { username = 'me', list = '' } = useParams();
@@ -52,6 +53,7 @@ export default function Profile() {
   const [activityLoading, setActivityLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
+  const tabSwipeStart = useRef(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverBusy, setCoverBusy] = useState(false);
@@ -89,6 +91,26 @@ export default function Profile() {
       .catch(() => { if (current) setStories([]); });
     return () => { current = false; };
   }, [tab, profile]);
+
+  // Swipe left or right across the profile content to move between Spotlight, Stories and Reposts
+  function onTabSwipeStart(e) {
+    const t = e.touches[0];
+    tabSwipeStart.current = { x: t.clientX, y: t.clientY };
+  }
+
+  function onTabSwipeEnd(e) {
+    const start = tabSwipeStart.current;
+    tabSwipeStart.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Ignore short moves and mostly vertical moves (those are scrolls)
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const index = PROFILE_TABS.indexOf(tab);
+    const next = dx < 0 ? index + 1 : index - 1;
+    if (next >= 0 && next < PROFILE_TABS.length) setTab(PROFILE_TABS[next]);
+  }
 
   function openPeople(type, replace = false) {
     navigate(`/u/${username}/${type}`, { replace });
@@ -477,6 +499,7 @@ export default function Profile() {
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
       </nav>
 
+      <div style={{ display: 'contents' }} onTouchStart={onTabSwipeStart} onTouchEnd={onTabSwipeEnd}>
       {tab === 'posts' ? (
         <>
           {tagList.length > 0 && <div className="sc-tag-row">{tagList.map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>)}</div>}
@@ -527,6 +550,7 @@ export default function Profile() {
           {[...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].length ? [...new Set(posts.flatMap((post) => (post.caption || '').match(/#[\p{L}\p{N}_]+/gu) || []))].map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>) : <div className="sc-empty-grid" role="status"><strong>No hashtags yet</strong></div>}
         </section>
       )}
+      </div>
     </div>
   );
 }
