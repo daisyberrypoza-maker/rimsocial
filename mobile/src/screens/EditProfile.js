@@ -101,11 +101,17 @@ export default function EditProfile() {
   );
 }
 
-function Field({ label, counter, ...props }) {
+// Label sits inside the box above the value, as in the reference
+function Field({ label, counter, editable = true, ...props }) {
   return (
-    <View style={styles.field}>
+    <View style={[styles.field, !editable && styles.fieldLocked]}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={[styles.input, props.multiline && styles.multiline]} placeholderTextColor={colors.muted} {...props} />
+      <TextInput
+        style={[styles.input, props.multiline && styles.multiline, !editable && styles.lockedText]}
+        placeholderTextColor={colors.muted}
+        editable={editable}
+        {...props}
+      />
       {!!counter && <Text style={styles.counter}>{counter}</Text>}
     </View>
   );
@@ -115,14 +121,16 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 44 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, paddingTop: 4, borderBottomWidth: 1, borderBottomColor: colors.line },
   spacer: { width: 22 },
-  title: { flex: 1, fontSize: 17, fontWeight: '600', color: colors.text },
-  form: { paddingHorizontal: 16, paddingVertical: 18, gap: 16 },
-  photo: { alignItems: 'center', gap: 8, marginBottom: 4 },
+  title: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
+  form: { paddingHorizontal: 16, paddingVertical: 18, gap: 12 },
+  photo: { alignItems: 'center', gap: 10, marginBottom: 8 },
   link: { color: colors.unseen, fontWeight: '600', fontSize: 15 },
-  field: { gap: 6 },
-  label: { fontSize: 13, color: colors.muted, fontWeight: '500' },
-  input: { borderWidth: 1, borderColor: '#d7d7dc', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: colors.text },
-  multiline: { minHeight: 80, textAlignVertical: 'top' },
+  field: { borderWidth: 1, borderColor: '#dbdbdb', borderRadius: 16, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, minHeight: 60 },
+  fieldLocked: { backgroundColor: '#fff' },
+  label: { fontSize: 14, color: '#737373', fontWeight: '400' },
+  input: { fontSize: 17, color: colors.text, padding: 0, marginTop: 2 },
+  lockedText: { color: colors.text },
+  multiline: { minHeight: 44, textAlignVertical: 'top' },
   counter: { alignSelf: 'flex-end', fontSize: 12, color: '#8a8a94' },
   save: { height: 48, borderRadius: 12, backgroundColor: '#4f5bfa', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   saveText: { color: '#fff', fontSize: 15, fontWeight: '600' },
