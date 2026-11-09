@@ -5593,3 +5593,19 @@ html, body, #root { width:100% !important; height:100% !important; }
 
 /* Stories Discover cards, Snapchat-style: rounded tiles, name at the bottom */
 .st-page .st-card, .st-page .st-big { border-radius: 14px !important; }
+
+/* Chat screen to the latest Snapchat reference: profile + search on the left, centred title, bell / add-friend / more on the right,
+   chips with a Stories badge, a camera on each row, and a floating yellow compose button. */
+.dm-page .dm-head { display:flex !important; align-items:center; justify-content:space-between; padding:10px 14px 12px !important; }
+.dm-page .dm-head-left { display:flex; align-items:center; gap:8px; flex:none; }
+.dm-page .dm-title { flex:1; margin:0; text-align:center; font-size:20px; font-weight:700; color:#111; }
+.dm-page .dm-avatar-btn { position:relative; width:40px !important; height:40px !important; border-radius:50% !important; overflow:visible; }
+.dm-page .dm-avatar-btn .av, .dm-page .dm-avatar-btn img { width:36px !important; height:36px !important; border-radius:50% !important; }
+.dm-page .dm-avatar-btn .dm-account-dot { position:absolute !important; top:0; right:0; }
+.dm-page .dm-head-actions { display:flex; align-items:center; gap:4px; flex:none; }
+.dm-page .dm-add-friend { background:#fffc00 !important; border-radius:50% !important; width:40px !important; height:40px !important; color:#111 !important; }
+.dm-page .dm-badge { margin-left:6px; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:#111; color:#fff; font-size:12px; font-weight:700; display:inline-grid; place-items:center; }
+.dm-page .dm-item { display:flex; align-items:center; padding-right:8px; }
+.dm-page .dm-item > a.dm-row { flex:1; min-width:0; }
+.dm-page a.dm-cam { flex:none; width:44px; height:44px; display:grid; place-items:center; color:#111; border-radius:50%; text-decoration:none; }
+.dm-page .dm-fab { position:fixed; right:16px; bottom:calc(var(--nav-height,56px) + 16px + env(safe-area-inset-bottom,0px)); width:58px; height:58px; border:0; border-radius:50%; background:#fffc00; color:#111; display:grid; place-items:center; box-shadow:0 4px 12px rgba(0,0,0,.18); cursor:pointer; z-index:25; }
