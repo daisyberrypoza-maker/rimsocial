@@ -217,6 +217,7 @@ export default function Stories() {
         </div>
         {!loading && loaded && others.length === 0 && !myGroup && (
           <div className="st-empty">
+            <span className="st-empty-icon" aria-hidden="true"><Icon name="users" size={28} /></span>
             <strong>No stories yet</strong>
             <p>Share a photo or video and your friends can see it for 24 hours.</p>
           </div>

@@ -155,6 +155,7 @@ export default function Stories() {
         </ScrollView>
         {others.length === 0 && !myGroup && (
           <View style={styles.empty}>
+            <View style={styles.emptyIcon}><Icon name="users" size={26} color={colors.muted} /></View>
             <Text style={styles.emptyTitle}>No stories yet</Text>
             <Text style={styles.emptyText}>Share a photo or video and your friends can see it for 24 hours.</Text>
           </View>
@@ -222,9 +223,10 @@ const styles = StyleSheet.create({
   name: { fontFamily: FONT, marginTop: 1.5, fontSize: 12, lineHeight: 14, fontWeight: '600', color: colors.text, maxWidth: 92 },
   handle: { fontFamily: FONT, fontSize: 12, lineHeight: 14, fontWeight: '400', color: colors.handle, maxWidth: 92 },
   storyBorder: { borderWidth: 2, borderColor: colors.unseen },
-  empty: { paddingVertical: 16, paddingRight: SIDE },
-  emptyTitle: { fontWeight: '700', color: colors.text, marginBottom: 4 },
-  emptyText: { color: colors.muted, fontSize: 14 },
+  empty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 32 },
+  emptyIcon: { width: 64, height: 64, borderRadius: 32, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  emptyTitle: { fontWeight: '700', fontSize: 17, color: colors.text, marginBottom: 6 },
+  emptyText: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginTop: 8 },
   card: { width: '48.5%', aspectRatio: 0.8, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface },
   big: { width: '48.5%', aspectRatio: 0.7, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.surface },
