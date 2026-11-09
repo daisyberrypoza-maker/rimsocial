@@ -99,9 +99,16 @@ export default function Stories() {
     <View style={styles.page}>
       <View style={styles.top}>
         <View style={styles.left}>
-          <Pressable style={styles.round} onPress={() => me?.username && navigation.navigate('Profile', { username: me.username })} accessibilityLabel="Your profile">
-            <Avatar user={me || {}} size={40} style={myGroup ? styles.storyBorder : null} />
-          </Pressable>
+          {navigation.canGoBack() ? (
+            // Opened from another screen: Back returns to where the user came from
+            <Pressable style={styles.round} onPress={() => navigation.goBack()} accessibilityLabel="Back">
+              <Icon name="arrow-left" size={22} color={colors.text} />
+            </Pressable>
+          ) : (
+            <Pressable style={styles.round} onPress={() => me?.username && navigation.navigate('Profile', { username: me.username })} accessibilityLabel="Your profile">
+              <Avatar user={me || {}} size={40} style={myGroup ? styles.storyBorder : null} />
+            </Pressable>
+          )}
           <Pressable style={styles.round} onPress={() => navigation.navigate('Explore', { search: true })} accessibilityLabel="Search"><Icon name="search" size={21} color={colors.navIcon} /></Pressable>
         </View>
         <View pointerEvents="none" style={styles.titleWrap}><Text style={styles.title}>Stories</Text></View>
