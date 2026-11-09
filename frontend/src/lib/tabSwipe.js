@@ -5,11 +5,23 @@ export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/u/me'];
 
 // Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
 const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
+// Touches on items (buttons, links, rows, cards, images, list entries and tabs) never start a tab swipe. Only empty space does.
+const ITEM = 'a, button, img, label, li, [role="button"], [role="tab"], [role="tablist"], [role="link"], [role="menuitem"], [role="option"], .st-friend, .st-card, .st-big, .dm-row, .dm-cam, .dm-chip, .xp-card, .ig-person, .sr-cell, .sc-card, .people-list-row, .post, .rail-btn';
 const LOCK_PX = 10;          // movement needed before we decide the direction
 const SETTLE_MS = 230;       // length of the slide or spring-back
 const busyRef = { current: false };
 // Runs once the new tab has actually mounted, so the slide-in never starts on a blank frame
 const afterMount = { current: null };
+
+// Anything inside a sideways-scrolling strip (stories row, chip rows, card rows) belongs to that strip
+function insideHorizontalStrip(node) {
+  for (let el = node instanceof Element ? node : node?.parentElement; el && el !== document.body; el = el.parentElement) {
+    if (el.classList?.contains('app')) break;
+    const overflowX = window.getComputedStyle(el).overflowX;
+    if ((overflowX === 'auto' || overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 1) return true;
+  }
+  return false;
+}
 
 function appEl() { return document.querySelector('.app'); }
 function setOffset(px) { appEl()?.style.setProperty('--swipe-x', `${px}px`); }
@@ -40,7 +52,9 @@ export function useTabSwipe(navigate, pathname, enabled) {
     }
 
     function onStart(event) {
-      if (busyRef.current || event.touches.length !== 1 || (event.target.closest && event.target.closest(IGNORE))) { gesture = null; return; }
+      const target = event.target;
+      const onItem = Boolean(target.closest && (target.closest(IGNORE) || target.closest(ITEM)));
+      if (busyRef.current || event.touches.length !== 1 || onItem || insideHorizontalStrip(target)) { gesture = null; return; }
       const touch = event.touches[0];
       gesture = { x: touch.clientX, y: touch.clientY, time: Date.now(), mode: 'pending', dx: 0 };
     }
