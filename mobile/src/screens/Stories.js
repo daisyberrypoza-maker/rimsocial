@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Image, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet, Platform, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../components/Icon';
@@ -53,8 +53,10 @@ export default function Stories() {
   const rail = railItems(storedRail);
 
   const loadRail = useCallback(() => {
-    api('/v1/stories/rail').then((r) => useAppStore.getState().setStoryRail({ items: r.items || [], updatedAt: Date.now() })).catch(logError);
+    return api('/v1/stories/rail').then((r) => useAppStore.getState().setStoryRail({ items: r.items || [], updatedAt: Date.now() })).catch(logError);
   }, []);
+  const [pulling, setPulling] = useState(false);
+  async function pullRefresh() { setPulling(true); try { await loadRail(); } finally { setPulling(false); } }
 
   useEffect(() => {
     if (Date.now() - (useAppStore.getState().storyRailAt || 0) > RAIL_FRESH_MS) loadRail();
@@ -163,7 +165,7 @@ export default function Stories() {
       </View>
 
       {discover.length > 0 && (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: SIDE, paddingBottom: 24 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: SIDE, paddingBottom: 24 }} refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}>
           <View style={styles.h2Row}><Text style={styles.h2}>Discover</Text><Icon name="chevron-right" size={18} color={colors.text} /></View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
             {discover.map((person) => (

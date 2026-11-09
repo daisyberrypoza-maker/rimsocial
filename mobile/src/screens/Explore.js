@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image, RefreshControl } from 'react-native';
 import { ChevronDown, MoreHorizontal, UserPlus, ChevronRight, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
@@ -35,6 +35,11 @@ export default function Explore() {
   const [searchOpen, setSearchOpen] = useState(Boolean(route.params?.search));
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState({});
+  const [pulling, setPulling] = useState(false);
+  async function pullRefresh() {
+    setPulling(true);
+    try { await Promise.all([more(true), api('/v1/users/suggestions').then(setRecs).catch(() => {})]); } finally { setPulling(false); }
+  }
   const feed = useAppStore((s) => s.feeds[KEY]);
   const items = feed?.items || [];
 
@@ -223,6 +228,7 @@ export default function Explore() {
       )}
       <FlatList
         data={rows}
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
         keyExtractor={(r) => r.id}
         renderItem={renderRow}
         onEndReached={() => { if (!results && !peopleMode && feed?.nextCursor && !loading) more(false); }}

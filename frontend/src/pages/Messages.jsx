@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import { messageTime } from '../lib/notify.js';
 import Activity from './Activity.jsx';
+import { usePullRefresh } from '../lib/pullRefresh.jsx';
 
 // Chat inbox laid out like the reference: header with profile, search, title, bell, add-friend and more;
 // chips My AI / Games / Stories / Near Me / New, then the existing inbox groups; rows with a camera on the right;
@@ -20,6 +21,7 @@ export default function Messages() {
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const { indicator } = usePullRefresh(async () => { const data = await api('/v1/messages/conversations'); setItems(data.items || []); });
 
   useEffect(() => {
     if (location.state?.view === 'activity') setView('activity');
@@ -50,6 +52,7 @@ export default function Messages() {
 
   return (
     <main className="dm-page">
+      {indicator}
       <header className="dm-head">
         <div className="dm-head-left">
           <button type="button" className="dm-icon dm-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
@@ -28,6 +28,11 @@ export default function Chat() {
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
+  const [pulling, setPulling] = useState(false);
+  async function pullRefresh() {
+    setPulling(true);
+    try { const d = await api('/v1/messages/conversations'); setItems(d.items || []); } catch (_) { /* keep the list */ } finally { setPulling(false); }
+  }
 
   useEffect(() => {
     if (route.params?.view === 'activity') setView('activity');
@@ -98,6 +103,7 @@ export default function Chat() {
 
       <FlatList
         data={shown}
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
         keyExtractor={(i) => String(i.user.id)}
         ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</Text>}
         renderItem={({ item }) => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Shield } from 'lucide-react-native';
 import Avatar from '../components/Avatar';
@@ -44,6 +44,14 @@ export default function ProfileList() {
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState({});
   const isActivity = list === 'activity';
+  const [pulling, setPulling] = useState(false);
+  async function pullRefresh() {
+    setPulling(true);
+    try {
+      if (list === 'activity') { const d = await api('/v1/activity'); setActivity(d.items || []); }
+      else { const d = await api(list === 'blocked' ? '/v1/users/blocked' : `/v1/users/${username}/${list}`); setItems(d.items || []); }
+    } catch (e) { logError(e); } finally { setPulling(false); }
+  }
   const isBlocked = list === 'blocked';
   const ownerName = profile?.username || username;
   const title = list === 'blocked' ? TITLES.blocked : list === 'activity' ? TITLES.activity : ownerName;
@@ -149,6 +157,7 @@ export default function ProfileList() {
       {isActivity ? (
         <FlatList
           data={activity || []}
+          refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={emptyNode}
           renderItem={({ item }) => (
@@ -164,6 +173,7 @@ export default function ProfileList() {
       ) : (
         <FlatList
           data={shown}
+          refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
           keyExtractor={(p) => String(p.id)}
           ListEmptyComponent={emptyNode}
           renderItem={({ item }) => (

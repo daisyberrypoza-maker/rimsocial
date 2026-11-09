@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
@@ -47,6 +48,7 @@ export default function Activity({ onBack } = {}) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  const { indicator } = usePullRefresh(load);
 
   const filtered = useMemo(() => filter === 'all' ? items : items.filter((item) => item.type === filter), [items, filter]);
   const unread = items.filter((item) => new Date(item.createdAt).getTime() > readAt).length;
@@ -66,6 +68,7 @@ export default function Activity({ onBack } = {}) {
 
   const Wrap = onBack ? 'div' : 'main';
   return <Wrap className="page activity-page">
+    {indicator}
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>

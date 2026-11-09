@@ -1,4 +1,5 @@
 import { Component, useCallback, useEffect, useState } from 'react';
+import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
@@ -146,6 +147,7 @@ export default function Stories() {
   }, []);
 
   // Reopening the page reuses the saved rail; it is requested again only when it is old
+  const { indicator } = usePullRefresh(() => loadRail());
   useEffect(() => {
     if (Date.now() - (useAppStore.getState().storyRailAt || 0) < RAIL_FRESH_MS) { setLoaded(true); return; }
     loadRail();
@@ -174,6 +176,7 @@ export default function Stories() {
 
   return (
     <main className="page st-page">
+      {indicator}
       <header className="st-top">
         <div className="st-left">
           <button className={`st-round st-avatar${myGroup ? ' has-story' : ''}`} aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>

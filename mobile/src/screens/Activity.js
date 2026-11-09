@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, Image, FlatList, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, FlatList, Pressable, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Avatar from '../components/Avatar';
@@ -46,10 +46,12 @@ export default function Activity({ onBack }) {
   const [readAt, setReadAt] = useState(0);
 
   const load = useCallback(() => {
-    api('/v1/activity')
+    return api('/v1/activity')
       .then((data) => { setItems(Array.isArray(data?.items) ? data.items : []); setFailed(false); })
       .catch(() => setFailed(true));
   }, []);
+  const [pulling, setPulling] = useState(false);
+  async function pullRefresh() { setPulling(true); try { await load(); } finally { setPulling(false); } }
 
   useEffect(() => {
     load();
@@ -111,6 +113,7 @@ export default function Activity({ onBack }) {
     <FlatList
       style={[styles.page, { paddingTop: insets.top }]}
       data={filtered}
+      refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={header}
       ListEmptyComponent={items === null || failed ? null : (
