@@ -2,6 +2,9 @@
   command = "npm run build"
   publish = "frontend/dist"
 
+[build.environment]
+  VITE_API_URL = "https://clipverse-backend-production.up.railway.app"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
