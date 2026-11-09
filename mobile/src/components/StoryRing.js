@@ -30,7 +30,8 @@ export default function StoryRing({ state = 'seen', size = 72, uploading = false
     loop.start();
     return () => loop.stop();
   }, [uploading, spin]);
-  const ringColor = uploading ? colors.unseen : state === 'mine' ? colors.myRing : state === 'unseen' ? colors.unseen : state === 'none' ? '#d9d9de' : colors.seen;
+  // No story: no ring at all, the profile picture shows on its own
+  const ringColor = uploading ? colors.unseen : state === 'mine' ? colors.myRing : state === 'unseen' ? colors.unseen : state === 'none' ? 'transparent' : colors.seen;
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   return (
     <Animated.View style={[styles.ring, { width: size, height: size, borderRadius: size / 2, borderColor: ringColor, transform: uploading ? [{ rotate }] : [] }]}>
