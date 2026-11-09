@@ -5,10 +5,9 @@ import { api } from '../api';
 import { playChime } from '../lib/chime';
 import { colors } from '../theme';
 
-// Bottom bar to match the reference: Explore (map pin), Chat, Add (camera), Stories (friends), Rimlight (play).
+// Bottom bar: Chat, Add (camera), Stories (friends), Rimlight (play). The Explore screen is now Find friends, opened from the user+ icon.
 // No text labels. The active icon is filled: black on the light bar, white on the dark Rimlight bar.
 const TABS = [
-  { name: 'Explore', icon: 'map-pin' },
   { name: 'Chat', icon: 'message-circle' },
   { name: 'Add', icon: 'camera' },
   { name: 'Stories', icon: 'users' },

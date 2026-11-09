@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { playChime } from '../lib/notify.js';
 import Icon from './Icon.jsx';
 
-// Bottom bar to match the reference: Explore (map pin), Chat, Add (camera), Stories (friends), Rimlight (play).
+// Bottom bar: Chat, Add (camera), Stories (friends), Rimlight (play). Explore is Find friends, opened from the user+ icon.
 // No text labels. The active icon is filled. Profile opens from the Stories header avatar.
 export default function BottomNav() {
   const { pathname } = useLocation();
@@ -34,7 +34,6 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/explore" replace aria-label="Explore"><Icon name="map-pin" /></NavLink>
       <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}>
         <Icon name="message-circle" />
         {unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}

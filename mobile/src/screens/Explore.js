@@ -22,7 +22,8 @@ const TABS = [['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hash
 export default function Explore() {
   const navigation = useNavigation();
   const route = useRoute();
-  const peopleMode = Boolean(route.params?.friends);
+  // Explore is Find friends only: the user+ icon and search open it
+  const peopleMode = true;
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState('all');
   const [results, setResults] = useState(null);
