@@ -17,7 +17,7 @@ export default function EditProfile() {
   const setSession = useAppStore((s) => s.setSession);
   const token = useAppStore((s) => s.token);
   const fileRef = useRef(null);
-  const [form, setForm] = useState({ displayName: '', bio: '', website: '', city: '' });
+  const [form, setForm] = useState({ displayName: '', pronouns: '', bio: '', website: '', city: '', gender: '' });
   const [avatarUrl, setAvatarUrl] = useState(me?.avatarUrl || '');
   const [username, setUsername] = useState(me?.username || '');
   const [loaded, setLoaded] = useState(false);
@@ -27,7 +27,7 @@ export default function EditProfile() {
   useEffect(() => {
     api('/v1/users/me')
       .then((u) => {
-        setForm({ displayName: u.displayName || '', bio: u.bio || '', website: u.website || '', city: u.city || '' });
+        setForm({ displayName: u.displayName || '', pronouns: u.pronouns || '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
         setAvatarUrl(u.avatarUrl || '');
         setUsername(u.username || '');
         setLoaded(true);
@@ -100,19 +100,39 @@ export default function EditProfile() {
         </label>
 
         <label className="ep-field">
+          <span>Pronouns</span>
+          <input value={form.pronouns} onChange={set('pronouns')} maxLength={40} placeholder="e.g. she/her" />
+        </label>
+
+        <label className="ep-field">
           <span>Bio</span>
           <textarea value={form.bio} onChange={set('bio')} maxLength={150} rows={3} />
           <small>{form.bio.length}/150</small>
         </label>
 
-        <label className="ep-field">
+        <button type="button" className="ep-row" onClick={() => document.getElementById('ep-website')?.focus()}>
+          <span>Links</span>
+          <span className="ep-row-value">{form.website ? 1 : 0}<Icon name="chevron-right" size={18} /></span>
+        </button>
+
+        <label className="ep-field" htmlFor="ep-website">
           <span>Website</span>
-          <input type="text" value={form.website} onChange={set('website')} maxLength={200} placeholder="yourwebsite.com" />
+          <input id="ep-website" type="text" value={form.website} onChange={set('website')} maxLength={200} placeholder="yourwebsite.com" />
         </label>
 
         <label className="ep-field">
           <span>City</span>
           <input value={form.city} onChange={set('city')} maxLength={80} />
+        </label>
+
+        <label className="ep-field">
+          <span>Gender</span>
+          <select value={form.gender} onChange={set('gender')}>
+            <option value="">Prefer not to say</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Custom">Custom</option>
+          </select>
         </label>
 
         <button type="submit" className="ep-save" disabled={!loaded || saving}>Save</button>
