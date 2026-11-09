@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
+import { ChevronDown, MoreHorizontal, UserPlus, ChevronRight, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -33,6 +34,7 @@ export default function Explore() {
   const [busy, setBusy] = useState({});
   const [searchOpen, setSearchOpen] = useState(Boolean(route.params?.search));
   const [loading, setLoading] = useState(false);
+  const [dismissed, setDismissed] = useState({});
   const feed = useAppStore((s) => s.feeds[KEY]);
   const items = feed?.items || [];
 
@@ -79,18 +81,12 @@ export default function Explore() {
     }
     if (!results.people?.length && !results.posts?.length) rows.push({ type: 'empty', id: 'none', text: 'No results. Try another name or hashtag.' });
   } else if (peopleMode) {
-    if (recs.followBack.length) {
-      rows.push({ type: 'header', id: 'h-fb', title: 'Follows you' });
-      recs.followBack.forEach((p) => rows.push({ type: 'person', id: `f-${p.id}`, person: p, followLabel: p.isFollowing ? 'Following' : 'Follow back', sub: p.displayName || 'Follows you' }));
-    }
-    // One place per person: anyone who follows you or you follow is never under Suggested
+    // One place per person: follow-back and suggested people in a single list, no section headers
     const followBackIds = new Set(recs.followBack.map((p) => p.id));
     const suggestedOnly = recs.suggested.filter((p) => !p.isFollowing && !followBackIds.has(p.id));
-    if (suggestedOnly.length) {
-      rows.push({ type: 'header', id: 'h-sug', title: 'Suggested for you' });
-      suggestedOnly.forEach((p) => rows.push({ type: 'person', id: `s-${p.id}`, person: p, followLabel: p.isFollowing ? 'Following' : 'Follow', sub: p.mutualCount ? `${p.mutualCount} mutual connection${p.mutualCount === 1 ? '' : 's'}` : (p.displayName || 'Suggested creator') }));
-    }
-    if (!recs.followBack.length && !suggestedOnly.length) rows.push({ type: 'empty', id: 'none', text: 'Search for people by name or username.' });
+    const people = [...recs.followBack, ...suggestedOnly].filter((p) => !dismissed[p.id]);
+    people.forEach((p) => rows.push({ type: 'add', id: `p-${p.id}`, person: p }));
+    if (!people.length) rows.push({ type: 'empty', id: 'none', text: 'Search for people by name or username.' });
   } else if (!searchOpen) {
     for (let i = 0; i < items.length; i += 3) rows.push({ type: 'grid', id: `g-${i}`, items: items.slice(i, i + 3) });
     if (!items.length && !loading) rows.push({ type: 'empty', id: 'none', text: 'Nothing to explore yet.' });
@@ -98,6 +94,26 @@ export default function Explore() {
 
   function renderRow({ item }) {
     if (item.type === 'header') return <Text style={styles.section}>{item.title}</Text>;
+    if (item.type === 'add') {
+      const p = item.person;
+      return (
+        <View style={styles.addRow}>
+          <Pressable style={styles.addMain} onPress={() => navigation.navigate('Profile', { username: p.username })}>
+            <View style={styles.addAvatar}><Avatar user={p} size={56} />{p.isOnline && <View style={styles.online} />}</View>
+            <View style={styles.text}>
+              <Text style={styles.name} numberOfLines={1}>{p.displayName || p.username}</Text>
+              <Text style={styles.handle} numberOfLines={1}>{p.username}</Text>
+            </View>
+          </Pressable>
+          <Pressable style={[styles.addBtn, p.isFollowing && styles.addBtnDone]} onPress={() => toggleFollow(p)} disabled={busy[p.id]} accessibilityLabel={p.isFollowing ? 'Added' : 'Add'}>
+            <Text style={styles.addText}>{busy[p.id] ? '…' : p.isFollowing ? 'Added' : '+ Add'}</Text>
+          </Pressable>
+          <Pressable onPress={() => setDismissed((d) => ({ ...d, [p.id]: true }))} accessibilityLabel={`Remove ${p.username}`} hitSlop={10} style={styles.dismiss}>
+            <X size={18} color="#bdbdbd" />
+          </Pressable>
+        </View>
+      );
+    }
     if (item.type === 'empty') return <Text style={styles.empty}>{item.text}</Text>;
     if (item.type === 'person') {
       const p = item.person;
@@ -148,13 +164,13 @@ export default function Explore() {
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
       {peopleMode && !searchOpen && (
-        <View style={styles.heading}>
-          <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={24} /></Pressable>
-          <View style={styles.headingText}>
-            <Text style={styles.h1}>Find friends</Text>
-            <Text style={styles.sub}>Discover people and creators you may know</Text>
+        <>
+          <View style={styles.afHead}>
+            <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" hitSlop={10} style={styles.afIcon}><ChevronDown size={26} color={colors.text} /></Pressable>
+            <Text style={styles.afTitle}>Add Friends</Text>
+            <Pressable accessibilityLabel="More" hitSlop={10} style={styles.afIcon}><MoreHorizontal size={24} color={colors.text} /></Pressable>
           </View>
-        </View>
+        </>
       )}
       <View style={styles.head}>
         {showSearchBar || searchOpen ? (
@@ -192,6 +208,18 @@ export default function Explore() {
             </Pressable>
           ))}
         </View>
+      )}
+      {peopleMode && !searchOpen && !results && (
+        <>
+          <Pressable style={styles.invite} accessibilityLabel="Invite your friends">
+            <UserPlus size={20} color={colors.text} />
+            <Text style={styles.inviteText}>Invite your friends!</Text>
+          </Pressable>
+          <View style={styles.findHead}>
+            <Text style={styles.findTitle}>Find Friends</Text>
+            <View style={styles.allContacts}><Text style={styles.allContactsText}>All Contacts</Text><ChevronRight size={16} color={colors.muted} /></View>
+          </View>
+        </>
       )}
       <FlatList
         data={rows}
@@ -240,4 +268,21 @@ const styles = StyleSheet.create({
   views: { position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 3 },
   viewsText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40, paddingHorizontal: 24 },
+  afHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingBottom: 8 },
+  afIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  afTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  invite: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginHorizontal: 16, marginBottom: 14, height: 46, borderRadius: 999, backgroundColor: '#f0f0f2' },
+  inviteText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  findHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 6 },
+  findTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  allContacts: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  allContactsText: { fontSize: 15, color: colors.muted },
+  addRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eeeeee' },
+  addMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  addAvatar: { width: 56, height: 56 },
+  online: { position: 'absolute', right: 0, bottom: 0, width: 14, height: 14, borderRadius: 7, backgroundColor: '#2bd35a', borderWidth: 2, borderColor: '#fff' },
+  addBtn: { minWidth: 84, height: 38, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fffc00', alignItems: 'center', justifyContent: 'center' },
+  addBtnDone: { backgroundColor: '#f0f0f2' },
+  addText: { fontSize: 15, fontWeight: '700', color: colors.text },
+  dismiss: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 });
