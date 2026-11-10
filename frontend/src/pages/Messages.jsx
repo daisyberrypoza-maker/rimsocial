@@ -1,32 +1,39 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
-import { messageTime } from '../lib/notify.js';
 import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
+import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 
 // Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
-// count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with a status line
-// and a camera on the right; yellow compose button floating bottom right. The bell opens Notifications.
+// count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with the last
+// message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
 
-function StatusLine({ item, mine }) {
-  if (item.isOnline) return <span className="sn-txt">Active now</span>;
-  if (mine) {
-    return (
-      <>
-        <svg className="sn-sent" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 21 23 12 2 3v7l15 2-15 2z" /></svg>
-        <span className="sn-txt">Delivered · {messageTime(item.lastMessage.createdAt)}</span>
-      </>
-    );
-  }
-  const kind = item.lastMessage.mediaKind;
-  const attachment = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' }[kind] || '';
-  const preview = item.lastMessage.deleted ? 'This message was deleted' : (item.lastMessage.body || attachment);
-  return <span className="sn-txt">{preview} · {messageTime(item.lastMessage.createdAt)}</span>;
+const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
+
+// Compact time since a message: now, 5m, 3h, 2d
+function timeAgo(iso) {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (!Number.isFinite(minutes) || minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function previewOf(last) {
+  if (last.deleted) return 'This message was deleted';
+  return last.body || MEDIA_LABEL[last.mediaKind] || '';
+}
+
+// One grey tick when sent, two blue ticks once the other person has seen it
+function Ticks({ last }) {
+  const seen = Boolean(last.readAt);
+  return <span className={seen ? 'sn-ticks seen' : 'sn-ticks'} aria-label={seen ? 'Seen' : 'Sent'}>{seen ? '✓✓' : '✓'}</span>;
 }
 
 export default function Messages() {
@@ -38,6 +45,8 @@ export default function Messages() {
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const snapInput = useRef(null);
+  const snapTo = useRef(null);
   const { indicator } = usePullRefresh(async () => { const data = await api('/v1/messages/conversations'); setItems(data.items || []); });
 
   useEffect(() => {
@@ -62,6 +71,28 @@ export default function Messages() {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  // The camera opens the phone camera; the photo or video is sent straight to that person
+  function openCamera(userId) {
+    snapTo.current = userId;
+    snapInput.current?.click();
+  }
+
+  async function onSnapPicked(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    const userId = snapTo.current;
+    if (!file || !userId) return;
+    try {
+      const form = new FormData();
+      form.append('media', file);
+      await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
+      toast('Sent');
+    } catch (e) {
+      toast(e.message || 'Could not send');
+      logError(e);
+    }
+  }
 
   if (view === 'activity') {
     return <Activity onBack={() => setView('messages')} />;
@@ -111,11 +142,13 @@ export default function Messages() {
         <button type="button" className="sn-chip">New<span className="sn-plus"><Icon name="plus" size={12} strokeWidth={2.6} /></span></button>
       </nav>
       {error && <p className="sn-empty" role="alert">{error}</p>}
+      <input ref={snapInput} type="file" accept="image/*,video/*" capture="environment" hidden onChange={onSnapPicked} />
       {items === null ? null
         : shown.length ? (
           <ul className="sn-list">
             {shown.map((item) => {
-              const mine = item.lastMessage.senderId === me?.id;
+              const last = item.lastMessage;
+              const mine = last.senderId === me?.id;
               const name = item.user.displayName || item.user.username;
               return (
                 <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'}>
@@ -125,13 +158,19 @@ export default function Messages() {
                       {item.isOnline && <span className="sn-online" aria-label="Online" />}
                     </span>
                     <span className="sn-text">
-                      <span className="sn-name">{name}</span>
-                      <span className="sn-sub"><StatusLine item={item} mine={mine} /></span>
+                      <span className="sn-name-row">
+                        <span className="sn-name">{name}</span>
+                        <span className="sn-time">{timeAgo(last.createdAt)}</span>
+                      </span>
+                      <span className="sn-sub">
+                        {mine && <Ticks last={last} />}
+                        <span className="sn-txt">{previewOf(last)}</span>
+                      </span>
                     </span>
                   </Link>
-                  <Link to={`/chat/${item.user.id}`} className="sn-cam" aria-label={`Message ${name}`}>
+                  <button type="button" className="sn-cam" onClick={() => openCamera(item.user.id)} aria-label={`Send ${name} a snap`}>
                     <Icon name="camera" size={24} strokeWidth={2} />
-                  </Link>
+                  </button>
                 </li>
               );
             })}

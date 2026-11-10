@@ -764,3 +764,17 @@
 
 /* Chat screens: the global dark button default must not colour these controls. Class rules below still win. */
 :where(.sn-page, .sn-notif, .sn-mf, .cv-page) button { background-color: transparent; }
+
+/* Chat list polish: header row, grey chips, last message with time and ticks, camera button */
+.sn-head-left { display: flex; align-items: center; gap: 10px; }
+.sn-circle { color: #17191f !important; }
+.sn-circle.sn-avatar-btn .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sn-chip { color: #68717d !important; }
+.sn-chip[aria-pressed="true"] { color: #17191f !important; }
+.sn-name-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.sn-time { flex: none; font-size: 13px; color: #8a8a8a; }
+.sn-sub { color: #6b6b6b; }
+.sn-sub .sn-txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sn-ticks { flex: none; font-size: 13px; line-height: 1; letter-spacing: -3px; color: #8a8a8a; }
+.sn-ticks.seen { color: #34b7f1; }
+.sn-cam { background: none !important; border: 0; padding: 0; cursor: pointer; }
