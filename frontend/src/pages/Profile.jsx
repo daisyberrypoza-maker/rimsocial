@@ -15,7 +15,7 @@ import { defaultCover } from '../lib/cover.js';
 import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
-import './settings-menu.css';
+import '../settings-menu.css';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
 const PROFILE_TABS = ['posts', 'stories', 'reposts'];
