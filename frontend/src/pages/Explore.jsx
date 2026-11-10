@@ -16,6 +16,7 @@ import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
 const STALE_AFTER_MS = 60 * 1000;
+const SEARCH_TABS = ['all', 'people', 'posts', 'hashtags'];
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function Explore() {
   const touchStartY = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [dismissed, setDismissed] = useState({});
-  const swipeSurfaceRef = useSwipeTabs(searchType, ['all', 'people', 'posts', 'hashtags'], setSearchType, searchMode && Boolean(query.trim() || results));
+  const swipeSurfaceRef = useSwipeTabs(searchType, SEARCH_TABS, setSearchType, searchMode && Boolean(query.trim() || results));
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
   // One place per person: anyone who follows you or you follow is never under Suggested
