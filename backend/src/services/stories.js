@@ -93,8 +93,8 @@ async function getSubscription(creatorId, viewerId) {
   return { isSubscribed: Boolean(follow), isNotifying: Boolean(follow && follow.notifyPosts) };
 }
 
-// Ring for each author with an active story: 'unseen' when the viewer has not watched all of it (and for their own
-// story), 'seen' once everything is watched. Authors with no active story are absent from the map.
+// Ring for each author with an active story: the owner's own active story is always 'mine';
+// other authors are 'unseen' until all active stories have been watched, then 'seen'.
 async function storyRingsFor(viewerId, authorIds) {
   const ids = [...new Set((authorIds || []).map(String))];
   const rings = new Map();
@@ -110,7 +110,8 @@ async function storyRingsFor(viewerId, authorIds) {
   const watched = new Set(views.map((row) => String(row.storyId)));
   for (const story of stories) {
     const author = String(story.authorId);
-    if (author === String(viewerId) || !watched.has(String(story.id))) rings.set(author, 'unseen');
+    if (author === String(viewerId)) rings.set(author, 'mine');
+    else if (!watched.has(String(story.id))) rings.set(author, 'unseen');
     else if (!rings.has(author)) rings.set(author, 'seen');
   }
   return rings;
