@@ -113,6 +113,12 @@
   cursor: pointer;
 }
 .sn-chip[aria-selected="true"] { font-weight: 700; }
+/* Active Messages/Stories tab matches the light-grey search button surface. */
+.sn-page .sn-filters .sn-chip[aria-pressed="true"] {
+  background: #eef0f2;
+  border-radius: 999px;
+  padding: 0 12px;
+}
 .sn-count {
   display: inline-grid;
   place-items: center;
