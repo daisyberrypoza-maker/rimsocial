@@ -5658,3 +5658,217 @@ html, body, #root { width:100% !important; height:100% !important; }
 .ptr-icon { display:inline-grid; place-items:center; transition:opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1); }
 .ptr-icon.spin { animation:ptr-spin .8s linear infinite; }
 @keyframes ptr-spin { to { transform:rotate(360deg); } }
+
+
+/* RimSocial Chat inbox — Snapchat reference pass (frontend only) */
+.dm-page {
+  background:#fff !important;
+  color:#111 !important;
+  padding-top:calc(env(safe-area-inset-top,0px) + 2px) !important;
+  padding-bottom:calc(var(--nav-height,56px) + env(safe-area-inset-bottom,0px) + 12px) !important;
+}
+.dm-page .dm-head {
+  min-height:76px;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  padding:8px 16px 12px !important;
+  box-sizing:border-box;
+}
+.dm-page .dm-head-left { display:flex; align-items:center; gap:10px; flex:none; }
+.dm-page .dm-title { flex:1; text-align:center; margin:0; font-size:20px !important; line-height:1.2; font-weight:500 !important; color:#111; }
+.dm-page button.dm-icon {
+  width:42px !important;
+  height:42px !important;
+  min-width:42px;
+  border:0 !important;
+  border-radius:50% !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  background:#eef0f2 !important;
+  color:#111 !important;
+  box-shadow:none !important;
+}
+.dm-page .dm-avatar-btn { background:#eef0f2 !important; overflow:hidden; }
+.dm-page .dm-avatar-btn .avatar,
+.dm-page .dm-avatar-btn .avatar img,
+.dm-page .dm-avatar-btn .avatar .avatar-initial { width:42px !important; height:42px !important; border-radius:50% !important; }
+.dm-page .dm-head-actions { display:flex; align-items:center; gap:8px; flex:none; }
+.dm-page .dm-head-actions .dm-add-friend { background:#fffc00 !important; color:#111 !important; }
+.dm-page .dm-filters {
+  display:flex !important;
+  align-items:center !important;
+  gap:26px !important;
+  min-height:56px;
+  padding:0 16px !important;
+  margin:0 !important;
+  border-bottom:1px solid #e9e9e9;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.dm-page .dm-filters::-webkit-scrollbar { display:none; }
+.dm-page button.dm-chip {
+  height:56px !important;
+  min-height:56px;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#171717 !important;
+  box-shadow:none !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  font-weight:600 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center;
+  gap:4px !important;
+  white-space:nowrap;
+  flex:none;
+}
+.dm-page button.dm-chip.on { color:#111 !important; background:transparent !important; }
+.dm-page button.dm-new-chip { color:#686868 !important; gap:6px !important; }
+.dm-page .dm-badge { min-width:20px; height:20px; margin-left:2px; padding:0 5px; border-radius:50%; background:#111; color:#fff; font-size:12px; }
+.dm-page .dm-list { list-style:none; margin:0; padding:0 0 18px; }
+.dm-page .dm-item { min-height:92px; display:flex; align-items:center; padding:0 16px 0 22px; border-bottom:1px solid #ededed; box-sizing:border-box; }
+.dm-page a.dm-row { display:flex; align-items:center; gap:14px; min-width:0; flex:1; padding:10px 0 !important; color:#111; text-decoration:none; }
+.dm-page .dm-row .dm-ring { width:58px; height:58px; padding:0; }
+.dm-page .dm-ring-face { padding:0; }
+.dm-page .dm-ring-face .avatar,
+.dm-page .dm-ring-face .avatar img,
+.dm-page .dm-ring-face .avatar .avatar-initial { width:100% !important; height:100% !important; border-radius:50% !important; }
+.dm-page .dm-text { display:flex; flex-direction:column; justify-content:center; min-width:0; gap:3px; }
+.dm-page .dm-text strong { color:#111; font-size:18px !important; line-height:1.2; font-weight:500 !important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-page .dm-text small { color:#858585; font-size:14px; line-height:1.25; font-weight:400; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dm-page a.dm-cam { width:48px; height:48px; flex:none; display:grid; place-items:center; color:#222; }
+.dm-page .dm-fab {
+  width:66px !important;
+  height:66px !important;
+  right:18px !important;
+  bottom:calc(var(--nav-height,56px) + env(safe-area-inset-bottom,0px) + 22px) !important;
+  background:#fffc00 !important;
+  color:#111 !important;
+  box-shadow:0 3px 12px rgba(0,0,0,.16) !important;
+}
+@media (max-width:380px) {
+  .dm-page .dm-filters { gap:20px !important; }
+  .dm-page .dm-head { padding-left:12px !important; padding-right:12px !important; }
+  .dm-page .dm-head-left { gap:6px; }
+  .dm-page .dm-head-actions { gap:4px; }
+}
+
+
+/* Chat filter tabs: subtle separator and lighter, smaller labels */
+.dm-page .dm-filters {
+  border-top:1px solid #eeeeee;
+}
+.dm-page button.dm-chip {
+  font-size:12px !important;
+  font-weight:400 !important;
+}
+
+
+/* Mobile keyboard + viewport handling across the app */
+.app { height:var(--app-viewport-height, 100dvh); min-height:0; }
+#root, body { min-height:0; }
+.app > main,
+.app > .auth-screen,
+.app > .ep-page {
+  min-height:0;
+  overscroll-behavior-y:contain;
+}
+.app > main { overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.app > .dm-convo {
+  height:var(--app-viewport-height, 100dvh);
+  min-height:0;
+  overflow:hidden;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px);
+}
+.dm-convo .dm-chead { flex:none; position:relative; z-index:3; background:#fff; }
+.dm-convo .dm-thread { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.dm-convo .dm-input { flex:none; margin-bottom:4px; }
+.keyboard-open .app { height:var(--app-viewport-height); }
+.keyboard-open .app > main:not(.dm-convo),
+.keyboard-open .app > .auth-screen,
+.keyboard-open .app > .ep-page {
+  max-height:var(--app-viewport-height);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-block:24px;
+}
+.keyboard-open .app > main > header,
+.keyboard-open .app > main > .dm-head,
+.keyboard-open .app > .ep-page > .ep-top {
+  position:sticky;
+  top:0;
+  z-index:24;
+  background:#fff;
+}
+.keyboard-open .bottomnav {
+  transform:translateY(110%);
+  pointer-events:none;
+}
+input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
+
+/* Chat refinements: compact avatar and balanced edge alignment */
+.dm-page button.dm-chip { font-size:14px !important; font-weight:400 !important; }
+.dm-page .dm-avatar-btn { width:36px !important; height:36px !important; }
+.dm-page .dm-avatar-btn .avatar,
+.dm-page .dm-avatar-btn .avatar img,
+.dm-page .dm-avatar-btn .avatar .avatar-initial { width:36px !important; height:36px !important; }
+.dm-page .dm-item { padding-left:12px !important; padding-right:12px !important; }
+.dm-page a.dm-row { gap:12px !important; }
+.dm-page .dm-row .dm-ring { width:50px !important; height:50px !important; flex:none; }
+.dm-page a.dm-cam { width:42px !important; height:42px !important; margin-left:4px; }
+
+
+/* Chat icon palette: soft grey throughout, with the add-friend glyph as the sole black icon */
+.dm-page .dm-head-left > button.dm-icon:not(.dm-avatar-btn),
+.dm-page .dm-head-actions > button.dm-icon:not(.dm-add-friend),
+.dm-page .dm-filters .dm-new-chip,
+.dm-page .dm-cam {
+  color:#777b80 !important;
+}
+.dm-page .dm-head-left > button.dm-icon:not(.dm-avatar-btn) svg,
+.dm-page .dm-head-actions > button.dm-icon:not(.dm-add-friend) svg,
+.dm-page .dm-filters .dm-new-chip svg,
+.dm-page .dm-cam svg {
+  color:inherit !important;
+  stroke:currentColor;
+}
+.dm-page .dm-head-actions > button.dm-add-friend {
+  color:#111 !important;
+  background:#fffc00 !important;
+}
+.dm-page .dm-head-actions > button.dm-add-friend svg {
+  color:#111 !important;
+  stroke:#111 !important;
+}
+
+
+/* Chat header controls mirror the Stories header geometry; scope stays on /chat only. */
+.dm-page button.dm-icon {
+  width:42px !important;
+  height:42px !important;
+  flex:0 0 42px !important;
+  background:#f1f1f3 !important;
+  color:#8e8e93 !important;
+}
+.dm-page button.dm-icon > svg {
+  width:21px;
+  height:21px;
+}
+.dm-page button.dm-avatar-btn {
+  background:transparent !important;
+}
+.dm-page button.dm-add-friend {
+  background:#fffc00 !important;
+  color:#111 !important;
+}
+.dm-page button.dm-add-friend > svg {
+  width:21px;
+  height:21px;
+}

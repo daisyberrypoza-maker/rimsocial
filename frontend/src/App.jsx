@@ -66,6 +66,44 @@ export default function App() {
     document.documentElement.classList.toggle('bleed-top', bleed);
   }, [location.pathname]);
 
+  // Keep the app aligned to the visible viewport when the mobile keyboard opens.
+  // visualViewport accounts for Android/iOS keyboard resizing and browser chrome changes.
+  useEffect(() => {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    let focusTimer;
+    const updateViewport = () => {
+      const height = viewport?.height || window.innerHeight;
+      const keyboardInset = Math.max(0, window.innerHeight - height - (viewport?.offsetTop || 0));
+      root.style.setProperty('--app-viewport-height', `${Math.round(height)}px`);
+      root.style.setProperty('--keyboard-inset', `${Math.round(keyboardInset)}px`);
+      root.classList.toggle('keyboard-open', keyboardInset > 100);
+    };
+    const keepFocusedFieldVisible = (event) => {
+      const field = event.target;
+      if (!(field instanceof HTMLElement) || !field.matches('input, textarea, select, [contenteditable="true"]')) return;
+      window.clearTimeout(focusTimer);
+      focusTimer = window.setTimeout(() => {
+        field.scrollIntoView?.({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      }, 180);
+    };
+    updateViewport();
+    viewport?.addEventListener('resize', updateViewport);
+    viewport?.addEventListener('scroll', updateViewport);
+    window.addEventListener('resize', updateViewport);
+    document.addEventListener('focusin', keepFocusedFieldVisible);
+    return () => {
+      window.clearTimeout(focusTimer);
+      viewport?.removeEventListener('resize', updateViewport);
+      viewport?.removeEventListener('scroll', updateViewport);
+      window.removeEventListener('resize', updateViewport);
+      document.removeEventListener('focusin', keepFocusedFieldVisible);
+      root.classList.remove('keyboard-open');
+      root.style.removeProperty('--app-viewport-height');
+      root.style.removeProperty('--keyboard-inset');
+    };
+  }, []);
+
   // A fresh open of the app (not a return from minimized) starts on the default screen, Stories
   useEffect(() => {
     if (token && location.pathname === '/') {
