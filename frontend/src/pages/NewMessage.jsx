@@ -13,6 +13,7 @@ export default function NewMessage() {
   const me = useAppStore((st) => st.user);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState([]);
+  const [loadingPeople, setLoadingPeople] = useState(true);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState([]);
   const [groupName, setGroupName] = useState('');
@@ -22,6 +23,7 @@ export default function NewMessage() {
     let alive = true;
     if (!me?.username) return () => { alive = false; };
     const loadPeople = async () => {
+      setLoadingPeople(true);
       const [conversationResult, followingResult, followerResult] = await Promise.allSettled([
         api('/v1/messages/conversations'),
         api(`/v1/users/${encodeURIComponent(me.username)}/following`),
@@ -46,8 +48,9 @@ export default function NewMessage() {
         });
       });
       setRecents([...ordered.values()].filter((person) => String(person.id) !== String(me.id)));
+      setLoadingPeople(false);
     };
-    loadPeople().catch(logError);
+    loadPeople().catch((error) => { logError(error); if (alive) setLoadingPeople(false); });
     return () => { alive = false; };
   }, [me?.id, me?.username]);
 
@@ -144,7 +147,7 @@ export default function NewMessage() {
               );
             })}
           </ul>
-        ) : <p className="nc-empty">{results ? 'No one found.' : 'No people available yet.'}</p>}
+        ) : <p className="nc-empty">{results ? 'No one found.' : loadingPeople ? 'Loading people…' : 'No people available yet.'}</p>}
 
         <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length || creating} onClick={startChat}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
       </section>
