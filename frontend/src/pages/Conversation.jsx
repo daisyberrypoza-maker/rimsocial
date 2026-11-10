@@ -41,13 +41,38 @@ function PostCard({ post }) {
   );
 }
 
+// Label for an attachment type, used in previews and the chat list
+export function attachmentLabel(kind) {
+  if (kind === 'photo') return 'Photo';
+  if (kind === 'video') return 'Video';
+  if (kind === 'audio') return 'Audio';
+  return 'File';
+}
+
+function kindOfFile(file) {
+  if (/^image\//.test(file.type)) return 'photo';
+  if (/^video\//.test(file.type)) return 'video';
+  if (/^audio\//.test(file.type)) return 'audio';
+  return 'file';
+}
+
+function Attachment({ message }) {
+  const src = mediaUrl(message.mediaUrl);
+  if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
+  if (message.mediaKind === 'photo') return <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
+  if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
+  const name = message.mediaName || 'File';
+  return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={name}>
+    <span className="cv-file-icon" aria-hidden="true"><Icon name="file" size={20} /></span>
+    <span className="cv-file-name">{name}</span>
+  </a>;
+}
+
 function Bubble({ message, mine }) {
   const hasText = Boolean(message.body);
   return (
     <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
-      {message.mediaUrl && (message.mediaKind === 'video'
-        ? <video className="cv-media" src={mediaUrl(message.mediaUrl)} controls playsInline preload="metadata" />
-        : <img className="cv-media" src={mediaUrl(message.mediaUrl)} alt="Photo" loading="lazy" />)}
+      {message.mediaUrl && <Attachment message={message} />}
       {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
       {message.post && <PostCard post={message.post} />}
       {message.post === null && <span className="cv-unavailable">This post is no longer available.</span>}
@@ -102,7 +127,6 @@ export default function Conversation() {
     const picked = event.target.files?.[0];
     event.target.value = '';
     if (!picked) return;
-    if (!/^(image|video)\//.test(picked.type)) { setError('Choose a photo or a video'); return; }
     setError('');
     setFile(picked);
   }
@@ -154,10 +178,10 @@ export default function Conversation() {
       {error && <p className="dm-error" role="alert">{error}</p>}
       {file && (
         <div className="cv-pending">
-          {file.type.startsWith('video/')
-            ? <video src={previewUrl} muted playsInline />
-            : <img src={previewUrl} alt="" />}
-          <span>{file.type.startsWith('video/') ? 'Video' : 'Photo'} ready to send</span>
+          {kindOfFile(file) === 'video' && <video src={previewUrl} muted playsInline />}
+          {kindOfFile(file) === 'photo' && <img src={previewUrl} alt="" />}
+          {(kindOfFile(file) === 'audio' || kindOfFile(file) === 'file') && <span className="cv-file-icon" aria-hidden="true"><Icon name="file" size={20} /></span>}
+          <span className="cv-pending-name">{file.name} <small>{attachmentLabel(kindOfFile(file))}</small></span>
           <button type="button" className="cv-pending-remove" onClick={() => setFile(null)} aria-label="Remove attachment"><Icon name="x" size={18} /></button>
         </div>
       )}
@@ -165,7 +189,7 @@ export default function Conversation() {
         <button type="button" className="cv-attach" onClick={() => fileRef.current?.click()} aria-label="Attach photo or video" disabled={sending}>
           <Icon name="plus" size={22} strokeWidth={2.2} />
         </button>
-        <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={pickFile} />
+        <input ref={fileRef} type="file" hidden onChange={pickFile} />
         <input value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} placeholder="Send a message" aria-label="Message" />
         <button type="submit" disabled={(!text.trim() && !file) || sending} aria-label="Send">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>

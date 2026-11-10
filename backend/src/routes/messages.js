@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { Op, User, DirectMessage, Follow, Post } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
-const { upload, kindFor } = require('../middleware/upload');
+const { anyFileUpload, chatKindFor } = require('../middleware/upload');
 const { blockedUserIds } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
 const httpError = require('../utils/httpError');
@@ -29,9 +29,9 @@ async function linkedPostId(text) {
   return post ? post.id : null;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null }) {
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null }) {
   const postId = await linkedPostId(body);
-  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, postId });
+  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId });
 }
 
 // Attach a small preview (media, caption, author) to every message that links to a post.
@@ -168,17 +168,17 @@ router.post('/with/:userId', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-// Send a photo or video to one person, with an optional caption.
-router.post('/with/:userId/media', upload.single('media'), async (req, res, next) => {
+// Send any file to one person (photo, video, audio or document), with an optional caption.
+router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, res, next) => {
   try {
     const me = req.user.id;
     const other = req.params.userId;
-    const kind = req.file ? kindFor(req.file.mimetype) : null;
-    if (!kind) throw httpError(400, 'Choose a JPG, PNG, WebP or GIF photo, or an MP4 or WebM video');
+    if (!req.file) throw httpError(400, 'Choose a file to send');
     await assertCanMessage(me, other);
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages');
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages', { resourceType: 'auto' });
     const body = String(req.body?.body || '').trim().slice(0, 2000);
-    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: kind });
+    const fileName = String(req.file.originalname || 'File').slice(0, 255);
+    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName });
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });

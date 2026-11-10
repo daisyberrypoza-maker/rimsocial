@@ -24,7 +24,8 @@ function StatusLine({ item, mine }) {
     );
   }
   const kind = item.lastMessage.mediaKind;
-  const preview = item.lastMessage.body || (kind === 'video' ? 'Video' : kind === 'photo' ? 'Photo' : '');
+  const attachment = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' }[kind] || '';
+  const preview = item.lastMessage.body || attachment;
   return <span className="sn-txt">{preview} · {messageTime(item.lastMessage.createdAt)}</span>;
 }
 

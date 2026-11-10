@@ -78,7 +78,8 @@ async function uploadFile(file, folder = 'rimsocial', options = {}) {
   try {
     const { cloudName, apiKey, apiSecret } = credentials();
     // Audio is stored as a Cloudinary 'video' resource, which is how Cloudinary handles sound files
-    const resourceType = /^(video|audio)\//.test(String(file.mimetype || '')) ? 'video' : 'image';
+    // options.resourceType 'auto' lets Cloudinary accept any file (documents, archives) as well as photos and videos
+    const resourceType = options.resourceType || (/^(video|audio)\//.test(String(file.mimetype || '')) ? 'video' : 'image');
     const params = { folder, timestamp: String(Math.floor(Date.now() / 1000)) };
     // Cloudinary keeps only the first N seconds of a video (server-side safety net for the browser trim).
     if (resourceType === 'video' && options.maxSeconds) params.transformation = `du_${Math.floor(options.maxSeconds)}`;
