@@ -1,6 +1,4 @@
 [build]
-  # Netlify deploys are turned off for this repo. Exit 0 tells Netlify to skip every build.
-  ignore = "exit 0"
   command = "npm run build"
   publish = "frontend/dist"
 
