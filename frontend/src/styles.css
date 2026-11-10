@@ -5123,6 +5123,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-page .st-friend { flex:0 0 auto; width:90px; display:flex; flex-direction:column; align-items:center; gap:4px; background:transparent !important; border:0 !important; padding:0 !important; box-shadow:none !important; cursor:pointer; color:#111; }
 .st-ring { position:relative; width:86px; height:86px; border-radius:50%; padding:3px; display:grid; place-items:center; background:#d9d9de; }
 .st-ring.unseen { background:#a53ff5; }
+.st-ring.mine { background:#1e90ff; }
 .st-ring.none { background:#d9d9de; }
 .st-face { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#f1f1f3; border:3px solid #fff; display:grid; place-items:center; box-sizing:border-box; }
 .st-face .sc-avatar, .st-face .avatar, .st-face img, .st-face video { width:100% !important; height:100% !important; }
