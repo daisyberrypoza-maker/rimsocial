@@ -481,7 +481,7 @@ export default function Profile() {
       </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadCover} /></>}
 
-      {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
+      {drawerOpen && createPortal(<div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="settings-menu" role="dialog" aria-modal="true" aria-label="Profile and settings" onClick={(e) => e.stopPropagation()}>
           <header className="settings-head">
             <h2>Profile & settings</h2>
@@ -509,7 +509,7 @@ export default function Profile() {
             </div>
           </div>
         </aside>
-      </div>}
+      </div>, document.body)}
 
       {imageViewerOpen && <div className="profile-image-viewer" role="dialog" aria-modal="true" aria-label={`@${profile.username} profile picture`} onClick={() => setImageViewerOpen(false)}>
         <button type="button" className="profile-image-viewer-close" aria-label="Close profile picture" onClick={() => setImageViewerOpen(false)}><Icon name="x" size={24} /></button>
