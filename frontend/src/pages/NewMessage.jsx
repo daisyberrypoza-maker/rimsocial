@@ -121,7 +121,7 @@ export default function NewMessage() {
           </ul>
         ) : <p className="nc-empty">{results ? 'No one found.' : 'Recent chats will appear here.'}</p>}
 
-        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length} onClick={startChat}{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
+        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length || creating} onClick={startChat}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
       </section>
     </div>
   );
