@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
 const { blockedUserIds } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
+const { storyRingsFor } = require('../services/stories');
 const httpError = require('../utils/httpError');
 
 router.use(requireAuth);
@@ -163,6 +164,7 @@ router.get('/conversations', async (req, res, next) => {
     const following = partners.length ? new Set((await Follow.findAll({ where: { followerId: me, followeeId: partners }, attributes: ['followeeId'], raw: true })).map((r) => String(r.followeeId))) : new Set();
     const replied = new Set(rows.filter((r) => String(r.senderId) === me).map((r) => String(r.recipientId)));
     const storyAuthors = partners.length ? new Set((await Post.findAll({ where: { authorId: partners, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } }, attributes: ['authorId'], raw: true })).map((r) => String(r.authorId))) : new Set();
+    const rings = await storyRingsFor(me, partners);
     const online = await Promise.all(partners.map((id) => redis.get('presence:' + id).then(Boolean).catch(() => false)));
     const onlineIds = new Set(partners.filter((_, i) => online[i]));
     const items = [...byPartner.entries()]
@@ -173,6 +175,7 @@ router.get('/conversations', async (req, res, next) => {
           user: userById.get(partner),
           group: following.has(partner) ? 'primary' : (!replied.has(partner) && String(entry.last.senderId) !== me ? 'requests' : 'general'),
           hasStory: storyAuthors.has(partner),
+          storyRing: rings.get(partner) || null,
           isOnline: onlineIds.has(partner),
           lastMessage: {
             body: last.body,

@@ -24,6 +24,13 @@ function saveStoryCache(value) {
 const PERSIST_ITEMS = 30;
 const EMPTY_STORIES = { items: [], updatedAt: 0 };
 
+// Ring per person for every avatar: 'unseen' (coloured) or 'seen' (grey). Absent means no active story.
+function ringsFromRail(rail) {
+  const out = {};
+  for (const g of rail?.items || []) if (g.user?.id) out[g.user.id] = g.unseen ? 'unseen' : 'seen';
+  return out;
+}
+
 export const useAppStore = create(
   persist(
     (set) => ({
@@ -37,6 +44,7 @@ export const useAppStore = create(
       offline: false,   // not saved: set from real network results
       setOffline: (offline) => set((s) => (s.offline === offline ? s : { offline })),
       storyRail: EMPTY_STORIES,
+      storyRings: {},
       storyCache: loadStoryCache(),   // { [userId]: { items, isSubscribed, updatedAt } } so stories open instantly
       pendingUpload: null,            // not saved: { kind: 'post' | 'story', thumb, mediaKind } while an upload is running
       setPendingUpload: (pendingUpload) => set({ pendingUpload }),
@@ -63,7 +71,8 @@ export const useAppStore = create(
       },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
-      setStoryRail: (storyRail) => set({ storyRail, storyRailAt: Date.now() }),
+      setStoryRail: (storyRail) => set((s) => ({ storyRail, storyRailAt: Date.now(), storyRings: { ...s.storyRings, ...ringsFromRail(storyRail) } })),
+      setStoryRings: (rings) => set((s) => ({ storyRings: { ...s.storyRings, ...rings } })),
       setStoryDiscover: (storyDiscover) => set({ storyDiscover }),
       setStoryCache: (userId, entry) => set((s) => {
         const next = { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, STORY_STORE_ITEMS), updatedAt: Date.now() } };

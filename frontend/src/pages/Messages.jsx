@@ -56,7 +56,7 @@ export default function Messages() {
   useEffect(() => {
     let alive = true;
     const load = () => api('/v1/messages/conversations')
-      .then((data) => { if (alive) { setItems(data.items || []); setError(''); } })
+      .then((data) => { if (alive) { setItems(data.items || []); setError(''); useAppStore.getState().setStoryRings(Object.fromEntries((data.items || []).map((i) => [i.user.id, i.storyRing || null]))); } })
       .catch((e) => { if (alive) setError(e.message || 'Could not load messages'); });
     load();
     const timer = setInterval(load, 4000);
@@ -151,7 +151,7 @@ export default function Messages() {
               return (
                 <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'}>
                   <Link to={`/chat/${item.user.id}`} className="sn-row">
-                    <span className={item.hasStory ? 'sn-ring has-story' : 'sn-ring'}>
+                    <span className="sn-ring">
                       <Avatar user={item.user} size={44} />
                       {item.isOnline && <span className="sn-online" aria-label="Online" />}
                     </span>
