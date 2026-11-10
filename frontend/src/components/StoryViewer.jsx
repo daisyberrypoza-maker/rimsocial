@@ -94,7 +94,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         useAppStore.getState().setStoryCache(group.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
       })
       .catch(() => { if (alive && !saved) setStories([]); });
-    return createPortal(() => { alive = false; };
+    return () => { alive = false; };
   }, [group.user.id]);
 
   // Behind the scenes: warm the next story (and the one after) while this one plays
@@ -389,7 +389,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     } catch (e) { logError(e); }
   }
 
-  return (
+  return createPortal((
     <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
