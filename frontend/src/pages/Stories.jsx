@@ -30,11 +30,6 @@ class ViewerBoundary extends Component {
   }
 }
 
-// Every story surface uses the same profile avatar; story media stays inside the viewer.
-function StoryFace({ fallback }) {
-  return fallback;
-}
-
 // While a story uploads, the picture being sent shows inside the ring, which spins
 function PendingFace({ pending }) {
   return pending.mediaKind === 'video'
@@ -178,7 +173,7 @@ export default function Stories() {
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
               <span className="st-face">
-                {uploading ? <PendingFace pending={pending} /> : myGroup ? <StoryFace group={myGroup} fallback={<Avatar user={me || {}} />} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
+                {uploading ? <PendingFace pending={pending} /> : <Avatar user={me || {}} />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
@@ -188,7 +183,7 @@ export default function Stories() {
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
-                <span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span>
+                <span className="st-face"><Avatar user={group.user} /></span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
