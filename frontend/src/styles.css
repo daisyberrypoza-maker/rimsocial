@@ -5755,3 +5755,13 @@ html, body, #root { width:100% !important; height:100% !important; }
   .dm-page .dm-head-left { gap:6px; }
   .dm-page .dm-head-actions { gap:4px; }
 }
+
+
+/* Chat filter tabs: subtle separator and lighter, smaller labels */
+.dm-page .dm-filters {
+  border-top:1px solid #eeeeee;
+}
+.dm-page button.dm-chip {
+  font-size:12px !important;
+  font-weight:400 !important;
+}
