@@ -85,7 +85,7 @@ export default function Activity({ onBack } = {}) {
     })}</div>;
 
   const Wrap = onBack ? 'div' : 'main';
-  return <Wrap ref={swipeSurfaceRef} className="page activity-page">
+  return <Wrap ref={swipeSurfaceRef} data-local-tab-swipe className="page activity-page">
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
