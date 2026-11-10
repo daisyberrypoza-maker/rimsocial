@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -92,25 +92,87 @@ export default function Profile() {
     return () => { current = false; };
   }, [tab, profile]);
 
-  // Swipe left or right across the profile content to move between Spotlight, Stories and Reposts
+  // Swipe left or right across the profile content to move between Spotlight, Stories and Reposts.
+  // The content follows the finger, slides off, and the new tab slides in from the other side.
+  const swipeRef = useRef(null);
+  const swipeEnterFrom = useRef(null);
+  const swipeBusy = useRef(false);
+  const SWIPE_MS = 260;
+  const SWIPE_EASE = `transform ${SWIPE_MS}ms cubic-bezier(0.22, 0.61, 0.36, 1)`;
+
+  function moveSwipe(px, animate) {
+    const el = swipeRef.current;
+    if (!el) return;
+    el.style.transition = animate ? SWIPE_EASE : 'none';
+    el.style.transform = `translate3d(${px}px, 0, 0)`;
+  }
+
+  // Clear the transform at rest so fixed-position children (such as the story viewer) are not affected
+  function clearSwipe() {
+    const el = swipeRef.current;
+    if (!el) return;
+    el.style.transform = '';
+    el.style.transition = '';
+  }
+
   function onTabSwipeStart(e) {
+    if (swipeBusy.current) return;
     const t = e.touches[0];
-    tabSwipeStart.current = { x: t.clientX, y: t.clientY };
+    tabSwipeStart.current = { x: t.clientX, y: t.clientY, locked: null };
+  }
+
+  function onTabSwipeMove(e) {
+    const start = tabSwipeStart.current;
+    if (!start) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (start.locked === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      // Decide once whether this is a sideways swipe or a vertical scroll
+      start.locked = Math.abs(dx) > Math.abs(dy) * 1.5 ? 'x' : 'y';
+    }
+    if (start.locked !== 'x') return;
+    const index = PROFILE_TABS.indexOf(tab);
+    // Resist dragging past the first or last tab
+    const atEdge = (dx > 0 && index === 0) || (dx < 0 && index === PROFILE_TABS.length - 1);
+    moveSwipe(atEdge ? dx * 0.3 : dx, false);
   }
 
   function onTabSwipeEnd(e) {
     const start = tabSwipeStart.current;
     tabSwipeStart.current = null;
-    if (!start) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    // Ignore short moves and mostly vertical moves (those are scrolls)
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (!start || swipeBusy.current) return;
+    const dx = e.changedTouches[0].clientX - start.x;
     const index = PROFILE_TABS.indexOf(tab);
     const next = dx < 0 ? index + 1 : index - 1;
-    if (next >= 0 && next < PROFILE_TABS.length) setTab(PROFILE_TABS[next]);
+    const canMove = start.locked === 'x' && Math.abs(dx) >= 60 && next >= 0 && next < PROFILE_TABS.length;
+    swipeBusy.current = true;
+    if (!canMove) {
+      // Not a full swipe: spring back to place
+      moveSwipe(0, true);
+      setTimeout(() => { clearSwipe(); swipeBusy.current = false; }, SWIPE_MS);
+      return;
+    }
+    const width = swipeRef.current?.offsetWidth || window.innerWidth;
+    // Slide the current content off in the swipe direction, then switch tabs
+    moveSwipe(dx < 0 ? -width : width, true);
+    setTimeout(() => {
+      swipeEnterFrom.current = dx < 0 ? width : -width;
+      setTab(PROFILE_TABS[next]);
+    }, SWIPE_MS);
   }
+
+  // After a tab change, place the new content off to the side and slide it into view
+  useLayoutEffect(() => {
+    const from = swipeEnterFrom.current;
+    if (from === null) return;
+    swipeEnterFrom.current = null;
+    moveSwipe(from, false);
+    void swipeRef.current?.offsetWidth;
+    moveSwipe(0, true);
+    setTimeout(() => { clearSwipe(); swipeBusy.current = false; }, SWIPE_MS);
+  }, [tab]);
 
   function openPeople(type, replace = false) {
     navigate(`/u/${username}/${type}`, { replace });
@@ -499,7 +561,7 @@ export default function Profile() {
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
       </nav>
 
-      <div style={{ display: 'contents' }} onTouchStart={onTabSwipeStart} onTouchEnd={onTabSwipeEnd}>
+      <div ref={swipeRef} style={{ width: '100%', overflowX: 'clip' }} onTouchStart={onTabSwipeStart} onTouchMove={onTabSwipeMove} onTouchEnd={onTabSwipeEnd} onTouchCancel={onTabSwipeEnd}>
       {tab === 'posts' ? (
         <>
           {tagList.length > 0 && <div className="sc-tag-row">{tagList.map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>)}</div>}
