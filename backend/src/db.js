@@ -326,6 +326,25 @@ const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
 }, { tableName: 'media_cleanup_jobs', indexes: [{ unique: true, fields: ['publicId', 'resourceType'] }, { fields: ['status', 'nextAttemptAt'] }] });
 
 // Direct messages between two accounts. Read state is stored per message (readAt).
+const GroupConversation = sequelize.define('GroupConversation', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING(80), allowNull: false },
+  createdById: { type: DataTypes.UUID, allowNull: false },
+}, { tableName: 'group_conversations', indexes: [{ fields: ['createdById', 'createdAt'] }] });
+
+const GroupMember = sequelize.define('GroupMember', {
+  groupId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  userId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  isAdmin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+}, { tableName: 'group_members', indexes: [{ fields: ['userId', 'createdAt'] }] });
+
+const GroupMessage = sequelize.define('GroupMessage', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  groupId: { type: DataTypes.UUID, allowNull: false },
+  senderId: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.STRING(2000), allowNull: false },
+}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
+
 const DirectMessage = sequelize.define('DirectMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   senderId: { type: DataTypes.UUID, allowNull: false },
@@ -350,7 +369,7 @@ const DirectMessage = sequelize.define('DirectMessage', {
 
 module.exports = {
   AudioTrack,
-  DirectMessage,
+  DirectMessage, GroupConversation, GroupMember, GroupMessage,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,

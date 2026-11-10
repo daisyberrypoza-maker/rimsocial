@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Follow, Post } = require('../db');
+const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
@@ -134,6 +134,90 @@ async function withPostPreviews(rows, me) {
     return id ? { ...row, post: previewById.get(id) || null } : row;
   });
 }
+
+
+// ---- group conversations --------------------------------------------------
+
+// Return groups for the signed-in user, including participants and latest message.
+router.get('/groups', async (req, res, next) => {
+  try {
+    const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId'], raw: true });
+    const ids = memberships.map((row) => row.groupId);
+    if (!ids.length) return res.json({ items: [] });
+    const groups = await GroupConversation.findAll({ where: { id: ids }, order: [['updatedAt', 'DESC']] });
+    const members = await GroupMember.findAll({ where: { groupId: ids }, raw: true });
+    const userIds = [...new Set(members.map((row) => String(row.userId)))];
+    const users = userIds.length ? await User.findAll({ where: { id: userIds }, attributes: PUBLIC_USER, raw: true }) : [];
+    const userById = new Map(users.map((user) => [String(user.id), user]));
+    const messages = await GroupMessage.findAll({ where: { groupId: ids }, order: [['createdAt', 'DESC']], limit: Math.max(ids.length * 3, 100), raw: true });
+    const latest = new Map();
+    for (const message of messages) if (!latest.has(String(message.groupId))) latest.set(String(message.groupId), message);
+    res.json({ items: groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
+      lastMessage: latest.get(String(group.id)) || null,
+    })) });
+  } catch (error) { next(error); }
+});
+
+// Create a group. The creator is automatically an admin and a member.
+router.post('/groups', async (req, res, next) => {
+  let transaction;
+  try {
+    transaction = await sequelize.transaction();
+    const me = String(req.user.id);
+    const requested = Array.isArray(req.body?.memberIds) ? req.body.memberIds.map(String) : [];
+    const memberIds = [...new Set(requested)].filter((id) => id !== me);
+    if (memberIds.length < 2) throw httpError(400, 'Choose at least two people to create a group');
+    if (memberIds.length > 199) throw httpError(400, 'A group can have at most 200 members');
+    const users = await User.findAll({ where: { id: memberIds }, attributes: PUBLIC_USER, raw: true, transaction });
+    if (users.length !== memberIds.length) throw httpError(404, 'One or more selected accounts could not be found');
+    const blocked = await blockedUserIds(me);
+    if (memberIds.some((id) => blocked.has(id))) throw httpError(403, 'Remove blocked accounts before creating this group');
+    const suppliedName = String(req.body?.name || '').trim().slice(0, 80);
+    const defaultName = users.slice(0, 3).map((user) => user.displayName || user.username).join(', ') + (users.length > 3 ? ' +' + (users.length - 3) : '');
+    const name = suppliedName || defaultName;
+    const group = await GroupConversation.create({ name, createdById: me }, { transaction });
+    await GroupMember.bulkCreate([
+      { groupId: group.id, userId: me, isAdmin: true },
+      ...memberIds.map((userId) => ({ groupId: group.id, userId, isAdmin: false })),
+    ], { transaction });
+    await transaction.commit();
+    const creator = await User.findByPk(me, { attributes: PUBLIC_USER, raw: true });
+    res.status(201).json({ group: { id: group.id, name, members: [creator, ...users] } });
+  } catch (error) {
+    if (transaction && !transaction.finished) await transaction.rollback();
+    next(error);
+  }
+});
+
+// Load a group and its recent messages; membership is required.
+router.get('/groups/:groupId', async (req, res, next) => {
+  try {
+    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
+    if (!membership) throw httpError(404, 'Group not found');
+    const group = await GroupConversation.findByPk(req.params.groupId);
+    if (!group) throw httpError(404, 'Group not found');
+    const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
+    const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
+    const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
+    res.json({ group: { id: group.id, name: group.name, members: users }, items: items.reverse() });
+  } catch (error) { next(error); }
+});
+
+// Send a group text message to every current member.
+router.post('/groups/:groupId/messages', async (req, res, next) => {
+  try {
+    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
+    if (!membership) throw httpError(404, 'Group not found');
+    const body = String(req.body?.body || '').trim().slice(0, 2000);
+    if (!body) throw httpError(400, 'Type a message first');
+    const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body });
+    await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
+    res.status(201).json({ message: message.toJSON() });
+  } catch (error) { next(error); }
+});
 
 // ---- chat list ------------------------------------------------------------
 

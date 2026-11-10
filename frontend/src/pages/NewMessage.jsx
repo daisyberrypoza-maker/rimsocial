@@ -15,6 +15,8 @@ export default function NewMessage() {
   const [recents, setRecents] = useState([]);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [groupName, setGroupName] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -42,10 +44,15 @@ export default function NewMessage() {
     cur.some((s) => s.id === person.id) ? cur.filter((s) => s.id !== person.id) : [...cur, person]
   ));
 
-  function startChat() {
-    if (!selected.length) return;
+  async function startChat() {
+    if (!selected.length || creating) return;
     if (selected.length > 1) {
-      toast('Group messaging is not available yet');
+      setCreating(true);
+      try {
+        const data = await api('/v1/messages/groups', { method: 'POST', body: { memberIds: selected.map((person) => person.id), name: groupName.trim() } });
+        navigate(`/chat/group/${data.group.id}`, { replace: true });
+      } catch (e) { toast(e.message || 'Could not create group'); }
+      finally { setCreating(false); }
       return;
     }
     navigate(`/chat/${selected[0].id}`);
@@ -82,7 +89,7 @@ export default function NewMessage() {
           {selected.length > 1 && <span className="nc-group-count">Group · {selected.length}</span>}
         </div>
 
-        <button type="button" className="nc-group" onClick={() => toast('Group chats are not available yet')}>
+        <button type="button" className="nc-group" onClick={() => { setSelected([]); setGroupName(''); document.querySelector('.nc-to input')?.focus(); }}>
           <span className="nc-group-icon" aria-hidden="true">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
           </span>
@@ -93,6 +100,7 @@ export default function NewMessage() {
           <svg className="nc-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
         </button>
 
+        {selected.length > 1 && <input className="nc-group-name-input" value={groupName} onChange={(e) => setGroupName(e.target.value)} maxLength={80} placeholder="Group name (optional)" aria-label="Group name" />}
         <h2 className="nc-section">{results ? 'Results' : 'Recents'}</h2>
         {list.length ? (
           <ul className="nc-list">
@@ -113,7 +121,7 @@ export default function NewMessage() {
           </ul>
         ) : <p className="nc-empty">{results ? 'No one found.' : 'Recent chats will appear here.'}</p>}
 
-        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length} onClick={startChat}>Chat</button>
+        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length || creating} onClick={startChat}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
       </section>
     </div>
   );
