@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
 import { startWhenReady } from '../lib/playVideo.js';
@@ -93,7 +94,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         useAppStore.getState().setStoryCache(group.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
       })
       .catch(() => { if (alive && !saved) setStories([]); });
-    return () => { alive = false; };
+    return createPortal(() => { alive = false; };
   }, [group.user.id]);
 
   // Behind the scenes: warm the next story (and the one after) while this one plays
@@ -558,5 +559,5 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         </div>
       )}
     </div>
-  );
+  ), document.body);
 }
