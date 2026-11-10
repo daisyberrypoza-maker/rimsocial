@@ -5,7 +5,7 @@ export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/following', '/l
 
 // Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
 const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
-// Touches on items (buttons, links, rows, cards, images, list entries and tabs) never start a tab swipe. Only empty space does.
+// Local tab surfaces own their gestures; text entry, media and horizontal carousels keep native behavior.
 const LOCK_PX = 10;          // movement needed before we decide the direction
 const SETTLE_MS = 230;       // length of the slide or spring-back
 const busyRef = { current: false };
