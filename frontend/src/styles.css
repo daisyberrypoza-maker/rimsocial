@@ -5819,3 +5819,27 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .dm-page a.dm-row { gap:12px !important; }
 .dm-page .dm-row .dm-ring { width:50px !important; height:50px !important; flex:none; }
 .dm-page a.dm-cam { width:42px !important; height:42px !important; margin-left:4px; }
+
+
+/* Chat icon palette: soft grey throughout, with the add-friend glyph as the sole black icon */
+.dm-page .dm-head-left > button.dm-icon:not(.dm-avatar-btn),
+.dm-page .dm-head-actions > button.dm-icon:not(.dm-add-friend),
+.dm-page .dm-filters .dm-new-chip,
+.dm-page .dm-cam {
+  color:#777b80 !important;
+}
+.dm-page .dm-head-left > button.dm-icon:not(.dm-avatar-btn) svg,
+.dm-page .dm-head-actions > button.dm-icon:not(.dm-add-friend) svg,
+.dm-page .dm-filters .dm-new-chip svg,
+.dm-page .dm-cam svg {
+  color:inherit !important;
+  stroke:currentColor;
+}
+.dm-page .dm-head-actions > button.dm-add-friend {
+  color:#111 !important;
+  background:#fffc00 !important;
+}
+.dm-page .dm-head-actions > button.dm-add-friend svg {
+  color:#111 !important;
+  stroke:#111 !important;
+}
