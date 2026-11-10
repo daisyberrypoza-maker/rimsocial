@@ -431,7 +431,7 @@ export default function Profile() {
         <div className="pf-id">
           <div className="pf-avatar">
             <button type="button" className="pf-avatar-btn" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} />
+              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={84} storyRing={profile.storyRing || (profile.hasStory ? "unseen" : null)} />
             </button>
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
