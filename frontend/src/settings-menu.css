@@ -180,3 +180,24 @@
   font-size: 12px;
   color: #9a9a9a;
 }
+
+
+/* Keep the profile settings panel on its original light appearance, independent of app dark surfaces. */
+.profile-drawer-backdrop .settings-menu {
+  background:#fff !important;
+  background-image:none !important;
+  color:#111 !important;
+  color-scheme:light;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:-12px 0 40px rgba(0,0,0,.18) !important;
+}
+.profile-drawer-backdrop .settings-menu .settings-head,
+.profile-drawer-backdrop .settings-menu .settings-body,
+.profile-drawer-backdrop .settings-menu .settings-foot {
+  background:#fff !important;
+  color:#111 !important;
+}
+.profile-drawer-backdrop .settings-menu .settings-item { color:#111 !important; background:#fff !important; }
+.profile-drawer-backdrop .settings-menu .settings-item:active,
+.profile-drawer-backdrop .settings-menu .settings-item:hover { background:#f6f6f6 !important; }

@@ -169,6 +169,11 @@ async function start() {
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
   const userColumns = await qi.describeTable('users');
+  if (!userColumns.bio) await qi.addColumn('users', 'bio', { type: require('sequelize').DataTypes.STRING(150), allowNull: true });
+  if (!userColumns.website) await qi.addColumn('users', 'website', { type: require('sequelize').DataTypes.STRING(200), allowNull: true });
+  if (!userColumns.city) await qi.addColumn('users', 'city', { type: require('sequelize').DataTypes.STRING(80), allowNull: true });
+  if (!userColumns.gender) await qi.addColumn('users', 'gender', { type: require('sequelize').DataTypes.STRING(40), allowNull: true });
+  if (!userColumns.dateOfBirth) await qi.addColumn('users', 'dateOfBirth', { type: require('sequelize').DataTypes.DATEONLY, allowNull: true });
   if (!userColumns.coverUrl) await qi.addColumn('users', 'coverUrl', { type: require('sequelize').DataTypes.STRING(512), allowNull: true });
   const payoutColumns = await qi.describeTable('payouts');
   if (!payoutColumns.providerTransferCode) {

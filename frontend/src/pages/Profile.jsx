@@ -431,7 +431,7 @@ export default function Profile() {
         <div className="pf-id">
           <div className="pf-avatar">
             <button type="button" className="pf-avatar-btn" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} />
+              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={84} storyRing={profile.storyRing || (profile.hasStory ? "unseen" : null)} />
             </button>
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
@@ -481,7 +481,7 @@ export default function Profile() {
       </section>
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadCover} /></>}
 
-      {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
+      {drawerOpen && createPortal(<div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
         <aside className="settings-menu" role="dialog" aria-modal="true" aria-label="Profile and settings" onClick={(e) => e.stopPropagation()}>
           <header className="settings-head">
             <h2>Profile & settings</h2>
@@ -509,7 +509,7 @@ export default function Profile() {
             </div>
           </div>
         </aside>
-      </div>}
+      </div>, document.body)}
 
       {imageViewerOpen && <div className="profile-image-viewer" role="dialog" aria-modal="true" aria-label={`@${profile.username} profile picture`} onClick={() => setImageViewerOpen(false)}>
         <button type="button" className="profile-image-viewer-close" aria-label="Close profile picture" onClick={() => setImageViewerOpen(false)}><Icon name="x" size={24} /></button>

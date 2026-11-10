@@ -5884,3 +5884,18 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .sc-profile .sc-hero-avatar .avatar, .sc-hero-avatar .avatar { box-shadow: none !important; }
 .story-ring { background: #c9ccd1 !important; }
 .story-ring.unseen { background: var(--story-grad) !important; }
+
+
+/* Profile sizing and edit-form viewport corrections. */
+.sc-profile .pf-avatar { flex:0 0 84px !important; width:84px !important; height:84px !important; }
+.sc-profile .pf-avatar-btn { width:84px !important; height:84px !important; display:block !important; overflow:visible !important; }
+.sc-profile .pf-avatar-btn .avatar { width:84px !important; height:84px !important; }
+.sc-profile .pf-avatar-btn .avatar img,
+.sc-profile .pf-avatar-btn .avatar .avatar-initial { width:100% !important; height:100% !important; }
+.sc-profile .pf-avatar-btn .avatar.ring { padding:3px !important; box-sizing:border-box !important; }
+.sc-profile .pf-avatar-btn .avatar.ring .inner { width:100% !important; height:100% !important; border-radius:50% !important; overflow:hidden !important; }
+.settings-menu { flex:none; min-width:0; }
+.ep-page { box-sizing:border-box; height:var(--app-viewport-height, 100dvh); max-height:var(--app-viewport-height, 100dvh); overflow-y:auto; overscroll-behavior-y:contain; padding-bottom:calc(24px + env(safe-area-inset-bottom, 0px)); }
+.ep-page > .ep-top { position:sticky !important; top:0 !important; z-index:40 !important; min-height:54px; padding-top:calc(6px + env(safe-area-inset-top, 0px)); margin-top:calc(-1 * env(safe-area-inset-top, 0px)); }
+.keyboard-open .ep-page > .ep-top { position:sticky !important; top:0 !important; }
+.ep-page .ep-form { padding-bottom:24px; }

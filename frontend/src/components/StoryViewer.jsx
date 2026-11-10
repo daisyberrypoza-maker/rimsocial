@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
 import { startWhenReady } from '../lib/playVideo.js';
@@ -388,7 +389,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     } catch (e) { logError(e); }
   }
 
-  return (
+  return createPortal((
     <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
@@ -558,5 +559,5 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         </div>
       )}
     </div>
-  );
+  ), document.body);
 }
