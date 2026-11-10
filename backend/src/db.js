@@ -369,7 +369,7 @@ const DirectMessage = sequelize.define('DirectMessage', {
 
 module.exports = {
   AudioTrack,
-  DirectMessage,
+  DirectMessage, GroupConversation, GroupMember, GroupMessage,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
