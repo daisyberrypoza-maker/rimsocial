@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Image, Pressable, FlatList, ScrollView, Share, StatusBar, StyleSheet, useWindowDimensions, Modal, Alert, Switch, RefreshControl, Linking } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, Image, Pressable, FlatList, ScrollView, Share, StatusBar, StyleSheet, useWindowDimensions, Modal, Alert, Switch, RefreshControl, Linking, Animated, Easing, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -45,6 +45,15 @@ export default function Profile() {
   const feed = useAppStore((s) => s.feeds[key]);
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('posts');
+  // Swipe between Spotlight, Stories and Reposts: the content follows the finger, slides off, and the new tab slides in
+  const TAB_IDS = TABS.map(([id]) => id);
+  const SWIPE_MS = 260;
+  const tabIdRef = useRef(tab);
+  tabIdRef.current = tab;
+  const widthRef = useRef(width);
+  widthRef.current = width;
+  const swipeX = useRef(new Animated.Value(0)).current;
+  const swipeBusy = useRef(false);
   const [stories, setStories] = useState(null);
   const [reposts, setReposts] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -345,6 +354,39 @@ export default function Profile() {
     </View>
   );
 
+  // Runs once the finger lifts: a full swipe changes tab, anything shorter springs back
+  function finishSwipe(dx) {
+    if (swipeBusy.current) return;
+    swipeBusy.current = true;
+    const index = TAB_IDS.indexOf(tabIdRef.current);
+    const next = dx < 0 ? index + 1 : index - 1;
+    const w = widthRef.current;
+    const timing = (toValue) => Animated.timing(swipeX, { toValue, duration: SWIPE_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true });
+    if (Math.abs(dx) < w * 0.2 || next < 0 || next >= TAB_IDS.length) {
+      timing(0).start(() => { swipeBusy.current = false; });
+      return;
+    }
+    timing(dx < 0 ? -w : w).start(() => {
+      // New tab comes in from the side the finger came from
+      swipeX.setValue(dx < 0 ? w : -w);
+      setTab(TAB_IDS[next]);
+      timing(0).start(() => { swipeBusy.current = false; });
+    });
+  }
+
+  const swipeResponder = useRef(PanResponder.create({
+    // Only sideways drags are claimed, so vertical scrolling of the grid still works
+    onMoveShouldSetPanResponder: (_, g) => !swipeBusy.current && Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderMove: (_, g) => {
+      const index = TAB_IDS.indexOf(tabIdRef.current);
+      // Resist dragging past the first or last tab
+      const atEdge = (g.dx > 0 && index === 0) || (g.dx < 0 && index === TAB_IDS.length - 1);
+      swipeX.setValue(atEdge ? g.dx * 0.3 : g.dx);
+    },
+    onPanResponderRelease: (_, g) => finishSwipe(g.dx),
+    onPanResponderTerminate: (_, g) => finishSwipe(g.dx),
+  })).current;
+
   const cellWidth = width / 3;
   const data = tab === 'posts' ? posts : tab === 'stories' ? (stories || []) : (reposts || []);
   const emptyText = tab === 'posts' ? (feed ? 'No posts yet' : '')
@@ -385,6 +427,8 @@ export default function Profile() {
     <View style={styles.page}>
       {/* The cover is drawn behind the status bar; its icons are white on the green */}
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <View style={{ flex: 1, overflow: 'hidden' }}>
+      <Animated.View style={{ flex: 1, transform: [{ translateX: swipeX }] }} {...swipeResponder.panHandlers}>
       <FlatList
         data={data}
         numColumns={3}
@@ -397,6 +441,8 @@ export default function Profile() {
         onEndReached={() => { if (tab === 'posts' && feed?.nextCursor) loadPage(key, `/v1/users/${username}/posts`).catch(logError); }}
         renderItem={renderCell}
       />
+      </Animated.View>
+      </View>
 
       {/* White header that appears once the cover has scrolled away, with the name centred */}
       {compactProgress > 0 && (
