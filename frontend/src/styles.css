@@ -5488,6 +5488,10 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .ep-field select { border:0 !important; outline:none; background:transparent !important; font-size:17px; color:#111; padding:0 !important; font-family:inherit; width:100%; appearance:auto; }
 .ep-row { display:flex; align-items:center; justify-content:space-between; width:100%; border:0 !important; background:transparent !important; padding:6px 2px; font-size:17px; color:#111; cursor:pointer; text-align:left; }
 .ep-row-value { display:flex; align-items:center; gap:4px; color:#737373; }
+/* Edit profile scrolls inside the fixed app shell (the shell clips overflow), and keeps the
+   focused field and Save button above the on-screen keyboard. */
+.app > .ep-page { height:100%; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-padding-bottom:160px; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 120px); box-sizing:border-box; }
+.app > .ep-page::-webkit-scrollbar { display:none; }
 
 /* Chat inbox to match the reference: account header, story rings, online dot, request tag */
 .dm-head { grid-template-columns:auto 1fr auto !important; padding:10px 12px 14px !important; }
