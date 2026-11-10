@@ -5809,7 +5809,8 @@ html, body, #root { width:100% !important; height:100% !important; }
   background:#fff;
 }
 .keyboard-open .bottomnav {
-  transform:translateY(110%);
+  /* Preserve the bar's horizontal centering while moving it below the keyboard. */
+  transform:translate(-50%, 110%);
   pointer-events:none;
 }
 input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
