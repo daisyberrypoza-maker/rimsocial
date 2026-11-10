@@ -35,7 +35,8 @@
   transform: translateY(-50%);
   margin: 0;
   text-align: center;
-  font-size: 22px;
+  font-size: 18px;
+  line-height: 1.2;
   font-weight: 600;
   color: #000;
   pointer-events: none;
@@ -790,7 +791,7 @@
 .nc-sheet { position: relative; flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; margin: 0; padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; background: #f6f7f9; color: #000; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; }
 .nc-grip { display: none; }
 .nc-tabs { position: sticky; top: 0; z-index: 5; display: flex; flex: none; border-bottom: 2px solid #e4e6ea; background: #f6f7f9; }
-.nc-tab { flex: 1; height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0 !important; background: transparent !important; color: #8a8a8a !important; font-size: 14px; font-weight: 500; cursor: pointer; position: relative; }
+.nc-tab { flex: 1; height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0 !important; background: transparent !important; color: #8a8a8a !important; font-size: 13px; font-weight: 500; cursor: pointer; position: relative; }
 .nc-tab.on { color: #000 !important; font-weight: 600; }
 .nc-tab.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 3px; background: #000; }
 .nc-tab:disabled { cursor: default; }
@@ -817,7 +818,7 @@
 .nc-radio { width: 26px; height: 26px; flex: none; box-sizing: border-box; border: 2px solid #c9ccd1; border-radius: 50%; display: grid; place-items: center; }
 .nc-radio.on { background: #000; border-color: #000; }
 .nc-empty { margin: 24px; text-align: center; color: #6b6b6b; font-size: 16px; }
-.nc-chat { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); width: min(60%, 420px); height: 56px; border: 0 !important; border-radius: 999px; background: #c4c8cf !important; color: #fff !important; font-size: 20px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.nc-chat { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); width: min(60%, 420px); height: 56px; border: 0 !important; border-radius: 999px; background: #c4c8cf !important; color: #fff !important; font-size: 15px; font-weight: 500; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
 .nc-chat.on { background: #fffc00 !important; color: #000 !important; }
 .nc-chat:disabled { cursor: default; }
 
