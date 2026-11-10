@@ -44,9 +44,16 @@ export default function NewMessage() {
 
   function startChat() {
     if (!selected.length) return;
-    if (selected.length > 1) { toast('Group chats are not available yet'); return; }
+    if (selected.length > 1) {
+      toast('Group messaging is not available yet');
+      return;
+    }
     navigate(`/chat/${selected[0].id}`);
   }
+
+  const removeSelected = (personId) => {
+    setSelected((cur) => cur.filter((person) => person.id !== personId));
+  };
 
   return (
     <div className="nc-backdrop" onClick={() => navigate('/chat')}>
@@ -63,10 +70,17 @@ export default function NewMessage() {
           </button>
         </div>
 
-        <label className="nc-to">
-          <span>To:</span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="" aria-label="Search people" autoFocus />
-        </label>
+        <div className={selected.length > 1 ? 'nc-to nc-to-group' : 'nc-to'} role="group" aria-label="Message recipients">
+          <span className="nc-to-label">To:</span>
+          {selected.map((person) => (
+            <span className="nc-recipient" key={person.id}>
+              <span>{person.displayName || person.username}</span>
+              <button type="button" aria-label={`Remove ${person.displayName || person.username}`} onClick={() => removeSelected(person.id)}>×</button>
+            </span>
+          ))}
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={selected.length ? 'Add people' : 'Search people'} aria-label="Search people" autoFocus />
+          {selected.length > 1 && <span className="nc-group-count">Group · {selected.length}</span>}
+        </div>
 
         <button type="button" className="nc-group" onClick={() => toast('Group chats are not available yet')}>
           <span className="nc-group-icon" aria-hidden="true">
