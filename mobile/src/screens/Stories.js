@@ -135,9 +135,7 @@ export default function Stories() {
         >
           <Pressable style={styles.friend} onPress={() => (myGroup ? openViewer(me.id) : navigation.navigate('Upload', { story: true }))} accessibilityLabel={myGroup ? 'View my story' : 'Create a story'}>
             <StoryRing state={myGroup ? 'mine' : 'none'} uploading={pending?.kind === 'story'}>
-              {pending?.kind === 'story'
-                ? <Image source={{ uri: pending.thumb }} style={styles.fill} />
-                : <Avatar user={me || {}} size={64} />}
+              <Avatar user={me || {}} size={64} />
             </StoryRing>
             <Pressable style={styles.plus} onPress={() => navigation.navigate('Upload', { story: true })} accessibilityLabel="Add a story">
               <Icon name="plus" size={13} color="#fff" strokeWidth={3} />
