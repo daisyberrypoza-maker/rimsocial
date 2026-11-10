@@ -25,7 +25,7 @@ function StatusLine({ item, mine }) {
   }
   const kind = item.lastMessage.mediaKind;
   const attachment = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' }[kind] || '';
-  const preview = item.lastMessage.body || attachment;
+  const preview = item.lastMessage.deleted ? 'This message was deleted' : (item.lastMessage.body || attachment);
   return <span className="sn-txt">{preview} · {messageTime(item.lastMessage.createdAt)}</span>;
 }
 
