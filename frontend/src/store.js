@@ -24,10 +24,14 @@ function saveStoryCache(value) {
 const PERSIST_ITEMS = 30;
 const EMPTY_STORIES = { items: [], updatedAt: 0 };
 
-// Ring per person for every avatar: 'unseen' (coloured) or 'seen' (grey). Absent means no active story.
-function ringsFromRail(rail) {
+// Ring state is shared by every avatar. The owner's active story is always 'mine',
+// regardless of whether they have viewed it; absent authors have no active story.
+function ringsFromRail(rail, ownId) {
   const out = {};
-  for (const g of rail?.items || []) if (g.user?.id) out[g.user.id] = g.unseen ? 'unseen' : 'seen';
+  for (const g of rail?.items || []) {
+    if (!g.user?.id) continue;
+    out[g.user.id] = String(g.user.id) === String(ownId) ? 'mine' : g.unseen ? 'unseen' : 'seen';
+  }
   return out;
 }
 
@@ -71,8 +75,18 @@ export const useAppStore = create(
       },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
-      setStoryRail: (storyRail) => set((s) => ({ storyRail, storyRailAt: Date.now(), storyRings: { ...s.storyRings, ...ringsFromRail(storyRail) } })),
-      setStoryRings: (rings) => set((s) => ({ storyRings: { ...s.storyRings, ...rings } })),
+      setStoryRail: (storyRail) => set((s) => {
+        const nextRings = { ...s.storyRings };
+        // Remove stale states for people in the previous rail before applying the fresh rail.
+        for (const group of s.storyRail?.items || []) if (group.user?.id) delete nextRings[group.user.id];
+        return { storyRail, storyRailAt: Date.now(), storyRings: { ...nextRings, ...ringsFromRail(storyRail, s.user?.id) } };
+      }),
+      setStoryRings: (rings) => set((s) => {
+        const normalized = { ...rings };
+        const ownId = s.user?.id;
+        if (ownId && normalized[ownId]) normalized[ownId] = 'mine';
+        return { storyRings: { ...s.storyRings, ...normalized } };
+      }),
       setStoryDiscover: (storyDiscover) => set({ storyDiscover }),
       setStoryCache: (userId, entry) => set((s) => {
         const next = { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, STORY_STORE_ITEMS), updatedAt: Date.now() } };
