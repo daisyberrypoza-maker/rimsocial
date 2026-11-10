@@ -4,12 +4,12 @@
 
 The frontend is a Vite/React application in `frontend/`; the API is an Express service in `backend/`. They can be run separately or the backend can serve the built frontend for a single-origin deployment.
 
-### Frontend-only hosting (Vercel, Netlify, static host)
+### Frontend hosting (Vercel / GitHub Pages)
 
 1. Build the frontend with `npm ci && npm run build` from `frontend/`.
 2. Set `VITE_API_URL` to the API origin, for example `https://api.example.com` (do not append `/v1`).
 3. Set `CORS_ORIGINS` on the API to the exact public frontend origin(s), separated by commas.
-4. Deploy the contents generated in `frontend/dist`.
+4. Deploy the contents generated in `frontend/dist` to the configured Vercel or GitHub Pages project.
 
 Vite proxies `/v1` and `/uploads` to localhost:3000 only during local development. A deployed frontend must have `VITE_API_URL` configured unless it is served from the same origin as the API.
 
