@@ -785,18 +785,18 @@
 .sn-ticks.seen { color: #34b7f1; }
 .sn-cam { background: none !important; border: 0; padding: 0; cursor: pointer; }
 
-/* New chat sheet, matched to the reference */
-.nc-backdrop { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.4); display: flex; flex-direction: column; }
-.nc-sheet { position: relative; flex: 1; margin-top: calc(env(safe-area-inset-top, 0px) + 36px); background: #f6f7f9; color: #000; border-radius: 22px 22px 0 0; display: flex; flex-direction: column; overflow: hidden; }
-.nc-grip { width: 40px; height: 5px; border-radius: 5px; background: #c9ccd1; margin: 10px auto 4px; flex: none; }
-.nc-tabs { display: flex; flex: none; border-bottom: 2px solid #e4e6ea; }
+/* New chat is a full-screen route; keep its tab header fixed while people scroll. */
+.nc-backdrop { position: fixed; inset: 0; z-index: 300; width: 100vw; height: 100vh; height: 100dvh; background: #f6f7f9; display: flex; flex-direction: column; overflow: hidden; }
+.nc-sheet { position: relative; flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; margin: 0; padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; background: #f6f7f9; color: #000; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; }
+.nc-grip { display: none; }
+.nc-tabs { position: sticky; top: 0; z-index: 5; display: flex; flex: none; border-bottom: 2px solid #e4e6ea; background: #f6f7f9; }
 .nc-tab { flex: 1; height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0 !important; background: transparent !important; color: #8a8a8a !important; font-size: 19px; font-weight: 500; cursor: pointer; position: relative; }
 .nc-tab.on { color: #000 !important; font-weight: 600; }
 .nc-tab.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 3px; background: #000; }
 .nc-tab:disabled { cursor: default; }
 .nc-to { display: flex; align-items: center; gap: 12px; margin: 16px 20px 0; height: 52px; padding: 0 20px; border-radius: 999px; background: #eef0f3; flex: none; }
 .nc-to span { font-size: 19px; color: #6b6b6b; }
-.nc-to input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; font-size: 19px; color: #000; outline: none; }
+.nc-to input, .nc-to input:focus { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0 !important; outline: 0 !important; box-shadow: none !important; border-radius: 0; background: transparent !important; font-size: 19px; color: #000; }
 .nc-group { display: flex; align-items: center; gap: 16px; margin: 16px 20px 0; padding: 16px 18px; border: 0 !important; border-radius: 18px; background: #fff !important; color: #000 !important; text-align: left; cursor: pointer; flex: none; }
 .nc-group-icon { width: 48px; height: 48px; flex: none; border-radius: 50%; background: #f2f3f5; display: grid; place-items: center; }
 .nc-group-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
