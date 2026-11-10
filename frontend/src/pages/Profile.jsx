@@ -596,7 +596,7 @@ export default function Profile() {
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
       </nav>
 
-      <div ref={swipeRef} style={{ width: '100%', overflowX: 'clip' }} onTouchStart={onTabSwipeStart} onTouchMove={onTabSwipeMove} onTouchEnd={onTabSwipeEnd} onTouchCancel={onTabSwipeEnd}>
+      <div ref={swipeRef} data-local-tab-swipe style={{ width: '100%', overflowX: 'clip' }} onTouchStart={onTabSwipeStart} onTouchMove={onTabSwipeMove} onTouchEnd={onTabSwipeEnd} onTouchCancel={onTabSwipeEnd}>
       {tab === 'posts' ? (
         <>
           {tagList.length > 0 && <div className="sc-tag-row">{tagList.map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>)}</div>}

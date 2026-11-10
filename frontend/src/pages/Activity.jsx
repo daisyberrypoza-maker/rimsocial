@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 const READ_KEY = 'rimsocial-activity-read-at';
+const ACTIVITY_TABS = ['all', 'mention', 'like', 'comment', 'repost', 'follow'];
 
 function message(item) {
   if (item.type === 'like') return 'liked your post';
@@ -33,6 +35,7 @@ export default function Activity({ onBack } = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const swipeSurfaceRef = useSwipeTabs(filter, ACTIVITY_TABS, setFilter);
   const [readAt, setReadAt] = useState(() => Number(localStorage.getItem(READ_KEY) || 0));
 
   const load = useCallback(async () => {
@@ -82,7 +85,7 @@ export default function Activity({ onBack } = {}) {
     })}</div>;
 
   const Wrap = onBack ? 'div' : 'main';
-  return <Wrap className="page activity-page">
+  return <Wrap ref={swipeSurfaceRef} data-local-tab-swipe className="page activity-page">
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>

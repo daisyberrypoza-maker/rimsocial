@@ -8,12 +8,14 @@ import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 // Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
 // count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with the last
 // message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
+const CHAT_TABS = ['all', 'stories'];
 
 // Compact time since a message: now, 5m, 3h, 2d
 function timeAgo(iso) {
@@ -45,6 +47,7 @@ export default function Messages() {
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const swipeSurfaceRef = useSwipeTabs(filter, CHAT_TABS, setFilter, view === 'messages');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
   const { indicator } = usePullRefresh(async () => { const data = await api('/v1/messages/conversations'); setItems(data.items || []); });
@@ -107,7 +110,7 @@ export default function Messages() {
   });
 
   return (
-    <main className="sn-page">
+    <main ref={swipeSurfaceRef} data-local-tab-swipe className="sn-page">
       <header className="sn-head">
         <div className="sn-head-left">
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
