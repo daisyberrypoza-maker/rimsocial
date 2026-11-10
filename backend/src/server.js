@@ -132,35 +132,35 @@ async function start() {
   await DirectMessage.sync();
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
-  const qi = sequelize.getQueryInterface();
-  const DataTypes = require('sequelize').DataTypes;
-  let directMessageColumns = await qi.describeTable('direct_messages');
+  const qiDM = sequelize.getQueryInterface();
+  const DataTypesDM = require('sequelize').DataTypesDM;
+  let directMessageColumns = await qiDM.describeTable('direct_messages');
   const directMessageAdditions = [
-    ['mediaUrl', { type: DataTypes.STRING(512), allowNull: true }],
-    ['mediaKind', { type: DataTypes.STRING(12), allowNull: true }],
-    ['postId', { type: DataTypes.UUID, allowNull: true }],
-    ['mediaName', { type: DataTypes.STRING(255), allowNull: true }],
-    ['deliveredAt', { type: DataTypes.DATE, allowNull: true }],
-    ['editedAt', { type: DataTypes.DATE, allowNull: true }],
-    ['deletedForEveryone', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }],
-    ['hiddenFor', { type: DataTypes.TEXT, allowNull: true }],
-    ['replyToId', { type: DataTypes.UUID, allowNull: true }],
-    ['forwarded', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }],
+    ['mediaUrl', { type: DataTypesDM.STRING(512), allowNull: true }],
+    ['mediaKind', { type: DataTypesDM.STRING(12), allowNull: true }],
+    ['postId', { type: DataTypesDM.UUID, allowNull: true }],
+    ['mediaName', { type: DataTypesDM.STRING(255), allowNull: true }],
+    ['deliveredAt', { type: DataTypesDM.DATE, allowNull: true }],
+    ['editedAt', { type: DataTypesDM.DATE, allowNull: true }],
+    ['deletedForEveryone', { type: DataTypesDM.BOOLEAN, allowNull: false, defaultValue: false }],
+    ['hiddenFor', { type: DataTypesDM.TEXT, allowNull: true }],
+    ['replyToId', { type: DataTypesDM.UUID, allowNull: true }],
+    ['forwarded', { type: DataTypesDM.BOOLEAN, allowNull: false, defaultValue: false }],
   ];
   for (const [column, definition] of directMessageAdditions) {
     if (!directMessageColumns[column]) {
-      await qi.addColumn('direct_messages', column, definition);
+      await qiDM.addColumn('direct_messages', column, definition);
     }
   }
-  directMessageColumns = await qi.describeTable('direct_messages');
+  directMessageColumns = await qiDM.describeTable('direct_messages');
   if (directMessageColumns.body && (directMessageColumns.body.type || '').toLowerCase() !== 'varchar(2000)') {
-    await qi.changeColumn('direct_messages', 'body', {
-      type: DataTypes.STRING(2000), allowNull: false, defaultValue: '',
+    await qiDM.changeColumn('direct_messages', 'body', {
+      type: DataTypesDM.STRING(2000), allowNull: false, defaultValue: '',
     });
   }
-  const directMessageIndexes = await qi.showIndex('direct_messages');
+  const directMessageIndexes = await qiDM.showIndex('direct_messages');
   if (!directMessageIndexes.some((index) => index.name === 'direct_messages_post_id')) {
-    await qi.addIndex('direct_messages', ['postId'], { name: 'direct_messages_post_id' });
+    await qiDM.addIndex('direct_messages', ['postId'], { name: 'direct_messages_post_id' });
   }
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
