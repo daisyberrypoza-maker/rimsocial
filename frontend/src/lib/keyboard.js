@@ -1,47 +1,56 @@
-// Keyboard avoidance for every screen.
-// 1. The app shell is sized to the visible area above the on-screen keyboard (--app-vh),
-//    so the bottom of the page is never hidden behind the keyboard.
-// 2. When an input, textarea or select gains focus, it is scrolled into the middle of its
-//    scroll container once the keyboard has finished opening.
-// 3. The page itself is never pushed off-screen by the keyboard.
-
+// Single keyboard/viewport controller shared by every screen.
+// Keeps the app shell and its keyboard-specific layout rules on the same viewport height.
 const FIELD_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+const KEYBOARD_THRESHOLD = 100;
 
 export function startKeyboardAvoidance() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+
   const root = document.documentElement;
-  const vv = window.visualViewport;
+  const viewport = window.visualViewport;
+  let focusTimer = null;
 
-  function setShellHeight() {
-    const height = vv ? vv.height : window.innerHeight;
-    root.style.setProperty('--app-vh', `${Math.round(height)}px`);
+  function updateViewport() {
+    const height = Math.max(0, viewport?.height || window.innerHeight);
+    const offsetTop = viewport?.offsetTop || 0;
+    const keyboardInset = Math.max(0, window.innerHeight - height - offsetTop);
+    const heightValue = `${Math.round(height)}px`;
+
+    // Both names are retained because existing layout rules consume both variables.
+    root.style.setProperty('--app-vh', heightValue);
+    root.style.setProperty('--app-viewport-height', heightValue);
+    root.style.setProperty('--keyboard-inset', `${Math.round(keyboardInset)}px`);
+    root.classList.toggle('keyboard-open', keyboardInset > KEYBOARD_THRESHOLD);
   }
 
-  function resetPageOffset() {
-    // The keyboard can scroll the layout viewport; the app manages its own scrolling, so keep it at the top.
-    if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
-  }
-
-  function onViewportChange() {
-    setShellHeight();
-    resetPageOffset();
-  }
-
-  setShellHeight();
-  if (vv) {
-    vv.addEventListener('resize', onViewportChange);
-    vv.addEventListener('scroll', onViewportChange);
-  } else {
-    window.addEventListener('resize', onViewportChange);
-  }
-
-  document.addEventListener('focusin', (event) => {
+  function keepFocusedFieldVisible(event) {
     const field = event.target;
     if (!(field instanceof HTMLElement) || !field.matches(FIELD_SELECTOR)) return;
-    // Wait for the keyboard animation to finish, then bring the field into view.
-    window.setTimeout(() => {
-      setShellHeight();
-      field.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-    }, 300);
-  });
+
+    window.clearTimeout(focusTimer);
+    focusTimer = window.setTimeout(() => {
+      updateViewport();
+      if (!field.isConnected || document.activeElement !== field) return;
+      // Nearest avoids unnecessarily moving the whole screen or pushing fixed headers away.
+      field.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    }, 220);
+  }
+
+  updateViewport();
+  viewport?.addEventListener('resize', updateViewport);
+  viewport?.addEventListener('scroll', updateViewport);
+  window.addEventListener('resize', updateViewport);
+  document.addEventListener('focusin', keepFocusedFieldVisible);
+
+  return () => {
+    window.clearTimeout(focusTimer);
+    viewport?.removeEventListener('resize', updateViewport);
+    viewport?.removeEventListener('scroll', updateViewport);
+    window.removeEventListener('resize', updateViewport);
+    document.removeEventListener('focusin', keepFocusedFieldVisible);
+    root.classList.remove('keyboard-open');
+    root.style.removeProperty('--app-vh');
+    root.style.removeProperty('--app-viewport-height');
+    root.style.removeProperty('--keyboard-inset');
+  };
 }
