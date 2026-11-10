@@ -999,7 +999,7 @@ input:focus { border-color:#4c5cff; }
 
 /* RimSocial auth refresh: edge-to-edge mobile layout + Snapchat yellow */
 :root { --brand-a:#111111; --brand-b:#111111; --brand:#111111; }
-button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button):not(.mention-inline):not(.share-target) { background-color:#111111; color:#080808; }
+button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button):not(.mention-inline):not(.share-target):not([class*="sn-"]):not([class*="cv-"]) { background-color:#111111; color:#080808; }
 .auth-screen {
   position:fixed; inset:0; z-index:100; width:100%; min-height:100vh; min-height:100dvh; height:100%;
   overflow-x:hidden; overflow-y:auto; overscroll-behavior-y:contain; display:flex; flex-direction:column;

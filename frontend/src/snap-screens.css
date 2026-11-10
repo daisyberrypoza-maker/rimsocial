@@ -744,3 +744,6 @@
 .cv-sheet h3 { margin: 6px 20px 10px; font-size: 17px; font-weight: 700; }
 .cv-forward-row { display: flex !important; align-items: center; gap: 12px; }
 .cv-empty { margin: 0; padding: 16px 20px; color: #6b6b6b; font-size: 14px; }
+
+/* Chat screens: the global dark button default must not colour these controls. Class rules below still win. */
+:where(.sn-page, .sn-notif, .sn-mf, .cv-page) button { background-color: transparent; }
