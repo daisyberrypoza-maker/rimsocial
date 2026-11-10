@@ -32,10 +32,6 @@ function kindOfFile(file) {
   return 'file';
 }
 
-function timeOf(iso) {
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
 // "just now", "5m ago", "2h ago", "3d ago"
 function ago(iso) {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -155,7 +151,7 @@ function Bubble({ message, mine }) {
       <span className="cv-meta">
         {message.forwarded && !deleted && <em>Forwarded · </em>}
         {message.editedAt && !deleted && <em>Edited · </em>}
-        <span>{timeOf(message.createdAt)}</span>
+        <span>{ago(message.createdAt)}</span>
         {mine && !deleted && <Ticks message={message} />}
       </span>
     </div>
