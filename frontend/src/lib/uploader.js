@@ -1,20 +1,18 @@
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from './paged.js';
-import { trimVideo, STORY_MAX_SECONDS } from './videoTrim.js';
 import { toast, logError } from '../toast.js';
 
 // Uploads a post or story in the background. The person lands on Rimlight or Stories at once,
 // the upload carries on there (spinner on the screen), and the new item appears when it finishes.
 export function startUpload(job) {
-  const { toStory, file, rawFile, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
+  const { toStory, file, storyFile, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
   const thumb = URL.createObjectURL(file);
   useAppStore.getState().setPendingUpload({
     kind: toStory ? 'story' : 'post',
     thumb,
     mediaKind: String(file.type).startsWith('video/') ? 'video' : 'image',
   });
-  const mediaFor = (seconds) => trimVideo(rawFile || file, seconds);
 
   (async () => {
     const fd = new FormData();
@@ -31,12 +29,12 @@ export function startUpload(job) {
       fd.append('sponsorCta', sponsor.cta);
       fd.append('sponsorUrl', sponsor.url);
     }
-    fd.append('media', toStory ? await mediaFor(STORY_MAX_SECONDS) : file);
+    fd.append('media', toStory ? (storyFile || file) : file);
     await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
 
     if (!toStory && shareToStory) {
       const storyFd = new FormData();
-      storyFd.append('media', await mediaFor(STORY_MAX_SECONDS));
+      storyFd.append('media', storyFile || file);
       storyFd.append('caption', (caption || '').slice(0, 200));
       try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
       catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
