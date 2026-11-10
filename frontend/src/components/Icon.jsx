@@ -5,9 +5,11 @@ import {
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
+  File as FileIcon,
 } from 'lucide-react';
 
 const ICONS = {
+  file: FileIcon,
   'badge-check': BadgeCheck, 'circle-play': CirclePlay, clapperboard: Clapperboard, hash: Hash, image: ImageIcon,
   'map-pin': MapPin, pencil: Pencil, 'repeat-2': Repeat2, shield: Shield, 'user-round': UserRound,
   'arrow-left': ArrowLeft,

@@ -66,8 +66,31 @@ export default function Activity({ onBack } = {}) {
     else navigate('/u/' + encodeURIComponent(item.actor.username));
   }
 
-  const Wrap = onBack ? 'div' : 'main';
-  return <Wrap className="page activity-page">
+  const content = loading ? <div className="activity-state"></div> :
+    error ? <div className="activity-state"><p>{error}</p><button onClick={load}>Try again</button></div> :
+    filtered.length === 0 ? <div className="activity-empty"><div className="activity-empty-icon"><Icon name="bell" size={30} /></div><h2>You’re all caught up</h2><p>New notifications will appear here.</p></div> :
+    <div className="activity-list">{filtered.map((item) => {
+      const isUnread = new Date(item.createdAt).getTime() > readAt;
+      return <button className={'activity-item' + (isUnread ? ' unread' : '')} key={item.id} onClick={() => openItem(item)}>
+        <Avatar user={item.actor} size={46} />
+        <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
+        <span className="activity-copy"><span><strong>{item.actor.displayName || item.actor.username}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
+        {item.post?.mediaUrl ? <span className="activity-thumb">{item.post.kind === 'video' ? <video src={item.post.mediaUrl} muted preload="metadata" /> : <img src={item.post.mediaUrl} alt="" />}</span> : <Icon name="chevron" size={18} />}
+        {isUnread && <span className="activity-unread-dot" />}
+      </button>;
+    })}</div>;
+
+  // Opened from the Chat bell: full screen like the reference, with Back to Chat and no tabs or subtitle.
+  if (onBack) return <div className="sn-notif">
+    <header className="sn-notif-head">
+      <button type="button" className="sn-af-iconbtn" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={24} /></button>
+      <h1>Notifications</h1>
+      <span aria-hidden="true" />
+    </header>
+    <div className="sn-notif-body">{indicator}{content}</div>
+  </div>;
+
+  return <main className="page activity-page">
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
@@ -80,18 +103,6 @@ export default function Activity({ onBack } = {}) {
       )}
     </div>
     {unread > 0 && <div className="activity-read-row"><span>{unread} new {unread === 1 ? 'activity' : 'activities'}</span><button className="ghost small" onClick={markRead}>Mark all read</button></div>}
-    {loading ? <div className="activity-state"></div> :
-      error ? <div className="activity-state"><p>{error}</p><button onClick={load}>Try again</button></div> :
-      filtered.length === 0 ? <div className="activity-empty"><div className="activity-empty-icon"><Icon name="bell" size={30} /></div><h2>You’re all caught up</h2><p>Mentions, likes, comments, reposts and new followers will show up here.</p></div> :
-      <div className="activity-list">{filtered.map((item) => {
-        const isUnread = new Date(item.createdAt).getTime() > readAt;
-        return <button className={'activity-item' + (isUnread ? ' unread' : '')} key={item.id} onClick={() => openItem(item)}>
-          <Avatar user={item.actor} size={46} />
-          <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
-          <span className="activity-copy"><span><strong>{item.actor.displayName || item.actor.username}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
-          {item.post?.mediaUrl ? <span className="activity-thumb">{item.post.kind === 'video' ? <video src={item.post.mediaUrl} muted preload="metadata" /> : <img src={item.post.mediaUrl} alt="" />}</span> : <Icon name="chevron" size={18} />}
-          {isUnread && <span className="activity-unread-dot" />}
-        </button>;
-      })}</div>}
-  </Wrap>;
+    {content}
+  </main>;
 }

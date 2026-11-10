@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './styles.css';
+import { startKeyboardAvoidance } from './lib/keyboard.js';
+
+startKeyboardAvoidance();
 
 // HashRouter keeps routes working inside the Android app, where the app is
 // served from local files. Web URLs look like /#/following.
