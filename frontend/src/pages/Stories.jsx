@@ -7,20 +7,11 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import StoryViewer from '../components/StoryViewer.jsx';
+import Avatar from '../components/Avatar.jsx';
 import { logError } from '../toast.js';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
-}
-
-function Avatar({ user, className = '' }) {
-  return (
-    <span className={`sc-avatar ${className}`}>
-      {user?.avatarUrl
-        ? <img src={mediaUrl(user.avatarUrl)} alt="" />
-        : <span>{(nameOf(user)).slice(0, 1).toUpperCase()}</span>}
-    </span>
-  );
 }
 
 // Keeps a viewer crash from turning the whole screen white: shows a message and a close button instead.
@@ -178,8 +169,8 @@ export default function Stories() {
     <main className="page st-page">
       <header className="st-top">
         <div className="st-left">
-          <button className={`st-round st-avatar${myGroup ? ' has-story' : ''}`} aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
-            <Avatar user={me || {}} />
+          <button className="st-round st-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
+            <Avatar user={me || {}} size={42} storyRing={myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : null} />
           </button>
           <button className="st-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={21} /></button>
         </div>
