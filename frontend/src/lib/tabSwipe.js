@@ -6,7 +6,6 @@ export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/following', '/l
 // Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
 const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
 // Touches on items (buttons, links, rows, cards, images, list entries and tabs) never start a tab swipe. Only empty space does.
-const ITEM = 'a, button, img, label, li, [role="button"], [role="tab"], [role="tablist"], [role="link"], [role="menuitem"], [role="option"], .st-friend, .st-card, .st-big, .dm-row, .dm-cam, .dm-chip, .xp-card, .ig-person, .sr-cell, .sc-card, .people-list-row, .post, .rail-btn';
 const LOCK_PX = 10;          // movement needed before we decide the direction
 const SETTLE_MS = 230;       // length of the slide or spring-back
 const busyRef = { current: false };
@@ -53,7 +52,7 @@ export function useTabSwipe(navigate, pathname, enabled) {
 
     function onStart(event) {
       const target = event.target;
-      const onItem = Boolean(target.closest && (target.closest(IGNORE) || target.closest(ITEM)));
+      const onItem = Boolean(target.closest && (target.closest(IGNORE) || target.closest('[data-local-tab-swipe]')));
       if (busyRef.current || event.touches.length !== 1 || onItem || insideHorizontalStrip(target)) { gesture = null; return; }
       const touch = event.touches[0];
       gesture = { x: touch.clientX, y: touch.clientY, time: Date.now(), mode: 'pending', dx: 0 };
@@ -76,6 +75,7 @@ export function useTabSwipe(navigate, pathname, enabled) {
         }
       }
       if (gesture.mode !== 'horizontal') return;
+      event.preventDefault();
       gesture.dx = dx;
       // Resists at the first and last tab, as Snapchat does
       const edge = !targetFor(dx);
@@ -121,7 +121,7 @@ export function useTabSwipe(navigate, pathname, enabled) {
     // The new tab has mounted: wait two frames so its first paint is done, then slide it in
     if (afterMount.current) window.requestAnimationFrame(() => window.requestAnimationFrame(() => { const fn = afterMount.current; if (fn) fn(); }));
     window.addEventListener('touchstart', onStart, { passive: true });
-    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: false });
     // A cancelled touch ends the gesture too, so the page is never left pushed to the side
     const onCancel = () => { gesture = null; if (!busyRef.current) { setClass('swiping', false); setClass('swipe-anim', false); setOffset(0); } };
     window.addEventListener('touchend', onEnd, { passive: true });
