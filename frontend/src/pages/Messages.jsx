@@ -8,6 +8,7 @@ import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 // Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
 // count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with the last
@@ -42,6 +43,7 @@ export default function Messages() {
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
+  const swipeSurfaceRef = useSwipeTabs(filter, ['all', 'stories'], setFilter, view === 'messages');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
@@ -107,7 +109,7 @@ export default function Messages() {
   });
 
   return (
-    <main className="sn-page">
+    <main ref={swipeSurfaceRef} className="sn-page">
       <header className="sn-head">
         <div className="sn-head-left">
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
