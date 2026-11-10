@@ -18,6 +18,15 @@ router.get('/rail', requireAuth, async (req, res, next) => {
   try { res.json(await stories.getStoryRail(req.user.id)); } catch (e) { next(e); }
 });
 
+// GET /v1/stories/rings?ids=1,2,3  -> story ring state ('mine' | 'unseen' | 'seen') for users with an active story
+router.get('/rings', requireAuth, async (req, res, next) => {
+  try {
+    const ids = String(req.query.ids || '').split(',').map((id) => id.trim()).filter((id) => /^[\w-]{1,40}$/.test(id)).slice(0, 100);
+    const rings = await stories.storyRingsFor(req.user.id, ids);
+    res.json({ rings: Object.fromEntries(rings) });
+  } catch (e) { next(e); }
+});
+
 // GET /v1/stories/users/:userId  -> active stories for one creator
 router.get('/users/:userId', requireAuth, async (req, res, next) => {
   try {
