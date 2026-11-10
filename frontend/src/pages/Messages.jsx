@@ -133,13 +133,11 @@ export default function Messages() {
       </header>
       {indicator}
       <nav className="sn-filters" aria-label="Filter chats">
-        <button type="button" className="sn-chip">My AI</button>
-        <button type="button" className="sn-chip">Games</button>
+        <button type="button" className="sn-chip" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>Messages</button>
         <button type="button" className="sn-chip" aria-pressed={filter === 'stories'} onClick={() => setFilter(filter === 'stories' ? 'all' : 'stories')}>
           Stories{storyCount > 0 && <span className="sn-count">{storyCount}</span>}
         </button>
-        <button type="button" className="sn-chip">Near Me</button>
-        <button type="button" className="sn-chip">New<span className="sn-plus"><Icon name="plus" size={12} strokeWidth={2.6} /></span></button>
+        <button type="button" className="sn-chip" onClick={() => navigate('/chat/new')} aria-label="New message">New<span className="sn-plus"><Icon name="plus" size={12} strokeWidth={2.6} /></span></button>
       </nav>
       {error && <p className="sn-empty" role="alert">{error}</p>}
       <input ref={snapInput} type="file" accept="image/*,video/*" capture="environment" hidden onChange={onSnapPicked} />
