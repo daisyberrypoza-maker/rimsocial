@@ -81,17 +81,8 @@ export default function Activity({ onBack } = {}) {
       </button>;
     })}</div>;
 
-  // Opened from the Chat bell: full screen like the reference, with Back to Chat and no tabs or subtitle.
-  if (onBack) return <div className="sn-notif">
-    <header className="sn-notif-head">
-      <button type="button" className="sn-af-iconbtn" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={24} /></button>
-      <h1>Notifications</h1>
-      <span aria-hidden="true" />
-    </header>
-    <div className="sn-notif-body">{indicator}{content}</div>
-  </div>;
-
-  return <main className="page activity-page">
+  const Wrap = onBack ? 'div' : 'main';
+  return <Wrap className="page activity-page">
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
@@ -105,5 +96,5 @@ export default function Activity({ onBack } = {}) {
     </div>
     {unread > 0 && <div className="activity-read-row"><span>{unread} new {unread === 1 ? 'activity' : 'activities'}</span><button className="ghost small" onClick={markRead}>Mark all read</button></div>}
     {content}
-  </main>;
+  </Wrap>;
 }
