@@ -253,7 +253,10 @@ router.get('/:username', requireAuth, async (req, res, next) => {
     ]);
     const isOnline = Boolean(await redis.get('presence:' + user.id).catch(() => null));
     const storyRing = (await storyRingsFor(req.user.id, [user.id])).get(String(user.id)) || null;
-    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
+    const extras = await readProfileExtras(user.id);
+    // Date of birth is private account information; expose it only on the owner's own edit endpoint.
+    if (user.id !== req.user.id) delete extras.dateOfBirth;
+    res.json({ ...user.toJSON(), ...extras, isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
 });
 
