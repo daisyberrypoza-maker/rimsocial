@@ -163,8 +163,9 @@ router.get('/groups', async (req, res, next) => {
 
 // Create a group. The creator is automatically an admin and a member.
 router.post('/groups', async (req, res, next) => {
-  const transaction = await sequelize.transaction();
+  let transaction;
   try {
+    transaction = await sequelize.transaction();
     const me = String(req.user.id);
     const requested = Array.isArray(req.body?.memberIds) ? req.body.memberIds.map(String) : [];
     const memberIds = [...new Set(requested)].filter((id) => id !== me);
@@ -186,7 +187,7 @@ router.post('/groups', async (req, res, next) => {
     const creator = await User.findByPk(me, { attributes: PUBLIC_USER, raw: true });
     res.status(201).json({ group: { id: group.id, name, members: [creator, ...users] } });
   } catch (error) {
-    if (!transaction.finished) await transaction.rollback();
+    if (transaction && !transaction.finished) await transaction.rollback();
     next(error);
   }
 });
@@ -200,8 +201,8 @@ router.get('/groups/:groupId', async (req, res, next) => {
     if (!group) throw httpError(404, 'Group not found');
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
-    const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'ASC']], limit: 300, raw: true });
-    res.json({ group: { id: group.id, name: group.name, members: users }, items });
+    const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
+    res.json({ group: { id: group.id, name: group.name, members: users }, items: items.reverse() });
   } catch (error) { next(error); }
 });
 
