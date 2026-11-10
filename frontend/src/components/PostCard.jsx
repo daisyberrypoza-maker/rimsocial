@@ -5,24 +5,13 @@ import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import { mediaUrl, postShareUrl, videoStreamUrl } from '../lib/config.js';
 import { startWhenReady } from '../lib/playVideo.js';
-import { formatCount } from '../lib/format.js';
+import { formatCount, formatRelativeTime } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 
 // Sound preference is shared by every video in the feed, like TikTok.
 let feedSoundOn = true;
 
 // Starts playback with the shared sound setting; if the browser blocks sound, play muted.
-// Short relative time for comments: 5m, 3h, 2d, 4w.
-function timeAgo(iso) {
-  if (!iso) return '';
-  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'Now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
-  return `${Math.floor(seconds / 604800)}w`;
-}
-
 function playVideo(video) {
   video.muted = !feedSoundOn;
   const attempt = startWhenReady(video);
@@ -111,7 +100,7 @@ function CommentsSheet({ post, onClose }) {
         {loading ? <p className="rv-empty"></p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
           <Avatar user={item.author} size={40} />
           <div className="rv-comment-body">
-            <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {timeAgo(item.createdAt)}</span></div>
+            <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {formatRelativeTime(item.createdAt)}</span></div>
             <p>{item.body}</p>
             {item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}
           </div>
