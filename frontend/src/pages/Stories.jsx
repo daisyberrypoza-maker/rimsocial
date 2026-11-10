@@ -38,15 +38,9 @@ function FaceImg({ src, fallback }) {
   return <img src={src} alt="" onError={() => setFailed(true)} />;
 }
 
-// The ring shows the latest story's picture; the profile picture only when there is no story
-function StoryFace({ group, fallback }) {
-  const preview = group?.preview;
-  if (!preview?.mediaUrl) return fallback;
-  // A video with no saved frame shows the profile picture: an empty video frame looks like a blank ring on phones
-  if (preview.kind === 'video') {
-    return preview.thumbUrl ? <FaceImg src={mediaUrl(preview.thumbUrl)} fallback={fallback} /> : fallback;
-  }
-  return <FaceImg src={mediaUrl(preview.mediaUrl)} fallback={fallback} />;
+// Every story surface uses the same profile avatar; story media stays inside the viewer.
+function StoryFace({ fallback }) {
+  return fallback;
 }
 
 // While a story uploads, the picture being sent shows inside the ring, which spins
