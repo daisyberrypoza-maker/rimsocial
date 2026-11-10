@@ -216,19 +216,22 @@ router.put('/me/profile', requireAuth, async (req, res, next) => {
     const city = String(body.city || '').trim();
     const dateOfBirth = String(body.dateOfBirth || '').trim();
     const gender = String(body.gender || '').trim();
-    if (dateOfBirth && (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateOfBirth) || Number.isNaN(Date.parse(`${dateOfBirth}T00:00:00Z`)) || dateOfBirth > new Date().toISOString().slice(0, 10))) throw httpError(400, 'Enter a valid date of birth');
+    if (dateOfBirth && (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) || Number.isNaN(Date.parse(`${dateOfBirth}T00:00:00Z`)) || new Date(`${dateOfBirth}T00:00:00Z`).toISOString().slice(0, 10) !== dateOfBirth || dateOfBirth > new Date().toISOString().slice(0, 10))) throw httpError(400, 'Enter a valid date of birth');
     if (gender.length > 40) throw httpError(400, 'Gender must be 40 characters or fewer');
     if (!displayName || displayName.length > 64) throw httpError(400, 'Name must be 1 to 64 characters');
     if (bio.length > 150) throw httpError(400, 'Bio must be 150 characters or fewer');
     if (city.length > 80) throw httpError(400, 'City must be 80 characters or fewer');
     const website = cleanWebsite(body.website);
-    await User.update({ displayName }, { where: { id: req.user.id } });
+    const transaction = await sequelize.transaction();
     try {
+      await User.update({ displayName }, { where: { id: req.user.id }, transaction });
       await sequelize.query(
         'UPDATE users SET bio = :bio, website = :website, city = :city, gender = :gender, dateOfBirth = :dateOfBirth WHERE id = :userId',
-        { replacements: { bio: bio || null, website, city: city || null, gender: gender || null, dateOfBirth: dateOfBirth || null, userId: req.user.id } },
+        { replacements: { bio: bio || null, website, city: city || null, gender: gender || null, dateOfBirth: dateOfBirth || null, userId: req.user.id }, transaction },
       );
+      await transaction.commit();
     } catch (err) {
+      await transaction.rollback();
       if (/bio|website|city|gender|dateOfBirth/.test(err.message)) throw httpError(503, 'Profile details are not available yet on this server');
       throw err;
     }
