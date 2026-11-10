@@ -5765,3 +5765,57 @@ html, body, #root { width:100% !important; height:100% !important; }
   font-size:12px !important;
   font-weight:400 !important;
 }
+
+
+/* Mobile keyboard + viewport handling across the app */
+.app { height:var(--app-viewport-height, 100dvh); min-height:0; }
+#root, body { min-height:0; }
+.app > main,
+.app > .auth-screen,
+.app > .ep-page {
+  min-height:0;
+  overscroll-behavior-y:contain;
+}
+.app > main { overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.app > .dm-convo {
+  height:var(--app-viewport-height, 100dvh);
+  min-height:0;
+  overflow:hidden;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 6px);
+}
+.dm-convo .dm-chead { flex:none; position:relative; z-index:3; background:#fff; }
+.dm-convo .dm-thread { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.dm-convo .dm-input { flex:none; margin-bottom:4px; }
+.keyboard-open .app { height:var(--app-viewport-height); }
+.keyboard-open .app > main:not(.dm-convo),
+.keyboard-open .app > .auth-screen,
+.keyboard-open .app > .ep-page {
+  max-height:var(--app-viewport-height);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-block:24px;
+}
+.keyboard-open .app > main > header,
+.keyboard-open .app > main > .dm-head,
+.keyboard-open .app > .ep-page > .ep-top {
+  position:sticky;
+  top:0;
+  z-index:24;
+  background:#fff;
+}
+.keyboard-open .bottomnav {
+  transform:translateY(110%);
+  pointer-events:none;
+}
+input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
+
+/* Chat refinements: compact avatar and balanced edge alignment */
+.dm-page button.dm-chip { font-size:14px !important; font-weight:400 !important; }
+.dm-page .dm-avatar-btn { width:36px !important; height:36px !important; }
+.dm-page .dm-avatar-btn .avatar,
+.dm-page .dm-avatar-btn .avatar img,
+.dm-page .dm-avatar-btn .avatar .avatar-initial { width:36px !important; height:36px !important; }
+.dm-page .dm-item { padding-left:12px !important; padding-right:12px !important; }
+.dm-page a.dm-row { gap:12px !important; }
+.dm-page .dm-row .dm-ring { width:50px !important; height:50px !important; flex:none; }
+.dm-page a.dm-cam { width:42px !important; height:42px !important; margin-left:4px; }
