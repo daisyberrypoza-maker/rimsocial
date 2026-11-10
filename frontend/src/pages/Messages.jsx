@@ -7,6 +7,7 @@ import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { toast, logError } from '../toast.js';
+import { formatRelativeTime } from '../lib/format.js';
 import '../snap-screens.css';
 
 // Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
@@ -14,16 +15,6 @@ import '../snap-screens.css';
 // message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
-
-// Compact time since a message: now, 5m, 3h, 2d
-function timeAgo(iso) {
-  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (!Number.isFinite(minutes) || minutes < 1) return 'now';
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
-}
 
 function previewOf(last) {
   if (last.deleted) return 'This message was deleted';
@@ -159,7 +150,7 @@ export default function Messages() {
                     <span className="sn-text">
                       <span className="sn-name-row">
                         <span className="sn-name">{name}</span>
-                        <span className="sn-time">{timeAgo(last.createdAt)}</span>
+                        <span className="sn-time">{formatRelativeTime(last.createdAt)}</span>
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
@@ -185,7 +176,7 @@ export default function Messages() {
                 <Link to={`/chat/group/${group.id}`} className="sn-row">
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={23} /></span>
                   <span className="sn-text">
-                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
+                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{last && <span className="sn-time">{formatRelativeTime(last.createdAt)}</span>}</span>
                     <span className="sn-sub"><span className="sn-txt">{preview}</span></span>
                   </span>
                 </Link>

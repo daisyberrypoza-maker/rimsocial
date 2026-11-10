@@ -10,6 +10,7 @@ import { useAppStore } from '../store.js';
 import ActionSheet from './ActionSheet.jsx';
 import StoryViewersSheet from './StoryViewersSheet.jsx';
 import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
+import { formatRelativeTime } from '../lib/format.js';
 import { logError } from '../toast.js';
 
 const PHOTO_MS = 5000;
@@ -18,18 +19,6 @@ const CLOSE_PX = 120;
 const DOUBLE_TAP_MS = 260;
 const QUICK_REACTIONS = ['❤️', '😂', '😮', '🔥', '👏', '😢'];
 const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual content', 'Violence or dangerous content', 'Something else'];
-
-// "14h ago", "3m ago", "now"
-function timeAgo(iso) {
-  if (!iso) return '';
-  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 // Full-screen story player. groups: [{ user }].
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
@@ -412,7 +401,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
           <Avatar user={group.user} size={36} />
           <span className="sv-meta">
             <span className="sv-name">{group.user.displayName || group.user.username}</span>
-            <span className="sv-time">{timeAgo(current?.createdAt)}</span>
+            <span className="sv-time">{formatRelativeTime(current?.createdAt, { suffix: true })}</span>
           </span>
         </button>
         <div className="sv-head-actions">
