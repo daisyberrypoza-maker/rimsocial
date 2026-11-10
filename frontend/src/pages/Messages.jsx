@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 
@@ -48,6 +49,7 @@ export default function Messages() {
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
+  const swipeSurfaceRef = useSwipeTabs(filter, ['all', 'stories'], setFilter);
   const { indicator } = usePullRefresh(async () => { const [data, groupData] = await Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]); setItems(data.items || []); setGroups(groupData.items || []); });
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function Messages() {
   });
 
   return (
-    <main className="sn-page">
+    <main ref={swipeSurfaceRef} className="sn-page">
       <header className="sn-head">
         <div className="sn-head-left">
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
