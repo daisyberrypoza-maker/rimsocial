@@ -21,7 +21,7 @@ export default function NewMessage() {
 
   useEffect(() => {
     let alive = true;
-    if (!me?.username) return () => { alive = false; };
+    if (!me?.username) { setLoadingPeople(false); return () => { alive = false; }; }
     const loadPeople = async () => {
       setLoadingPeople(true);
       const [conversationResult, followingResult, followerResult] = await Promise.allSettled([
