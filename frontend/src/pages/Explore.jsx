@@ -11,6 +11,7 @@ import Icon from '../components/Icon.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 import '../snap-screens.css';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -34,6 +35,7 @@ export default function Explore() {
   const touchStartY = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [dismissed, setDismissed] = useState({});
+  const swipeSurfaceRef = useSwipeTabs(searchType, ['all', 'people', 'posts', 'hashtags'], setSearchType, searchMode && Boolean(query.trim() || results));
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
   // One place per person: anyone who follows you or you follow is never under Suggested
@@ -121,7 +123,7 @@ export default function Explore() {
   }, [searchParams]);
 
   return (
-    <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
+    <div ref={swipeSurfaceRef} className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {peopleMode && !searchMode && <header className="sn-af-head"><button type="button" className="sn-af-iconbtn" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={26} /></button><h1>Add Friends</h1><button type="button" className="sn-af-iconbtn" aria-label="More"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></button></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
