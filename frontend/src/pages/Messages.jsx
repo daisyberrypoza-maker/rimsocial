@@ -58,19 +58,19 @@ export default function Messages() {
             {totalUnread > 0 && <span className="dm-account-dot" aria-label="Unread" />}
           </button>
           <button type="button" className="dm-icon" onClick={() => navigate('/search')} aria-label="Search">
-            <Icon name="search" size={22} strokeWidth={2.4} />
+            <Icon name="search" size={21} strokeWidth={2.4} />
           </button>
         </div>
         <h1 className="dm-title">Chat</h1>
         <div className="dm-head-actions">
           <button type="button" className="dm-icon" onClick={() => setView('activity')} aria-label="Notifications">
-            <Icon name="bell" size={24} strokeWidth={2.2} />
+            <Icon name="bell" size={21} strokeWidth={2.2} />
           </button>
           <button type="button" className="dm-icon dm-add-friend" onClick={() => navigate('/friends')} aria-label="Add friends">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
           </button>
           <button type="button" className="dm-icon" onClick={() => setView('activity')} aria-label="More">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
           </button>
         </div>
       </header>
