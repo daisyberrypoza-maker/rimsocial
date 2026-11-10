@@ -19,8 +19,19 @@ function message(item) {
   return 'interacted with you';
 }
 
+function readStoredTimestamp() {
+  try {
+    const value = Number(window.localStorage.getItem(READ_KEY) || 0);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function timeAgo(value) {
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return '';
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
   if (seconds < 60) return 'now';
   if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
   if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
@@ -36,7 +47,7 @@ export default function Activity({ onBack } = {}) {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
   const swipeSurfaceRef = useSwipeTabs(filter, ACTIVITY_TABS, setFilter);
-  const [readAt, setReadAt] = useState(() => Number(localStorage.getItem(READ_KEY) || 0));
+  const [readAt, setReadAt] = useState(readStoredTimestamp);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,31 +65,39 @@ export default function Activity({ onBack } = {}) {
   useEffect(() => { load(); }, [load]);
   const { indicator } = usePullRefresh(load);
 
-  const filtered = useMemo(() => filter === 'all' ? items : items.filter((item) => item.type === filter), [items, filter]);
-  const unread = items.filter((item) => new Date(item.createdAt).getTime() > readAt).length;
+  const filtered = useMemo(() => filter === 'all'
+    ? items
+    : items.filter((item) => filter === 'like'
+      ? item.type === 'like' || item.type === 'story_like'
+      : item.type === filter), [items, filter]);
+  const unread = items.filter((item) => {
+    const createdAt = new Date(item.createdAt).getTime();
+    return Number.isFinite(createdAt) && createdAt > readAt;
+  }).length;
 
   function markRead() {
     const stamp = Date.now();
-    localStorage.setItem(READ_KEY, String(stamp));
+    try { window.localStorage.setItem(READ_KEY, String(stamp)); } catch { /* Read state remains available for this session. */ }
     setReadAt(stamp);
   }
 
   function openItem(item) {
     markRead();
-    if (item.type === 'follow') navigate('/u/' + encodeURIComponent(item.actor.username));
-    else if (item.post?.id) navigate('/p/' + item.post.id);
-    else navigate('/u/' + encodeURIComponent(item.actor.username));
+    if (item.type === 'follow' && item.actor?.username) navigate('/u/' + encodeURIComponent(item.actor.username));
+    else if (item.post?.id) navigate('/p/' + encodeURIComponent(item.post.id));
+    else if (item.actor?.username) navigate('/u/' + encodeURIComponent(item.actor.username));
   }
 
   const content = loading ? <div className="activity-state"></div> :
     error ? <div className="activity-state"><p>{error}</p><button onClick={load}>Try again</button></div> :
     filtered.length === 0 ? <div className="activity-empty"><div className="activity-empty-icon"><Icon name="bell" size={30} /></div><h2>You’re all caught up</h2><p>New notifications will appear here.</p></div> :
     <div className="activity-list">{filtered.map((item) => {
-      const isUnread = new Date(item.createdAt).getTime() > readAt;
+      const createdAt = new Date(item.createdAt).getTime();
+      const isUnread = Number.isFinite(createdAt) && createdAt > readAt;
       return <button className={'activity-item' + (isUnread ? ' unread' : '')} key={item.id} onClick={() => openItem(item)}>
-        <Avatar user={item.actor} size={46} />
+        <Avatar user={item.actor || {}} size={46} />
         <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' || item.type === 'story_like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
-        <span className="activity-copy"><span><strong>{item.actor.displayName || item.actor.username}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
+        <span className="activity-copy"><span><strong>{item.actor?.displayName || item.actor?.username || 'Someone'}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
         {item.post?.mediaUrl ? <span className="activity-thumb">{item.post.kind === 'video' ? <video src={item.post.mediaUrl} muted preload="metadata" /> : <img src={item.post.mediaUrl} alt="" />}</span> : <Icon name="chevron" size={18} />}
         {isUnread && <span className="activity-unread-dot" />}
       </button>;
