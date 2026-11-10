@@ -92,7 +92,7 @@ export default function Profile() {
 
   useEffect(() => {
     api(`/v1/users/${username}`)
-      .then((user) => { useAppStore.getState().setStoryRings({ [user.id]: user.storyRing || null }); setProfile(username, { user, updatedAt: Date.now() }); })
+      .then((user) => { const storyRing = user.storyRing || (user.hasStory ? 'unseen' : null); useAppStore.getState().setStoryRings({ [user.id]: storyRing }); setProfile(username, { user: { ...user, storyRing }, updatedAt: Date.now() }); })
       .catch((e) => logError(e));
     loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => logError(e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -272,7 +272,9 @@ export default function Profile() {
     setRefreshing(true);
     try {
       const user = await api(`/v1/users/${username}`);
-      setProfile(username, { user, updatedAt: Date.now() });
+      const storyRing = user.storyRing || (user.hasStory ? 'unseen' : null);
+      useAppStore.getState().setStoryRings({ [user.id]: storyRing });
+      setProfile(username, { user: { ...user, storyRing }, updatedAt: Date.now() });
       await loadPage(feedKey, `/v1/users/${username}/posts`, true);
     } catch (e) { logError(e); }
     finally { setRefreshing(false); }
@@ -428,7 +430,7 @@ export default function Profile() {
         </div>
         <div className="pf-id">
           <div className="pf-avatar">
-            <button type="button" className={profile.hasStory ? 'pf-avatar-btn has-story' : 'pf-avatar-btn'} aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
+            <button type="button" className="pf-avatar-btn" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
               <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} />
             </button>
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
