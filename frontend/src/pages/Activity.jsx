@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
+import { formatRelativeTime } from '../lib/format.js';
 
 const READ_KEY = 'rimsocial-activity-read-at';
 const ACTIVITY_TABS = ['all', 'mention', 'like', 'comment', 'repost', 'follow'];
@@ -26,17 +27,6 @@ function readStoredTimestamp() {
   } catch {
     return 0;
   }
-}
-
-function timeAgo(value) {
-  const timestamp = new Date(value).getTime();
-  if (!Number.isFinite(timestamp)) return '';
-  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (seconds < 60) return 'now';
-  if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
-  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
-  if (seconds < 604800) return Math.floor(seconds / 86400) + 'd';
-  return new Date(value).toLocaleDateString();
 }
 
 // Shown inside the Chat page when onBack is given (Back returns to messages)
@@ -97,7 +87,7 @@ export default function Activity({ onBack } = {}) {
       return <button className={'activity-item' + (isUnread ? ' unread' : '')} key={item.id} onClick={() => openItem(item)}>
         <Avatar user={item.actor || {}} size={46} />
         <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' || item.type === 'story_like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
-        <span className="activity-copy"><span><strong>{item.actor?.displayName || item.actor?.username || 'Someone'}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
+        <span className="activity-copy"><span><strong>{item.actor?.displayName || item.actor?.username || 'Someone'}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{formatRelativeTime(item.createdAt, { absoluteAfterDays: 7 })}</span></span>
         {item.post?.mediaUrl ? <span className="activity-thumb">{item.post.kind === 'video' ? <video src={item.post.mediaUrl} muted preload="metadata" /> : <img src={item.post.mediaUrl} alt="" />}</span> : <Icon name="chevron" size={18} />}
         {isUnread && <span className="activity-unread-dot" />}
       </button>;
