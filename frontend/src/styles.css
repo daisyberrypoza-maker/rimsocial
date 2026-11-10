@@ -5843,3 +5843,28 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
   color:#111 !important;
   stroke:#111 !important;
 }
+
+
+/* Chat header controls mirror the Stories header geometry; scope stays on /chat only. */
+.dm-page button.dm-icon {
+  width:42px !important;
+  height:42px !important;
+  flex:0 0 42px !important;
+  background:#f1f1f3 !important;
+  color:#8e8e93 !important;
+}
+.dm-page button.dm-icon > svg {
+  width:21px;
+  height:21px;
+}
+.dm-page button.dm-avatar-btn {
+  background:transparent !important;
+}
+.dm-page button.dm-add-friend {
+  background:#fffc00 !important;
+  color:#111 !important;
+}
+.dm-page button.dm-add-friend > svg {
+  width:21px;
+  height:21px;
+}
