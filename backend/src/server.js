@@ -133,7 +133,7 @@ async function start() {
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
   const qiDM = sequelize.getQueryInterface();
-  const DataTypesDM = require('sequelize').DataTypesDM;
+  const DataTypesDM = require('sequelize').DataTypes;
   let directMessageColumns = await qiDM.describeTable('direct_messages');
   const directMessageAdditions = [
     ['mediaUrl', { type: DataTypesDM.STRING(512), allowNull: true }],
