@@ -68,12 +68,12 @@ export default function Activity({ onBack } = {}) {
 
   const Wrap = onBack ? 'div' : 'main';
   return <Wrap className="page activity-page">
-    {indicator}
     <div className="activity-heading">
       {onBack && <button className="ghost activity-refresh" onClick={onBack} aria-label="Back to chat"><Icon name="arrow-left" size={22} /></button>}
       <div><h1 className="page-title">Activity</h1><p className="activity-subtitle">What’s happening with your posts and people.</p></div>
       <button className="ghost activity-refresh" onClick={load} aria-label="Refresh activity" title="Refresh"><Icon name="refresh" size={19} /></button>
     </div>
+    {indicator}
     <div className="activity-filters" role="tablist" aria-label="Filter activity">
       {[['all','All'],['mention','Mentions'],['like','Likes'],['comment','Comments'],['repost','Reposts'],['follow','Followers']].map(([key,label]) =>
         <button key={key} role="tab" aria-selected={filter === key} className={filter === key ? 'activity-filter active' : 'activity-filter'} onClick={() => setFilter(key)}>{label}</button>

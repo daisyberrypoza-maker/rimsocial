@@ -176,7 +176,6 @@ export default function Stories() {
 
   return (
     <main className="page st-page">
-      {indicator}
       <header className="st-top">
         <div className="st-left">
           <button className={`st-round st-avatar${myGroup ? ' has-story' : ''}`} aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
@@ -194,6 +193,7 @@ export default function Stories() {
           <button className="st-round" aria-label="More" onClick={() => navigate('/chat', { state: { view: 'activity' } })}><Icon name="more-vertical" size={21} /></button>
         </div>
       </header>
+      {indicator}
 
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>

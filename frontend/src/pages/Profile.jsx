@@ -379,7 +379,6 @@ export default function Profile() {
 
   return (
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
-      {pullIndicator}
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
         <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
@@ -433,6 +432,7 @@ export default function Profile() {
           </div>
         )}
       </header>
+      {pullIndicator}
       <div className="pf-body">
         {profile.bio && <p className="pf-bio">{profile.bio}</p>}
         {(profile.city || profile.country || profile.website) && (

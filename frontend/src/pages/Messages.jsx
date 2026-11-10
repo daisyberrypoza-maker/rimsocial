@@ -52,7 +52,6 @@ export default function Messages() {
 
   return (
     <main className="dm-page">
-      {indicator}
       <header className="dm-head">
         <div className="dm-head-left">
           <button type="button" className="dm-icon dm-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
@@ -76,6 +75,7 @@ export default function Messages() {
           </button>
         </div>
       </header>
+      {indicator}
       <div className="dm-filters" role="tablist" aria-label="Filter messages">
         <button type="button" className="dm-chip">My AI</button>
         <button type="button" className="dm-chip">Games</button>
