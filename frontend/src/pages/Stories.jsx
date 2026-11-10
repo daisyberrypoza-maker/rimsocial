@@ -30,14 +30,6 @@ class ViewerBoundary extends Component {
   }
 }
 
-// If a story picture fails to load, the profile picture shows instead (never a blank ring)
-function FaceImg({ src, fallback }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (failed) return fallback;
-  return <img src={src} alt="" onError={() => setFailed(true)} />;
-}
-
 // Every story surface uses the same profile avatar; story media stays inside the viewer.
 function StoryFace({ fallback }) {
   return fallback;
