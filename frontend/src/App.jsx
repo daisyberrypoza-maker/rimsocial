@@ -37,7 +37,7 @@ function RequireAuth({ children }) {
   return children;
 }
 
-const IMMERSIVE_PATHS = ['/', '/following', '/live'];
+const IMMERSIVE_PATHS = ['/', '/following'];
 
 // /explore is now Find friends; keeps any search in the address
 function ExploreRedirect() {
@@ -53,16 +53,16 @@ export default function App() {
   const setLastPath = useAppStore((s) => s.setLastPath);
 
   // On a fresh load at "/", return to the last screen the user was on
-  // Status bar: white on Stories and Chat, dark everywhere else
+  // Status bar: dark only on Rimlight (the feed), white everywhere else
   useEffect(() => {
-    const light = location.pathname === '/stories' || location.pathname.startsWith('/chat');
+    const light = !(location.pathname === '/' || location.pathname === '/following');
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
     meta.content = light ? '#ffffff' : '#171717';
     // Android app: dark status bar icons on light pages, white on dark ones (see MainActivity)
     window.RimStatus?.setLightBackground?.(light);
     // Full-bleed pages draw behind the status bar; every other page keeps clear of it
-    const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/live';
+    const bleed = location.pathname.startsWith('/u/') || location.pathname === '/';
     document.documentElement.classList.toggle('bleed-top', bleed);
   }, [location.pathname]);
 
