@@ -15,6 +15,7 @@ import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 // message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
+const CHAT_TABS = ['all', 'stories'];
 
 // Compact time since a message: now, 5m, 3h, 2d
 function timeAgo(iso) {
@@ -43,10 +44,10 @@ export default function Messages() {
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
   const [filter, setFilter] = useState('all');
-  const swipeSurfaceRef = useSwipeTabs(filter, ['all', 'stories'], setFilter, view === 'messages');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const swipeSurfaceRef = useSwipeTabs(filter, CHAT_TABS, setFilter, view === 'messages');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
   const { indicator } = usePullRefresh(async () => { const data = await api('/v1/messages/conversations'); setItems(data.items || []); });
