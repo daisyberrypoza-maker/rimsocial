@@ -3,57 +3,104 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import { useAppStore } from '../store.js';
-import { goBack } from '../lib/goBack.js';
+import { toast, logError } from '../toast.js';
+import '../snap-screens.css';
 
-// New message: search people, then open a conversation with them.
+// New chat, laid out like the reference: a white sheet over the dimmed chat with New Chat / New Call tabs,
+// a To: search, New Group, Recents with selectable rows and a Chat button. Tap the dimmed area to close.
 export default function NewMessage() {
   const navigate = useNavigate();
   const me = useAppStore((st) => st.user);
   const [query, setQuery] = useState('');
-  const [people, setPeople] = useState([]);
-  const [searching, setSearching] = useState(false);
+  const [recents, setRecents] = useState([]);
+  const [results, setResults] = useState(null);
+  const [selected, setSelected] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    api('/v1/messages/conversations')
+      .then((data) => { if (alive) setRecents((data.items || []).map((item) => item.user).filter(Boolean)); })
+      .catch((e) => logError(e));
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const q = query.trim();
-    if (!q) { setPeople([]); setSearching(false); return undefined; }
+    if (!q) { setResults(null); return undefined; }
     let alive = true;
-    setSearching(true);
     const timer = setTimeout(() => {
       api(`/v1/search?q=${encodeURIComponent(q)}&type=people`)
-        .then((data) => { if (alive) setPeople((data.people || []).filter((person) => person.id !== me?.id)); })
-        .catch(() => { if (alive) setPeople([]); })
-        .finally(() => { if (alive) setSearching(false); });
+        .then((data) => { if (alive) setResults((data.people || []).filter((person) => person.id !== me?.id)); })
+        .catch(() => { if (alive) setResults([]); });
     }, 250);
     return () => { alive = false; clearTimeout(timer); };
   }, [query, me?.id]);
 
+  const list = results ?? recents.filter((person) => person.id !== me?.id);
+  const isSelected = (person) => selected.some((s) => s.id === person.id);
+  const toggle = (person) => setSelected((cur) => (
+    cur.some((s) => s.id === person.id) ? cur.filter((s) => s.id !== person.id) : [...cur, person]
+  ));
+
+  function startChat() {
+    if (!selected.length) return;
+    if (selected.length > 1) { toast('Group chats are not available yet'); return; }
+    navigate(`/chat/${selected[0].id}`);
+  }
+
   return (
-    <main className="dm-page">
-      <header className="dm-head">
-        <button type="button" className="dm-icon" onClick={() => goBack(navigate, '/chat')} aria-label="Back">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+    <div className="nc-backdrop" onClick={() => navigate('/chat')}>
+      <section className="nc-sheet" role="dialog" aria-modal="true" aria-label="New chat" onClick={(e) => e.stopPropagation()}>
+        <span className="nc-grip" aria-hidden="true" />
+        <div className="nc-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected="true" className="nc-tab on">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+            New Chat
+          </button>
+          <button type="button" role="tab" aria-selected="false" className="nc-tab" disabled>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" /></svg>
+            New Call
+          </button>
+        </div>
+
+        <label className="nc-to">
+          <span>To:</span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="" aria-label="Search people" autoFocus />
+        </label>
+
+        <button type="button" className="nc-group" onClick={() => toast('Group chats are not available yet')}>
+          <span className="nc-group-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
+          </span>
+          <span className="nc-group-text">
+            <strong>New Group</strong>
+            <small>Chat with up to 200 friends</small>
+          </span>
+          <svg className="nc-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
         </button>
-        <h1>New message</h1>
-        <span />
-      </header>
-      <div className="dm-to">
-        <span>To:</span>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people" autoFocus />
-      </div>
-      {!query.trim() ? <p className="dm-empty">Search for someone to message.</p>
-        : searching && !people.length ? <p className="dm-empty">Searching…</p>
-        : people.length ? (
-          <ul className="dm-list">
-            {people.map((person) => (
-              <li key={person.id}>
-                <button type="button" className="dm-row" onClick={() => navigate(`/chat/${person.id}`)}>
-                  <Avatar user={person} size={48} />
-                  <span className="dm-text"><strong>{person.displayName || person.username}</strong><small>@{person.username}</small></span>
-                </button>
-              </li>
-            ))}
+
+        <h2 className="nc-section">{results ? 'Results' : 'Recents'}</h2>
+        {list.length ? (
+          <ul className="nc-list">
+            {list.map((person) => {
+              const on = isSelected(person);
+              return (
+                <li key={person.id}>
+                  <button type="button" className="nc-row" onClick={() => toggle(person)} aria-pressed={on}>
+                    <Avatar user={person} size={48} />
+                    <span className="nc-name">{person.displayName || person.username}</span>
+                    <span className={on ? 'nc-radio on' : 'nc-radio'} aria-hidden="true">
+                      {on && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
-        ) : <p className="dm-empty">No one found.</p>}
-    </main>
+        ) : <p className="nc-empty">{results ? 'No one found.' : 'Recent chats will appear here.'}</p>}
+
+        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length} onClick={startChat}>Chat</button>
+      </section>
+    </div>
   );
 }
