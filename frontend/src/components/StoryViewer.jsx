@@ -8,6 +8,7 @@ import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import ActionSheet from './ActionSheet.jsx';
+import StoryViewersSheet from './StoryViewersSheet.jsx';
 import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
 import { logError } from '../toast.js';
 
@@ -43,6 +44,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [flash, setFlash] = useState(null);
   const [resharing, setResharing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [viewersOpen, setViewersOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
@@ -69,7 +71,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
-  const frozen = paused || typing || shareOpen || reportOpen || menuOpen;
+  const frozen = paused || typing || shareOpen || reportOpen || menuOpen || viewersOpen;
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
@@ -139,7 +141,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     setPaused(false);
     setReply('');
     if (!current) return;
-    api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
+    // The owner's own watching is not counted
+    if (!isOwner) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
       if (error.status === 404) dropStory(current.id);
     });
     updateCurrent(current.id, { viewed: true });
@@ -242,7 +245,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     const body = String(text || '').trim();
     if (!body || isOwner) return;
     try {
-      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body } });
+      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body, storyId: current.id } });
       toast('Sent');
     } catch (e) { logError(e); }
   }
@@ -465,7 +468,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               </button>
             )}
             {isOwner ? (
-              <div className="sv-reply sv-views"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
+              <div className="sv-reply sv-views" role="button" tabIndex={0} onClick={() => setViewersOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter') setViewersOpen(true); }} aria-label="See who watched and liked"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
             ) : (
             <div className="sv-reply">
               <input
@@ -496,6 +499,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" onClick={() => { setReactionPickerOpen(false); onQuickReaction(emoji); }}>{emoji}</button>)}
       </div>}
 
+      {viewersOpen && current && <StoryViewersSheet storyId={current.id} onClose={() => setViewersOpen(false)} />}
       {menuOpen && <ActionSheet
         actions={[{ label: 'Delete story', icon: 'trash', danger: true, onClick: deleteCurrent }]}
         onClose={() => setMenuOpen(false)}

@@ -252,10 +252,21 @@ router.post('/with/:userId', async (req, res, next) => {
     const me = req.user.id;
     const other = req.params.userId;
     const body = String(req.body?.body || '').trim().slice(0, 2000);
-    if (!body) return res.status(400).json({ error: 'Type a message first' });
+    const storyId = req.body?.storyId ? String(req.body.storyId) : null;
+    if (!body && !storyId) return res.status(400).json({ error: 'Type a message first' });
     await assertCanMessage(me, other);
     const replyToId = await validReplyTarget(me, other, req.body?.replyToId);
-    const message = await createMessage({ me, other, body, replyToId });
+    // A reply to a story sends the story's photo or video with the comment
+    let media = {};
+    if (storyId) {
+      const story = await Post.findOne({
+        where: { id: storyId, isStory: true, authorId: other, status: 'live', expiresAt: { [Op.gt]: new Date() } },
+        attributes: ['mediaUrl', 'kind'],
+      });
+      if (!story) throw httpError(404, 'This story has expired');
+      media = { mediaUrl: story.mediaUrl, mediaKind: story.kind === 'video' ? 'video' : 'photo' };
+    }
+    const message = await createMessage({ me, other, body, replyToId, ...media });
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });

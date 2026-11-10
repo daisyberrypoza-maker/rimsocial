@@ -745,5 +745,22 @@
 .cv-forward-row { display: flex !important; align-items: center; gap: 12px; }
 .cv-empty { margin: 0; padding: 16px 20px; color: #6b6b6b; font-size: 14px; }
 
+/* Story viewers sheet (owner only): who watched and who liked */
+.sv-viewers-backdrop { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
+.sv-viewers { width: 100%; max-width: 460px; max-height: 72dvh; background: #fff; color: #17191f; border-radius: 22px 22px 0 0; display: flex; flex-direction: column; padding: 8px 0 calc(env(safe-area-inset-bottom, 0px) + 12px); box-sizing: border-box; }
+.sv-viewers-grip { width: 40px; height: 4px; border-radius: 4px; background: #d0d4da; margin: 0 auto 8px; }
+.sv-viewers-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 10px; font-weight: 700; font-size: 16px; }
+.sv-viewers-close { width: 36px; height: 36px; border: 0 !important; border-radius: 50%; background: #f0f2f5 !important; color: #17191f !important; display: grid; place-items: center; cursor: pointer; }
+.sv-viewers-body { overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 8px; }
+.sv-viewers-section { padding: 12px 8px 6px; font-size: 12px; font-weight: 600; color: #68717d; text-transform: uppercase; letter-spacing: .04em; }
+.sv-viewers-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; }
+.sv-viewers-person { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: none !important; border: 0; padding: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.sv-viewers-text { min-width: 0; display: flex; flex-direction: column; }
+.sv-viewers-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sv-viewers-sub { font-size: 13px; color: #68717d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sv-viewers-heart { color: #ff3b57; display: grid; place-items: center; flex: none; }
+.sv-viewers-chat { width: 40px; height: 40px; border: 0 !important; border-radius: 50%; background: #f0f2f5 !important; color: #17191f !important; display: grid; place-items: center; cursor: pointer; flex: none; }
+.sv-viewers-empty { padding: 24px 16px; text-align: center; color: #68717d; }
+
 /* Chat screens: the global dark button default must not colour these controls. Class rules below still win. */
 :where(.sn-page, .sn-notif, .sn-mf, .cv-page) button { background-color: transparent; }
