@@ -93,4 +93,27 @@ async function getSubscription(creatorId, viewerId) {
   return { isSubscribed: Boolean(follow), isNotifying: Boolean(follow && follow.notifyPosts) };
 }
 
-module.exports = { getStoryRail, getUserStories, getSubscription };
+// Ring for each author with an active story: 'unseen' when the viewer has not watched all of it (and for their own
+// story), 'seen' once everything is watched. Authors with no active story are absent from the map.
+async function storyRingsFor(viewerId, authorIds) {
+  const ids = [...new Set((authorIds || []).map(String))];
+  const rings = new Map();
+  if (!ids.length) return rings;
+  const stories = await Post.findAll({
+    where: { authorId: ids, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
+    attributes: ['id', 'authorId'], raw: true,
+  });
+  if (!stories.length) return rings;
+  const views = await StoryView.findAll({
+    where: { viewerId, storyId: stories.map((story) => story.id) }, attributes: ['storyId'], raw: true,
+  });
+  const watched = new Set(views.map((row) => String(row.storyId)));
+  for (const story of stories) {
+    const author = String(story.authorId);
+    if (author === String(viewerId) || !watched.has(String(story.id))) rings.set(author, 'unseen');
+    else if (!rings.has(author)) rings.set(author, 'seen');
+  }
+  return rings;
+}
+
+module.exports = { getStoryRail, getUserStories, getSubscription, storyRingsFor };

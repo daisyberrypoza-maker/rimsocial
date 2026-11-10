@@ -236,6 +236,7 @@ router.put('/me/profile', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+const { storyRingsFor } = require('../services/stories');
 router.get('/:username', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
@@ -248,7 +249,8 @@ router.get('/:username', requireAuth, async (req, res, next) => {
       Post.count({ where: { authorId: user.id, status: 'live', isStory: true, expiresAt: { [Op.gt]: new Date() } } }),
     ]);
     const isOnline = Boolean(await redis.get('presence:' + user.id).catch(() => null));
-    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), isOnline, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
+    const storyRing = (await storyRingsFor(req.user.id, [user.id])).get(String(user.id)) || null;
+    res.json({ ...user.toJSON(), ...(await readProfileExtras(user.id)), isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
 });
 

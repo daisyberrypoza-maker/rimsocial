@@ -92,7 +92,7 @@ export default function Profile() {
 
   useEffect(() => {
     api(`/v1/users/${username}`)
-      .then((user) => setProfile(username, { user, updatedAt: Date.now() }))
+      .then((user) => { useAppStore.getState().setStoryRings({ [user.id]: user.storyRing || null }); setProfile(username, { user, updatedAt: Date.now() }); })
       .catch((e) => logError(e));
     loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => logError(e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -429,7 +429,7 @@ export default function Profile() {
         <div className="pf-id">
           <div className="pf-avatar">
             <button type="button" className={profile.hasStory ? 'pf-avatar-btn has-story' : 'pf-avatar-btn'} aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
-              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} ring />
+              <Avatar user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={92} />
             </button>
             {profile.isOnline && <span className="pf-online" aria-label="Online now" />}
             {profile.isMe && <button type="button" className="pf-edit" aria-label="Choose profile or background image" onClick={() => setImageChoiceOpen(true)} disabled={avatarBusy || coverBusy}>{avatarBusy ? '…' : <Icon name="camera" size={15} />}</button>}
