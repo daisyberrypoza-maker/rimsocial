@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
-import StoryRing, { StoryFace, railItems } from '../components/StoryRing';
+import StoryRing, { railItems } from '../components/StoryRing';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { mediaUrl } from '../config';
@@ -137,7 +137,7 @@ export default function Stories() {
             <StoryRing state={myGroup ? 'mine' : 'none'} uploading={pending?.kind === 'story'}>
               {pending?.kind === 'story'
                 ? <Image source={{ uri: pending.thumb }} style={styles.fill} />
-                : myGroup ? <StoryFace preview={myGroup.preview} fallbackUser={me} size={72} /> : <Avatar user={me || {}} size={64} />}
+                : <Avatar user={me || {}} size={64} />}
             </StoryRing>
             <Pressable style={styles.plus} onPress={() => navigation.navigate('Upload', { story: true })} accessibilityLabel="Add a story">
               <Icon name="plus" size={13} color="#fff" strokeWidth={3} />
@@ -148,7 +148,7 @@ export default function Stories() {
           {others.map((group) => (
             <Pressable key={group.user.id} style={styles.friend} onPress={() => openViewer(group.user.id)} accessibilityLabel={`View ${nameOf(group.user)}'s story`}>
               <StoryRing state={group.unseen ? 'unseen' : 'seen'}>
-                <StoryFace preview={group.preview} fallbackUser={group.user} size={72} />
+                <Avatar user={group.user} size={64} />
               </StoryRing>
               <Text style={styles.name} numberOfLines={1}>{nameOf(group.user)}</Text>
               {!!group.user.username && <Text style={styles.handle} numberOfLines={1}>{group.user.username}</Text>}
