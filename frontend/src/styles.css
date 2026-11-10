@@ -5868,3 +5868,17 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
   width:21px;
   height:21px;
 }
+
+
+/* Keep edit-profile fields and Save visible above the mobile keyboard. */
+.app > .ep-page { height:100%; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-padding-bottom:160px; padding-bottom:calc(env(safe-area-inset-bottom,0px) + 120px); box-sizing:border-box; }
+.app > .ep-page::-webkit-scrollbar { display:none; }
+
+
+/* Snapchat chat typography — use the same Avenir Next stack across inbox and message threads. */
+.dm-page,
+.dm-page *,
+.dm-convo,
+.dm-convo * {
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+}

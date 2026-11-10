@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
 import BottomNav from './components/BottomNav.jsx';
+import MyFriends from './pages/MyFriends.jsx';
 import Algorithm from './pages/Algorithm.jsx';
 import Messages from './pages/Messages.jsx';
 import Conversation from './pages/Conversation.jsx';
@@ -168,7 +169,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/search') && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/search') && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -177,6 +178,7 @@ export default function App() {
         <Route path="/search" element={<RequireAuth><Search /></RequireAuth>} />
         <Route path="/search/tag/:tag" element={<RequireAuth><Search /></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><Explore /></RequireAuth>} />
+        <Route path="/my-friends" element={<RequireAuth><MyFriends /></RequireAuth>} />
         <Route path="/explore/watch/:postId" element={<RequireAuth><ExploreWatch /></RequireAuth>} />
         <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
         <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
@@ -200,7 +202,7 @@ export default function App() {
         <Route path="/u/:username/:list" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && location.pathname !== '/upload' && <BottomNav />}
+      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && location.pathname !== '/upload' && <BottomNav />}
       <Toast />
     </div>
   );

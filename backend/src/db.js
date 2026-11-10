@@ -330,8 +330,22 @@ const DirectMessage = sequelize.define('DirectMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   senderId: { type: DataTypes.UUID, allowNull: false },
   recipientId: { type: DataTypes.UUID, allowNull: false },
-  body: { type: DataTypes.STRING(2000), allowNull: false },
+  body: { type: DataTypes.STRING(2000), allowNull: false, defaultValue: '' },
+  // Photo or video sent in the chat (Cloudinary or local upload URL)
+  mediaUrl: { type: DataTypes.STRING(512), allowNull: true },
+  mediaKind: { type: DataTypes.STRING(12), allowNull: true },
+  mediaName: { type: DataTypes.STRING(255), allowNull: true },
+  // RimSocial post the message links to, shown as a preview card
+  postId: { type: DataTypes.UUID, allowNull: true },
+  // Status: delivered when the recipient's app fetches it, read when they open the chat
+  deliveredAt: DataTypes.DATE,
   readAt: DataTypes.DATE,
+  editedAt: DataTypes.DATE,
+  deletedForEveryone: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  // JSON array of user ids who deleted this message just for themselves
+  hiddenFor: DataTypes.TEXT,
+  replyToId: DataTypes.UUID,
+  forwarded: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
 module.exports = {

@@ -4,9 +4,18 @@ import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
-import { messageTime } from '../lib/notify.js';
 import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
+
+function ago(iso) {
+  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (!Number.isFinite(seconds)) return '';
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
 
 // Chat inbox laid out like the reference: header with profile, search, title, bell, add-friend and more;
 // Reference-matched inbox: a clean Snapchat-style header, four discovery filters, conversation rows and camera actions.
@@ -89,7 +98,8 @@ export default function Messages() {
           <ul className="dm-list">
             {shown.map((item) => {
               const mine = item.lastMessage.senderId === me?.id;
-              const subtitle = item.isOnline ? 'Active now' : mine ? `Sent · ${messageTime(item.lastMessage.createdAt)}` : `${item.lastMessage.body} · ${messageTime(item.lastMessage.createdAt)}`;
+              const preview = item.lastMessage.deleted ? 'Message deleted' : item.lastMessage.body || (item.lastMessage.mediaKind ? item.lastMessage.mediaKind[0].toUpperCase() + item.lastMessage.mediaKind.slice(1) : 'Message');
+              const subtitle = `${mine ? 'You: ' : ''}${preview} · ${ago(item.lastMessage.createdAt)}`;
               return (
                 <li key={item.user.id} className="dm-item">
                   <Link to={`/chat/${item.user.id}`} className={item.unread ? 'dm-row unread' : 'dm-row'}>
@@ -99,7 +109,7 @@ export default function Messages() {
                     </span>
                     <span className="dm-text">
                       <strong>{item.user.displayName || item.user.username}</strong>
-                      <small>{subtitle}</small>
+                      <small>{mine && <span className={item.lastMessage.readAt ? 'dm-preview-ticks seen' : 'dm-preview-ticks'} aria-label={item.lastMessage.readAt ? 'Seen' : item.lastMessage.deliveredAt ? 'Delivered' : 'Sent'}>{item.lastMessage.deliveredAt || item.lastMessage.readAt ? '✓✓' : '✓'}</span>} {subtitle}</small>
                       {item.group === 'requests' && <em className="dm-tag">Request</em>}
                     </span>
                     {item.unread > 0 && <span className="dm-unread" aria-label="Unread" />}

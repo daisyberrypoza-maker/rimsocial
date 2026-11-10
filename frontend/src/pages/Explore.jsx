@@ -10,6 +10,7 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
+import '../snap-screens.css';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -121,7 +122,7 @@ export default function Explore() {
 
   return (
     <div className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
-      {peopleMode && !searchMode && <header className="af-head"><button type="button" className="af-icon" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={24} /></button><h1>Add Friends</h1><button type="button" className="af-icon" aria-label="More"><Icon name="ellipsis" size={24} /></button></header>}
+      {peopleMode && !searchMode && <header className="sn-af-head"><button type="button" className="sn-af-iconbtn" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={26} /></button><h1>Add Friends</h1><button type="button" className="sn-af-iconbtn" aria-label="More"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></button></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
@@ -129,10 +130,11 @@ export default function Explore() {
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
+      </div> : peopleMode ? <button type="button" className="sn-search" onClick={() => navigate('/friends?search=1')}><Icon name="search" size={19} /><span>{query || 'Search...'}</span><svg className="sn-ghost" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5" /><path d="M12 6.5c-2.4 0-4 1.8-4 4.2v5.3l1.4-1 1.3 1.1 1.3-1.1 1.3 1.1 1.3-1.1 1.4 1v-5.3c0-2.4-1.6-4.2-4-4.2z" /></svg></button>
+        : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
       {peopleMode && !searchMode && !results && <>
-        <button type="button" className="af-invite"><Icon name="users" size={20} /><span>Invite your friends!</span></button>
-        <div className="af-section-head"><h3>Find Friends</h3><span>All Contacts <Icon name="chevron-right" size={16} /></span></div>
+        <button type="button" className="sn-invite"><Icon name="users" size={20} /><span>Invite your friends!</span></button>
+        <div className="sn-af-section"><h3>Find Friends{recommendations.followBack.length > 0 && <span className="sn-new-pill">{recommendations.followBack.length} New</span>}</h3><button type="button" className="sn-all-contacts" onClick={() => navigate('/my-friends')}>All Contacts <Icon name="chevron-right" size={16} /></button></div>
       </>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
@@ -153,14 +155,17 @@ export default function Explore() {
       </> : <>
         {peopleMode && !results && (() => {
           const people = [...recommendations.followBack, ...suggestedOnly].filter((person) => !dismissed[person.id]);
-          return people.length > 0 && <ul className="af-list">{people.map((person) => <li className="af-row" key={person.id}>
-            <button type="button" className="af-main" onClick={() => navigate(`/u/${person.username}`)}>
-              <span className="af-avatar"><Avatar user={person} size={56} />{person.isOnline && <span className="af-online" aria-label="Online" />}</span>
-              <span className="af-text"><strong>{person.displayName || person.username}</strong><small>{person.username}</small></span>
-            </button>
-            <button type="button" className={person.isFollowing ? 'af-add added' : 'af-add'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Added' : <><span aria-hidden="true">+</span> Add</>}</button>
-            <button type="button" className="af-dismiss" aria-label={`Remove ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}>×</button>
-          </li>)}</ul>;
+          return people.length > 0 && <ul className="sn-af-list">{people.map((person) => {
+            const isNew = followBackIds.has(person.id);
+            return <li className={isNew ? 'sn-af-row new' : 'sn-af-row'} key={person.id}>
+              <button type="button" className="sn-af-main" onClick={() => navigate(`/u/${person.username}`)}>
+                <span className="sn-af-avatar"><Avatar user={person} size={52} />{person.isOnline && <span className="sn-online" aria-label="Online" />}</span>
+                <span className="sn-af-text"><strong>{person.displayName || person.username}</strong><small>{isNew ? 'Follows you' : person.username}</small></span>
+              </button>
+              <button type="button" className={person.isFollowing ? 'sn-af-add added' : 'sn-af-add'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Added' : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>Add</>}</button>
+              <button type="button" className="sn-af-dismiss" aria-label={`Remove ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}>×</button>
+            </li>;
+          })}</ul>;
         })()}
         {!peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
