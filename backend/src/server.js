@@ -130,6 +130,38 @@ async function start() {
   if (config.syncDatabase) await sequelize.sync();
   // Creates only the direct messages table when it is missing; safe to run in production.
   await DirectMessage.sync();
+  // Idempotent production upgrade for direct-message features (migrations 030–032).
+  // Add only missing columns so existing messages and other user data remain untouched.
+  const qi = sequelize.getQueryInterface();
+  const DataTypes = require('sequelize').DataTypes;
+  let directMessageColumns = await qi.describeTable('direct_messages');
+  const directMessageAdditions = [
+    ['mediaUrl', { type: DataTypes.STRING(512), allowNull: true }],
+    ['mediaKind', { type: DataTypes.STRING(12), allowNull: true }],
+    ['postId', { type: DataTypes.UUID, allowNull: true }],
+    ['mediaName', { type: DataTypes.STRING(255), allowNull: true }],
+    ['deliveredAt', { type: DataTypes.DATE, allowNull: true }],
+    ['editedAt', { type: DataTypes.DATE, allowNull: true }],
+    ['deletedForEveryone', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }],
+    ['hiddenFor', { type: DataTypes.TEXT, allowNull: true }],
+    ['replyToId', { type: DataTypes.UUID, allowNull: true }],
+    ['forwarded', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }],
+  ];
+  for (const [column, definition] of directMessageAdditions) {
+    if (!directMessageColumns[column]) {
+      await qi.addColumn('direct_messages', column, definition);
+    }
+  }
+  directMessageColumns = await qi.describeTable('direct_messages');
+  if (directMessageColumns.body && !/varchar\\(2000\\)/i.test(directMessageColumns.body.type || '')) {
+    await qi.changeColumn('direct_messages', 'body', {
+      type: DataTypes.STRING(2000), allowNull: false, defaultValue: '',
+    });
+  }
+  const directMessageIndexes = await qi.showIndex('direct_messages');
+  if (!directMessageIndexes.some((index) => index.name === 'direct_messages_post_id')) {
+    await qi.addIndex('direct_messages', ['postId'], { name: 'direct_messages_post_id' });
+  }
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
   const userColumns = await qi.describeTable('users');
