@@ -109,7 +109,7 @@ export default function Messages() {
   });
 
   return (
-    <main ref={swipeSurfaceRef} className="sn-page">
+    <main ref={swipeSurfaceRef} data-local-tab-swipe className="sn-page">
       <header className="sn-head">
         <div className="sn-head-left">
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
