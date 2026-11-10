@@ -17,7 +17,7 @@ export default function EditProfile() {
   const setSession = useAppStore((s) => s.setSession);
   const token = useAppStore((s) => s.token);
   const fileRef = useRef(null);
-  const [form, setForm] = useState({ displayName: '', pronouns: '', bio: '', website: '', city: '', gender: '' });
+  const [form, setForm] = useState({ displayName: '', dateOfBirth: '', bio: '', website: '', city: '', gender: '' });
   const [avatarUrl, setAvatarUrl] = useState(me?.avatarUrl || '');
   const [username, setUsername] = useState(me?.username || '');
   const [loaded, setLoaded] = useState(false);
@@ -27,7 +27,7 @@ export default function EditProfile() {
   useEffect(() => {
     api('/v1/users/me')
       .then((u) => {
-        setForm({ displayName: u.displayName || '', pronouns: u.pronouns || '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
+        setForm({ displayName: u.displayName || '', dateOfBirth: u.dateOfBirth ? String(u.dateOfBirth).slice(0, 10) : '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
         setAvatarUrl(u.avatarUrl || '');
         setUsername(u.username || '');
         setLoaded(true);
@@ -58,9 +58,9 @@ export default function EditProfile() {
     event.preventDefault();
     setSaving(true);
     try {
-      await api('/v1/users/me/profile', { method: 'PUT', body: form });
+      const saved = await api('/v1/users/me/profile', { method: 'PUT', body: form });
       const current = useAppStore.getState().user;
-      if (current) setSession(useAppStore.getState().token, { ...current, displayName: form.displayName });
+      if (current) setSession(useAppStore.getState().token, { ...current, displayName: form.displayName, dateOfBirth: saved.dateOfBirth || form.dateOfBirth || null, bio: form.bio, website: form.website, city: form.city, gender: form.gender });
       toast('Profile updated');
       navigate(`/u/${username || 'me'}`);
     } catch (error) {
@@ -72,7 +72,7 @@ export default function EditProfile() {
   }
 
   return (
-    <main className="ep-page">
+    <main className="ep-page" onFocusCapture={(event) => { if (event.target.matches("input, textarea, select")) requestAnimationFrame(() => event.target.scrollIntoView({ block: "nearest", behavior: "smooth" })); }}>
       <header className="ep-top">
         <button type="button" className="ep-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={26} /></button>
         <h1>Edit profile</h1>
@@ -100,8 +100,8 @@ export default function EditProfile() {
         </label>
 
         <label className="ep-field">
-          <span>Pronouns</span>
-          <input value={form.pronouns} onChange={set('pronouns')} maxLength={40} placeholder="e.g. she/her" />
+          <span>Date of birth</span>
+          <input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} max={new Date().toISOString().slice(0, 10)} />
         </label>
 
         <label className="ep-field">
