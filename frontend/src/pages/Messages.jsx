@@ -23,7 +23,9 @@ function StatusLine({ item, mine }) {
       </>
     );
   }
-  return <span className="sn-txt">{item.lastMessage.body} · {messageTime(item.lastMessage.createdAt)}</span>;
+  const kind = item.lastMessage.mediaKind;
+  const preview = item.lastMessage.body || (kind === 'video' ? 'Video' : kind === 'photo' ? 'Photo' : '');
+  return <span className="sn-txt">{preview} · {messageTime(item.lastMessage.createdAt)}</span>;
 }
 
 export default function Messages() {

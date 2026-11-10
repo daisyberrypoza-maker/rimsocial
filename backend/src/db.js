@@ -330,7 +330,12 @@ const DirectMessage = sequelize.define('DirectMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   senderId: { type: DataTypes.UUID, allowNull: false },
   recipientId: { type: DataTypes.UUID, allowNull: false },
-  body: { type: DataTypes.STRING(2000), allowNull: false },
+  body: { type: DataTypes.STRING(2000), allowNull: false, defaultValue: '' },
+  // Photo or video sent in the chat (Cloudinary or local upload URL)
+  mediaUrl: { type: DataTypes.STRING(512), allowNull: true },
+  mediaKind: { type: DataTypes.STRING(12), allowNull: true },
+  // RimSocial post the message links to, shown as a preview card
+  postId: { type: DataTypes.UUID, allowNull: true },
   readAt: DataTypes.DATE,
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
