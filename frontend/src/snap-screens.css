@@ -753,3 +753,8 @@
 .sn-head .sn-avatar-btn .avatar { width:34px !important; height:34px !important; }
 .sn-row { padding-left:10px; padding-right:10px; gap:10px; }
 .sn-ring { width:48px; height:48px; }
+
+
+/* Chat inbox delivery and read receipts */
+.dm-preview-ticks { display:inline-block; margin-right:3px; color:#8a8a8a; font-size:12px; letter-spacing:-2px; font-weight:700; }
+.dm-preview-ticks.seen { color:#34b7f1; }
