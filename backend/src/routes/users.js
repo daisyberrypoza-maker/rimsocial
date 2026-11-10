@@ -191,7 +191,7 @@ router.get('/blocked', requireAuth, async (req, res, next) => {
 // Profile details (bio, website, city). Read and written with SQL so the app works before migration 027.
 async function readProfileExtras(userId) {
   try {
-    const [rows] = await sequelize.query('SELECT bio, website, city, pronouns, gender FROM users WHERE id = :userId', { replacements: { userId } });
+    const [rows] = await sequelize.query('SELECT bio, website, city, gender, dateOfBirth FROM users WHERE id = :userId', { replacements: { userId } });
     return rows[0] || {};
   } catch { return {}; }
 }
@@ -207,16 +207,16 @@ function cleanWebsite(value) {
   } catch { throw httpError(400, 'Enter a valid website address'); }
 }
 
-// PUT /v1/users/me/profile  body: { displayName, bio, website, city, pronouns, gender }
+// PUT /v1/users/me/profile  body: { displayName, bio, website, city, dateOfBirth, gender }
 router.put('/me/profile', requireAuth, async (req, res, next) => {
   try {
     const body = req.body || {};
     const displayName = String(body.displayName || '').trim();
     const bio = String(body.bio || '').trim();
     const city = String(body.city || '').trim();
-    const pronouns = String(body.pronouns || '').trim();
+    const dateOfBirth = String(body.dateOfBirth || '').trim();
     const gender = String(body.gender || '').trim();
-    if (pronouns.length > 40) throw httpError(400, 'Pronouns must be 40 characters or fewer');
+    if (dateOfBirth && (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateOfBirth) || Number.isNaN(Date.parse(`${dateOfBirth}T00:00:00Z`)) || dateOfBirth > new Date().toISOString().slice(0, 10))) throw httpError(400, 'Enter a valid date of birth');
     if (gender.length > 40) throw httpError(400, 'Gender must be 40 characters or fewer');
     if (!displayName || displayName.length > 64) throw httpError(400, 'Name must be 1 to 64 characters');
     if (bio.length > 150) throw httpError(400, 'Bio must be 150 characters or fewer');
@@ -225,14 +225,14 @@ router.put('/me/profile', requireAuth, async (req, res, next) => {
     await User.update({ displayName }, { where: { id: req.user.id } });
     try {
       await sequelize.query(
-        'UPDATE users SET bio = :bio, website = :website, city = :city, pronouns = :pronouns, gender = :gender WHERE id = :userId',
-        { replacements: { bio: bio || null, website, city: city || null, pronouns: pronouns || null, gender: gender || null, userId: req.user.id } },
+        'UPDATE users SET bio = :bio, website = :website, city = :city, gender = :gender, dateOfBirth = :dateOfBirth WHERE id = :userId',
+        { replacements: { bio: bio || null, website, city: city || null, gender: gender || null, dateOfBirth: dateOfBirth || null, userId: req.user.id } },
       );
     } catch (err) {
-      if (/bio|website|city|pronouns|gender/.test(err.message)) throw httpError(503, 'Profile details are not available yet on this server');
+      if (/bio|website|city|gender|dateOfBirth/.test(err.message)) throw httpError(503, 'Profile details are not available yet on this server');
       throw err;
     }
-    res.json({ ok: true });
+    res.json({ ok: true, dateOfBirth: dateOfBirth || null });
   } catch (e) { next(e); }
 });
 
