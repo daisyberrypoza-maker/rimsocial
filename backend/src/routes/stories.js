@@ -156,6 +156,8 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
     });
     if (!story) throw httpError(404, 'Story not found or expired');
     await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
+    // The owner's own views are not recorded, so their count and viewer list only show other people
+    if (story.authorId === req.user.id) return res.status(204).end();
     const [, created] = await StoryView.findOrCreate({
       where: { storyId: story.id, viewerId: req.user.id },
     });
@@ -163,6 +165,29 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
     // The viewer's rail is cached briefly; drop it so their ring updates right away
     await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+// GET /v1/stories/:id/viewers  -> owner only: who watched and who liked, newest first
+router.get('/:id/viewers', requireAuth, async (req, res, next) => {
+  try {
+    const story = await Post.findOne({ where: { id: req.params.id, isStory: true, authorId: req.user.id }, attributes: ['id'] });
+    if (!story) throw httpError(404, 'Story not found');
+    const [views, likes] = await Promise.all([
+      StoryView.findAll({ where: { storyId: story.id }, order: [['createdAt', 'DESC']], limit: 500, raw: true }),
+      StoryLike.findAll({ where: { postId: story.id }, order: [['createdAt', 'DESC']], limit: 500, raw: true }),
+    ]);
+    const ids = [...new Set([...views, ...likes].map((row) => String(row.viewerId || row.userId)))].filter((id) => id !== String(req.user.id));
+    const people = ids.length ? await User.findAll({ where: { id: ids }, attributes: ['id', 'username', 'displayName', 'avatarUrl'], raw: true }) : [];
+    const byId = new Map(people.map((person) => [String(person.id), person]));
+    const likedBy = new Map(likes.map((row) => [String(row.userId), row.createdAt]));
+    const viewers = views
+      .filter((row) => byId.has(String(row.viewerId)))
+      .map((row) => ({ user: byId.get(String(row.viewerId)), viewedAt: row.createdAt, liked: likedBy.has(String(row.viewerId)) }));
+    const likers = likes
+      .filter((row) => byId.has(String(row.userId)))
+      .map((row) => ({ user: byId.get(String(row.userId)), likedAt: row.createdAt }));
+    res.json({ viewers, likers });
   } catch (e) { next(e); }
 });
 

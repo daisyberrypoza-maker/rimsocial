@@ -9,6 +9,7 @@ const READ_KEY = 'rimsocial-activity-read-at';
 
 function message(item) {
   if (item.type === 'like') return 'liked your post';
+  if (item.type === 'story_like') return 'liked your story';
   if (item.type === 'comment') return 'commented on your post';
   if (item.type === 'repost') return 'reposted your post';
   if (item.type === 'follow') return 'started following you';
@@ -73,7 +74,7 @@ export default function Activity({ onBack } = {}) {
       const isUnread = new Date(item.createdAt).getTime() > readAt;
       return <button className={'activity-item' + (isUnread ? ' unread' : '')} key={item.id} onClick={() => openItem(item)}>
         <Avatar user={item.actor} size={46} />
-        <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
+        <span className={'activity-type-icon ' + item.type}><Icon name={item.type === 'like' || item.type === 'story_like' ? 'heart' : item.type === 'comment' ? 'message-circle' : item.type === 'repost' ? 'repeat' : item.type === 'mention' ? 'at-sign' : 'user-plus'} size={16} /></span>
         <span className="activity-copy"><span><strong>{item.actor.displayName || item.actor.username}</strong> {message(item)}</span>{item.type === 'comment' && item.comment && <span className="activity-comment">“{item.comment}”</span>}<span className="activity-time">{timeAgo(item.createdAt)}</span></span>
         {item.post?.mediaUrl ? <span className="activity-thumb">{item.post.kind === 'video' ? <video src={item.post.mediaUrl} muted preload="metadata" /> : <img src={item.post.mediaUrl} alt="" />}</span> : <Icon name="chevron" size={18} />}
         {isUnread && <span className="activity-unread-dot" />}
