@@ -30,32 +30,6 @@ class ViewerBoundary extends Component {
   }
 }
 
-// If a story picture fails to load, the profile picture shows instead (never a blank ring)
-function FaceImg({ src, fallback }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (failed) return fallback;
-  return <img src={src} alt="" onError={() => setFailed(true)} />;
-}
-
-// The ring shows the latest story's picture; the profile picture only when there is no story
-function StoryFace({ group, fallback }) {
-  const preview = group?.preview;
-  if (!preview?.mediaUrl) return fallback;
-  // A video with no saved frame shows the profile picture: an empty video frame looks like a blank ring on phones
-  if (preview.kind === 'video') {
-    return preview.thumbUrl ? <FaceImg src={mediaUrl(preview.thumbUrl)} fallback={fallback} /> : fallback;
-  }
-  return <FaceImg src={mediaUrl(preview.mediaUrl)} fallback={fallback} />;
-}
-
-// While a story uploads, the picture being sent shows inside the ring, which spins
-function PendingFace({ pending }) {
-  return pending.mediaKind === 'video'
-    ? <video src={pending.thumb} muted playsInline preload="metadata" />
-    : <img src={pending.thumb} alt="" />;
-}
-
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
@@ -170,7 +144,7 @@ export default function Stories() {
       <header className="st-top">
         <div className="st-left">
           <button className="st-round st-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
-            <Avatar user={me || {}} size={42} storyRing={myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : null} />
+            <Avatar user={me || {}} size={42} storyRing={myGroup ? 'mine' : null} />
           </button>
           <button className="st-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={21} /></button>
         </div>
@@ -190,9 +164,9 @@ export default function Stories() {
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
-            <span className={`st-ring ${uploading ? 'uploading' : myGroup ? (myGroup.unseen ? 'unseen' : 'seen') : 'none'}`}>
+            <span className={`st-ring ${uploading ? 'uploading' : myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
-                {uploading ? <PendingFace pending={pending} /> : myGroup ? <StoryFace group={myGroup} fallback={<Avatar user={me || {}} />} /> : me?.avatarUrl ? <img src={mediaUrl(me.avatarUrl)} alt="" /> : <Icon name="camera" size={26} />}
+                <Avatar user={me || {}} />
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
@@ -202,7 +176,7 @@ export default function Stories() {
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
-                <span className="st-face"><StoryFace group={group} fallback={<Avatar user={group.user} />} /></span>
+                <span className="st-face"><Avatar user={group.user} /></span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
