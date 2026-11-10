@@ -15,9 +15,33 @@ import { defaultCover } from '../lib/cover.js';
 import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
+import './settings-menu.css';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
 const PROFILE_TABS = ['posts', 'stories', 'reposts'];
+
+// Settings menu building blocks: grouped sections with aligned rows (see settings-menu.css).
+function SettingsSection({ title, children }) {
+  return (
+    <section className="settings-section">
+      <h3>{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function SettingsItem({ icon, title, subtitle, onClick, disabled, danger }) {
+  return (
+    <button type="button" className="settings-item" onClick={onClick} disabled={disabled}>
+      <span className="settings-item-icon" aria-hidden="true"><Icon name={icon} size={22} /></span>
+      <span className="settings-item-text">
+        <span className="settings-item-title">{title}</span>
+        {subtitle && <span className="settings-item-sub">{subtitle}</span>}
+      </span>
+      {!danger && <span className="settings-item-chevron" aria-hidden="true"><Icon name="chevron-right" size={18} /></span>}
+    </button>
+  );
+}
 
 export default function Profile() {
   const { username = 'me', list = '' } = useParams();
@@ -456,20 +480,31 @@ export default function Profile() {
             {profile.isMe && <><input id="profile-avatar-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadAvatar} /><input id="profile-cover-file" className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadCover} /></>}
 
       {drawerOpen && <div className="profile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
-        <aside className="profile-drawer" role="dialog" aria-label="Profile settings" onClick={(e) => e.stopPropagation()}>
-          <div className="drawer-head"><h3>Profile & settings</h3><button className="icon-button" onClick={() => setDrawerOpen(false)} aria-label="Close settings"><Icon name="x" size={21} /></button></div>
-          <div className="profile-drawer-content">
-          <button onClick={() => { setDrawerOpen(false); navigate('/u/' + profile.username); }}><Icon name="user-round" size={21} />My Profile</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/upload'); }}><Icon name="plus" size={21} />Create post or story</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/friends'); }}><Icon name="users" size={21} />Find friends & creators</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/creator'); }}><Icon name="wallet" size={21} />Creator Studio · earnings & cashout</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }}><Icon name="megaphone" size={21} />Ads & Sponsors</button>
-          <button onClick={openBlockedPeople}><Icon name="shield" size={21} />Blocked accounts</button>
-          <button onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} disabled={avatarBusy || coverBusy}><Icon name="image" size={21} />Change profile or background image</button>
-          <button onClick={() => { setDrawerOpen(false); navigate('/live'); }}><Icon name="video" size={21} />LIVE broadcasts</button>
-          <button onClick={() => { setDrawerOpen(false); setShowCoins(true); }}><Icon name="gift" size={21} />Get coins</button>
-          <p className="muted" style={{ textAlign: "center", fontSize: 12, marginTop: 12 }} data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
-          <button className="drawer-danger" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={21} />Log out</button>
+        <aside className="settings-menu" role="dialog" aria-modal="true" aria-label="Profile and settings" onClick={(e) => e.stopPropagation()}>
+          <header className="settings-head">
+            <h2>Profile & settings</h2>
+            <button type="button" className="settings-close" onClick={() => setDrawerOpen(false)} aria-label="Close settings"><Icon name="x" size={20} /></button>
+          </header>
+          <div className="settings-body">
+            <SettingsSection title="Account">
+              <SettingsItem icon="user-round" title="My profile" onClick={() => { setDrawerOpen(false); navigate('/u/' + profile.username); }} />
+              <SettingsItem icon="image" title="Change profile or background" subtitle="Profile picture or cover image" disabled={avatarBusy || coverBusy} onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} />
+              <SettingsItem icon="gift" title="Get coins" onClick={() => { setDrawerOpen(false); setShowCoins(true); }} />
+              <SettingsItem icon="shield" title="Blocked accounts" onClick={openBlockedPeople} />
+            </SettingsSection>
+            <SettingsSection title="Create">
+              <SettingsItem icon="plus" title="Create post or story" onClick={() => { setDrawerOpen(false); navigate('/upload'); }} />
+              <SettingsItem icon="wallet" title="Creator Studio" subtitle="Earnings and cashout" onClick={() => { setDrawerOpen(false); navigate('/creator'); }} />
+              <SettingsItem icon="megaphone" title="Ads & sponsors" onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }} />
+            </SettingsSection>
+            <SettingsSection title="Discover">
+              <SettingsItem icon="users" title="Find friends & creators" onClick={() => { setDrawerOpen(false); navigate('/friends'); }} />
+              <SettingsItem icon="video" title="LIVE broadcasts" onClick={() => { setDrawerOpen(false); navigate('/live'); }} />
+            </SettingsSection>
+            <div className="settings-foot">
+              <button type="button" className="settings-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={20} />Log out</button>
+              <p className="settings-build" data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
+            </div>
           </div>
         </aside>
       </div>}
