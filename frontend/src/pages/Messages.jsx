@@ -41,13 +41,14 @@ export default function Messages() {
   const location = useLocation();
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
+  const [groups, setGroups] = useState([]);
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
-  const { indicator } = usePullRefresh(async () => { const data = await api('/v1/messages/conversations'); setItems(data.items || []); });
+  const { indicator } = usePullRefresh(async () => { const [data, groupData] = await Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]); setItems(data.items || []); setGroups(groupData.items || []); });
 
   useEffect(() => {
     if (location.state?.view === 'activity') setView('activity');
@@ -55,8 +56,8 @@ export default function Messages() {
 
   useEffect(() => {
     let alive = true;
-    const load = () => api('/v1/messages/conversations')
-      .then((data) => { if (alive) { setItems(data.items || []); setError(''); useAppStore.getState().setStoryRings(Object.fromEntries((data.items || []).map((i) => [i.user.id, i.storyRing || null]))); } })
+    const load = () => Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')])
+      .then(([data, groupData]) => { if (alive) { setItems(data.items || []); setGroups(groupData.items || []); setError(''); useAppStore.getState().setStoryRings(Object.fromEntries((data.items || []).map((i) => [i.user.id, i.storyRing || null]))); } })
       .catch((e) => { if (alive) setError(e.message || 'Could not load messages'); });
     load();
     const timer = setInterval(load, 4000);
@@ -173,7 +174,27 @@ export default function Messages() {
               );
             })}
           </ul>
-        ) : <p className="sn-empty">{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</p>}
+        ) : null}
+      {filter === 'all' && groups.length > 0 && (
+        <ul className="sn-list sn-group-list">
+          {groups.map((group) => {
+            const last = group.lastMessage;
+            const preview = last ? (String(last.senderId) === String(me?.id) ? 'You: ' : '') + last.body : 'Group conversation';
+            return (
+              <li key={group.id} className="sn-item">
+                <Link to={`/chat/group/${group.id}`} className="sn-row">
+                  <span className="sn-ring sn-group-avatar"><Icon name="users" size={23} /></span>
+                  <span className="sn-text">
+                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
+                    <span className="sn-sub"><span className="sn-txt">{preview}</span></span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {items !== null && shown.length === 0 && (filter !== 'all' || groups.length === 0) && <p className="sn-empty">{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</p>}
       <button type="button" className="sn-fab" onClick={() => navigate('/chat/new')} aria-label="New message">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
       </button>
