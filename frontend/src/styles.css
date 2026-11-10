@@ -5877,7 +5877,8 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 :root { --story-grad: conic-gradient(from 200deg, #a855f7, #ff3d8b, #ffb020, #a855f7); }
 .avatar.ring.story-unseen { background: var(--story-grad) !important; padding: 3px; box-shadow: none !important; }
 .avatar.ring.story-seen { background: #c9ccd1 !important; padding: 3px; box-shadow: none !important; }
-.avatar.ring.story-unseen .inner, .avatar.ring.story-seen .inner { box-shadow: 0 0 0 2px #fff; }
+.avatar.ring.story-mine { background: #1e90ff !important; padding: 3px; box-shadow: none !important; }
+.avatar.ring.story-unseen .inner, .avatar.ring.story-seen .inner, .avatar.ring.story-mine .inner { box-shadow: 0 0 0 2px #fff; }
 .sc-profile .sc-hero-avatar .avatar, .sc-hero-avatar .avatar { box-shadow: none !important; }
 .story-ring { background: #c9ccd1 !important; }
 .story-ring.unseen { background: var(--story-grad) !important; }
