@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { trimVideo, POST_MAX_SECONDS } from '../lib/videoTrim.js';
+import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -209,7 +209,7 @@ export default function Upload() {
 
   // Post (toStory false) or My Story (toStory true): checked here, then uploaded in the background
   // while the person goes straight to Rimlight or Stories.
-  function publish(toStory) {
+  async function publish(toStory) {
     if (trimming) return;
     if (!file) return toast('Choose a photo or video first');
     if (remixId && !sourcePost) return toast('This post cannot be remixed. Choose a post whose creator allows remixing.');
@@ -219,17 +219,32 @@ export default function Upload() {
       if (!/^https?:\/\//i.test(sponsorUrl.trim())) return toast('Enter a valid sponsor destination URL');
       sponsor = { name: sponsorName.trim(), description: sponsorDescription.trim(), cta: sponsorCta.trim() || 'Shop Now', url: sponsorUrl.trim() };
     }
-    startUpload({
-      toStory, file, rawFile, caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
-      sourcePostId: sourcePost?.id, sponsor, shareToStory,
-    });
-    setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
-    setTopic(''); setAiLabel(false); setShareToStory(false);
-    setFile(null);
-    setRawFile(null);
-    setSourcePost(null);
-    setSheetOpen(false);
-    navigate(toStory ? '/stories' : '/');
+
+    // Prepare story media while the editor is still open. Background upload only sends
+    // the prepared file; it never decodes or plays the source video after navigation.
+    setTrimming(true);
+    try {
+      const storyFile = (toStory || shareToStory)
+        ? await trimVideo(rawFile || file, STORY_MAX_SECONDS)
+        : null;
+      startUpload({
+        toStory, file: toStory ? (storyFile || file) : file, storyFile,
+        caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
+        sourcePostId: sourcePost?.id, sponsor, shareToStory,
+      });
+      setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
+      setTopic(''); setAiLabel(false); setShareToStory(false);
+      setFile(null);
+      setRawFile(null);
+      setSourcePost(null);
+      setSheetOpen(false);
+      navigate(toStory ? '/stories' : '/');
+    } catch (error) {
+      toast(error?.message || 'This video could not be prepared for your Story');
+      logError(error);
+    } finally {
+      setTrimming(false);
+    }
   }
 
   if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} onClose={() => goBack(navigate)} />;
