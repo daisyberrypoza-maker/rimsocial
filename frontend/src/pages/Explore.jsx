@@ -123,7 +123,7 @@ export default function Explore() {
   }, [searchParams]);
 
   return (
-    <div ref={swipeSurfaceRef} className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
+    <div ref={swipeSurfaceRef} data-local-tab-swipe className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
       {peopleMode && !searchMode && <header className="sn-af-head"><button type="button" className="sn-af-iconbtn" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={26} /></button><h1>Add Friends</h1><button type="button" className="sn-af-iconbtn" aria-label="More"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></button></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
