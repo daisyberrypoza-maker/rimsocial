@@ -9,9 +9,7 @@ import Activity from './Activity.jsx';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 
 // Chat inbox laid out like the reference: header with profile, search, title, bell, add-friend and more;
-// chips My AI / Games / Stories / Near Me / New, then the existing inbox groups; rows with a camera on the right;
-// yellow compose button floating bottom right. Activity lives on this same page: the bell (or More) switches to it.
-const GROUP_FILTERS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
+// Reference-matched inbox: a clean Snapchat-style header, four discovery filters, conversation rows and camera actions.
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -46,7 +44,8 @@ export default function Messages() {
   const shown = all.filter((item) => {
     if (filter === 'all') return true;
     if (filter === 'stories') return item.hasStory;
-    return item.group === filter;
+    if (filter === 'unreplied') return (item.unread || 0) > 0;
+    return true;
   });
   const totalUnread = all.reduce((sum, item) => sum + (item.unread || 0), 0);
 
@@ -77,18 +76,12 @@ export default function Messages() {
       </header>
       {indicator}
       <div className="dm-filters" role="tablist" aria-label="Filter messages">
-        <button type="button" className="dm-chip">My AI</button>
-        <button type="button" className="dm-chip">Games</button>
         <button type="button" role="tab" aria-selected={filter === 'stories'} className={filter === 'stories' ? 'dm-chip on' : 'dm-chip'} onClick={() => setFilter(filter === 'stories' ? 'all' : 'stories')}>
           Stories{storyCount > 0 && <span className="dm-badge">{storyCount}</span>}
         </button>
-        <button type="button" className="dm-chip">Near Me</button>
-        <button type="button" className="dm-chip">New</button>
-        {GROUP_FILTERS.map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected={filter === key} className={filter === key ? 'dm-chip on' : 'dm-chip'} onClick={() => setFilter(filter === key ? 'all' : key)}>
-            {label}{key === 'requests' && <Icon name="chevron-right" size={14} />}
-          </button>
-        ))}
+        <button type="button" className="dm-chip" onClick={() => navigate('/friends')}>Near Me</button>
+        <button type="button" role="tab" aria-selected={filter === 'unreplied'} className={filter === 'unreplied' ? 'dm-chip on' : 'dm-chip'} onClick={() => setFilter(filter === 'unreplied' ? 'all' : 'unreplied')}>Unreplied</button>
+        <button type="button" className="dm-chip dm-new-chip" onClick={() => navigate('/chat/new')}>New <Icon name="plus" size={21} strokeWidth={2.8} /></button>
       </div>
       {error && <p className="dm-error" role="alert">{error}</p>}
       {items === null ? <p className="dm-empty"></p>
