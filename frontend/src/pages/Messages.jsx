@@ -109,7 +109,7 @@ export default function Messages() {
                     </span>
                     <span className="dm-text">
                       <strong>{item.user.displayName || item.user.username}</strong>
-                      <small>{subtitle}</small>
+                      <small>{mine && <span className={item.lastMessage.readAt ? 'dm-preview-ticks seen' : 'dm-preview-ticks'} aria-label={item.lastMessage.readAt ? 'Seen' : item.lastMessage.deliveredAt ? 'Delivered' : 'Sent'}>{item.lastMessage.deliveredAt || item.lastMessage.readAt ? '✓✓' : '✓'}</span>} {subtitle}</small>
                       {item.group === 'requests' && <em className="dm-tag">Request</em>}
                     </span>
                     {item.unread > 0 && <span className="dm-unread" aria-label="Unread" />}
