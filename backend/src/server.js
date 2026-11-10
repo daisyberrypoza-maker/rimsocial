@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, DirectMessage } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, DirectMessage, GroupConversation, GroupMember, GroupMessage } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -130,6 +130,10 @@ async function start() {
   if (config.syncDatabase) await sequelize.sync();
   // Creates only the direct messages table when it is missing; safe to run in production.
   await DirectMessage.sync();
+  // Additive group-chat tables; existing direct messages and user data are untouched.
+  await GroupConversation.sync();
+  await GroupMember.sync();
+  await GroupMessage.sync();
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
   const qiDM = sequelize.getQueryInterface();
