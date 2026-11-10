@@ -153,7 +153,7 @@ async function start() {
     }
   }
   directMessageColumns = await qi.describeTable('direct_messages');
-  if (directMessageColumns.body && !/varchar\\(2000\\)/i.test(directMessageColumns.body.type || '')) {
+  if (directMessageColumns.body && (directMessageColumns.body.type || '').toLowerCase() !== 'varchar(2000)') {
     await qi.changeColumn('direct_messages', 'body', {
       type: DataTypes.STRING(2000), allowNull: false, defaultValue: '',
     });
