@@ -6,7 +6,9 @@ import { useAppStore } from '../store.js';
 // is unseen, grey once it has all been watched. No active story means a plain avatar.
 export default function Avatar({ user, size = 40, ring = false, storyRing }) {
   const storeRing = useAppStore((s) => (user?.id ? s.storyRings?.[user.id] : undefined));
-  const state = storyRing !== undefined ? storyRing : storeRing;
+  const rawState = storyRing !== undefined ? storyRing : storeRing;
+  const ownId = useAppStore((s) => s.user?.id);
+  const state = rawState && user?.id && String(user.id) === String(ownId) ? 'mine' : rawState;
   const label = (user?.displayName || user?.username || '?').charAt(0).toUpperCase();
   const src = mediaUrl(user?.avatarUrl);
   const [failedSrc, setFailedSrc] = useState(null);
