@@ -761,3 +761,6 @@
 .sv-viewers-heart { color: #ff3b57; display: grid; place-items: center; flex: none; }
 .sv-viewers-chat { width: 40px; height: 40px; border: 0 !important; border-radius: 50%; background: #f0f2f5 !important; color: #17191f !important; display: grid; place-items: center; cursor: pointer; flex: none; }
 .sv-viewers-empty { padding: 24px 16px; text-align: center; color: #68717d; }
+
+/* Chat screens: the global dark button default must not colour these controls. Class rules below still win. */
+:where(.sn-page, .sn-notif, .sn-mf, .cv-page) button { background-color: transparent; }
