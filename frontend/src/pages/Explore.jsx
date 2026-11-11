@@ -133,12 +133,8 @@ export default function Explore() {
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : peopleMode ? <button type="button" className="sn-search" onClick={() => navigate('/friends?search=1')}><Icon name="search" size={19} /><span>{query || 'Search...'}</span><svg className="sn-ghost" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5" /><path d="M12 6.5c-2.4 0-4 1.8-4 4.2v5.3l1.4-1 1.3 1.1 1.3-1.1 1.3 1.1 1.3-1.1 1.4 1v-5.3c0-2.4-1.6-4.2-4-4.2z" /></svg></button>
-        : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
-      {peopleMode && !searchMode && !results && <>
-        <button type="button" className="sn-invite"><Icon name="users" size={20} /><span>Invite your friends!</span></button>
-        <div className="sn-af-section"><h3>Find Friends{recommendations.followBack.length > 0 && <span className="sn-new-pill">{recommendations.followBack.length} New</span>}</h3><button type="button" className="sn-all-contacts" onClick={() => navigate('/my-friends')}>All Contacts <Icon name="chevron-right" size={16} /></button></div>
-      </>}
+      </div> : !peopleMode ? <button type="button" className="rim-search-launch" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button> : null}
+      {peopleMode && !searchMode && !results && <div className="sn-af-section"><h3>Find Friends{recommendations.followBack.length > 0 && <span className="sn-new-pill">{recommendations.followBack.length} New</span>}</h3></div>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
