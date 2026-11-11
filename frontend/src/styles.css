@@ -6182,3 +6182,25 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
   .ig-explore.friends-page .friends-suggestion-person { gap:8px; }
   .ig-explore.friends-page .friends-suggestion-follow { min-width:74px; padding:0 10px; }
 }
+
+
+/* Light surfaces throughout the app; only the immersive Reels/Spotlight players stay dark. */
+html, body, #root, .app { background:#fff !important; color:#17191f; }
+.page, .profile-page, .ig-explore, .friends-page, .live-page, .rec-page,
+.pv-sheet, .pv-sheet-body, .people-sheet, .settings-page, .activity-page {
+  background:#fff !important;
+  color:#17191f !important;
+}
+.sc-grid .sc-tile { background:#fff !important; }
+.pv-sheet-top { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important; }
+.pv-sheet-top .pv-sheet-title { flex:1; text-align:left !important; margin:0 !important; }
+.pv-sheet-top .pv-icon-spacer { width:40px; flex:none; }
+.pv-empty, .pv-empty-row { text-align:center !important; }
+.pv-sheet .pv-empty { min-height:48vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pv-activity-empty { min-height:52vh; display:flex; align-items:center; justify-content:center; padding:24px !important; }
+.pv-person-menu-wrap { position:relative; flex:none; }
+.pv-person-menu { position:absolute; z-index:30; top:calc(100% + 6px); right:0; width:190px; padding:5px; border:1px solid #e8e8e8; border-radius:12px; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.14); }
+.pv-person-menu button { display:block; width:100%; padding:11px 12px; border:0; border-radius:8px; background:#fff; color:#17191f; text-align:left; font-size:14px; font-weight:500; }
+.pv-person-menu button + button { border-top:1px solid #f0f0f0; }
+.pv-person-menu button.danger { color:#e53950; }
+.pv-person-menu button:disabled { opacity:.45; cursor:not-allowed; }
