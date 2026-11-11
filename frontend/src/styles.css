@@ -6293,3 +6293,23 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   color: #17191f !important;
 }
 .profile-top { background-image: none !important; }
+
+
+/* /friends suggestions: no search/contact controls; keep the back control unfilled. */
+.ig-explore.friends-page .friends-discovery-back,
+.ig-explore.friends-page .friends-discovery-back:hover,
+.ig-explore.friends-page .friends-discovery-back:focus,
+.ig-explore.friends-page .friends-discovery-back:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.ig-explore.friends-page .friends-discovery-back svg {
+  background: transparent !important;
+}
+.ig-explore.friends-page .friends-discovery-search,
+.ig-explore.friends-page .friends-discovery-intro {
+  display: none !important;
+}
