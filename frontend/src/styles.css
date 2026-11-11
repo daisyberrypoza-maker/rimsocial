@@ -5899,3 +5899,44 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .ep-page > .ep-top { position:sticky !important; top:0 !important; z-index:40 !important; min-height:54px; padding-top:calc(6px + env(safe-area-inset-top, 0px)); margin-top:calc(-1 * env(safe-area-inset-top, 0px)); }
 .keyboard-open .ep-page > .ep-top { position:sticky !important; top:0 !important; }
 .ep-page .ep-form { padding-bottom:24px; }
+
+
+/* Discover People — reference-matched white list layout */
+.rec-page.rec-discover-page { background:#fff !important; color:#111 !important; padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 18px) !important; }
+.rec-discover-page .rec-top { position:sticky; top:0; z-index:2; grid-template-columns:44px 1fr 44px; padding:12px 16px 14px !important; border:0; background:#fff; }
+.rec-discover-page .rec-top h1 { font-size:20px !important; font-weight:700 !important; text-align:left; }
+.rec-discover-page .rec-back { justify-content:start; }
+.rec-discover-section { margin:20px 0 0; }
+.rec-discover-section h2 { margin:0 16px 12px; font-size:17px; line-height:1.3; font-weight:500; color:#111; }
+.rec-discover-section-head { display:flex; align-items:center; justify-content:space-between; padding-right:16px; margin-bottom:8px; }
+.rec-discover-section-head h2 { margin-bottom:0; }
+.rec-discover-section-head > button { border:0; background:transparent; color:#4f5df5; font-size:14px; font-weight:600; padding:8px 0; }
+.rec-discover-list { list-style:none; margin:0; padding:0 16px; }
+.rec-discover-row { display:flex; align-items:center; gap:10px; min-height:104px; padding:10px 0; border:0; }
+.rec-discover-person { flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0; background:transparent; color:#111; padding:0; text-align:left; }
+.rec-discover-person .avatar { width:56px !important; height:56px !important; flex:0 0 56px; }
+.rec-discover-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:4px; }
+.rec-discover-copy strong { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; line-height:1.25; font-weight:600; color:#262626; }
+.rec-discover-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:#85858d; }
+.rec-discover-follow { flex:0 0 auto; width:136px; max-width:34vw; height:42px; padding:0 10px; border:0 !important; border-radius:10px !important; background:#4f5df5 !important; color:#fff !important; font-size:14px; font-weight:600; white-space:nowrap; }
+.rec-discover-follow.is-following { background:#f0f1f5 !important; color:#111 !important; }
+.rec-discover-dismiss { flex:0 0 24px; width:24px; height:40px; display:grid; place-items:center; padding:0; border:0; background:transparent; color:#8a8a90; }
+.rec-followback-section { margin-top:24px; }
+.rec-discover-page .rec-empty { margin:0; padding:14px 16px; font-size:14px; }
+.rec-discover-row + .rec-discover-row { border-top:0; }
+
+/* Connection list rows follow the supplied reference's left-aligned identity and action layout. */
+.pv-person { text-align:left !important; }
+.pv-person-text { align-items:flex-start !important; text-align:left !important; }
+.pv-person-text strong { font-size:15px !important; font-weight:600 !important; }
+.pv-person-text small { font-size:14px !important; }
+.pv-follow { min-width:0 !important; width:136px; max-width:34vw; height:40px !important; border-radius:10px !important; background:#4f5df5 !important; color:#fff !important; font-size:14px !important; }
+.pv-follow.added { background:#f0f1f5 !important; color:#111 !important; }
+.pv-row { grid-template-columns:minmax(0,1fr) auto auto !important; gap:10px !important; border-bottom:0 !important; padding:8px 0 !important; }
+.pv-remove-follower { width:24px; height:40px; display:grid; place-items:center; border:0; background:transparent; color:#262626; padding:0; }
+.pv-sort-row { position:relative; display:flex; align-items:center; justify-content:space-between; padding:12px 24px 6px; color:#111; font-size:14px; }
+.pv-sort-row strong { font-weight:700; }
+.pv-sort-trigger { width:36px; height:36px; display:grid; place-items:center; border:0; background:transparent; color:#111; }
+.pv-sort-menu { position:absolute; z-index:5; right:18px; top:46px; min-width:190px; padding:6px; background:#fff; border:1px solid #ececf0; border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,.14); }
+.pv-sort-menu button { display:block; width:100%; padding:10px 12px; border:0; border-radius:8px; background:transparent; color:#111; text-align:left; font-size:14px; }
+.pv-sort-menu button.on { background:#f1f2f6; font-weight:700; }
