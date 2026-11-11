@@ -6293,3 +6293,36 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   color: #17191f !important;
 }
 .profile-top { background-image: none !important; }
+
+
+/* User-requested clean Add Friends and connection-menu surfaces. */
+.friends-discovery-back,
+.friends-discovery-back:hover,
+.friends-discovery-back:active {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.friends-discovery-search { display: none !important; }
+.friends-discovery-intro > button { display: none !important; }
+.pv-person-menu {
+  background: #fff !important;
+  background-image: none !important;
+  color: #111 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.pv-person-menu button,
+.pv-person-menu button:hover,
+.pv-person-menu button:active {
+  background: #fff !important;
+  background-image: none !important;
+  color: #111 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.pv-person-menu button + button { border-top: 0 !important; }
