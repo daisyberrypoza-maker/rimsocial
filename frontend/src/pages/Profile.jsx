@@ -71,6 +71,7 @@ export default function Profile() {
   // The list is open when its address is open, so Back returns to it
   const listType = LIST_TYPES.includes(list) ? list : '';
   const [people, setPeople] = useState([]);
+  const [peopleLoading, setPeopleLoading] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
   const [activity, setActivity] = useState([]);
@@ -218,11 +219,14 @@ export default function Profile() {
         .catch((e) => logError(e))
         .finally(() => { if (current) setActivityLoading(false); });
     } else {
+      setPeople([]);
       setPeopleQuery('');
+      setPeopleLoading(true);
       const path = listType === 'blocked' ? '/v1/users/blocked' : `/v1/users/${username}/${listType}`;
       api(path)
         .then((data) => { if (current) setPeople(data.items || []); })
-        .catch((e) => logError(e));
+        .catch((e) => { if (current) { setPeople([]); logError(e); } })
+        .finally(() => { if (current) setPeopleLoading(false); });
     }
     return () => { current = false; };
   }, [listType, username]);
@@ -587,7 +591,9 @@ export default function Profile() {
                 </li>
               ))}
             </ul>
-            {!people.length && <div className="pv-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here.' : 'People who connect with this account will appear here.'}</p></div>}
+            {peopleLoading
+              ? <li className="pv-empty-row">Loading {listType}…</li>
+              : !people.length && <div className="pv-empty"><Icon name={listType === 'blocked' ? 'shield' : 'users'} size={28} /><strong>{listType === 'blocked' ? 'No blocked accounts' : `No ${listType} yet`}</strong><p>{listType === 'blocked' ? 'Accounts you block will appear here.' : 'People who connect with this account will appear here.'}</p></div>}
           </>}
         </section>
       </div>, document.body)}

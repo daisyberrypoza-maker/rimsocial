@@ -13,6 +13,7 @@ export default function NewMessage() {
   const me = useAppStore((st) => st.user);
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState([]);
+  const [loadingPeople, setLoadingPeople] = useState(true);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState([]);
   const [groupName, setGroupName] = useState('');
@@ -20,11 +21,38 @@ export default function NewMessage() {
 
   useEffect(() => {
     let alive = true;
-    api('/v1/messages/conversations')
-      .then((data) => { if (alive) setRecents((data.items || []).map((item) => item.user).filter(Boolean)); })
-      .catch((e) => logError(e));
+    if (!me?.username) { setLoadingPeople(false); return () => { alive = false; }; }
+    const loadPeople = async () => {
+      setLoadingPeople(true);
+      const [conversationResult, followingResult, followerResult] = await Promise.allSettled([
+        api('/v1/messages/conversations'),
+        api(`/v1/users/${encodeURIComponent(me.username)}/following`),
+        api(`/v1/users/${encodeURIComponent(me.username)}/followers`),
+      ]);
+      if (!alive) return;
+      if (conversationResult.status === 'rejected') logError(conversationResult.reason);
+      const ordered = new Map();
+      const recentUsers = conversationResult.status === 'fulfilled'
+        ? (conversationResult.value.items || []).map((item) => item.user).filter(Boolean)
+        : [];
+      // Keep recent conversations first, then add every current connection once.
+      recentUsers.forEach((person) => ordered.set(String(person.id), person));
+      [followingResult, followerResult].forEach((result) => {
+        if (result.status !== 'fulfilled') {
+          logError(result.reason);
+          return;
+        }
+        (result.value.items || []).forEach((person) => {
+          const id = String(person.id);
+          ordered.set(id, { ...(ordered.get(id) || {}), ...person });
+        });
+      });
+      setRecents([...ordered.values()].filter((person) => String(person.id) !== String(me.id)));
+      setLoadingPeople(false);
+    };
+    loadPeople().catch((error) => { logError(error); if (alive) setLoadingPeople(false); });
     return () => { alive = false; };
-  }, []);
+  }, [me?.id, me?.username]);
 
   useEffect(() => {
     const q = query.trim();
@@ -101,7 +129,7 @@ export default function NewMessage() {
         </button>
 
         {selected.length > 1 && <input className="nc-group-name-input" value={groupName} onChange={(e) => setGroupName(e.target.value)} maxLength={80} placeholder="Group name (optional)" aria-label="Group name" />}
-        <h2 className="nc-section">{results ? 'Results' : 'Recents'}</h2>
+        <h2 className="nc-section">{results ? 'Results' : 'People'}</h2>
         {list.length ? (
           <ul className="nc-list">
             {list.map((person) => {
@@ -119,7 +147,7 @@ export default function NewMessage() {
               );
             })}
           </ul>
-        ) : <p className="nc-empty">{results ? 'No one found.' : 'Recent chats will appear here.'}</p>}
+        ) : <p className="nc-empty">{results ? 'No one found.' : loadingPeople ? 'Loading people…' : 'No people available yet.'}</p>}
 
         <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length || creating} onClick={startChat}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
       </section>

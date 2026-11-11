@@ -245,9 +245,10 @@ router.get('/:username', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
     if (!user) throw httpError(404, 'User not found');
     await assertNotBlocked(req.user.id, user.id);
-    const [postCount, follow, followingCount, storyCount] = await Promise.all([
+    const [postCount, follow, followerCount, followingCount, storyCount] = await Promise.all([
       Post.count({ where: { authorId: user.id, status: 'live', isStory: false } }),
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
+      Follow.count({ where: { followeeId: user.id } }),
       Follow.count({ where: { followerId: user.id } }),
       Post.count({ where: { authorId: user.id, status: 'live', isStory: true, expiresAt: { [Op.gt]: new Date() } } }),
     ]);
@@ -256,7 +257,7 @@ router.get('/:username', requireAuth, async (req, res, next) => {
     const extras = await readProfileExtras(user.id);
     // Date of birth is private account information; expose it only on the owner's own edit endpoint.
     if (user.id !== req.user.id) delete extras.dateOfBirth;
-    res.json({ ...user.toJSON(), ...extras, isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
+    res.json({ ...user.toJSON(), ...extras, followerCount, isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
 });
 
@@ -292,15 +293,23 @@ router.get('/:username/reposts', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// GET follower/following lists for profile stats.
+// GET complete follower/following lists in relationship order.
+async function peopleInRelationshipOrder(rows, idField, viewerId) {
+  const ids = rows.map((row) => String(row[idField]));
+  if (!ids.length) return [];
+  const people = await User.findAll({ where: { id: { [Op.in]: ids } }, attributes: PUBLIC_ATTRS });
+  const byId = new Map(people.map((person) => [String(person.id), person]));
+  const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+  const visible = await excludeBlockedPeople(ordered, viewerId);
+  return withFollowState(visible, viewerId);
+}
+
 router.get('/:username/followers', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
-    const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId'], order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    const people = await User.findAll({ where: { id: rows.map((r) => r.followerId) }, attributes: PUBLIC_ATTRS });
-    const visiblePeople = await excludeBlockedPeople(people, req.user.id);
-    res.json({ items: await withFollowState(visiblePeople, req.user.id) });
+    const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId'], order: [['createdAt', 'DESC'], ['followerId', 'ASC']], raw: true });
+    res.json({ items: await peopleInRelationshipOrder(rows, 'followerId', req.user.id) });
   } catch (e) { next(e); }
 });
 
@@ -308,10 +317,8 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
-    const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    const people = await User.findAll({ where: { id: rows.map((r) => r.followeeId) }, attributes: PUBLIC_ATTRS });
-    const visiblePeople = await excludeBlockedPeople(people, req.user.id);
-    res.json({ items: await withFollowState(visiblePeople, req.user.id) });
+    const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC'], ['followeeId', 'ASC']], raw: true });
+    res.json({ items: await peopleInRelationshipOrder(rows, 'followeeId', req.user.id) });
   } catch (e) { next(e); }
 });
 
