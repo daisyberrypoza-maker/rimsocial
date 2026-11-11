@@ -74,6 +74,8 @@ export default function Profile() {
   const [peopleLoading, setPeopleLoading] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
+  const [peopleSort, setPeopleSort] = useState('default');
+  const [sortOpen, setSortOpen] = useState(false);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -268,6 +270,18 @@ export default function Profile() {
         ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
         : item));
     } catch (e) { logError(e); }
+    finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
+  }
+
+  async function removeFollower(person) {
+    if (!profile?.isMe || peopleBusy[person.id]) return;
+    if (!window.confirm(`Remove @${person.username} as a follower?`)) return;
+    setPeopleBusy((current) => ({ ...current, [person.id]: true }));
+    try {
+      await api(`/v1/users/${person.id}/follower`, { method: 'DELETE' });
+      setPeople((current) => current.filter((item) => item.id !== person.id));
+      setProfile(username, { user: { ...profile, followerCount: Math.max(0, Number(profile.followerCount || 0) - 1) } });
+    } catch (error) { logError(error); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
@@ -572,9 +586,15 @@ export default function Profile() {
             </ul>
           ) : <>
             {listType !== 'blocked' && <label className="pv-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>}
-            {listType !== 'blocked' && <div className="pv-sort">Sorted by <strong>Default</strong></div>}
+            {listType !== 'blocked' && <div className="pv-sort-row">
+              <span>Sorted by <strong>{peopleSort === 'default' ? 'Default' : peopleSort === 'newest' ? 'Date followed: Latest' : 'Date followed: Earliest'}</strong></span>
+              {profile.isMe && <button type="button" className="pv-sort-trigger" aria-label="Change sort order" onClick={() => setSortOpen((open) => !open)}><Icon name="arrow-down-up" size={22} /></button>}
+              {sortOpen && <div className="pv-sort-menu">
+                {[['default', 'Default'], ['newest', 'Date followed: Latest'], ['oldest', 'Date followed: Earliest']].map(([value, label]) => <button type="button" key={value} className={peopleSort === value ? 'on' : ''} onClick={() => { setPeopleSort(value); setSortOpen(false); }}>{label}</button>)}
+              </div>}
+            </div>}
             <ul className="pv-list">
-              {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) => (
+              {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => peopleSort === 'default' ? 0 : peopleSort === 'newest' ? 0 : (a.username || '').localeCompare(b.username || '')).map((person) => (
                 <li className="pv-row" key={person.id}>
                   <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
                     <Avatar user={person} size={52} />
@@ -584,10 +604,9 @@ export default function Profile() {
                     ? <button type="button" className="pv-follow" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
                     : listType === 'followers' && !person.isFollowing
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
-                      : <>
-                          <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>
-                          {listType === 'following' && <button type="button" className="pv-more" aria-label={`More options for ${person.username}`} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="more-vertical" size={18} /></button>}
-                        </>}
+                      : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
+                  {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
+                  {listType === 'following' && <button type="button" className="pv-more" aria-label={`Unfollow ${person.username}`} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="more-vertical" size={18} /></button>}
                 </li>
               ))}
             </ul>
