@@ -419,6 +419,7 @@ export default function Profile() {
 
   if (!profile) return <div className="page profile-page" />;
 
+  const compactConnectionCount = (value) => formatCount(Number(value) || 0).toLowerCase();
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
@@ -461,7 +462,7 @@ export default function Profile() {
               {profile.isMe && <button type="button" className="pf-chev" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}
             </h2>
             <p className="pf-handle">{profile.username}</p>
-            <p className="pf-sub"><button type="button" className="pf-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
+            <p className="pf-sub"><button type="button" className="pf-link" onClick={() => openPeople('followers')}>{compactConnectionCount(profile.followerCount)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
           </div>
         </div>
         {profile.isMe ? (
@@ -487,11 +488,11 @@ export default function Profile() {
         )}
       </div>
       <section className="sc-profile-stats" aria-label="Profile statistics">
-        <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
-          <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
+        <button type="button" onClick={() => openPeople('followers')} aria-label={`${compactConnectionCount(profile.followerCount)} followers`}>
+          <strong>{compactConnectionCount(profile.followerCount)}</strong><span>Followers</span>
         </button>
-        <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
-          <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
+        <button type="button" onClick={() => openPeople('following')} aria-label={`${compactConnectionCount(profile.followingCount)} following`}>
+          <strong>{compactConnectionCount(profile.followingCount)}</strong><span>Following</span>
         </button>
         <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
           <strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span>
@@ -567,8 +568,8 @@ export default function Profile() {
             {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => navigate('/explore')}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
           </header>
           {listType !== 'blocked' && <nav className="pv-sheet-tabs" role="tablist" aria-label="Connections">
-            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers', true); }}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
-            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following', true); }}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers', true); }}><strong>{compactConnectionCount(profile.followerCount)}</strong><span>Followers</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following', true); }}><strong>{compactConnectionCount(profile.followingCount)}</strong><span>Following</span></button>
             {profile.isMe && <button type="button" role="tab" aria-selected={listType === 'activity'} className={listType === 'activity' ? 'on' : ''} onClick={() => { if (listType !== 'activity') openActivity(true); }}><strong>{activity.length ? formatCount(activity.length) : '0'}</strong><span>Activity</span></button>}
           </nav>}
           {listType === 'activity' ? (
