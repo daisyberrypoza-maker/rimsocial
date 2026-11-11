@@ -6209,3 +6209,33 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
 .bottomnav.bottomnav-dark { background:#fff !important; border-top-color:#e5e7eb !important; }
 .bottomnav.bottomnav-dark a { color:#777 !important; }
 .bottomnav.bottomnav-dark a.active { color:#17191f !important; }
+
+/* /friends: isolate every suggestion control from global button theme defaults. */
+.ig-explore.friends-page .friends-suggestion-row,
+.ig-explore.friends-page .friends-suggestion-person,
+.ig-explore.friends-page .friends-suggestion-person strong,
+.ig-explore.friends-page .friends-suggestion-person small,
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-person {
+  color: #171717 !important;
+  box-shadow: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-person strong { color: #171717 !important; }
+.ig-explore.friends-page .friends-suggestion-person small { color: #8a8a8a !important; }
+.ig-explore.friends-page .friends-suggestion-follow {
+  background: #0095f6 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-follow.following {
+  background: #efefef !important;
+  color: #262626 !important;
+}
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  color: #8e8e8e !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
