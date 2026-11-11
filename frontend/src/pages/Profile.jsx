@@ -76,6 +76,7 @@ export default function Profile() {
   const [peopleBusy, setPeopleBusy] = useState({});
   const [peopleSort, setPeopleSort] = useState('default');
   const [sortOpen, setSortOpen] = useState(false);
+  const [listMenuPerson, setListMenuPerson] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -575,7 +576,7 @@ export default function Profile() {
           {listType === 'activity' ? (
             <ul className="pv-list" aria-label="Activity">
               
-              {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
+              {!activityLoading && !activity.length && <li className="pv-empty-row pv-activity-empty">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
               {activity.map((item) => (
                 <li className="pv-row pv-activity-row" key={item.id}>
                   <button type="button" className="pv-person" onClick={() => { if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
@@ -607,7 +608,14 @@ export default function Profile() {
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
                       : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
                   {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
-                  {listType === 'following' && <button type="button" className="pv-more" aria-label={`Unfollow ${person.username}`} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="more-vertical" size={18} /></button>}
+                  {listType === 'following' && <div className="pv-person-menu-wrap">
+                    <button type="button" className="pv-more" aria-label={`Options for ${person.username}`} aria-expanded={listMenuPerson === person.id} onClick={() => setListMenuPerson((current) => current === person.id ? null : person.id)}><Icon name="more-vertical" size={18} /></button>
+                    {listMenuPerson === person.id && <div className="pv-person-menu" role="menu">
+                      <button type="button" role="menuitem" className="danger" onClick={() => { setListMenuPerson(null); toggleListFollow(person); }} disabled={Boolean(peopleBusy[person.id])}>Unfollow</button>
+                      <button type="button" role="menuitem" disabled title="Mute requires a server-side mute setting">Mute</button>
+                      <button type="button" role="menuitem" disabled title="Shared activity is not available from the current API">See shared activity</button>
+                    </div>}
+                  </div>}
                 </li>
               ))}
             </ul>
