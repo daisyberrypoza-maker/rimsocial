@@ -6239,3 +6239,57 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   border: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Connection and activity sheets: compact header and truly centered empty states. */
+.pv-sheet-top {
+  gap: 4px !important;
+}
+.pv-sheet-top > .pv-icon-btn:first-child {
+  margin-right: 0 !important;
+  flex: 0 0 36px !important;
+}
+.pv-sheet-top .pv-sheet-title {
+  margin-left: 0 !important;
+  text-align: left !important;
+}
+.pv-sheet .pv-empty,
+.pv-sheet .pv-empty-row,
+.pv-sheet .pv-activity-empty {
+  text-align: center !important;
+}
+.pv-sheet .pv-list:has(.pv-activity-empty) {
+  min-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.pv-sheet .pv-activity-empty {
+  width: 100%;
+  min-height: 48vh;
+  padding: 24px !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep non-video application surfaces light; immersive Reels/Spotlight media retain black. */
+.topbar:not(.overlay),
+.profile-top,
+.activity-heading,
+.activity-filters,
+.activity-read-row,
+.activity-list,
+.pv-row,
+.pv-person,
+.pv-person-text,
+.pv-search,
+.pv-sort-row,
+.pf-tabs,
+.pf-body,
+.sc-profile-stats,
+.settings-menu,
+.settings-body {
+  background: #fff !important;
+  color: #17191f !important;
+}
+.profile-top { background-image: none !important; }
