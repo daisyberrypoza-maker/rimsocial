@@ -133,9 +133,8 @@ export default function Explore() {
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : peopleMode ? <button type="button" className="friends-discovery-search" onClick={() => navigate('/friends?search=1')}><Icon name="search" size={18} /><span>{query || 'Search people'}</span></button>
-        : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
-      {peopleMode && !searchMode && !results && <div className="friends-discovery-intro"><p>Find people you know and creators you may like.</p><button type="button" onClick={() => navigate('/my-friends')}>All contacts <Icon name="chevron-right" size={16} /></button></div>}
+      </div> : !peopleMode ? <button type="button" className="rim-search-launch" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button> : null}
+      {peopleMode && !searchMode && !results && <div className="friends-discovery-intro"><p>Find people you know and creators you may like.</p></div>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
