@@ -270,6 +270,12 @@ export default function Profile() {
       setPeople((current) => current.map((item) => item.id === person.id
         ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
         : item));
+      // Keep the profile's connection totals in sync with the list immediately.
+      const delta = response.isFollowing ? 1 : -1;
+      setProfile(username, { user: {
+        ...profile,
+        followingCount: Math.max(0, Number(profile.followingCount || 0) + delta),
+      } });
     } catch (e) { logError(e); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
