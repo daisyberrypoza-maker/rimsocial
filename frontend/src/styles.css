@@ -5976,3 +5976,209 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .pv-sheet .pv-search {
   margin-top: 0 !important;
 }
+
+ 
+/* Instagram-style account discovery for /friends. Keep this scoped to the Add Friends route. */
+.ig-explore.friends-page {
+  background:#fff !important;
+  color:#111 !important;
+  padding:calc(env(safe-area-inset-top,0px) + 4px) 0 calc(env(safe-area-inset-bottom,0px) + 24px) !important;
+}
+.ig-explore.friends-page .friends-discovery-header {
+  min-height:48px;
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) 40px;
+  align-items:center;
+  padding:0 14px;
+  background:#fff;
+}
+.ig-explore.friends-page .friends-discovery-header h1 {
+  margin:0;
+  text-align:center;
+  color:#111;
+  font-size:18px;
+  line-height:1.2;
+  font-weight:650;
+  letter-spacing:-.2px;
+}
+.ig-explore.friends-page .friends-discovery-back {
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#111;
+}
+.ig-explore.friends-page .friends-discovery-search {
+  width:calc(100% - 32px);
+  height:40px;
+  margin:8px 16px 0;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  border-radius:9px;
+  background:#efeff0;
+  color:#8e8e93;
+  text-align:left;
+  font-size:14px;
+  font-weight:400;
+}
+.ig-explore.friends-page .friends-discovery-search span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-explore.friends-page .friends-discovery-intro {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px 4px;
+}
+.ig-explore.friends-page .friends-discovery-intro p {
+  margin:0;
+  color:#737373;
+  font-size:12px;
+  line-height:1.4;
+}
+.ig-explore.friends-page .friends-discovery-intro button {
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:4px 0 4px 8px;
+  border:0;
+  background:transparent;
+  color:#0095f6;
+  font-size:13px;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-section { margin:18px 0 0; }
+.ig-explore.friends-page .friends-suggestion-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px 7px;
+}
+.ig-explore.friends-page .friends-suggestion-heading h2 {
+  margin:0;
+  color:#171717;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:650;
+  letter-spacing:-.15px;
+}
+.ig-explore.friends-page .friends-suggestion-heading > button {
+  flex:none;
+  padding:4px 0 4px 8px;
+  border:0;
+  background:transparent;
+  color:#0095f6;
+  font-size:13px;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-list {
+  list-style:none;
+  margin:0;
+  padding:0 16px;
+}
+.ig-explore.friends-page .friends-suggestion-row {
+  min-height:68px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 0;
+  border:0;
+  border-bottom:1px solid #f2f2f2;
+}
+.ig-explore.friends-page .friends-suggestion-row:last-child { border-bottom:0; }
+.ig-explore.friends-page .friends-suggestion-person {
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#111;
+  text-align:left;
+}
+.ig-explore.friends-page .friends-suggestion-person .avatar {
+  width:44px !important;
+  height:44px !important;
+  flex:0 0 44px;
+}
+.ig-explore.friends-page .friends-suggestion-person > span {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.ig-explore.friends-page .friends-suggestion-person strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#171717;
+  font-size:14px;
+  line-height:1.25;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-person small {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#8a8a8a;
+  font-size:12px;
+  line-height:1.3;
+  font-weight:400;
+}
+.ig-explore.friends-page .friends-suggestion-follow {
+  flex:none;
+  min-width:82px;
+  height:32px;
+  padding:0 13px;
+  border:0;
+  border-radius:7px;
+  background:#0095f6;
+  color:#fff;
+  font-size:13px;
+  line-height:1;
+  font-weight:600;
+  white-space:nowrap;
+}
+.ig-explore.friends-page .friends-suggestion-follow.following {
+  background:#efefef;
+  color:#262626;
+}
+.ig-explore.friends-page .friends-suggestion-follow:disabled { opacity:.65; }
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  flex:0 0 26px;
+  width:26px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#8e8e8e;
+}
+.ig-explore.friends-page .friends-followback-section {
+  margin-top:18px;
+  padding-top:15px;
+  border-top:1px solid #efefef;
+}
+.ig-explore.friends-page .ig-empty {
+  margin:20px 16px;
+  color:#8a8a8a;
+  font-size:13px;
+  text-align:center;
+}
+@media (max-width:360px) {
+  .ig-explore.friends-page .friends-suggestion-row { gap:4px; }
+  .ig-explore.friends-page .friends-suggestion-person { gap:8px; }
+  .ig-explore.friends-page .friends-suggestion-follow { min-width:74px; padding:0 10px; }
+}
