@@ -3659,8 +3659,8 @@ html, body, #root { min-height:100%; }
 .pv-sheet-title { margin:0; text-align:center; font-size:18px; font-weight:700; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pv-icon-btn { width:40px; height:40px; border:0 !important; border-radius:50%; background:transparent !important; color:#111 !important; display:grid; place-items:center; padding:0; cursor:pointer; }
 .pv-icon-spacer { width:40px; height:40px; }
-.pv-sheet-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; border-bottom:1px solid #ececf0; }
-.pv-sheet-tabs button { position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; padding:8px 0 10px; border:0 !important; background:transparent !important; color:#8a8a94 !important; cursor:pointer; }
+.pv-sheet-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; border-bottom:1px solid #ececf0 !important; }
+.pv-sheet-tabs button { position:relative; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; padding:10px 0 12px; border:0 !important; background:transparent !important; color:#8a8a94 !important; cursor:pointer; }
 .pv-sheet-tabs strong { font-size:17px; font-weight:700; }
 .pv-sheet-tabs span { font-size:13px; }
 .pv-sheet-tabs button.on { color:#111 !important; }
@@ -5933,7 +5933,7 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .pv-follow { min-width:0 !important; width:136px; max-width:34vw; height:40px !important; border-radius:10px !important; background:#4f5df5 !important; color:#fff !important; font-size:14px !important; }
 .pv-follow.added { background:#f0f1f5 !important; color:#111 !important; }
 .pv-row { grid-template-columns:minmax(0,1fr) auto auto !important; gap:10px !important; border-bottom:0 !important; padding:8px 0 !important; }
-.pv-remove-follower { width:24px; height:40px; display:grid; place-items:center; border:0; background:transparent; color:#262626; padding:0; }
+.pv-remove-follower { width:32px; height:40px; display:grid; place-items:center; border:0 !important; border-radius:50% !important; background:transparent !important; box-shadow:none !important; color:#262626 !important; padding:0; }
 .pv-sort-row { position:relative; display:flex; align-items:center; justify-content:space-between; padding:12px 24px 6px; color:#111; font-size:14px; }
 .pv-sort-row strong { font-weight:700; }
 .pv-sort-trigger { width:36px; height:36px; display:grid; place-items:center; border:0; background:transparent; color:#111; }
