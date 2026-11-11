@@ -594,7 +594,7 @@ export default function Profile() {
               </div>}
             </div>}
             <ul className="pv-list">
-              {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => peopleSort === 'default' ? 0 : peopleSort === 'newest' ? 0 : (a.username || '').localeCompare(b.username || '')).map((person) => (
+              {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => { if (peopleSort === 'default') return 0; const delta = new Date(a.relationshipCreatedAt || 0).getTime() - new Date(b.relationshipCreatedAt || 0).getTime(); return peopleSort === 'newest' ? -delta : delta; }).map((person) => (
                 <li className="pv-row" key={person.id}>
                   <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
                     <Avatar user={person} size={52} />
