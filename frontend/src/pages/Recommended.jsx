@@ -49,17 +49,17 @@ export default function Recommended() {
     return (
       <li className="rec-discover-row" key={person.id}>
         <button type="button" className="rec-discover-person" onClick={() => navigate(`/u/${person.username}`)}>
-          <Avatar user={person} size={56} />
+          <Avatar user={person} size={44} />
           <span className="rec-discover-copy">
             <strong>{person.username || person.displayName}</strong>
-            <small>{section === 'followBack' ? 'Suggested for you' : person.mutualCount > 0 ? `${person.mutualCount} mutual` : 'Suggested for you'}</small>
+            <small>{section === 'followBack' ? 'Follows you' : person.mutualCount > 0 ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'}` : (person.displayName || 'Suggested for you')}</small>
           </span>
         </button>
         <button type="button" className={`rec-discover-follow${following ? ' is-following' : ''}`} onClick={() => toggle(person, section)} disabled={Boolean(busy[person.id])}>
           {busy[person.id] ? '…' : following ? 'Following' : section === 'followBack' ? 'Follow back' : 'Follow'}
         </button>
         <button type="button" className="rec-discover-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((items) => [...items, person.id])}>
-          <Icon name={section === 'followBack' ? 'x' : 'more-vertical'} size={20} />
+          <Icon name="x" size={18} />
         </button>
       </li>
     );
