@@ -125,7 +125,7 @@ export default function Explore() {
 
   return (
     <div ref={swipeSurfaceRef} data-local-tab-swipe className={`ig-explore${peopleMode ? ' friends-page' : ''}`} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 90 && e.currentTarget.scrollTop <= 0) refreshExplore(); }}>
-      {peopleMode && !searchMode && <header className="sn-af-head"><button type="button" className="sn-af-iconbtn" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={26} /></button><h1>Add Friends</h1><button type="button" className="sn-af-iconbtn" aria-label="More"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></button></header>}
+      {peopleMode && !searchMode && <header className="friends-discovery-header"><button type="button" className="friends-discovery-back" onClick={() => goBack(navigate)} aria-label="Back"><Icon name="arrow-left" size={23} /></button><h1>Discover people</h1><span aria-hidden="true" /></header>}
       {searchMode ? <div className="rim-search-head">
         <button type="button" className="rim-search-back" aria-label="Back" onClick={() => goBack(navigate, peopleMode ? '/friends' : '/explore')}><Icon name="arrow-left" size={23} /></button>
         <form className="ig-search" onSubmit={search} role="search">
@@ -133,12 +133,9 @@ export default function Explore() {
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : peopleMode ? <button type="button" className="sn-search" onClick={() => navigate('/friends?search=1')}><Icon name="search" size={19} /><span>{query || 'Search...'}</span><svg className="sn-ghost" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5" /><path d="M12 6.5c-2.4 0-4 1.8-4 4.2v5.3l1.4-1 1.3 1.1 1.3-1.1 1.3 1.1 1.3-1.1 1.4 1v-5.3c0-2.4-1.6-4.2-4-4.2z" /></svg></button>
+      </div> : peopleMode ? <button type="button" className="friends-discovery-search" onClick={() => navigate('/friends?search=1')}><Icon name="search" size={18} /><span>{query || 'Search people'}</span></button>
         : <button type="button" className="rim-search-launch" onClick={() => navigate(peopleMode ? '/friends?search=1' : '/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>}
-      {peopleMode && !searchMode && !results && <>
-        <button type="button" className="sn-invite"><Icon name="users" size={20} /><span>Invite your friends!</span></button>
-        <div className="sn-af-section"><h3>Find Friends{recommendations.followBack.length > 0 && <span className="sn-new-pill">{recommendations.followBack.length} New</span>}</h3><button type="button" className="sn-all-contacts" onClick={() => navigate('/my-friends')}>All Contacts <Icon name="chevron-right" size={16} /></button></div>
-      </>}
+      {peopleMode && !searchMode && !results && <div className="friends-discovery-intro"><p>Find people you know and creators you may like.</p><button type="button" onClick={() => navigate('/my-friends')}>All contacts <Icon name="chevron-right" size={16} /></button></div>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
@@ -156,20 +153,35 @@ export default function Explore() {
         {results.posts?.length > 0 && <section className="ig-section"><h3 className="ig-section-title">Posts</h3>{results.posts.map((p) => <button key={p.id} className="rim-search-post" onClick={() => navigate(`/p/${p.id}`)}><span className="rim-search-post-thumb">{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</span><span className="rim-search-post-copy"><strong>@{p.author?.username || 'creator'}</strong><small>{p.caption || 'Post'} · {formatCount(p.viewCount)} views</small></span></button>)}</section>}
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
-        {peopleMode && !results && (() => {
-          const people = [...recommendations.followBack, ...suggestedOnly].filter((person) => !dismissed[person.id]);
-          return people.length > 0 && <ul className="sn-af-list">{people.map((person) => {
-            const isNew = followBackIds.has(person.id);
-            return <li className={isNew ? 'sn-af-row new' : 'sn-af-row'} key={person.id}>
-              <button type="button" className="sn-af-main" onClick={() => navigate(`/u/${person.username}`)}>
-                <span className="sn-af-avatar"><Avatar user={person} size={52} />{person.isOnline && <span className="sn-online" aria-label="Online" />}</span>
-                <span className="sn-af-text"><strong>{person.displayName || person.username}</strong><small>{isNew ? 'Follows you' : person.username}</small></span>
-              </button>
-              <button type="button" className={person.isFollowing ? 'sn-af-add added' : 'sn-af-add'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Added' : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>Add</>}</button>
-              <button type="button" className="sn-af-dismiss" aria-label={`Remove ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}>×</button>
-            </li>;
-          })}</ul>;
-        })()}
+        {peopleMode && !results && <>
+          {suggestedOnly.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section">
+            <div className="friends-suggestion-heading"><h2>Suggested for you</h2><button type="button" onClick={() => navigate('/recommended')}>See all</button></div>
+            <ul className="friends-suggestion-list">{suggestedOnly.filter((person) => !dismissed[person.id]).map((person) => (
+              <li className="friends-suggestion-row" key={person.id}>
+                <button type="button" className="friends-suggestion-person" onClick={() => navigate(`/u/${person.username}`)}>
+                  <Avatar user={person} size={44} />
+                  <span><strong>{person.username || person.displayName}</strong><small>{person.mutualCount > 0 ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'}` : (person.displayName || 'Suggested for you')}</small></span>
+                </button>
+                <button type="button" className={person.isFollowing ? 'friends-suggestion-follow following' : 'friends-suggestion-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
+                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}><Icon name="x" size={17} /></button>
+              </li>
+            ))}</ul>
+          </section>}
+          {recommendations.followBack.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section friends-followback-section">
+            <div className="friends-suggestion-heading"><h2>Follow back</h2><button type="button" onClick={() => navigate('/u/me/followers')}>See all</button></div>
+            <ul className="friends-suggestion-list">{recommendations.followBack.filter((person) => !dismissed[person.id]).map((person) => (
+              <li className="friends-suggestion-row" key={person.id}>
+                <button type="button" className="friends-suggestion-person" onClick={() => navigate(`/u/${person.username}`)}>
+                  <Avatar user={person} size={44} />
+                  <span><strong>{person.username || person.displayName}</strong><small>Follows you</small></span>
+                </button>
+                <button type="button" className={person.isFollowing ? 'friends-suggestion-follow following' : 'friends-suggestion-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
+                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}><Icon name="x" size={17} /></button>
+              </li>
+            ))}</ul>
+          </section>}
+          {!suggestedOnly.some((person) => !dismissed[person.id]) && !recommendations.followBack.some((person) => !dismissed[person.id]) && <p className="ig-empty">No suggestions right now. Search for people by name or username.</p>}
+        </>}
         {!peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
