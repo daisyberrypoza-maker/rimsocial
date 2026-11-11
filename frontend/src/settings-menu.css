@@ -21,7 +21,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 0;
 }
 
 .settings-head h2 {
@@ -104,15 +104,8 @@
 }
 
 /* Hairline between rows, starting at the text so the icon column stays clean */
-.settings-item + .settings-item::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 60px;
-  right: 20px;
-  height: 1px;
-  background: #efefef;
-}
+/* No divider lines between settings rows. */
+.settings-item + .settings-item::before { content: none; }
 
 .settings-item-icon {
   flex: 0 0 24px;
@@ -163,7 +156,7 @@
   justify-content: center;
   gap: 10px;
   padding: 0;
-  border: 1px solid #e3e3e3;
+  border: 0;
   border-radius: 12px;
   background: #fff;
   color: #e0243c;
@@ -201,3 +194,15 @@
 .profile-drawer-backdrop .settings-menu .settings-item { color:#111 !important; background:#fff !important; }
 .profile-drawer-backdrop .settings-menu .settings-item:active,
 .profile-drawer-backdrop .settings-menu .settings-item:hover { background:#f6f6f6 !important; }
+
+/* Clean settings drawer: no separator or control borders. */
+.profile-drawer-backdrop .settings-menu,
+.profile-drawer-backdrop .settings-head,
+.profile-drawer-backdrop .settings-section,
+.profile-drawer-backdrop .settings-item,
+.profile-drawer-backdrop .settings-foot,
+.profile-drawer-backdrop .settings-logout {
+  border: 0 !important;
+  outline: 0 !important;
+}
+.profile-drawer-backdrop .settings-item + .settings-item::before { display:none !important; }
