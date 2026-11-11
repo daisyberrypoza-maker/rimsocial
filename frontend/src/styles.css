@@ -5964,3 +5964,15 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
   .rec-page.rec-discover-page .rec-discover-follow { min-width:78px; padding:0 12px; }
   .rec-page.rec-discover-page .rec-discover-row { gap:6px; }
 }
+
+
+/* Connections sheet: clear separator between Followers/Following tabs and the search field. */
+.pv-sheet .pv-sheet-tabs {
+  border: 0 !important;
+  border-bottom: 1px solid #e8e8e8 !important;
+  box-shadow: none !important;
+  margin-bottom: 12px !important;
+}
+.pv-sheet .pv-search {
+  margin-top: 0 !important;
+}
