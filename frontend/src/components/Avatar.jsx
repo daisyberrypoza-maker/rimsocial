@@ -11,7 +11,9 @@ export default function Avatar({ user, size = 40, ring = false, storyRing }) {
   useEffect(() => {
     if (!storyRing && user?.id) requestStoryRings(user.id);
   }, [user?.id, storyRing]);
-  // A null prop is not authoritative: a cached/shared active ring must still show while the\n  // batched server check refreshes it. The server clears it when the story expires or is removed.\n  const rawState = storyRing || storeRing;
+  // A null prop is not authoritative: a cached/shared active ring must still show while the
+  // batched server check refreshes it. The server clears it when the story expires or is removed.
+  const rawState = storyRing || storeRing;
   const ownId = useAppStore((s) => s.user?.id);
   const state = rawState && user?.id && String(user.id) === String(ownId) ? 'mine' : rawState;
   const label = (user?.displayName || user?.username || '?').charAt(0).toUpperCase();
