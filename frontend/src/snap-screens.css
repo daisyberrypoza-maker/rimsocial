@@ -865,3 +865,36 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+/* Add Friends: bare back control and no suggestion/contact search shortcuts. */
+.app > .ig-explore.friends-page .sn-af-head .sn-af-iconbtn {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #111 !important;
+}
+.app > .ig-explore.friends-page .sn-af-section {
+  justify-content: flex-start !important;
+}
+
+/* Connection options menu: white surface, black labels, no outlines or separators. */
+.pv-person-menu {
+  background: #fff !important;
+  background-image: none !important;
+  color: #111 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
+}
+.pv-person-menu button,
+.pv-person-menu button:hover,
+.pv-person-menu button:active {
+  background: #fff !important;
+  background-image: none !important;
+  color: #111 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.pv-person-menu button + button { border-top: 0 !important; }
