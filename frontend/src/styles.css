@@ -6204,3 +6204,8 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
 .pv-person-menu button + button { border-top:1px solid #f0f0f0; }
 .pv-person-menu button.danger { color:#e53950; }
 .pv-person-menu button:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Following and all standard navigation stay light; dark treatment is limited to immersive video. */
+.bottomnav.bottomnav-dark { background:#fff !important; border-top-color:#e5e7eb !important; }
+.bottomnav.bottomnav-dark a { color:#777 !important; }
+.bottomnav.bottomnav-dark a.active { color:#17191f !important; }
