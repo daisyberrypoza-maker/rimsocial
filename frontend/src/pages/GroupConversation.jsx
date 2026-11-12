@@ -53,6 +53,15 @@ export default function GroupConversationPage() {
     } catch (e) { toast(e.message || 'Could not update mute setting'); }
   }
 
+  async function deleteGroupForEveryone() {
+    setOptionsOpen(false);
+    if (!window.confirm('Delete this group and its messages for every member? This cannot be undone.')) return;
+    try {
+      await api('/v1/messages/groups/' + groupId + '?scope=everyone', { method: 'DELETE' });
+      navigate('/chat', { replace: true });
+    } catch (e) { toast(e.message || 'Could not delete group'); }
+  }
+
   async function leaveGroup() {
     setOptionsOpen(false);
     if (!window.confirm('Leave this group? You will stop receiving its messages.')) return;
@@ -147,6 +156,7 @@ export default function GroupConversationPage() {
         <div className="cv-sheet-backdrop" onClick={() => setOptionsOpen(false)}>
           <section className="cv-sheet" role="dialog" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={toggleMute}>{muted ? 'Unmute messages' : 'Mute messages'}</button>
+            {String(group?.createdById) === String(me?.id) && <button type="button" className="danger" onClick={deleteGroupForEveryone}>Delete group for everyone</button>}
             <button type="button" className="danger" onClick={leaveGroup}>Leave group</button>
             <button type="button" className="cancel" onClick={() => setOptionsOpen(false)}>Cancel</button>
           </section>
