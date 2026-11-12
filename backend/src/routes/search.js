@@ -54,7 +54,7 @@ router.get('/', async (req, res, next) => {
       const text = String(value || '').toLowerCase();
       if (text === normalizedQuery) return 100;
       if (text.startsWith(normalizedQuery)) return 70;
-      if (text.split(/\\s+/).some((part) => part.startsWith(normalizedQuery))) return 45;
+      if (text.split(/\s+/).some((part) => part.startsWith(normalizedQuery))) return 45;
       return text.includes(normalizedQuery) ? 20 : 0;
     };
     const rankedPeople = visiblePeople.map((person) => ({
