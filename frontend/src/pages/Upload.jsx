@@ -8,6 +8,7 @@ import { toast, logError } from '../toast.js';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
+import './UploadCreate.css';
 
 const ACCEPT = 'video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif';
 
@@ -250,25 +251,39 @@ export default function Upload() {
   if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} onClose={() => goBack(navigate)} />;
 
   if (view === 'gallery') {
-    return <main className="up-page up-gallery">
-      <header className="up-top">
-        <button type="button" className="up-icon" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="chevron-down" size={30} /></button>
-        <h1>{asStory ? 'Post To Story' : 'Post'}</h1>
-        <button type="button" className="up-icon" onClick={() => document.getElementById('up-capture')?.click()} aria-label="Take a photo or video"><Icon name="camera" size={26} /></button>
+    const onRecents = tab === 'Camera Roll';
+    const preview = onRecents ? recents[0] : null;
+    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }];
+    return <main className="up-page up-gallery ig-create">
+      <header className="ig-create-top">
+        <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={26} /></button>
+        <h1>{asStory ? 'New story' : 'New post'}</h1>
+        <span className="ig-create-spacer" aria-hidden="true" />
       </header>
-      <div className="up-tabs" role="tablist" aria-label="Media sources">
-        {['Memories', 'Camera Roll'].map((name) => <button type="button" role="tab" key={name} aria-selected={tab === name} className={tab === name ? 'on' : ''} onClick={() => setTab(name)}>{name}</button>)}
+      <div className="ig-create-preview">
+        {preview
+          ? (String(preview.file.type).startsWith('video/') ? <video src={preview.url} muted playsInline /> : <img src={preview.url} alt="" />)
+          : <Icon name="image" size={48} />}
       </div>
-      {tab === 'Camera Roll' ? <div className="up-grid">
-        <button type="button" className="up-tile up-pick" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={30} /></button>
+      <div className="ig-create-sub">
+        <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
+          {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
+        </button>
+        {onRecents && <button type="button" className="ig-create-pick" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={18} /> Choose</button>}
+      </div>
+      {onRecents ? <div className="up-grid ig-create-grid">
+        <button type="button" className="up-tile ig-create-camera" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={30} /><span>Camera</span></button>
         {recents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => chooseFile(item.file)} aria-label="Select this media">
           {String(item.file.type).startsWith('video/') ? <video src={item.url} muted playsInline preload="metadata" /> : <img src={item.url} alt="" />}
         </button>)}
-      </div> : <div className="up-grid">
+      </div> : <div className="up-grid ig-create-grid">
         {memories.map((item) => <button type="button" key={item.id} className="up-tile" onClick={() => navigate(`/p/${item.id}`)} aria-label="Open this post">
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
+      <nav className="ig-create-modes" aria-label="Create type">
+        {modes.map((mode) => <button key={mode.key} type="button" className={(mode.key === 'story') === asStory ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+      </nav>
       <input id="up-file" className="hidden" type="file" accept={ACCEPT} onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
     </main>;
