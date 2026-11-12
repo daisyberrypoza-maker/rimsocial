@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, MoreHorizontal, Users, Send } from 'lucide-react-native';
 import { api } from '../api';
@@ -23,6 +23,7 @@ export default function GroupConversation() {
   const [muted, setMuted] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -96,14 +97,12 @@ export default function GroupConversation() {
     ]);
   }
 
-  function showOptions() {
-    const actions = [
-      { text: muted ? 'Unmute messages' : 'Mute messages', onPress: toggleMute },
-    ];
-    if (String(group?.createdById) === String(me?.id)) actions.push({ text: 'Delete group for everyone', style: 'destructive', onPress: deleteForEveryone });
-    actions.push({ text: 'Leave group', style: 'destructive', onPress: leaveGroup });
-    actions.push({ text: 'Cancel', style: 'cancel' });
-    Alert.alert(group?.name || 'Group chat', 'Group options', actions);
+  function showOptions() { setMenuOpen(true); }
+  function runGroupAction(action) {
+    setMenuOpen(false);
+    if (action === 'mute') return toggleMute();
+    if (action === 'leave') return leaveGroup();
+    if (action === 'delete') return deleteForEveryone();
   }
 
   function deleteMessage(message) {
@@ -151,6 +150,18 @@ export default function GroupConversation() {
         })}
       </ScrollView>
       {!!error && <Text style={styles.error}>{error}</Text>}
+      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuOpen(false)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Group options</Text>
+            <Pressable style={styles.menuOption} onPress={() => runGroupAction('mute')}><Text style={styles.menuText}>{muted ? 'Unmute messages' : 'Mute messages'}</Text></Pressable>
+            {String(group?.createdById) === String(me?.id) && <Pressable style={styles.menuOption} onPress={() => runGroupAction('delete')}><Text style={styles.menuDanger}>Delete group for everyone</Text></Pressable>}
+            <Pressable style={styles.menuOption} onPress={() => runGroupAction('leave')}><Text style={styles.menuDanger}>Leave group</Text></Pressable>
+            <Pressable style={styles.menuCancel} onPress={() => setMenuOpen(false)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
       <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TextInput style={styles.input} value={body} onChangeText={setBody} placeholder="Message the group" placeholderTextColor={colors.muted} maxLength={2000} multiline />
         <Pressable onPress={send} disabled={!body.trim() || sending} style={[styles.send, (!body.trim() || sending) && styles.disabled]} accessibilityLabel="Send message"><Send size={20} color="#fff" /></Pressable>
@@ -161,6 +172,13 @@ export default function GroupConversation() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#fff' },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
+  menuTitle: { fontSize: 14, fontWeight: '600', color: '#777', paddingVertical: 9 },
+  menuOption: { minHeight: 46, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  menuText: { fontSize: 15, color: '#111', fontWeight: '500' },
+  menuDanger: { fontSize: 15, color: '#d93025', fontWeight: '500' },
+  menuCancel: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
   header: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#e8e8e8' },
   groupIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   headerText: { flex: 1, minWidth: 0 },
