@@ -10,9 +10,7 @@ import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
 import { colors } from '../theme';
 
-// Chat to the Snapchat reference: profile and search on the left, centred title, bell / add-friend / more on the right,
-// chips My AI / Games / Stories (count) / Near Me / New and the inbox groups, a camera on each row,
-// and a floating yellow compose button. Activity lives on this same screen: the bell or more icon switches to it.
+// Instagram-style inbox with API-backed Primary, General and Requests categories. Activity remains accessible from the bell.
 const GREY = '#8e8e93';
 const BLUE = '#0095f6';
 const GROUPS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
