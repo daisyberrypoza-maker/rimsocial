@@ -24,6 +24,7 @@ export default function GroupConversationPage() {
   const [muted, setMuted] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
   const endRef = useRef(null);
+  const messagePressTimer = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -89,6 +90,15 @@ export default function GroupConversationPage() {
     }
   }
 
+  async function copyGroupMessage(message) {
+    if (!message?.body) return;
+    try {
+      await navigator.clipboard.writeText(message.body);
+      toast('Message copied');
+    } catch { toast('Could not copy message'); }
+    setMessageMenu(null);
+  }
+
   async function deleteGroupMessage(message) {
     setMessageMenu(null);
     if (!window.confirm('Delete this message for everyone in the group?')) return;
@@ -126,7 +136,12 @@ export default function GroupConversationPage() {
             return (
               <div key={message.id} className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
-                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageMenu(message); } }}>
+                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}
+                  onContextMenu={(event) => { event.preventDefault(); setMessageMenu(message); }}
+                  onTouchStart={() => { window.clearTimeout(messagePressTimer.current); messagePressTimer.current = window.setTimeout(() => setMessageMenu(message), 500); }}
+                  onTouchMove={() => window.clearTimeout(messagePressTimer.current)}
+                  onTouchEnd={() => window.clearTimeout(messagePressTimer.current)}
+                  onTouchCancel={() => window.clearTimeout(messagePressTimer.current)}>
                   <span className="cv-text">{message.body}</span>
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={() => setMessageMenu(message)} aria-label="Message options"><Icon name="ellipsis" size={15} /></button>}
@@ -147,7 +162,8 @@ export default function GroupConversationPage() {
       {messageMenu && (
         <div className="cv-sheet-backdrop" onClick={() => setMessageMenu(null)}>
           <section className="cv-sheet" role="dialog" aria-label="Group message options" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>
+            {messageMenu.body && <button type="button" onClick={() => copyGroupMessage(messageMenu)}>Copy message</button>}
+            {String(messageMenu.senderId) === String(me?.id) && <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>}
             <button type="button" className="cancel" onClick={() => setMessageMenu(null)}>Cancel</button>
           </section>
         </div>

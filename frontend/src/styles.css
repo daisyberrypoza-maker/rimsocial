@@ -6702,3 +6702,19 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
 @media (min-width:700px) {
   .auth-screen .auth-card { max-width:390px !important; }
 }
+
+/* Align the My Stories heading with the My Story avatar, not the story tile's wider box. */
+.st-page .st-section > .st-h2.st-friends-heading {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+.st-page .st-row {
+  margin: 0 -9px !important;
+  padding: 6px 9px 8px !important;
+  scroll-padding-left: 9px !important;
+}
+.st-page .st-row > .st-friend:first-child {
+  width: 86px !important;
+  margin-left: 0 !important;
+  align-items: center !important;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { createPortal } from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -46,6 +46,7 @@ function SettingsItem({ icon, title, subtitle, onClick, disabled, danger }) {
 export default function Profile() {
   const { username = 'me', list = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const logout = useAppStore((s) => s.logout);
   const setProfile = useAppStore((s) => s.setProfile);
   const setFeed = useAppStore((s) => s.setFeed);
@@ -94,6 +95,12 @@ export default function Profile() {
   // 0 to 1: how far the scrolled bar has faded in
   const [compactProgress, setCompactProgress] = useState(0);
   const compactHeader = compactProgress > 0.5;
+
+  function backFromProfile(fallback = '/') {
+    const returnTo = location.state?.returnTo;
+    if (typeof returnTo === 'string' && returnTo.startsWith('/u/')) navigate(returnTo, { replace: true });
+    else goBack(navigate, fallback);
+  }
 
   useEffect(() => {
     let current = true;
@@ -497,7 +504,7 @@ export default function Profile() {
   return (
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
-        <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+        <button className="sc-compact-back" aria-label="Back" onClick={() => backFromProfile()} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
         <div className="sc-compact-actions">
           <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
@@ -635,7 +642,7 @@ export default function Profile() {
       {listType && profile && createPortal(<div className="pv-sheet-backdrop" role="presentation">
         <section className="pv-sheet" role="dialog" aria-label={listType} onClick={(e) => e.stopPropagation()}>
           <header className="pv-sheet-top">
-            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => goBack(navigate, `/u/${username}`)}><Icon name="arrow-left" size={22} /></button>
+            <button type="button" className="pv-icon-btn" aria-label="Back" onClick={() => backFromProfile(`/u/${username}`)}><Icon name="arrow-left" size={22} /></button>
             <h2 className="pv-sheet-title">{listType === 'blocked' ? 'Blocked accounts' : listType === 'activity' ? 'Activity' : profile.username}</h2>
             {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => navigate('/explore')}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
           </header>
@@ -669,7 +676,7 @@ export default function Profile() {
             <ul className="pv-list">
               {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => { if (peopleSort === 'default') return 0; const delta = new Date(a.relationshipCreatedAt || 0).getTime() - new Date(b.relationshipCreatedAt || 0).getTime(); return peopleSort === 'newest' ? -delta : delta; }).map((person) => (
                 <li className="pv-row" key={person.id}>
-                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
+                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`, { state: { returnTo: location.pathname } })}>
                     <Avatar user={person} size={52} />
                     <span className="pv-person-text"><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                   </button>
