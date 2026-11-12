@@ -164,7 +164,7 @@ export default function Stories() {
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
           <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
-            <span className={`st-ring ${uploading ? 'uploading' : myGroup ? 'mine' : 'none'}`}>
+            <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
                 <Avatar user={me || {}} />
               </span>
