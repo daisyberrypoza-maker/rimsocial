@@ -346,6 +346,13 @@ const GroupMessage = sequelize.define('GroupMessage', {
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
 
+
+const UserMute = sequelize.define('UserMute', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  mutedUserId: { type: DataTypes.UUID, allowNull: false },
+}, { tableName: 'user_mutes', indexes: [{ unique: true, fields: ['userId', 'mutedUserId'] }] });
+
 const ChatPreference = sequelize.define('ChatPreference', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   userId: { type: DataTypes.UUID, allowNull: false },
@@ -387,6 +394,6 @@ module.exports = {
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, PostReport,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };
