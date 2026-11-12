@@ -342,6 +342,15 @@ router.delete('/direct/:userId', async (req, res, next) => {
     if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
     const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
     if (!target) throw httpError(404, 'Account not found');
+    const rows = await DirectMessage.findAll({
+      where: { [Op.or]: [
+        { senderId: req.user.id, recipientId: req.params.userId },
+        { senderId: req.params.userId, recipientId: req.user.id },
+      ] },
+    });
+    for (const row of rows) {
+      await row.update({ hiddenFor: JSON.stringify([...new Set([...hiddenIds(row), String(req.user.id)])]) });
+    }
     await setPreference(req.user.id, { peerId: req.params.userId }, { hidden: true });
     res.json({ deleted: true });
   } catch (error) { next(error); }
