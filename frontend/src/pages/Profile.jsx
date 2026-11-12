@@ -679,7 +679,7 @@ export default function Profile() {
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
                       : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
                   {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
-                  {listType !== 'blocked' && <div className="pv-person-menu-wrap">
+                  {listType === 'following' && <div className="pv-person-menu-wrap">
                     <button type="button" className="pv-more" aria-label={`Options for ${person.username}`} aria-expanded={listMenuPerson === person.id} onClick={() => setListMenuPerson((current) => current === person.id ? null : person.id)}><Icon name="more-vertical" size={18} /></button>
                     {listMenuPerson === person.id && <div className="pv-person-menu" role="menu">
                       <button type="button" role="menuitem" className={person.isFollowing ? 'danger' : ''} onClick={() => { setListMenuPerson(null); toggleListFollow(person); }} disabled={Boolean(peopleBusy[person.id])}>{person.isFollowing ? 'Unfollow' : 'Follow back'}</button>
