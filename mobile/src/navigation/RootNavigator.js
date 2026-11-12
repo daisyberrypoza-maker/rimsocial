@@ -1,6 +1,8 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MainTabs from './MainTabs';
+import BottomBar from '../components/BottomBar';
 import Login from '../screens/Login';
 import Upload from '../screens/Upload';
 import Camera from '../screens/Camera';
@@ -10,6 +12,7 @@ import Profile from '../screens/Profile';
 import ProfileList from '../screens/ProfileList';
 import EditProfile from '../screens/EditProfile';
 import Conversation from '../screens/Conversation';
+import GroupConversation from '../screens/GroupConversation';
 import NewMessage from '../screens/NewMessage';
 import Explore from '../screens/Explore';
 import Activity from '../screens/Activity';
@@ -47,6 +50,7 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="ProfileList" component={ProfileList} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="Conversation" component={Conversation} />
+      <Stack.Screen name="GroupConversation" component={GroupConversation} />
       <Stack.Screen name="NewMessage" component={NewMessage} />
       <Stack.Screen name="Explore" component={withTabBar(Explore, 'Explore')} />
       <Stack.Screen name="Activity" component={withTabBar(Activity, 'Stories')} />
@@ -62,4 +66,16 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="LiveMatchRoom" component={LiveMatchRoom} />
     </Stack.Navigator>
   );
+}
+
+
+function withTabBar(Component, activeTab) {
+  return function ScreenWithTabBar(props) {
+    return (
+      <View style={{ flex: 1 }}>
+        <Component {...props} />
+        <BottomBar activeTab={activeTab} onPress={(name) => props.navigation.navigate('Main', { screen: name })} />
+      </View>
+    );
+  };
 }
