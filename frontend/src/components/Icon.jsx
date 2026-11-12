@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 
 const ICONS = {
-  file: FileIcon,\n  calendar: CalendarDays,\n  mail: Mail,
+  file: FileIcon,
+  calendar: CalendarDays,
+  mail: Mail,
   'badge-check': BadgeCheck, 'circle-play': CirclePlay, clapperboard: Clapperboard, hash: Hash, image: ImageIcon,
   'map-pin': MapPin, pencil: Pencil, 'repeat-2': Repeat2, shield: Shield, 'user-round': UserRound,
   'arrow-left': ArrowLeft,
