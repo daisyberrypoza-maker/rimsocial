@@ -5556,7 +5556,7 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .sr-music { width:48px; height:48px; border-radius:7px; background:#f0f0f0; display:grid; place-items:center; font-size:22px; flex:none; color:#333; }
 .sr-track .sr-person-text { flex:1; min-width:0; }
 .sr-play { width:34px; height:34px; border-radius:50%; padding:0; display:grid; place-items:center; background:#f1f1f1 !important; color:#111 !important; font-size:13px; }
-.sr-play.playing { background:#111 !important; color:#fff !important; }
+.sr-play.playing { background:#f1f1f1 !important; color:#111 !important; }
 
 /* Full-screen, app-like layout: every screen fills the whole viewport (no centred card width, no side borders).
    Bottom sheets and pop-ups keep their own sizes. */
