@@ -1049,3 +1049,23 @@
 .cv-shared-row p { margin: 0; overflow-wrap: anywhere; }
 .cv-shared-row small { color: #8e8e93; font-size: 11px; }
 .cv-shared .cancel { position: sticky; bottom: 0; background: #fff; }
+
+
+.cv-group-message-options {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: currentColor;
+  box-shadow: none;
+  opacity: .65;
+}
+.cv-group-message-options:hover { background: rgba(0,0,0,.06); opacity: 1; }
+.cv-bubble { position: relative; }
