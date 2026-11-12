@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Modal, FlatList } from 'react-native';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { loadAccount } from '../lib/account';
@@ -8,7 +9,11 @@ import { logError } from '../lib/toast';
 
 // Instagram-style screens. Sign-up asks one thing per screen, in the same order as the web page.
 const BLUE = '#0064e0';
-const PILL = '#c7c7c7';
+const LINE = '#dbdbdb';
+const CONTROL_H = 50;
+const RADIUS = 8;
+// Same logo as the web app (frontend/public/icons/rimsocial.svg)
+const LOGO_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#171717"/><path d="M116 368V144h112c77 0 126 35 126 98 0 45-25 74-68 87l80 39h-93l-67-34h-14v34zm76-95h36c34 0 51-10 51-31s-17-31-51-31h-36z" fill="#fff"/><circle cx="374" cy="362" r="44" fill="#6d7cff"/><circle cx="374" cy="362" r="14" fill="#fff"/></svg>`;
 
 const REGISTER_STEPS = [
   { key: 'email', title: 'What’s your email?', hint: 'You’ll use this to log in and secure your account.', placeholder: 'Email address' },
@@ -101,7 +106,7 @@ export default function Login() {
       <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
         {mode === 'login' ? (
           <>
-            <Text style={styles.logo}>RimSocial</Text>
+            <View style={styles.logoWrap}><SvgXml xml={LOGO_XML} width={56} height={56} /></View>
             <TextInput
               style={styles.input}
               placeholder="Username or email"
@@ -211,25 +216,25 @@ function Btn({ label, onPress, disabled }) {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#fff' },
   topbar: { height: 56, justifyContent: 'center', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 12 : 0 },
-  wrap: { paddingHorizontal: 28, paddingTop: 16, paddingBottom: 24, gap: 12 },
-  logo: { fontSize: 44, fontWeight: '800', color: '#000', textAlign: 'center', letterSpacing: -1.5, marginTop: 40, marginBottom: 36 },
-  stepTitle: { fontSize: 26, fontWeight: '700', color: '#000', letterSpacing: -0.4, marginTop: 8 },
-  stepHint: { fontSize: 15, color: '#262626', lineHeight: 22, marginBottom: 12 },
-  input: { height: 56, borderWidth: 1, borderColor: PILL, borderRadius: 28, paddingHorizontal: 20, fontSize: 16, color: '#000', backgroundColor: '#fff', justifyContent: 'center' },
+  wrap: { paddingHorizontal: 24, paddingTop: 0, paddingBottom: 24, gap: 12 },
+  logoWrap: { alignItems: 'center', marginTop: 24, marginBottom: 40 },
+  stepTitle: { fontSize: 26, fontWeight: '700', color: '#000', letterSpacing: -0.3, marginTop: 8, textAlign: 'left' },
+  stepHint: { fontSize: 15, color: '#262626', lineHeight: 22, marginBottom: 12, textAlign: 'left' },
+  input: { height: CONTROL_H, borderWidth: 1, borderColor: LINE, borderRadius: RADIUS, paddingHorizontal: 14, fontSize: 16, color: '#000', backgroundColor: '#fff', justifyContent: 'center' },
   inputText: { fontSize: 16, color: '#000' },
   passwordRow: { position: 'relative', justifyContent: 'center' },
-  passwordInput: { paddingRight: 56 },
-  eye: { position: 'absolute', right: 18, height: '100%', justifyContent: 'center' },
-  btn: { height: 56, marginTop: 8, backgroundColor: BLUE, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  passwordInput: { paddingRight: 64 },
+  eye: { position: 'absolute', right: 14, height: '100%', justifyContent: 'center' },
+  btn: { height: CONTROL_H, marginTop: 8, backgroundColor: BLUE, borderRadius: RADIUS, alignItems: 'center', justifyContent: 'center' },
   btnDim: { opacity: 0.4 },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  btnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
   linkWrap: { alignItems: 'center', paddingVertical: 10 },
   link: { fontSize: 15, fontWeight: '600', color: '#000' },
   blueLink: { fontSize: 15, fontWeight: '600', color: BLUE, marginTop: 16 },
-  outline: { height: 56, marginTop: 14, borderWidth: 1, borderColor: BLUE, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  outlineText: { color: BLUE, fontWeight: '600', fontSize: 16 },
-  grey: { height: 56, marginTop: 10, backgroundColor: '#f1f2f4', borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  greyText: { color: '#000', fontWeight: '600', fontSize: 16 },
+  outline: { height: CONTROL_H, marginTop: 12, borderWidth: 1, borderColor: BLUE, borderRadius: RADIUS, alignItems: 'center', justifyContent: 'center' },
+  outlineText: { color: BLUE, fontWeight: '600', fontSize: 15 },
+  grey: { height: CONTROL_H, marginTop: 10, backgroundColor: '#f1f2f4', borderRadius: RADIUS, alignItems: 'center', justifyContent: 'center' },
+  greyText: { color: '#000', fontWeight: '600', fontSize: 15 },
   hintSmall: { fontSize: 13, color: '#737373', marginLeft: 4 },
   terms: { fontSize: 13, color: '#737373', lineHeight: 19, marginTop: 8 },
   notice: { fontSize: 13, color: '#4b4200', backgroundColor: '#fff9c2', padding: 12, borderRadius: 12, lineHeight: 19 },
