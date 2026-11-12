@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
 import Video from 'react-native-video';
-import { Music, Plus, X as XIcon } from 'lucide-react-native';
+import { Music } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -16,11 +16,6 @@ import { colors } from '../theme';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own screen (SearchTag) with the posts that use it.
-// Music upload needs react-native-document-picker (install it in mobile/). Until it is installed the app still runs,
-// and the Add music button says what is missing.
-let DocumentPicker = null;
-try { DocumentPicker = require('react-native-document-picker').default; } catch (e) { DocumentPicker = null; }
-
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
 const BLUE = '#4f5bfa';
@@ -51,8 +46,6 @@ export default function Discover() {
   const [busy, setBusy] = useState({});
   const [playingId, setPlayingId] = useState(null);
   const [tracks, setTracks] = useState([]);
-  const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState({ file: null, title: '', artist: '', duration: null });
   const feed = useAppStore((s) => s.feeds[KEY]);
   const explore = feed?.items || [];
   const term = query.trim();
@@ -174,69 +167,7 @@ export default function Discover() {
     );
   }
 
-  // Music: pick a file, the track shows at once as pending and is removed if the upload fails
-  async function pickTrack() {
-    if (!DocumentPicker) { toast('Music upload is not set up in this app yet'); return; }
-    try {
-      const [file] = await DocumentPicker.pick({ type: [DocumentPicker.types.audio] });
-      setDraft((d) => ({ ...d, file, duration: null }));
-    } catch (e) { if (!DocumentPicker.isCancel || !DocumentPicker.isCancel(e)) logError(e); }
-  }
-
-  async function uploadTrack() {
-    const { file, title, artist, duration } = draft;
-    if (!file || !title.trim()) return;
-    if (duration && duration > 60.5) { toast('Music must be 60 seconds or less'); return; }
-    const tempId = `pending-${Date.now()}`;
-    setTracks((list) => [{ id: tempId, title: title.trim(), artist: artist.trim() || 'You', mediaUrl: '', pending: true }, ...list]);
-    setDraft({ file: null, title: '', artist: '', duration: null });
-    setAdding(false);
-    const fd = new FormData();
-    fd.append('media', { uri: file.fileCopyUri || file.uri, name: file.name || 'track.mp3', type: file.type || 'audio/mpeg' });
-    fd.append('title', title.trim());
-    fd.append('artist', artist.trim());
-    try {
-      const track = await api('/v1/audio', { method: 'POST', body: fd });
-      setTracks((list) => list.map((t) => (t.id === tempId ? track : t)));
-      toast('Track added');
-    } catch (e) {
-      logError(e);
-      setTracks((list) => list.filter((t) => t.id !== tempId));
-      toast('Could not add the track');
-    }
-  }
-
-  const audioHeader = (
-    <View>
-      {header}
-      <View style={styles.uploadWrap}>
-        {!adding ? (
-          <Pressable style={styles.addBtn} onPress={() => setAdding(true)} accessibilityLabel="Add music">
-            <Plus size={18} color={BLUE} />
-            <Text style={styles.addText}>Add music</Text>
-          </Pressable>
-        ) : (
-          <View style={styles.uploadBox}>
-            <View style={styles.uploadTop}>
-              <Text style={styles.uploadTitle}>Add music</Text>
-              <Pressable onPress={() => setAdding(false)} accessibilityLabel="Close" hitSlop={8}><XIcon size={18} color={colors.muted} /></Pressable>
-            </View>
-            <Pressable style={styles.fileBtn} onPress={pickTrack} accessibilityLabel="Choose a music file">
-              <Text style={styles.fileText} numberOfLines={1}>{draft.file ? (draft.file.name || 'Music file chosen') : 'Choose a music file (up to 60 seconds)'}</Text>
-            </Pressable>
-            {!!draft.file && (
-              <Video source={{ uri: draft.file.fileCopyUri || draft.file.uri }} audioOnly paused onLoad={(e) => setDraft((d) => ({ ...d, duration: e.duration }))} style={styles.hidden} />
-            )}
-            <TextInput style={styles.uploadInput} value={draft.title} onChangeText={(t) => setDraft((d) => ({ ...d, title: t }))} placeholder="Title" placeholderTextColor={colors.muted} maxLength={80} />
-            <TextInput style={styles.uploadInput} value={draft.artist} onChangeText={(t) => setDraft((d) => ({ ...d, artist: t }))} placeholder="Artist (optional)" placeholderTextColor={colors.muted} maxLength={80} />
-            <Pressable style={[styles.submit, (!draft.file || !draft.title.trim()) && styles.dim]} onPress={uploadTrack} disabled={!draft.file || !draft.title.trim()} accessibilityLabel="Add music">
-              <Text style={styles.submitText}>Add music</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    </View>
-  );
+  const audioHeader = header;
 
   if (activeTab === 'audio') {
     return (
@@ -246,7 +177,7 @@ export default function Discover() {
         data={audio}
         keyExtractor={(t) => String(t.id)}
         ListHeaderComponent={audioHeader}
-        ListEmptyComponent={<Text style={styles.empty}>No music found.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{term ? 'No audio found.' : 'No audio available yet.'}</Text>}
         renderItem={({ item }) => {
           const playing = playingId === item.id;
           return (
@@ -331,18 +262,6 @@ const styles = StyleSheet.create({
   hash: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: '#e5e5e5', alignItems: 'center', justifyContent: 'center' },
   hashText: { fontSize: 22, color: colors.text },
   empty: { textAlign: 'center', color: colors.muted, padding: 40 },
-  uploadWrap: { paddingHorizontal: 16, paddingBottom: 12 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 42, borderRadius: 12, borderWidth: 1, borderColor: '#dbdbdb', paddingHorizontal: 14, alignSelf: 'flex-start' },
-  addText: { color: BLUE, fontSize: 15, fontWeight: '600' },
-  uploadBox: { borderWidth: 1, borderColor: '#dbdbdb', borderRadius: 14, padding: 12, gap: 8 },
-  uploadTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  uploadTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
-  fileBtn: { height: 42, borderRadius: 10, backgroundColor: '#f0f0f2', justifyContent: 'center', paddingHorizontal: 12 },
-  fileText: { color: colors.text, fontSize: 14 },
-  uploadInput: { height: 42, borderRadius: 10, borderWidth: 1, borderColor: '#dbdbdb', paddingHorizontal: 12, fontSize: 15, color: colors.text },
-  submit: { height: 44, borderRadius: 12, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center' },
-  submitText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  dim: { opacity: 0.5 },
   playingName: { color: BLUE },
   hidden: { width: 1, height: 1 },
 });
