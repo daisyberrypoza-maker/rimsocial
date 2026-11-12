@@ -26,7 +26,7 @@ router.get('/', async (req, res, next) => {
         ],
       },
       attributes: ['id', 'username', 'displayName', 'avatarUrl', 'country', 'followerCount'],
-      order: [['followerCount', 'DESC']], limit: 30,
+      order: [['followerCount', 'DESC']], limit: 100,
     });
     const postNeedle = type === 'hashtags' ? `%#${tag}%` : `%${raw}%`;
     const postsPromise = type === 'people' ? Promise.resolve([]) : Post.findAll({
@@ -49,9 +49,31 @@ router.get('/', async (req, res, next) => {
         })
       : [];
     const followingIds = new Set(following.map((row) => row.followeeId));
+    const normalizedQuery = raw.replace(/^@/, '').toLowerCase();
+    const relevance = (value = '') => {
+      const text = String(value || '').toLowerCase();
+      if (text === normalizedQuery) return 100;
+      if (text.startsWith(normalizedQuery)) return 70;
+      if (text.split(/\\s+/).some((part) => part.startsWith(normalizedQuery))) return 45;
+      return text.includes(normalizedQuery) ? 20 : 0;
+    };
+    const rankedPeople = visiblePeople.map((person) => ({
+      person,
+      score: Math.max(relevance(person.username), relevance(person.displayName))
+        + (followingIds.has(person.id) ? 18 : 0)
+        + Math.log1p(Number(person.followerCount || 0)),
+    })).sort((a, b) => b.score - a.score).slice(0, 30);
+    const rankedPosts = visiblePosts.map((post) => {
+      const dto = toPostDTO(post);
+      const captionScore = relevance(post.caption);
+      const tagScore = post.caption && post.caption.toLowerCase().includes('#' + tag.toLowerCase()) ? 30 : 0;
+      const popularity = Math.log1p(Number(dto.likeCount || dto.likesCount || 0));
+      const ageHours = Math.max(0, (Date.now() - new Date(post.createdAt).getTime()) / 3600000);
+      return { dto, score: captionScore + tagScore + popularity + 8 / (1 + ageHours / 24) };
+    }).sort((a, b) => b.score - a.score).map((item) => item.dto);
     res.json({
-      people: visiblePeople.map((person) => ({ ...person.toJSON(), isFollowing: followingIds.has(person.id) })),
-      posts: visiblePosts.map(toPostDTO),
+      people: rankedPeople.map(({ person }) => ({ ...person.toJSON(), isFollowing: followingIds.has(person.id) })),
+      posts: rankedPosts,
       audio: audio.map((track) => ({ id: track.id, title: track.title, artist: track.artist, mediaUrl: track.mediaUrl, createdAt: track.createdAt })),
     });
   } catch (e) { next(e); }
