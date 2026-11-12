@@ -59,7 +59,9 @@ export default function EditProfile() {
     } catch (e) { logError(e); }
   }
 
-  const canSave = loaded && !saving && form.displayName.trim().length > 0;
+  const dob = form.dateOfBirth.trim();
+  const validDob = !dob || (/^\\d{4}-\\d{2}-\\d{2}$/.test(dob) && !Number.isNaN(Date.parse(dob)) && new Date(dob).toISOString().slice(0, 10) === dob && dob <= new Date().toISOString().slice(0, 10));
+  const canSave = loaded && !saving && form.displayName.trim().length > 0 && validDob;
 
   async function save() {
     if (!canSave) return;
@@ -93,7 +95,7 @@ export default function EditProfile() {
         </View>
         <Field label="Name" value={form.displayName} onChangeText={set('displayName')} maxLength={64} />
         <Field label="Username" value={me?.username ? `@${me.username}` : ''} editable={false} />
-        <Field label="Date of birth" value={form.dateOfBirth} onChangeText={set('dateOfBirth')} placeholder="YYYY-MM-DD" maxLength={10} keyboardType="numbers-and-punctuation" />
+        <Field label="Date of birth" value={form.dateOfBirth} onChangeText={set('dateOfBirth')} placeholder="YYYY-MM-DD" maxLength={10} keyboardType="numbers-and-punctuation" counter={dob && !validDob ? "Use a valid date (YYYY-MM-DD)" : undefined} />
         <Field label="Bio" value={form.bio} onChangeText={set('bio')} maxLength={150} multiline counter={`${form.bio.length}/150`} />
         <Pressable style={styles.linksRow} onPress={() => websiteRef.current?.focus()} accessibilityLabel="Links">
           <Text style={styles.linksText}>Links</Text>
