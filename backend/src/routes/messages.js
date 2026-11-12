@@ -232,6 +232,19 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Delete one of your own group messages for every current member.
+router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, attributes: ['userId'], raw: true });
+    if (!member) throw httpError(404, 'Group not found');
+    const message = await GroupMessage.findOne({ where: { id: req.params.messageId, groupId: req.params.groupId } });
+    if (!message) throw httpError(404, 'Message not found');
+    if (String(message.senderId) !== String(req.user.id)) throw httpError(403, 'You can only delete your own group messages');
+    await message.destroy();
+    res.json({ deleted: true });
+  } catch (error) { next(error); }
+});
+
 // ---- chat list ------------------------------------------------------------
 
 // Chat list: one row per person, newest conversation first, with unread counts.
