@@ -2,7 +2,6 @@ import { Component, useCallback, useEffect, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { mediaUrl } from '../lib/config.js';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
@@ -31,7 +30,6 @@ class ViewerBoundary extends Component {
 }
 
 const RAIL_FRESH_MS = 30 * 1000;
-const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
 export default function Stories() {
   const navigate = useNavigate();
@@ -41,7 +39,6 @@ export default function Stories() {
   const storedRailAt = useAppStore((s) => s.storyRailAt);
   const pending = useAppStore((s) => s.pendingUpload);
   const uploading = pending?.kind === 'story';
-  const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
   const loading = false;
@@ -49,9 +46,6 @@ export default function Stories() {
   const [friendsActive, setFriendsActive] = useState(false);
   // Badge on the add-friend icon: people who followed you since you last opened it
   const [newFollows, setNewFollows] = useState(0);
-  const feedItems = useAppStore((s) => s.feeds.discover?.items || []);
-  // Sponsored posts shown first in the Discover grid, like the reference
-  const sponsored = feedItems.filter((p) => p.isSponsored).slice(0, 2);
   useEffect(() => {
     let seen = 0;
     try { seen = Number(localStorage.getItem('rimsocial-follow-seen-at') || 0); } catch { /* storage unavailable */ }
@@ -65,38 +59,9 @@ export default function Stories() {
     navigate('/friends');
   }
   const [openAt, setOpenAt] = useState(null);
-  const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
-  const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
   // The saved rail changes when a story finishes uploading
   useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
-
-  // Discover and ordering: people you don't follow yet, ranked Snapchat-style by the server
-  useEffect(() => {
-    const saved = useAppStore.getState().storyDiscover;
-    if (Date.now() - (saved?.updatedAt || 0) < DISCOVER_FRESH_MS) return undefined;
-    let current = true;
-    (async () => {
-      try {
-        const items = (await api('/v1/users/suggestions')).items || [];
-        let ranked = saved?.ranking || { friends: {}, discoverOrder: [] };
-        const ids = items.map((u) => u.id).slice(0, 60).join(',');
-        if (ids) {
-          try {
-            const r = await api(`/v1/stories/ranking?discover=${encodeURIComponent(ids)}`);
-            ranked = { friends: r.friends || {}, discoverOrder: r.discoverOrder || [] };
-          } catch (error) { logError(error); }
-        }
-        if (!current) return;
-        setSuggested(items);
-        setRanking(ranked);
-        useAppStore.getState().setStoryDiscover({ suggested: items, ranking: ranked, updatedAt: Date.now() });
-      } catch (error) {
-        logError(error);
-      }
-    })();
-    return () => { current = false; };
-  }, []);
 
   const loadRail = useCallback(async () => {
     try {
@@ -126,18 +91,9 @@ export default function Stories() {
 
   const myGroup = rail.find((group) => group.user?.id === me?.id);
 
-  // A suggested person with stories opens the viewer; otherwise their profile opens
-  function openSuggested(person) {
-    const i = rail.findIndex((item) => item.user?.id === person.id);
-    if (i >= 0) setOpenAt(i);
-    else navigate('/u/' + person.username);
-  }
   const others = rail.filter((group) => group.user?.id !== me?.id);
   const orderedOthers = [...others].sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
-  const byId = new Map(suggested.map((u) => [u.id, u]));
-  const discoverList = (ranking.discoverOrder.length
-    ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean)
-    : suggested).filter((u) => u.id !== me?.id);
+
 
   return (
     <main className="page st-page">
@@ -191,46 +147,6 @@ export default function Stories() {
           </div>
         )}
       </section>
-
-      {discoverList.length > 0 && (
-        <section className="st-section" aria-label="Discover">
-          <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
-          <div className="st-cards">
-            {discoverList.map((person) => (
-              <button className="st-card" key={person.id} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
-                {person.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
-                <span className="st-card-shade" />
-                <span className="st-card-foot">
-                  <span className="st-card-avatar">{person.avatarUrl ? <img src={mediaUrl(person.avatarUrl)} alt="" /> : nameOf(person).slice(0, 1).toUpperCase()}</span>
-                  <span className="st-card-name">{nameOf(person)}{person.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="st-big-grid">
-            {sponsored.map((post) => (
-              <button className="st-big st-sponsor" key={`sp-${post.id}`} onClick={() => navigate('/p/' + post.id)} aria-label={`Sponsored: ${post.sponsorName || 'ad'}`}>
-                {post.thumbUrl || post.kind === 'image' ? <img className="st-card-img" src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" /> : <span className="st-card-img st-card-fallback" />}
-                <span className="st-card-shade" />
-                <span className="st-sponsored-tag">Sponsored</span>
-                <span className="st-card-name">{post.sponsorName || post.author?.username}</span>
-                <span className="st-cta">{post.sponsorCta || 'Learn more'}</span>
-              </button>
-            ))}
-            {discoverList.map((person) => (
-              <button className="st-big" key={`big-${person.id}`} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
-                {person.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
-                <span className="st-card-shade" />
-                <span className="st-card-name">{nameOf(person)}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
 
       {openAt !== null && (
         <ViewerBoundary onClose={() => { setOpenAt(null); loadRail(); }}>
