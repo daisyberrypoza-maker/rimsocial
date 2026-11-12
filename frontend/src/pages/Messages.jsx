@@ -175,8 +175,9 @@ export default function Messages() {
               const last = item.lastMessage || {};
               const mine = String(last.senderId) === String(me?.id);
               const name = item.user.displayName || item.user.username;
+              const openRowMenu = () => setRowMenu({ item, isGroup: false });
               return (
-                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'}>
+                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(); }} onTouchStart={() => { longPressTimer.current = setTimeout(openRowMenu, 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
                   <Link to={`/chat/${item.user.id}`} className="sn-row">
                     <span className="sn-ring">
                       <Avatar user={item.user} size={44} />
