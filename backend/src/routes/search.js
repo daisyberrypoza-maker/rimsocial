@@ -48,7 +48,18 @@ router.get('/', async (req, res, next) => {
           raw: true,
         })
       : [];
-    const followingIds = new Set(following.map((row) => row.followeeId));
+    const postAuthorIds = [...new Set(visiblePosts.map((post) => post.authorId))];
+    const followedPostAuthors = postAuthorIds.length
+      ? await Follow.findAll({
+          where: { followerId: req.user.id, followeeId: { [Op.in]: postAuthorIds } },
+          attributes: ['followeeId'],
+          raw: true,
+        })
+      : [];
+    const followingIds = new Set([
+      ...following.map((row) => row.followeeId),
+      ...followedPostAuthors.map((row) => row.followeeId),
+    ]);
     const normalizedQuery = raw.replace(/^@/, '').toLowerCase();
     const relevance = (value = '') => {
       const text = String(value || '').toLowerCase();
@@ -66,10 +77,10 @@ router.get('/', async (req, res, next) => {
     const rankedPosts = visiblePosts.map((post) => {
       const dto = toPostDTO(post);
       const captionScore = relevance(post.caption);
-      const tagScore = post.caption && post.caption.toLowerCase().includes('#' + tag.toLowerCase()) ? 30 : 0;
+      const tagScore = raw.startsWith('#') && post.caption && post.caption.toLowerCase().includes('#' + tag.toLowerCase()) ? 30 : 0;
       const popularity = Math.log1p(Number(dto.likeCount || dto.likesCount || 0));
       const ageHours = Math.max(0, (Date.now() - new Date(post.createdAt).getTime()) / 3600000);
-      return { dto, score: captionScore + tagScore + popularity + 8 / (1 + ageHours / 24) };
+      return { dto, score: captionScore + tagScore + (followingIds.has(post.authorId) ? 14 : 0) + popularity + 8 / (1 + ageHours / 24) };
     }).sort((a, b) => b.score - a.score).map((item) => item.dto);
     res.json({
       people: rankedPeople.map(({ person }) => ({ ...person.toJSON(), isFollowing: followingIds.has(person.id) })),
