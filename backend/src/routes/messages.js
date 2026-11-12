@@ -358,6 +358,8 @@ router.get('/with/:userId/shared', async (req, res, next) => {
   try {
     const me = String(req.user.id), other = String(req.params.userId);
     if ((await blockedUserIds(me)).has(other)) throw httpError(404, 'Conversation not found');
+    const chatPreference = await preferenceFor(me, { peerId: other });
+    if (chatPreference?.hidden) return res.json({ items: [] });
     const rows = await DirectMessage.findAll({
       where: { [Op.and]: [
         { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
@@ -386,6 +388,8 @@ router.get('/with/:userId', async (req, res, next) => {
     const other = req.params.userId;
     if (other === me) return res.json({ items: [], typing: false });
     if ((await blockedUserIds(me)).has(String(other))) return res.status(404).json({ error: 'Account not found' });
+    const chatPreference = await preferenceFor(me, { peerId: other });
+    if (chatPreference?.hidden) return res.json({ items: [], typing: false });
     await DirectMessage.update({ deliveredAt: new Date() }, { where: { senderId: other, recipientId: me, deliveredAt: null } }).catch(() => {});
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
