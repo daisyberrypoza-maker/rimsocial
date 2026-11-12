@@ -5566,7 +5566,7 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sc-stories, .sc-profile, .profile-page, .rec-page, .live-page, .ads-sponsors-content, .creator-page, .auth, .auth-card {
   max-width:none !important; width:100% !important; margin-left:0 !important; margin-right:0 !important; box-sizing:border-box;
 }
-.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; } 50% { opacity:1; } }
+.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; }
 
 /* Stories row: stays inside the screen, so scrolling stops with the last story at the edge (no extra empty scroll) */
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
