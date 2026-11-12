@@ -865,3 +865,91 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+
+/* Instagram-style inbox categories and consistent light chat controls. */
+.sn-page .sn-filters {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  padding: 0 16px !important;
+  margin: 0 0 4px !important;
+  overflow-x: auto !important;
+  border-bottom: 1px solid #efefef !important;
+  background: #fff !important;
+}
+.sn-page .sn-chip,
+.sn-page .sn-chip:hover,
+.sn-page .sn-chip:focus,
+.sn-page .sn-chip:active {
+  position: relative !important;
+  flex: 1 0 0 !important;
+  min-width: 0 !important;
+  height: 48px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #8e8e8e !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+.sn-page .sn-chip.active,
+.sn-page .sn-chip[aria-selected="true"] {
+  color: #111 !important;
+}
+.sn-page .sn-chip.active::after,
+.sn-page .sn-chip[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: #111;
+}
+.sn-page .sn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #efefef !important;
+  color: #262626 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+.sn-page .sn-circle,
+.sn-page .sn-circle:hover,
+.sn-page .sn-circle:focus,
+.sn-page .sn-circle:active {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #111 !important;
+}
+.sn-page .sn-circle svg {
+  color: #111 !important;
+  stroke: #111 !important;
+}
+.sn-page .sn-title {
+  color: #111 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+.sn-page .sn-empty {
+  min-height: 42vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px !important;
+  text-align: center !important;
+  color: #8e8e93 !important;
+}
