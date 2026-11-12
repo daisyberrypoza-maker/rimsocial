@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow, StoryView, StoryLike } = require('../db');
+const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
 const config = require('../config');
@@ -19,17 +19,21 @@ async function viewedSet(viewerId, storyIds) {
 // Result is cached in Redis for a short time, so refreshes do not hit MySQL each time.
 async function getStoryRail(viewerId) {
   const key = `stories:rail:${viewerId}`;
-  const blocked = await blockedUserIds(viewerId);
+  const [blocked, mutedRows] = await Promise.all([
+    blockedUserIds(viewerId),
+    UserMute.findAll({ where: { userId: viewerId }, attributes: ['mutedUserId'], raw: true }),
+  ]);
+  const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
   const cached = await redis.get(key);
   if (cached) {
     const hit = JSON.parse(cached);
-    return { ...hit, items: (hit.items || []).filter((item) => !blocked.has(item.user?.id)) };
+    return { ...hit, items: (hit.items || []).filter((item) => !blocked.has(item.user?.id) && !muted.has(String(item.user?.id))) };
   }
 
   const follows = await Follow.findAll({
     where: { followerId: viewerId }, attributes: ['followeeId'], raw: true,
   });
-  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id))];
+  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)))];
 
   const stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: authorIds, expiresAt: { [Op.gt]: new Date() } },
@@ -64,6 +68,10 @@ async function getStoryRail(viewerId) {
 
 // Active stories for one creator, oldest first (plays like a story sequence)
 async function getUserStories(userId, viewerId) {
+  if (String(userId) !== String(viewerId)) {
+    const muted = await UserMute.findOne({ where: { userId: viewerId, mutedUserId: userId }, attributes: ['id'], raw: true });
+    if (muted) return [];
+  }
   const stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: userId, expiresAt: { [Op.gt]: new Date() } },
     include: [{ model: User, as: 'author', attributes: authorAttrs }],
