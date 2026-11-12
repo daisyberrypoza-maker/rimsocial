@@ -74,7 +74,6 @@ export default function Messages() {
   async function runRowAction(item, isGroup, action) {
     setRowMenu(null);
     try {
-      if (action === 'reminder' || action === 'organizer') { toast(action === 'reminder' ? 'Reminder setup is not available yet.' : 'Chat organizer is not available yet.'); return; }
       if (!isGroup && action === 'read') { await api(`/v1/messages/with/${item.user.id}/read`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: 0 } : row)); toast('Marked as read');
       } else if (!isGroup && action === 'unread') { await api(`/v1/messages/with/${item.user.id}/unread`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: Math.max(1, row.unread || 0) } : row)); toast('Marked as unread');
       } else if (!isGroup && action === 'block') { if (!window.confirm(`Block ${item.user.displayName || item.user.username}?`)) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
@@ -232,8 +231,6 @@ export default function Messages() {
         <div className="sn-menu-dismiss" onClick={() => setRowMenu(null)}>
           <section className="sn-action-menu" role="menu" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
             {!rowMenu.isGroup && <>
-              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'reminder')}><Icon name="bell" size={17} />Set reminder</button>
-              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'organizer')}><Icon name="calendar" size={17} />Organizer</button>
               <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread')}><Icon name={rowMenu.item.unread ? 'check' : 'mail'} size={17} />Mark as {rowMenu.item.unread ? 'read' : 'unread'}</button>
               <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'block')}><Icon name="shield" size={17} />Block</button>
             </>}
