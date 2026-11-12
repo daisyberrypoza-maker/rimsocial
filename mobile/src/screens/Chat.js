@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
-import { SquarePen, Search, Bell, UserPlus, Camera } from 'lucide-react-native';
+import { SquarePen, Search, Bell, UserPlus, Camera, MoreHorizontal } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
@@ -38,6 +38,31 @@ export default function Chat() {
     const timer = setInterval(load, 4000);
     return () => { alive = false; clearInterval(timer); };
   }, []);
+
+  async function muteChat(item) {
+    const enabled = !item.muted;
+    try {
+      const data = await api(`/v1/messages/direct/${item.user.id}/mute`, { method: 'PUT', body: { enabled } });
+      setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update mute setting'); }
+  }
+  async function deleteChat(item) {
+    try {
+      await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
+      setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); }
+  }
+  function showChatOptions(item) {
+    const name = item.user.displayName || item.user.username;
+    Alert.alert(name, 'Conversation options', [
+      { text: item.muted ? 'Unmute notifications' : 'Mute notifications', onPress: () => muteChat(item) },
+      { text: 'Delete conversation', style: 'destructive', onPress: () => Alert.alert('Delete conversation?', 'This removes the chat from your inbox only. The other person keeps their messages.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteChat(item) },
+      ]) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
 
   if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
 
@@ -118,6 +143,9 @@ export default function Chat() {
                   <Camera size={26} color={colors.text} strokeWidth={2} />
                 </Pressable>
               )}
+              <Pressable onPress={() => showChatOptions(item)} accessibilityLabel={`Options for ${item.user.displayName || item.user.username}`} hitSlop={10} style={styles.rowMenu}>
+                <MoreHorizontal size={21} color="#262626" />
+              </Pressable>
             </View>
           );
         }}
@@ -161,8 +189,9 @@ const styles = StyleSheet.create({
   lastUnread: { fontWeight: '700', color: colors.text },
   tag: { color: '#7b3ff2', fontSize: 13, fontWeight: '700', marginTop: 2 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: BLUE },
-  cam: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  snap: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 16, borderRadius: 999, backgroundColor: YELLOW },
+  cam: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
+  rowMenu: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
+  snap: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#f2f2f2' },
   snapText: { color: colors.text, fontSize: 15, fontWeight: '700' },
   reqBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#ff3b5c', alignItems: 'center', justifyContent: 'center' },
   reqBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
