@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
-import { MoreHorizontal, SquarePen, Search, Bell, UserPlus, Camera, ChevronRight, Plus } from 'lucide-react-native';
+import { SquarePen, Search, Bell, UserPlus, Camera } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
@@ -15,9 +15,7 @@ import { colors } from '../theme';
 // and a floating yellow compose button. Activity lives on this same screen: the bell or more icon switches to it.
 const BLUE = '#3797f0';
 const GREY = '#8e8e93';
-const CHIP = '#f0f0f2';
-const CHIP_ON = '#e8eefc';
-const YELLOW = '#fffc00';
+const BLUE = '#0095f6';
 const GROUPS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
 
 export default function Chat() {
@@ -26,18 +24,12 @@ export default function Chat() {
   const route = useRoute();
   const me = useAppStore((s) => s.user);
   const [items, setItems] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('primary');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
   const [newRequests, setNewRequests] = useState(0);
   useEffect(() => {
     api('/v1/users/suggestions').then((d) => setNewRequests((d.followBack || []).filter((p) => !p.isFollowing).length)).catch(() => {});
   }, []);
-  const [pulling, setPulling] = useState(false);
-  async function pullRefresh() {
-    setPulling(true);
-    try { const d = await api('/v1/messages/conversations'); setItems(d.items || []); } catch (_) { /* keep the list */ } finally { setPulling(false); }
-  }
-
   useEffect(() => {
     if (route.params?.view === 'activity') setView('activity');
   }, [route.params?.view]);
@@ -53,14 +45,11 @@ export default function Chat() {
   if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
 
   const all = items || [];
-  const storyCount = all.filter((i) => i.hasStory).length;
-  const shown = all.filter((i) => {
-    if (filter === 'all') return true;
-    if (filter === 'stories') return i.hasStory;
-    return i.group === filter;
-  });
-  const totalUnread = all.reduce((sum, i) => sum + (i.unread || 0), 0);
-  const toggle = (key) => setFilter(filter === key ? 'all' : key);
+  const shown = all.filter((i) => i.group === filter);
+  const unreadByGroup = GROUPS.reduce((counts, [key]) => {
+    counts[key] = all.reduce((sum, item) => sum + (item.group === key ? Number(item.unread || 0) : 0), 0);
+    return counts;
+  }, {});
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
@@ -74,7 +63,7 @@ export default function Chat() {
             <Search size={22} color={colors.text} strokeWidth={2.4} />
           </Pressable>
         </View>
-        <Text style={styles.title}>Chat</Text>
+        <Text style={styles.title}>Messages</Text>
         <View style={styles.actions}>
           <Pressable onPress={() => setView('activity')} accessibilityLabel="Notifications" hitSlop={8} style={styles.iconBtn}>
             <Bell size={24} color={colors.text} strokeWidth={2.2} />
@@ -83,34 +72,25 @@ export default function Chat() {
             <UserPlus size={22} color={colors.text} strokeWidth={2.2} />
             {newRequests > 0 && <View style={styles.reqBadge}><Text style={styles.reqBadgeText}>{newRequests > 99 ? '99+' : newRequests}</Text></View>}
           </Pressable>
-          <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8} style={styles.iconBtn}>
-            <MoreHorizontal size={24} color={colors.text} />
+          <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message" hitSlop={8} style={styles.iconBtn}>
+            <SquarePen size={22} color={colors.text} strokeWidth={2.2} />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.filters}>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>My AI</Text></Pressable>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>Games</Text></Pressable>
-        <Pressable onPress={() => toggle('stories')} accessibilityRole="tab" accessibilityState={{ selected: filter === 'stories' }} style={[styles.chip, filter === 'stories' && styles.chipOn]}>
-          <Text style={styles.chipText}>Stories</Text>
-          {storyCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{storyCount}</Text></View>}
-        </Pressable>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>Near Me</Text></Pressable>
-        <Pressable onPress={() => navigation.navigate('NewMessage')} style={styles.chip}><Text style={styles.chipText}>New</Text><Plus size={16} color={colors.text} strokeWidth={2.4} /></Pressable>
+      <View style={styles.filters} accessibilityRole="tablist">
         {GROUPS.map(([key, label]) => (
-          <Pressable key={key} onPress={() => toggle(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
-            <Text style={styles.chipText}>{label}{key === 'requests' ? '  ' : ''}</Text>
-            {key === 'requests' && <ChevronRight size={14} color={colors.text} />}
+          <Pressable key={key} onPress={() => setFilter(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
+            <Text style={[styles.chipText, filter === key && styles.chipTextOn]}>{label}</Text>
+            {unreadByGroup[key] > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unreadByGroup[key] > 99 ? '99+' : unreadByGroup[key]}</Text></View>}
           </Pressable>
         ))}
       </View>
 
       <FlatList
         data={shown}
-        refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
         keyExtractor={(i) => String(i.user.id)}
-        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</Text>}
+        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</Text>}
         renderItem={({ item }) => {
           const mine = item.lastMessage.senderId === me?.id;
           const unread = item.unread > 0;
@@ -146,28 +126,30 @@ export default function Chat() {
       />
 
       <Pressable style={[styles.fab, { bottom: insets.bottom + 90 }]} onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message">
-        <SquarePen size={26} color="#111" strokeWidth={2.2} />
+        <SquarePen size={24} color="#fff" strokeWidth={2.2} />
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg },
+  page: { flex: 1, backgroundColor: '#fff' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12 },
   headLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatarBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   accountDot: { position: 'absolute', top: 0, right: 0, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.heart },
-  title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: colors.text },
+  title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: '#111' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  addFriend: { backgroundColor: YELLOW, borderRadius: 20, position: 'relative' },
-  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  chip: { height: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
-  chipOn: { backgroundColor: CHIP_ON },
-  chipText: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  badge: { marginLeft: 6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  addFriend: { backgroundColor: 'transparent', borderRadius: 20, position: 'relative' },
+  filters: { flexDirection: 'row', flexWrap: 'nowrap', paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#efefef' },
+  chip: { flex: 1, height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  chipOn: { borderBottomColor: '#111' },
+  chipText: { color: '#8e8e93', fontSize: 14, fontWeight: '600' },
+  chipTextOn: { color: '#111' },
+
+  badge: { marginLeft: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#efefef', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#262626', fontSize: 11, fontWeight: '600' },
   rowWrap: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
   row: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   ring: { width: 62, height: 62, borderRadius: 31, padding: 3, borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
@@ -186,6 +168,6 @@ const styles = StyleSheet.create({
   snapText: { color: colors.text, fontSize: 15, fontWeight: '700' },
   reqBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#ff3b5c', alignItems: 'center', justifyContent: 'center' },
   reqBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  fab: { position: 'absolute', right: 16, width: 58, height: 58, borderRadius: 29, backgroundColor: YELLOW, alignItems: 'center', justifyContent: 'center', elevation: 4 },
+  fab: { position: 'absolute', right: 16, width: 54, height: 54, borderRadius: 27, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, padding: 40 },
 });
