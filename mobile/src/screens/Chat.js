@@ -13,7 +13,6 @@ import { colors } from '../theme';
 // Chat to the Snapchat reference: profile and search on the left, centred title, bell / add-friend / more on the right,
 // chips My AI / Games / Stories (count) / Near Me / New and the inbox groups, a camera on each row,
 // and a floating yellow compose button. Activity lives on this same screen: the bell or more icon switches to it.
-const BLUE = '#3797f0';
 const GREY = '#8e8e93';
 const BLUE = '#0095f6';
 const GROUPS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
@@ -46,6 +45,7 @@ export default function Chat() {
 
   const all = items || [];
   const shown = all.filter((i) => i.group === filter);
+  const totalUnread = all.reduce((sum, item) => sum + Number(item.unread || 0), 0);
   const unreadByGroup = GROUPS.reduce((counts, [key]) => {
     counts[key] = all.reduce((sum, item) => sum + (item.group === key ? Number(item.unread || 0) : 0), 0);
     return counts;
