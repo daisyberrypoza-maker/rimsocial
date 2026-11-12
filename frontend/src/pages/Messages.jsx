@@ -8,9 +8,7 @@ import Activity from './Activity.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 
-// Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
-// count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with the last
-// message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
+// Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
 
