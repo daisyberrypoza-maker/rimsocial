@@ -6474,3 +6474,10 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   right: 12px;
   width: 224px;
 }
+/* Direct and group conversations share the same compact header popover. */
+.cv-chat-action-menu,
+.cv-group-action-menu {
+  top: calc(env(safe-area-inset-top, 0px) + 58px);
+  right: 12px;
+  width: 224px;
+}
