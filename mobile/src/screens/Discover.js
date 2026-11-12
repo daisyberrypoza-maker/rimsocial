@@ -10,7 +10,7 @@ import { api } from '../api';
 import { useAppStore } from '../store';
 import { loadPage } from '../lib/paged';
 import { formatCount } from '../lib/format';
-import { logError, toast } from '../lib/toast';
+import { logError } from '../lib/toast';
 import { mediaUrl } from '../config';
 import { colors } from '../theme';
 
@@ -244,10 +244,10 @@ const styles = StyleSheet.create({
   back: { paddingRight: 4 },
   field: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#efefef', borderRadius: 12, paddingHorizontal: 12, height: 40 },
   input: { flex: 1, fontSize: 16, color: colors.text, padding: 0 },
-  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
-  tab: { borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 999, paddingHorizontal: 16, height: 34, justifyContent: 'center' },
-  tabOn: { backgroundColor: '#efefef', borderColor: '#efefef' },
-  tabText: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  tabs: { flexDirection: 'row', gap: 0, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#efefef' },
+  tab: { flex: 1, alignItems: 'center', borderWidth: 0, borderRadius: 0, paddingHorizontal: 10, height: 40, justifyContent: 'center' },
+  tabOn: { backgroundColor: 'transparent', borderBottomWidth: 2, borderBottomColor: colors.text },
+  tabText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
   tabTextOn: { color: colors.text },
   cell: { flex: 1 / 3, aspectRatio: 1, margin: 1 },
   fill: { width: '100%', height: '100%', backgroundColor: colors.surface },
