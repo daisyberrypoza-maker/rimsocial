@@ -488,13 +488,12 @@ export default function Conversation() {
       )}
 
       {chatMenu && (
-        <div className="cv-sheet-backdrop" onClick={() => setChatMenu(false)}>
-          <section className="cv-sheet" role="dialog" aria-label="Chat options" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={toggleMute}>{muted ? 'Unmute messages' : 'Mute messages'}</button>
-            <button type="button" onClick={openSharedActivity}>See shared activity</button>
-            <button type="button" className="danger" onClick={deleteConversation}>Delete conversation</button>
-            <button type="button" className="danger" onClick={blockPerson}>Block {name}</button>
-            <button type="button" className="cancel" onClick={() => setChatMenu(false)}>Cancel</button>
+        <div className="sn-menu-dismiss" onClick={() => setChatMenu(false)}>
+          <section className="sn-action-menu cv-chat-action-menu" role="menu" aria-label="Chat options" onClick={(e) => e.stopPropagation()}>
+            <button type="button" role="menuitem" onClick={toggleMute}><Icon name={muted ? 'bell' : 'bell-off'} size={17} />{muted ? 'Unmute messages' : 'Mute messages'}</button>
+            <button type="button" role="menuitem" onClick={openSharedActivity}><Icon name="images" size={17} />See shared activity</button>
+            <button type="button" role="menuitem" className="danger" onClick={deleteConversation}><Icon name="trash-2" size={17} />Delete conversation</button>
+            <button type="button" role="menuitem" className="danger" onClick={blockPerson}><Icon name="shield-ban" size={17} />Block {name}</button>
           </section>
         </div>
       )}
