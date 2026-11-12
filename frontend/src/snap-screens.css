@@ -974,3 +974,32 @@
 .sn-page .sn-fab svg {
   stroke: #fff !important;
 }
+
+
+/* Keep the new-message flow consistent with the light Instagram inbox. */
+.nc-backdrop,
+.nc-sheet,
+.nc-tabs {
+  background: #fff !important;
+  color: #111 !important;
+}
+.nc-tab {
+  color: #737373 !important;
+  background: #fff !important;
+}
+.nc-tab.on {
+  color: #111 !important;
+}
+.nc-chat.on,
+.nc-chat.on:hover,
+.nc-chat.on:active {
+  background: #0095f6 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.nc-recipient button,
+.nc-recipient button:hover,
+.nc-recipient button:active {
+  background: #e8eaed !important;
+  color: #262626 !important;
+}
