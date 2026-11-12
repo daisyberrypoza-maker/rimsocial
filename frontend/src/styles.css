@@ -5641,7 +5641,7 @@ html, body, #root { width:100% !important; height:100% !important; }
 /* Stories row: full width, no side gutter, so the first story sits at the screen's left edge and the row scrolls smoothly
    to the last story. The heading keeps its section padding. "My Stories" is 2px larger and sits 2px lower. */
 .st-page .st-row { margin:0 -14px !important; padding:6px 0 8px !important; scroll-padding:0 !important; -webkit-overflow-scrolling:touch; touch-action:pan-x; }
-.st-page .st-row > .st-friend:first-child { margin-left:0 !important; }
+.st-page .st-row > .st-friend:first-child { margin-left:14px !important; }
 .st-page .st-section > .st-h2.st-friends-heading { font-size:16px !important; line-height:20px !important; margin-top:2px !important; }
 
 /* Pull to refresh: the indicator grows as you pull and spins while the screen reloads */
