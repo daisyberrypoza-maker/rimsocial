@@ -52,6 +52,17 @@ router.post('/login', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Public, read-only check used by the sign-up form to show live username feedback.
+router.get('/username-available', async (req, res, next) => {
+  try {
+    const username = String(req.query.username || '').trim();
+    if (!/^[a-z0-9_]{3,32}$/i.test(username)) return res.json({ available: false, reason: 'invalid' });
+    if (username.toLowerCase() === 'me') return res.json({ available: false, reason: 'reserved' });
+    const taken = await User.findOne({ where: { username: username.toLowerCase() }, attributes: ['id'] });
+    res.json({ available: !taken, reason: taken ? 'taken' : null });
+  } catch (e) { next(e); }
+});
+
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id);

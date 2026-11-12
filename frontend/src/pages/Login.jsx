@@ -3,13 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadAccount } from '../account.js';
-import Icon from '../components/Icon.jsx';
+import './Login.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const USERNAME_RE = /^[A-Za-z0-9_]{3,32}$/;
 const COUNTRY_CODES = `AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW`.split(' ');
 const countryNames = new Intl.DisplayNames([typeof navigator !== 'undefined' ? navigator.language : 'en'], { type: 'region' });
 const COUNTRIES = COUNTRY_CODES.map((code) => ({ code, name: countryNames.of(code) || code })).sort((a, b) => a.name.localeCompare(b.name));
 
+const USERNAME_MESSAGES = {
+  checking: ['checking', 'Checking availability…'],
+  ok: ['ok', 'Username is available'],
+  taken: ['taken', 'That username is taken'],
+  reserved: ['taken', 'That username is reserved'],
+  invalid: ['invalid', 'Use 3–32 letters, numbers or underscores'],
+};
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,11 +25,41 @@ export default function Login() {
   const googleButton = useRef(null);
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ username: '', password: '', email: '', displayName: '', country: 'NG' });
+  const [usernameStatus, setUsernameStatus] = useState({ state: 'idle' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // Live username feedback on sign-up, debounced so we do not query on every keystroke.
+  useEffect(() => {
+    if (mode !== 'register') return undefined;
+    const candidate = form.username.trim();
+    if (!candidate) { setUsernameStatus({ state: 'idle' }); return undefined; }
+    if (!USERNAME_RE.test(candidate)) { setUsernameStatus({ state: 'invalid' }); return undefined; }
+    if (candidate.toLowerCase() === 'me') { setUsernameStatus({ state: 'reserved' }); return undefined; }
+    setUsernameStatus({ state: 'checking' });
+    let stale = false;
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api(`/v1/auth/username-available?username=${encodeURIComponent(candidate)}`);
+        if (stale) return;
+        setUsernameStatus(data.available ? { state: 'ok' } : { state: data.reason === 'reserved' ? 'reserved' : 'taken' });
+      } catch {
+        if (!stale) setUsernameStatus({ state: 'idle' });
+      }
+    }, 400);
+    return () => { stale = true; clearTimeout(timer); };
+  }, [form.username, mode]);
+
+  const canLogin = form.username.trim() !== '' && form.password !== '';
+  const canRegister = form.email.includes('@') && form.displayName.trim() !== '' &&
+    usernameStatus.state === 'ok' && form.password.length >= 8;
+
+  function switchMode(next) {
+    setMode(next); setError(''); setNotice(''); setShowPassword(false);
+  }
 
   async function finishSession(data) {
     setSession(data.token, data.user);
@@ -32,6 +70,8 @@ export default function Login() {
 
   async function submit(e) {
     e?.preventDefault();
+    if (busy) return;
+    if (mode === 'register' ? !canRegister : !canLogin) return;
     setError(''); setNotice(''); setBusy(true);
     try {
       const payload = mode === 'register'
@@ -62,7 +102,7 @@ export default function Login() {
         cancel_on_tap_outside: true,
       });
       googleButton.current.innerHTML = '';
-      window.google.accounts.id.renderButton(googleButton.current, { theme: 'outline', size: 'large', shape: 'pill', text: mode === 'register' ? 'signup_with' : 'continue_with', width: Math.min(340, googleButton.current.clientWidth || 340), logo_alignment: 'left' });
+      window.google.accounts.id.renderButton(googleButton.current, { theme: 'outline', size: 'large', shape: 'rectangular', text: mode === 'register' ? 'signup_with' : 'continue_with', width: Math.min(350, googleButton.current.clientWidth || 350), logo_alignment: 'center' });
     };
     if (window.google?.accounts?.id) renderGoogleButton();
     else {
@@ -75,51 +115,79 @@ export default function Login() {
     return () => { cancelled = true; };
   }, [form.country, mode]);
 
-  const handleSubmit = (e) => { e.preventDefault(); submit(e); };
+  const passwordToggle = (
+    form.password ? (
+      <button className="ig-auth-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>
+        {showPassword ? 'Hide' : 'Show'}
+      </button>
+    ) : null
+  );
+
+  const usernameMessage = USERNAME_MESSAGES[usernameStatus.state];
+
   return (
-    <main className="auth-screen">
-      <section className="auth-card" aria-label="RimSocial account">
-        <div className="auth-brand-row">
-          <div className="auth-monogram" aria-hidden="true">r</div>
-          <span className="auth-brand">RimSocial</span>
-        </div>
+    <main className="ig-auth">
+      <section className="ig-auth-card" aria-label="RimSocial account">
+        <h1 className="ig-auth-logo">RimSocial</h1>
+
         {mode === 'login' ? (
           <>
-            <div className="auth-intro"><p className="auth-eyebrow">YOUR PEOPLE. YOUR MOMENTS.</p><h1>Welcome back</h1><p>Log in to see what your friends are sharing.</p></div>
-            <div className="auth-mode-switch" role="tablist" aria-label="Account action">
-              <button type="button" role="tab" aria-selected="true" className="selected">Log in</button>
-              <button type="button" role="tab" aria-selected="false" onClick={() => { setMode('register'); setError(''); setNotice(''); }}>Sign up</button>
-            </div>
-            <form className="auth-form" onSubmit={submit}>
-              <label>Username or email<input autoComplete="username" placeholder="Username or email" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} /></label>
-              <label>Password<div className="auth-password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Your password" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>
-              <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Log in'}</button>
+            <form className="ig-auth-form" onSubmit={submit}>
+              <input aria-label="Username or email" autoComplete="username" autoCapitalize="none" placeholder="Username or email" value={form.username} onChange={field('username')} required maxLength={254} />
+              <div className="ig-auth-field-wrap">
+                <input aria-label="Password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Password" value={form.password} onChange={field('password')} required />
+                {passwordToggle}
+              </div>
+              <button className="ig-auth-primary" type="submit" disabled={busy || !canLogin}>{busy ? 'Logging in…' : 'Log in'}</button>
             </form>
-            <div className="auth-divider"><span>or continue with</span></div>
-            {GOOGLE_CLIENT_ID ? <div className="google-signin-wrap"><div ref={googleButton} className="google-signin-button" /></div> : <button type="button" className="google-unconfigured" onClick={() => setNotice('Google sign-in needs a Google OAuth Web client ID. Set VITE_GOOGLE_CLIENT_ID in frontend/.env.local and GOOGLE_CLIENT_ID in backend/.env, then restart both servers.')}><span className="google-g">G</span><span>Continue with Google</span></button>}
+
+            <div className="ig-auth-divider"><span>OR</span></div>
+
+            {GOOGLE_CLIENT_ID
+              ? <div className="ig-auth-google-wrap"><div ref={googleButton} className="ig-auth-google-button" /></div>
+              : <button type="button" className="ig-auth-google-unconfigured" onClick={() => setNotice('Google sign-in needs a Google OAuth Web client ID. Set VITE_GOOGLE_CLIENT_ID in frontend/.env.local and GOOGLE_CLIENT_ID in backend/.env, then restart both servers.')}><span className="ig-auth-g">G</span><span>Log in with Google</span></button>}
           </>
         ) : (
           <>
-            <div className="auth-intro auth-register-intro">
-              <h1>Create an account</h1>
-              <p>Sign up to see photos and videos from your friends.</p>
-            </div>
-            <form className="auth-form auth-register-form" onSubmit={handleSubmit}>
-              <label>Email address<input autoComplete="email" type="email" placeholder="Email address" value={form.email} onChange={field('email')} required /></label>
-              <label>Full name<input autoComplete="name" placeholder="Full name" value={form.displayName} onChange={field('displayName')} required maxLength={64} /></label>
-              <label>Username<input autoComplete="username" placeholder="Username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} pattern="[A-Za-z0-9_]+" title="Use letters, numbers or underscores." /></label>
-              <label>Password<div className="auth-password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Password (at least 8 characters)" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>
-              <label>Country<select value={form.country} onChange={field('country')} required>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
-              <p className="auth-signup-note">We use your information to create and secure your RimSocial account.</p>
-              <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Sign up'}</button>
+            <p className="ig-auth-subtitle">Sign up to see photos and videos from your friends.</p>
+            <form className="ig-auth-form" onSubmit={submit}>
+              <input aria-label="Email address" autoComplete="email" type="email" autoCapitalize="none" placeholder="Email address" value={form.email} onChange={field('email')} required />
+              <input aria-label="Full name" autoComplete="name" placeholder="Full name" value={form.displayName} onChange={field('displayName')} required maxLength={64} />
+              <input aria-label="Username" autoComplete="username" autoCapitalize="none" placeholder="Username" value={form.username} onChange={field('username')} required maxLength={32} />
+              {usernameMessage && <p className={`ig-auth-status ig-auth-status-${usernameMessage[0]}`} role="status">{usernameMessage[1]}</p>}
+              <div className="ig-auth-field-wrap">
+                <input aria-label="Password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Password" value={form.password} onChange={field('password')} required minLength={8} />
+                {passwordToggle}
+              </div>
+              {form.password && form.password.length < 8 && <p className="ig-auth-status ig-auth-status-hint">Password must be at least 8 characters</p>}
+              <select aria-label="Country" value={form.country} onChange={field('country')} required>
+                {COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
+              </select>
+              <p className="ig-auth-note">By signing up, you agree to our Terms and Privacy Policy. We use your information to create and secure your account.</p>
+              <button className="ig-auth-primary" type="submit" disabled={busy || !canRegister}>{busy ? 'Please wait…' : 'Sign up'}</button>
             </form>
-            <p className="auth-register-switch">Have an account? <button type="button" onClick={() => { setMode('login'); setError(''); }}>Log in</button></p>
-          </>}
-        {notice && <p className="auth-notice" role="status">{notice}</p>}
-        {error && <p className="auth-error" role="alert">{error}</p>}
-        <p className="auth-terms">By continuing, you agree to RimSocial’s Terms and Privacy Policy.</p>
+
+            <div className="ig-auth-divider"><span>OR</span></div>
+
+            {GOOGLE_CLIENT_ID
+              ? <div className="ig-auth-google-wrap"><div ref={googleButton} className="ig-auth-google-button" /></div>
+              : <button type="button" className="ig-auth-google-unconfigured" onClick={() => setNotice('Google sign-in needs a Google OAuth Web client ID. Set VITE_GOOGLE_CLIENT_ID in frontend/.env.local and GOOGLE_CLIENT_ID in backend/.env, then restart both servers.')}><span className="ig-auth-g">G</span><span>Sign up with Google</span></button>}
+          </>
+        )}
+
+        {notice && <p className="ig-auth-notice" role="status">{notice}</p>}
+        {error && <p className="ig-auth-error" role="alert">{error}</p>}
       </section>
-      <p className="auth-footer">A little more fun, a little more you. <span>●</span></p>
+
+      <section className="ig-auth-switch" aria-label={mode === 'login' ? 'Sign up' : 'Log in'}>
+        {mode === 'login' ? (
+          <p>Don’t have an account? <button type="button" onClick={() => switchMode('register')}>Sign up</button></p>
+        ) : (
+          <p>Have an account? <button type="button" onClick={() => switchMode('login')}>Log in</button></p>
+        )}
+      </section>
+
+      <p className="ig-auth-terms">By continuing, you agree to RimSocial’s Terms and Privacy Policy.</p>
     </main>
   );
 }
