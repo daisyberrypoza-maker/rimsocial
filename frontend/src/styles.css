@@ -6422,3 +6422,17 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   font-weight: 600 !important;
   letter-spacing: -.2px !important;
 }
+
+
+/* Rimlight alone keeps the immersive black bottom bar; Following and standard screens stay light. */
+.bottomnav.bottomnav-dark { background:#111214 !important; border-top-color:#252629 !important; }
+.bottomnav.bottomnav-dark a { color:#9a9aa1 !important; }
+.bottomnav.bottomnav-dark a.active,
+.bottomnav.bottomnav-dark a.active svg { color:#fff !important; stroke:#fff !important; }
+
+/* My Story remains present with its add control, but has no story ring until a story is active. */
+.st-page .st-ring.none,
+.st-page .st-friend:first-child .st-ring.none {
+  background:transparent !important;
+  padding:0 !important;
+}
