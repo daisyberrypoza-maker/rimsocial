@@ -178,6 +178,10 @@ export default function Conversation() {
   const [menuFor, setMenuFor] = useState(null);
   const [forwarding, setForwarding] = useState(null);
   const [chatMenu, setChatMenu] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [sharedOpen, setSharedOpen] = useState(false);
+  const [sharedItems, setSharedItems] = useState([]);
+  const [sharedLoading, setSharedLoading] = useState(false);
   const [chats, setChats] = useState([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -190,6 +194,7 @@ export default function Conversation() {
     setPartner(null);
     setMessages(null);
     api(`/v1/messages/with/${userId}/info`).then((data) => { if (alive) { setPartner(data.user); setOnline(Boolean(data.online)); } }).catch((e) => { if (alive) setError(e.message); });
+    api(`/v1/messages/direct/${userId}/preferences`).then((data) => { if (alive) setMuted(Boolean(data.muted)); }).catch(() => {});
     const load = () => api(`/v1/messages/with/${userId}`)
       .then((data) => {
         if (!alive) return;
@@ -327,6 +332,36 @@ export default function Conversation() {
     } catch (e) { logError(e); toast(e.message || 'Could not forward'); }
   }
 
+  async function toggleMute() {
+    const next = !muted;
+    setChatMenu(false);
+    try {
+      const data = await api(`/v1/messages/direct/${userId}/mute`, { method: 'PUT', body: { enabled: next } });
+      setMuted(Boolean(data.muted));
+      toast(data.muted ? 'Notifications muted' : 'Notifications unmuted');
+    } catch (e) { toast(e.message || 'Could not update mute setting'); }
+  }
+
+  async function openSharedActivity() {
+    setChatMenu(false);
+    setSharedOpen(true);
+    setSharedLoading(true);
+    try {
+      const data = await api(`/v1/messages/with/${userId}/shared`);
+      setSharedItems(data.items || []);
+    } catch (e) { toast(e.message || 'Could not load shared activity'); setSharedItems([]); }
+    finally { setSharedLoading(false); }
+  }
+
+  async function deleteConversation() {
+    setChatMenu(false);
+    if (!window.confirm('Delete this conversation from your inbox? The other person will still have their messages.')) return;
+    try {
+      await api(`/v1/messages/direct/${userId}`, { method: 'DELETE' });
+      navigate('/chat', { replace: true });
+    } catch (e) { toast(e.message || 'Could not delete conversation'); }
+  }
+
   async function blockPerson() {
     setChatMenu(false);
     try {
@@ -450,8 +485,29 @@ export default function Conversation() {
       {chatMenu && (
         <div className="cv-sheet-backdrop" onClick={() => setChatMenu(false)}>
           <section className="cv-sheet" role="dialog" aria-label="Chat options" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={toggleMute}>{muted ? 'Unmute messages' : 'Mute messages'}</button>
+            <button type="button" onClick={openSharedActivity}>See shared activity</button>
+            <button type="button" className="danger" onClick={deleteConversation}>Delete conversation</button>
             <button type="button" className="danger" onClick={blockPerson}>Block {name}</button>
             <button type="button" className="cancel" onClick={() => setChatMenu(false)}>Cancel</button>
+          </section>
+        </div>
+      )}
+      {sharedOpen && (
+        <div className="cv-sheet-backdrop" onClick={() => setSharedOpen(false)}>
+          <section className="cv-sheet cv-shared" role="dialog" aria-label="Shared activity" onClick={(e) => e.stopPropagation()}>
+            <h3>Shared activity</h3>
+            {sharedLoading ? <p className="cv-empty">Loading shared activity…</p>
+              : sharedItems.length === 0 ? <p className="cv-empty">No photos, videos or posts shared yet.</p>
+              : sharedItems.map((item) => (
+                <div key={item.id} className="cv-shared-row">
+                  {item.mediaUrl && <Attachment message={item} />}
+                  {item.post && <PostCard post={item.post} />}
+                  {item.body && <p>{item.body}</p>}
+                  <small>{timeOf(item.createdAt)}</small>
+                </div>
+              ))}
+            <button type="button" className="cancel" onClick={() => setSharedOpen(false)}>Close</button>
           </section>
         </div>
       )}
