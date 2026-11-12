@@ -105,12 +105,12 @@ export default function Login() {
               <p>Sign up to see photos and videos from your friends.</p>
             </div>
             <form className="auth-form auth-register-form" onSubmit={handleSubmit}>
-              <label>Mobile number or email address<input autoComplete="email" type="email" placeholder="Email address" value={form.email} onChange={field('email')} required /></label>
+              <label>Email address<input autoComplete="email" type="email" placeholder="Email address" value={form.email} onChange={field('email')} required /></label>
               <label>Full name<input autoComplete="name" placeholder="Full name" value={form.displayName} onChange={field('displayName')} required maxLength={64} /></label>
               <label>Username<input autoComplete="username" placeholder="Username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} pattern="[A-Za-z0-9_]+" title="Use letters, numbers or underscores." /></label>
               <label>Password<div className="auth-password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Password (at least 8 characters)" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>
               <label>Country<select value={form.country} onChange={field('country')} required>{COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
-              <p className="auth-signup-note">People who use our service may have uploaded your contact information to RimSocial. <a href="#/privacy">Learn more</a>.</p>
+              <p className="auth-signup-note">We use your information to create and secure your RimSocial account.</p>
               <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Sign up'}</button>
             </form>
             <p className="auth-register-switch">Have an account? <button type="button" onClick={() => { setMode('login'); setError(''); }}>Log in</button></p>
