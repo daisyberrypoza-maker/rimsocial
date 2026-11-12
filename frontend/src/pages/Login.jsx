@@ -91,7 +91,7 @@ export default function Login() {
               <button type="button" role="tab" aria-selected="false" onClick={() => { setMode('register'); setError(''); setNotice(''); }}>Sign up</button>
             </div>
             <form className="auth-form" onSubmit={submit}>
-              <label>Username<input autoComplete="username" placeholder="Your username" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} /></label>
+              <label>Username or email<input autoComplete="username" placeholder="Username or email" value={form.username} onChange={field('username')} required minLength={3} maxLength={32} /></label>
               <label>Password<div className="auth-password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Your password" value={form.password} onChange={field('password')} required minLength={8} /><button className="password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}><Icon name={showPassword ? 'eye-off' : 'eye'} size={22} /></button></div></label>
               <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'Please wait…' : 'Log in'}</button>
             </form>
