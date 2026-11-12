@@ -4,7 +4,7 @@ name: Check React Native app
 # import or a missing file shows up here instead of on the phone.
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
