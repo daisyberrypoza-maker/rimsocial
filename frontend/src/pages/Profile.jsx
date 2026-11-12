@@ -71,6 +71,7 @@ export default function Profile() {
   // The list is open when its address is open, so Back returns to it
   const listType = LIST_TYPES.includes(list) ? list : '';
   const [people, setPeople] = useState([]);
+  const peopleCache = useRef({});
   const [peopleLoading, setPeopleLoading] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
@@ -95,10 +96,33 @@ export default function Profile() {
   const compactHeader = compactProgress > 0.5;
 
   useEffect(() => {
+    let current = true;
     api(`/v1/users/${username}`)
-      .then((user) => { const storyRing = user.storyRing || (user.hasStory ? 'unseen' : null); useAppStore.getState().setStoryRings({ [user.id]: storyRing }); setProfile(username, { user: { ...user, storyRing }, updatedAt: Date.now() }); })
-      .catch((e) => logError(e));
+      .then((user) => {
+        if (!current) return;
+        const storyRing = user.storyRing || (user.hasStory ? 'unseen' : null);
+        useAppStore.getState().setStoryRings({ [user.id]: storyRing });
+        setProfile(username, { user: { ...user, storyRing }, updatedAt: Date.now() });
+
+        // Warm connection lists and the activity count while the profile is visible,
+        // so opening Followers, Following, or Activity does not start with an empty panel.
+        const preload = [
+          api(`/v1/users/${username}/followers`),
+          api(`/v1/users/${username}/following`),
+          user.isMe ? api('/v1/activity') : Promise.resolve(null),
+        ];
+        Promise.all(preload).then(([followers, following, activityData]) => {
+          if (!current) return;
+          peopleCache.current[username] = {
+            followers: followers.items || [],
+            following: following.items || [],
+          };
+          if (activityData) setActivity(activityData.items || []);
+        }).catch((e) => logError(e));
+      })
+      .catch((e) => { if (current) logError(e); });
     loadPage(feedKey, `/v1/users/${username}/posts`, true).catch((e) => logError(e));
+    return () => { current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
@@ -211,24 +235,37 @@ export default function Profile() {
     navigate(`/u/${username}/blocked`);
   }
 
-  // Lists load from their address, so opening one again after Back reloads it
+  // Use preloaded data immediately; refresh it quietly while the panel is open.
   useEffect(() => {
     if (!listType) return undefined;
     let current = true;
     if (listType === 'activity') {
-      setActivityLoading(true);
+      if (!activity.length) setActivityLoading(true);
       api('/v1/activity')
         .then((data) => { if (current) setActivity(data.items || []); })
-        .catch((e) => logError(e))
+        .catch((e) => { if (current) logError(e); })
         .finally(() => { if (current) setActivityLoading(false); });
     } else {
-      setPeople([]);
       setPeopleQuery('');
-      setPeopleLoading(true);
       const path = listType === 'blocked' ? '/v1/users/blocked' : `/v1/users/${username}/${listType}`;
+      const cachedPeople = peopleCache.current[username]?.[listType];
+      if (cachedPeople) {
+        setPeople(cachedPeople);
+        setPeopleLoading(false);
+      } else {
+        setPeople([]);
+        setPeopleLoading(true);
+      }
       api(path)
-        .then((data) => { if (current) setPeople(data.items || []); })
-        .catch((e) => { if (current) { setPeople([]); logError(e); } })
+        .then((data) => {
+          if (!current) return;
+          const items = data.items || [];
+          if (listType !== 'blocked') {
+            peopleCache.current[username] = { ...(peopleCache.current[username] || {}), [listType]: items };
+          }
+          setPeople(items);
+        })
+        .catch((e) => { if (current && !cachedPeople) { setPeople([]); logError(e); } })
         .finally(() => { if (current) setPeopleLoading(false); });
     }
     return () => { current = false; };
@@ -267,9 +304,13 @@ export default function Profile() {
       const response = person.isFollowing
         ? await api(`/v1/users/${person.id}/follow`, { method: 'DELETE' })
         : await api(`/v1/users/${person.id}/follow`, { method: 'POST' });
-      setPeople((current) => current.map((item) => item.id === person.id
-        ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
-        : item));
+      setPeople((current) => {
+        const updated = current.map((item) => item.id === person.id
+          ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
+          : item);
+        if (listType !== 'blocked') peopleCache.current[username] = { ...(peopleCache.current[username] || {}), [listType]: updated };
+        return updated;
+      });
       // Keep the profile's connection totals in sync with the list immediately.
       const delta = response.isFollowing ? 1 : -1;
       setProfile(username, { user: {
@@ -286,7 +327,11 @@ export default function Profile() {
     setPeopleBusy((current) => ({ ...current, [person.id]: true }));
     try {
       await api(`/v1/users/${person.id}/follower`, { method: 'DELETE' });
-      setPeople((current) => current.filter((item) => item.id !== person.id));
+      setPeople((current) => {
+        const updated = current.filter((item) => item.id !== person.id);
+        peopleCache.current[username] = { ...(peopleCache.current[username] || {}), followers: updated };
+        return updated;
+      });
       setProfile(username, { user: { ...profile, followerCount: Math.max(0, Number(profile.followerCount || 0) - 1) } });
     } catch (error) { logError(error); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
