@@ -89,6 +89,15 @@ export default function GroupConversationPage() {
     }
   }
 
+  async function copyGroupMessage(message) {
+    if (!message?.body) return;
+    try {
+      await navigator.clipboard.writeText(message.body);
+      toast('Message copied');
+    } catch { toast('Could not copy message'); }
+    setMessageMenu(null);
+  }
+
   async function deleteGroupMessage(message) {
     setMessageMenu(null);
     if (!window.confirm('Delete this message for everyone in the group?')) return;
@@ -147,7 +156,8 @@ export default function GroupConversationPage() {
       {messageMenu && (
         <div className="cv-sheet-backdrop" onClick={() => setMessageMenu(null)}>
           <section className="cv-sheet" role="dialog" aria-label="Group message options" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>
+            {messageMenu.body && <button type="button" onClick={() => copyGroupMessage(messageMenu)}>Copy message</button>}
+            {String(messageMenu.senderId) === String(me?.id) && <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>}
             <button type="button" className="cancel" onClick={() => setMessageMenu(null)}>Cancel</button>
           </section>
         </div>
