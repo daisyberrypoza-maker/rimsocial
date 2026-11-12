@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, sequelize } = require('../db');
+const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
@@ -136,6 +136,16 @@ async function withPostPreviews(rows, me) {
 }
 
 
+
+async function preferenceFor(userId, fields) {
+  return ChatPreference.findOne({ where: { userId, ...fields } });
+}
+async function setPreference(userId, fields, patch) {
+  const [row] = await ChatPreference.findOrCreate({ where: { userId, ...fields }, defaults: { ...fields, ...patch } });
+  if (row) await row.update(patch);
+  return row;
+}
+
 // ---- group conversations --------------------------------------------------
 
 // Return groups for the signed-in user, including participants and latest message.
@@ -143,6 +153,8 @@ router.get('/groups', async (req, res, next) => {
   try {
     const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId'], raw: true });
     const ids = memberships.map((row) => row.groupId);
+    const groupPrefs = await ChatPreference.findAll({ where: { userId: req.user.id, groupId: ids }, raw: true });
+    const groupPrefById = new Map(groupPrefs.map((row) => [String(row.groupId), row]));
     if (!ids.length) return res.json({ items: [] });
     const groups = await GroupConversation.findAll({ where: { id: ids }, order: [['updatedAt', 'DESC']] });
     const members = await GroupMember.findAll({ where: { groupId: ids }, raw: true });
@@ -157,6 +169,7 @@ router.get('/groups', async (req, res, next) => {
       name: group.name,
       members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
       lastMessage: latest.get(String(group.id)) || null,
+      muted: Boolean(groupPrefById.get(String(group.id))?.muted),
     })) });
   } catch (error) { next(error); }
 });
@@ -227,6 +240,8 @@ router.get('/conversations', async (req, res, next) => {
     const me = req.user.id;
     await markDelivered(me);
     const blocked = await blockedUserIds(me);
+    const prefs = await ChatPreference.findAll({ where: { userId: me, peerId: { [Op.ne]: null } }, raw: true });
+    const prefByPeer = new Map(prefs.map((row) => [String(row.peerId), row]));
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me }, { recipientId: me }] },
       order: [['createdAt', 'DESC']],
@@ -237,6 +252,7 @@ router.get('/conversations', async (req, res, next) => {
     for (const row of rows) {
       if (isHiddenFor(row, me)) continue;
       const partner = String(row.senderId === me ? row.recipientId : row.senderId);
+      if (prefByPeer.get(partner)?.hidden) continue;
       if (blocked.has(partner)) continue;
       if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0 });
       if (String(row.recipientId) === me && !row.readAt) byPartner.get(partner).unread += 1;
@@ -271,6 +287,7 @@ router.get('/conversations', async (req, res, next) => {
             deliveredAt: entry.last.deliveredAt,
           },
           unread: entry.unread,
+          muted: Boolean(prefByPeer.get(partner)?.muted),
         };
       });
     res.json({ items });
@@ -285,6 +302,78 @@ router.get('/unread-count', async (req, res, next) => {
     const blocked = await blockedUserIds(me);
     const rows = await DirectMessage.findAll({ where: { recipientId: me, readAt: null }, attributes: ['senderId', 'hiddenFor'], raw: true, limit: 5000 });
     res.json({ count: rows.filter((row) => !blocked.has(String(row.senderId)) && !isHiddenFor(row, me)).length });
+  } catch (error) { next(error); }
+});
+
+
+/* Per-user direct-chat controls. Deleting a conversation only removes it from this inbox. */
+router.get('/direct/:userId/preferences', async (req, res, next) => {
+  try {
+    const row = await preferenceFor(req.user.id, { peerId: req.params.userId });
+    res.json({ muted: Boolean(row?.muted) });
+  } catch (error) { next(error); }
+});
+router.put('/direct/:userId/mute', async (req, res, next) => {
+  try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'Account not found');
+    const enabled = Boolean(req.body?.enabled);
+    await setPreference(req.user.id, { peerId: req.params.userId }, { muted: enabled });
+    res.json({ muted: enabled });
+  } catch (error) { next(error); }
+});
+router.delete('/direct/:userId', async (req, res, next) => {
+  try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'Account not found');
+    await setPreference(req.user.id, { peerId: req.params.userId }, { hidden: true });
+    res.json({ deleted: true });
+  } catch (error) { next(error); }
+});
+
+/* Group controls: mute is private; leave removes only this member. */
+router.put('/groups/:groupId/mute', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    const enabled = Boolean(req.body?.enabled);
+    await setPreference(req.user.id, { groupId: req.params.groupId }, { muted: enabled });
+    res.json({ muted: enabled });
+  } catch (error) { next(error); }
+});
+router.delete('/groups/:groupId', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    await member.destroy();
+    await ChatPreference.destroy({ where: { userId: req.user.id, groupId: req.params.groupId } });
+    res.json({ left: true });
+  } catch (error) { next(error); }
+});
+
+/* Shared activity: actual media and post links exchanged in this direct conversation. */
+router.get('/with/:userId/shared', async (req, res, next) => {
+  try {
+    const me = String(req.user.id), other = String(req.params.userId);
+    if ((await blockedUserIds(me)).has(other)) throw httpError(404, 'Conversation not found');
+    const rows = await DirectMessage.findAll({
+      where: {
+        [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }],
+        [Op.or]: [
+          { mediaUrl: { [Op.ne]: null } },
+          { postId: { [Op.ne]: null } },
+          { body: { [Op.like]: '%/p/%' } },
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 100,
+      raw: true,
+    });
+    const visible = rows.filter((row) => !isHiddenFor(row, me)).map(sanitize);
+    const items = await withPostPreviews(visible, me);
+    res.json({ items });
   } catch (error) { next(error); }
 });
 
