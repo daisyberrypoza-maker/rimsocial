@@ -46,8 +46,8 @@ export default function StoryRing({ state = 'seen', size = 72, uploading = false
 }
 
 const styles = StyleSheet.create({
-  ring: { borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
-  face: { overflow: 'hidden', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
+  ring: { borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
+  face: { overflow: 'hidden', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   // Centred on the bottom of the ring, 44x22 pill with a 2px white border (web .st-friend-badge)
   badge: { position: 'absolute', bottom: -2, alignSelf: 'center', width: 44, height: 22, borderRadius: 11, backgroundColor: colors.friendBadge, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
 });

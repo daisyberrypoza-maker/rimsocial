@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
-import { logError, toast } from '../toast.js';
+import { logError } from '../toast.js';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
@@ -22,18 +22,6 @@ function tagsFrom(posts, term) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([tag, count]) => ({ tag, count }));
 }
 
-// Length of a music file in seconds (NaN if the browser cannot read it)
-function audioLength(file) {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const audio = new Audio();
-    audio.preload = 'metadata';
-    audio.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(audio.duration); };
-    audio.onerror = () => { URL.revokeObjectURL(url); resolve(NaN); };
-    audio.src = url;
-  });
-}
-
 export default function Search() {
   const navigate = useNavigate();
   const { tag: routeTag } = useParams();
@@ -44,10 +32,8 @@ export default function Search() {
   const [explore, setExplore] = useState([]);
   const [busy, setBusy] = useState({});
   const [tracks, setTracks] = useState([]);
-  const [reload, setReload] = useState(0);
-  const [trackTitle, setTrackTitle] = useState('');
-  const [trackArtist, setTrackArtist] = useState('');
-  const [trackFile, setTrackFile] = useState(null);
+  const [playingTrackId, setPlayingTrackId] = useState(null);
+  const audioRef = useRef(null);
   const term = query.trim();
 
   useEffect(() => {
@@ -76,39 +62,12 @@ export default function Search() {
         .catch(logError);
     }, term ? 300 : 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [term, tagPage, reload]);
-
-  // The track shows at once as pending; it stays until the upload succeeds, and is removed if it fails
-  async function uploadTrack(event) {
-    event.preventDefault();
-    if (!trackFile || !trackTitle.trim()) return;
-    const seconds = await audioLength(trackFile);
-    if (seconds > 60.5) { toast('Music must be 60 seconds or less'); return; }
-    const title = trackTitle.trim();
-    const artist = trackArtist.trim();
-    const file = trackFile;
-    const tempId = `pending-${Date.now()}`;
-    setTracks((list) => [{ id: tempId, title, artist: artist || 'You', mediaUrl: '', pending: true }, ...list]);
-    setTrackTitle(''); setTrackArtist(''); setTrackFile(null);
-    const body = new FormData();
-    body.append('media', file);
-    body.append('title', title);
-    body.append('artist', artist);
-    try {
-      const track = await api('/v1/audio', { method: 'POST', body });
-      setTracks((list) => list.map((t) => (t.id === tempId ? track : t)));
-      toast('Track added');
-    } catch (e) {
-      logError(e);
-      setTracks((list) => list.filter((t) => t.id !== tempId));
-      toast('Could not add the track');
-    }
-  }
+  }, [term, tagPage]);
 
   const posts = term ? (search?.posts || []) : explore;
   const people = search?.people || [];
   const tags = useMemo(() => tagsFrom(search?.posts || [], term), [search, term]);
-  const showTabs = !tagPage;
+  const showTabs = !tagPage && Boolean(term);
   const activeTab = tagPage ? 'foryou' : tab;
 
   async function toggleFollow(person) {
@@ -163,25 +122,24 @@ export default function Search() {
 
       {activeTab === 'audio' && (
         <section className="sr-audio">
-          <form className="sr-upload" onSubmit={uploadTrack}>
-            <strong>Add music</strong>
-            <input value={trackTitle} onChange={(e) => setTrackTitle(e.target.value)} placeholder="Title" maxLength={80} />
-            <input value={trackArtist} onChange={(e) => setTrackArtist(e.target.value)} placeholder="Artist (optional)" maxLength={80} />
-            <input type="file" accept="audio/*" onChange={(e) => setTrackFile(e.target.files?.[0] || null)} />
-            <small className="sr-upload-note">Up to 60 seconds</small>
-            <button type="submit" disabled={!trackFile || !trackTitle.trim()}>Add music</button>
-          </form>
           {tracks.length ? (
             <ul className="sr-list">
               {tracks.map((track) => (
-                <li key={track.id} className={track.pending ? 'sr-track pending' : 'sr-track'}>
+                <li key={track.id} className="sr-track">
                   <span className="sr-music" aria-hidden="true">♪</span>
                   <span className="sr-person-text"><strong>{track.title}</strong><small>{track.artist}</small></span>
-                  {track.pending ? <span className="sr-pending-dot" aria-hidden="true" /> : <audio controls preload="none" src={mediaUrl(track.mediaUrl)} />}
+                  <button type="button" className={playingTrackId === track.id ? 'sr-play playing' : 'sr-play'} aria-label={playingTrackId === track.id ? 'Pause track' : 'Play track'} onClick={() => {
+                    const player = audioRef.current;
+                    if (!player) return;
+                    if (playingTrackId === track.id && !player.paused) { player.pause(); setPlayingTrackId(null); return; }
+                    player.src = mediaUrl(track.mediaUrl);
+                    player.play().then(() => setPlayingTrackId(track.id)).catch(logError);
+                  }}>{playingTrackId === track.id ? 'Ⅱ' : '▶'}</button>
                 </li>
               ))}
             </ul>
-          ) : <p className="sr-empty">{term ? 'No music found.' : 'No music yet. Add the first track.'}</p>}
+          ) : <p className="sr-empty">{term ? 'No audio found.' : 'No audio available yet.'}</p>}
+          <audio ref={audioRef} preload="none" onEnded={() => setPlayingTrackId(null)} onPause={() => setPlayingTrackId(null)} hidden />
         </section>
       )}
 
