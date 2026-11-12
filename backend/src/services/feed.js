@@ -93,7 +93,7 @@ async function getExplorePage({ userId, cursor, limit }) {
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
-    const [candidates, follows, blocks] = await Promise.all([
+    const [candidates, follows, blocks, mutedRows] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
         attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
@@ -101,6 +101,7 @@ async function getExplorePage({ userId, cursor, limit }) {
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+      UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
@@ -169,6 +170,7 @@ async function getFollowingPage({ userId, cursor, limit }) {
   const [rows, blockedRows, mutedRows] = await Promise.all([
     hydrate(page.map((e) => e.id)),
     UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+    UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
   ]);
   const blockedIds = new Set(blockedRows.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
   const mutedIds = new Set(mutedRows.map((row) => String(row.mutedUserId)));
