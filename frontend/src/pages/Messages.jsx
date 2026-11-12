@@ -5,7 +5,6 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
-import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 
@@ -42,13 +41,12 @@ export default function Messages() {
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
   const [groups, setGroups] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('primary');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
-  const { indicator } = usePullRefresh(async () => { const [data, groupData] = await Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]); setItems(data.items || []); setGroups(groupData.items || []); });
 
   useEffect(() => {
     if (location.state?.view === 'activity') setView('activity');
@@ -100,12 +98,11 @@ export default function Messages() {
   }
 
   const all = items || [];
-  const storyCount = all.filter((item) => item.hasStory).length;
-  const shown = all.filter((item) => {
-    if (filter === 'all') return true;
-    if (filter === 'stories') return item.hasStory;
-    return true;
-  });
+  const shown = all.filter((item) => item.group === filter);
+  const unreadByGroup = ['primary', 'general', 'requests'].reduce((counts, group) => {
+    counts[group] = all.reduce((sum, item) => sum + (item.group === group ? Number(item.unread || 0) : 0), 0);
+    return counts;
+  }, {});
 
   return (
     <main className="sn-page">
@@ -118,7 +115,7 @@ export default function Messages() {
             <Icon name="search" size={20} strokeWidth={2.2} />
           </button>
         </div>
-        <h1 className="sn-title">Chat</h1>
+        <h1 className="sn-title">Messages</h1>
         <div className="sn-head-right">
           <button type="button" className="sn-circle" onClick={() => setView('activity')} aria-label="Notifications">
             <Icon name="bell" size={22} strokeWidth={2} />
@@ -127,18 +124,18 @@ export default function Messages() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
             {newFriends > 0 && <span className="sn-badge">{newFriends > 99 ? '99+' : newFriends}</span>}
           </button>
-          <button type="button" className="sn-circle" onClick={() => setView('activity')} aria-label="More">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+          <button type="button" className="sn-circle" onClick={() => navigate('/chat/new')} aria-label="New message">
+            <Icon name="plus" size={22} strokeWidth={2.2} />
           </button>
         </div>
       </header>
-      {indicator}
-      <nav className="sn-filters" aria-label="Filter chats">
-        <button type="button" className="sn-chip" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>Messages</button>
-        <button type="button" className="sn-chip" aria-pressed={filter === 'stories'} onClick={() => setFilter(filter === 'stories' ? 'all' : 'stories')}>
-          Stories{storyCount > 0 && <span className="sn-count">{storyCount}</span>}
-        </button>
-        <button type="button" className="sn-chip" onClick={() => navigate('/chat/new')} aria-label="New message">New<span className="sn-plus"><Icon name="plus" size={12} strokeWidth={2.6} /></span></button>
+      <nav className="sn-filters" aria-label="Message inbox categories">
+        {['primary', 'general', 'requests'].map((category) => (
+          <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
+            {category === 'primary' ? 'Primary' : category === 'general' ? 'General' : 'Requests'}
+            {unreadByGroup[category] > 0 && <span className="sn-count">{unreadByGroup[category] > 99 ? '99+' : unreadByGroup[category]}</span>}
+          </button>
+        ))}
       </nav>
       {error && <p className="sn-empty" role="alert">{error}</p>}
       <input ref={snapInput} type="file" accept="image/*,video/*" capture="environment" hidden onChange={onSnapPicked} />
@@ -146,8 +143,8 @@ export default function Messages() {
         : shown.length ? (
           <ul className="sn-list">
             {shown.map((item) => {
-              const last = item.lastMessage;
-              const mine = last.senderId === me?.id;
+              const last = item.lastMessage || {};
+              const mine = String(last.senderId) === String(me?.id);
               const name = item.user.displayName || item.user.username;
               return (
                 <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'}>
@@ -175,7 +172,7 @@ export default function Messages() {
             })}
           </ul>
         ) : null}
-      {filter === 'all' && groups.length > 0 && (
+      {filter === 'primary' && groups.length > 0 && (
         <ul className="sn-list sn-group-list">
           {groups.map((group) => {
             const last = group.lastMessage;
@@ -194,7 +191,7 @@ export default function Messages() {
           })}
         </ul>
       )}
-      {items !== null && shown.length === 0 && (filter !== 'all' || groups.length === 0) && <p className="sn-empty">{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</p>}
+      {items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</p>}
       <button type="button" className="sn-fab" onClick={() => navigate('/chat/new')} aria-label="New message">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
       </button>
