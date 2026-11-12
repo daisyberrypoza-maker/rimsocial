@@ -24,6 +24,7 @@ export default function GroupConversationPage() {
   const [muted, setMuted] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
   const endRef = useRef(null);
+  const messagePressTimer = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -135,7 +136,12 @@ export default function GroupConversationPage() {
             return (
               <div key={message.id} className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
-                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageMenu(message); } }}>
+                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}
+                  onContextMenu={(event) => { event.preventDefault(); setMessageMenu(message); }}
+                  onTouchStart={() => { window.clearTimeout(messagePressTimer.current); messagePressTimer.current = window.setTimeout(() => setMessageMenu(message), 500); }}
+                  onTouchMove={() => window.clearTimeout(messagePressTimer.current)}
+                  onTouchEnd={() => window.clearTimeout(messagePressTimer.current)}
+                  onTouchCancel={() => window.clearTimeout(messagePressTimer.current)}>
                   <span className="cv-text">{message.body}</span>
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={() => setMessageMenu(message)} aria-label="Message options"><Icon name="ellipsis" size={15} /></button>}
