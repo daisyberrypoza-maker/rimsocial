@@ -17,14 +17,32 @@ export default function NewMessage() {
   const me = useAppStore((s) => s.user);
   const [query, setQuery] = useState('');
   const [people, setPeople] = useState([]);
+  const [recents, setRecents] = useState([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState([]);
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
+    if (!me?.username) return undefined;
+    let alive = true;
+    Promise.allSettled([
+      api('/v1/messages/conversations'),
+      api(`/v1/users/${encodeURIComponent(me.username)}/following`),
+      api(`/v1/users/${encodeURIComponent(me.username)}/followers`),
+    ]).then((results) => {
+      if (!alive) return;
+      const ordered = new Map();
+      if (results[0].status === 'fulfilled') (results[0].value.items || []).forEach((row) => { if (row.user) ordered.set(String(row.user.id), row.user); });
+      results.slice(1).forEach((result) => { if (result.status === 'fulfilled') (result.value.items || []).forEach((person) => ordered.set(String(person.id), { ...(ordered.get(String(person.id)) || {}), ...person })); });
+      const rows = [...ordered.values()].filter((person) => String(person.id) !== String(me.id));
+      setRecents(rows);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [me?.id, me?.username]);
+  useEffect(() => {
     const q = query.trim();
-    if (!q) { setPeople([]); setSearching(false); return undefined; }
+    if (!q) { setPeople(recents); setSearching(false); return undefined; }
     let alive = true;
     setSearching(true);
     const timer = setTimeout(() => {
@@ -34,7 +52,7 @@ export default function NewMessage() {
         .finally(() => { if (alive) setSearching(false); });
     }, 250);
     return () => { alive = false; clearTimeout(timer); };
-  }, [query, me?.id]);
+  }, [query, me?.id, recents]);
 
   const toggle = (person) => setSelected((current) => current.some((row) => row.id === person.id) ? current.filter((row) => row.id !== person.id) : [...current, person]);
   async function startChat() {
@@ -52,8 +70,7 @@ export default function NewMessage() {
   }
 
   let body;
-  if (!query.trim()) body = <Text style={styles.empty}>Search for someone to message.</Text>;
-  else if (people.length) {
+  if (people.length) {
     body = (
       <FlatList
         data={people}
@@ -70,7 +87,7 @@ export default function NewMessage() {
         )}
       />
     );
-  } else if (!searching) body = <Text style={styles.empty}>No one found.</Text>;
+  } else if (!searching) body = <Text style={styles.empty}>{query.trim() ? 'No one found.' : 'Search for someone or choose a recent contact.'}</Text>;
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
