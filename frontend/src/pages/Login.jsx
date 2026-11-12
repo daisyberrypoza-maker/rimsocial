@@ -174,7 +174,7 @@ export default function Login() {
       <section className="ig-auth-body" aria-label="RimSocial account">
         {mode === 'login' ? (
           <>
-            <h1 className="ig-auth-logo">RimSocial</h1>
+            <img className="ig-auth-logo" src="/icons/rimsocial.svg" alt="RimSocial" />
             <form className="ig-auth-form" onSubmit={handleSubmit}>
               <input aria-label="Username or email" autoComplete="username" autoCapitalize="none" placeholder="Username or email" value={form.username} onChange={field('username')} required maxLength={254} />
               <div className="ig-auth-field-wrap">
