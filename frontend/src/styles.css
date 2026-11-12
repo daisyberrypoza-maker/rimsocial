@@ -5566,11 +5566,7 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sc-stories, .sc-profile, .profile-page, .rec-page, .live-page, .ads-sponsors-content, .creator-page, .auth, .auth-card {
   max-width:none !important; width:100% !important; margin-left:0 !important; margin-right:0 !important; box-sizing:border-box;
 }
-.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; }
-.sr-track.pending { opacity:.6; }
-.sr-pending-dot { width:10px; height:10px; border-radius:50%; background:#4f5bfa; margin-left:auto; animation:sr-pulse 1s ease-in-out infinite; }
-@keyframes sr-pulse { 0%,100% { opacity:.25; } 50% { opacity:1; } }
-.sr-upload-note { font-size:13px; color:#737373; }
+.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; } 50% { opacity:1; } }
 
 /* Stories row: stays inside the screen, so scrolling stops with the last story at the edge (no extra empty scroll) */
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
