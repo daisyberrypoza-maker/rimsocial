@@ -4,7 +4,7 @@ import { View, Text, FlatList, Pressable, StyleSheet, Alert } from 'react-native
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
-import { SquarePen, Search, Bell, UserPlus, Camera, MoreHorizontal } from 'lucide-react-native';
+import { SquarePen, Search, Bell, UserPlus, Camera, MoreHorizontal, Users } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
@@ -21,6 +21,7 @@ export default function Chat() {
   const route = useRoute();
   const me = useAppStore((s) => s.user);
   const [items, setItems] = useState(null);
+  const [groups, setGroups] = useState([]);
   const [filter, setFilter] = useState('primary');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
   const [newRequests, setNewRequests] = useState(0);
@@ -33,7 +34,7 @@ export default function Chat() {
 
   useEffect(() => {
     let alive = true;
-    const load = () => api('/v1/messages/conversations').then((d) => { if (alive) setItems(d.items || []); }).catch(() => {});
+    const load = () => Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]).then(([d, groupData]) => { if (alive) { setItems(d.items || []); setGroups(groupData.items || []); } }).catch(() => {});
     load();
     const timer = setInterval(load, 4000);
     return () => { alive = false; clearInterval(timer); };
@@ -69,6 +70,19 @@ export default function Chat() {
       setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
     } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); }
   }
+  async function toggleGroupMute(group) {
+    try {
+      const result = await api(`/v1/messages/groups/${group.id}/mute`, { method: 'PUT', body: { enabled: !group.muted } });
+      setGroups((current) => current.map((row) => row.id === group.id ? { ...row, muted: Boolean(result.muted) } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update group mute setting'); }
+  }
+  function showGroupOptions(group) {
+    const actions = [{ text: group.muted ? 'Unmute messages' : 'Mute messages', onPress: () => toggleGroupMute(group) }];
+    if (String(group.createdById) === String(me?.id)) actions.push({ text: 'Delete group for everyone', style: 'destructive', onPress: () => Alert.alert('Delete group?', 'This permanently removes the group and its messages for every member.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/groups/${group.id}?scope=everyone`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete group'); } } }]) });
+    actions.push({ text: 'Leave group', style: 'destructive', onPress: () => Alert.alert('Leave group?', 'You will stop receiving its messages.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Leave', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/groups/${group.id}`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not leave group'); } } }]) });
+    actions.push({ text: 'Cancel', style: 'cancel' });
+    Alert.alert(group.name || 'Group chat', 'Group options', actions);
+  }
   function showChatOptions(item) {
     const name = item.user.displayName || item.user.username;
     Alert.alert(name, 'Conversation options', [
@@ -87,6 +101,7 @@ export default function Chat() {
 
   const all = items || [];
   const shown = all.filter((i) => i.group === filter);
+  const listData = filter === 'primary' ? [...shown, ...groups.map((group) => ({ ...group, isGroupRow: true }))] : shown;
   const totalUnread = all.reduce((sum, item) => sum + Number(item.unread || 0), 0);
   const unreadByGroup = GROUPS.reduce((counts, [key]) => {
     counts[key] = all.reduce((sum, item) => sum + (item.group === key ? Number(item.unread || 0) : 0), 0);
@@ -130,10 +145,22 @@ export default function Chat() {
       </View>
 
       <FlatList
-        data={shown}
-        keyExtractor={(i) => String(i.user.id)}
+        data={listData}
+        keyExtractor={(i) => i.isGroupRow ? `group-${i.id}` : `direct-${i.user.id}`}
         ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</Text>}
         renderItem={({ item }) => {
+          if (item.isGroupRow) return (
+            <View style={styles.rowWrap}>
+              <Pressable style={styles.row} onPress={() => navigation.navigate('GroupConversation', { groupId: item.id })} onLongPress={() => showGroupOptions(item)} delayLongPress={450}>
+                <View style={styles.groupAvatar}><Users size={23} color={colors.text} /></View>
+                <View style={styles.text}>
+                  <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.last} numberOfLines={1}>{item.lastMessage ? `${String(item.lastMessage.senderId) === String(me?.id) ? 'You: ' : ''}${item.lastMessage.body}` : 'Group conversation'}</Text>
+                </View>
+              </Pressable>
+              <Pressable onPress={() => showGroupOptions(item)} accessibilityLabel={`Options for ${item.name}`} hitSlop={10} style={styles.rowMenu}><MoreHorizontal size={21} color="#262626" /></Pressable>
+            </View>
+          );
           const mine = item.lastMessage.senderId === me?.id;
           const unread = item.unread > 0;
           const subtitle = item.isOnline ? 'Active now' : mine ? `Sent · ${messageTime(item.lastMessage.createdAt)}` : `${item.lastMessage.body} · ${messageTime(item.lastMessage.createdAt)}`;
@@ -196,6 +223,7 @@ const styles = StyleSheet.create({
   badge: { marginLeft: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#efefef', alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#262626', fontSize: 11, fontWeight: '600' },
   rowWrap: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  groupAvatar: { width: 62, height: 62, borderRadius: 31, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   row: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   ring: { width: 62, height: 62, borderRadius: 31, padding: 3, borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
   ringStory: { borderColor: '#dc2743' },
