@@ -27,6 +27,7 @@ export default function Conversation() {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [sharedOpen, setSharedOpen] = useState(false);
   const [sharedLoading, setSharedLoading] = useState(false);
   const [sharedItems, setSharedItems] = useState([]);
@@ -84,14 +85,13 @@ export default function Conversation() {
     catch (error) { Alert.alert('RimSocial', error.message || 'Could not load shared activity'); setSharedItems([]); }
     finally { setSharedLoading(false); }
   }
-  function showChatOptions() {
-    Alert.alert(partner?.displayName || partner?.username || 'Conversation', 'Conversation options', [
-      { text: muted ? 'Unmute notifications' : 'Mute notifications', onPress: toggleMute },
-      { text: 'Shared activity', onPress: openSharedActivity },
-      { text: 'Delete conversation', style: 'destructive', onPress: () => Alert.alert('Delete conversation?', 'This removes the conversation from your inbox only.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/direct/${userId}`, { method: 'DELETE' }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); } } }]) },
-      { text: 'Block account', style: 'destructive', onPress: () => Alert.alert('Block account?', 'This account will no longer be able to interact with you normally.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Block', style: 'destructive', onPress: async () => { try { await api(`/v1/users/${userId}/block`, { method: 'POST', body: {} }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not block account'); } } }]) },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  function showChatOptions() { setChatMenuOpen(true); }
+  function runConversationAction(action) {
+    setChatMenuOpen(false);
+    if (action === 'mute') return toggleMute();
+    if (action === 'shared') return openSharedActivity();
+    if (action === 'delete') Alert.alert('Delete conversation?', 'This removes the conversation from your inbox only.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/direct/${userId}`, { method: 'DELETE' }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); } } }]);
+    if (action === 'block') Alert.alert('Block account?', 'This account will no longer be able to interact with you normally.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Block', style: 'destructive', onPress: async () => { try { await api(`/v1/users/${userId}/block`, { method: 'POST', body: {} }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not block account'); } } }]);
   }
   const canSend = Boolean(body.trim()) && !sending;
 
@@ -136,6 +136,19 @@ export default function Conversation() {
           <Icon name="send" size={22} color="#fff" filled />
         </Pressable>
       </View>
+      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setChatMenuOpen(false)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Conversation options</Text>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('mute')}><Text style={styles.menuText}>{muted ? 'Unmute notifications' : 'Mute notifications'}</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('shared')}><Text style={styles.menuText}>Shared activity</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('delete')}><Text style={styles.menuDanger}>Delete conversation</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('block')}><Text style={styles.menuDanger}>Block account</Text></Pressable>
+            <Pressable style={styles.menuCancel} onPress={() => setChatMenuOpen(false)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
       <Modal visible={sharedOpen} transparent animationType="slide" onRequestClose={() => setSharedOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.sharedSheet}>
@@ -157,6 +170,13 @@ export default function Conversation() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0, paddingBottom: 6 },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
+  menuTitle: { fontSize: 14, fontWeight: '600', color: '#777', paddingVertical: 9 },
+  menuOption: { minHeight: 46, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  menuText: { fontSize: 15, color: '#111', fontWeight: '500' },
+  menuDanger: { fontSize: 15, color: '#d93025', fontWeight: '500' },
+  menuCancel: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)' },
   sharedSheet: { maxHeight: '78%', backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 24 },
   sharedHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
