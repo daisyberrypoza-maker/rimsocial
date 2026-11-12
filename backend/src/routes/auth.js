@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
@@ -42,7 +43,8 @@ router.post('/register', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { username = '', password = '' } = req.body;
-    const user = await User.findOne({ where: { username: username.toLowerCase() } });
+    const identifier = String(username).trim().toLowerCase();
+    const user = await User.findOne({ where: { [Op.or]: [{ username: identifier }, { email: identifier }] } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw httpError(401, 'Wrong username or password');
     }
