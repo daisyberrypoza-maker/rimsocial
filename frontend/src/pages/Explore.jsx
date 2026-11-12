@@ -181,7 +181,7 @@ export default function Explore() {
           {!suggestedOnly.some((person) => !dismissed[person.id]) && !recommendations.followBack.some((person) => !dismissed[person.id]) && <p className="ig-empty">No suggestions right now. Search for people by name or username.</p>}
         </>}
         {!peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
-          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3>{!peopleMode && <button type="button" className="ig-link" onClick={() => navigate('/friends')}>See all</button>}</div>
+          <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3></div>
           {recommendations.followBack.map((person) => <div className="ig-person" key={person.id}>
             <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={44} /><span><strong>{person.username}</strong><small>{person.displayName || 'Follows you'}</small></span></button>
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
