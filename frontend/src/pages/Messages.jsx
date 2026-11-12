@@ -80,10 +80,11 @@ export default function Messages() {
         else setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
         toast(data.muted ? 'Notifications muted' : 'Notifications unmuted');
       } else if (isGroup) {
-        if (!window.confirm(`Leave “${item.name}”?`)) return;
-        await api(`/v1/messages/groups/${item.id}`, { method: 'DELETE' });
+        const deleteAll = action === 'deleteAll';
+        if (!window.confirm(deleteAll ? `Delete “${item.name}” for every member?` : `Leave “${item.name}”?`)) return;
+        await api(`/v1/messages/groups/${item.id}${deleteAll ? '?scope=everyone' : ''}`, { method: 'DELETE' });
         setGroups((current) => current.filter((row) => row.id !== item.id));
-        toast('You left the group');
+        toast(deleteAll ? 'Group deleted' : 'You left the group');
       } else {
         const name = item.user.displayName || item.user.username;
         if (!window.confirm(`Delete your conversation with ${name}? This only removes it from your inbox.`)) return;
@@ -225,6 +226,7 @@ export default function Messages() {
         <div className="cv-sheet-backdrop" onClick={() => setRowMenu(null)}>
           <section className="cv-sheet" role="dialog" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
             <button type="button" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}>{rowMenu.item.muted ? 'Unmute notifications' : 'Mute notifications'}</button>
+            {rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) && <button type="button" className="danger" onClick={() => runRowAction(rowMenu.item, true, 'deleteAll')}>Delete group for everyone</button>}
             <button type="button" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}>{rowMenu.isGroup ? 'Leave group' : 'Delete conversation'}</button>
             <button type="button" className="cancel" onClick={() => setRowMenu(null)}>Cancel</button>
           </section>
