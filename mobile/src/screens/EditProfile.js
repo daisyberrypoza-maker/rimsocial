@@ -60,7 +60,7 @@ export default function EditProfile() {
   }
 
   const dob = form.dateOfBirth.trim();
-  const validDob = !dob || (/^\\d{4}-\\d{2}-\\d{2}$/.test(dob) && !Number.isNaN(Date.parse(dob)) && new Date(dob).toISOString().slice(0, 10) === dob && dob <= new Date().toISOString().slice(0, 10));
+  const validDob = !dob || (/^\d{4}-\d{2}-\d{2}$/.test(dob) && !Number.isNaN(Date.parse(dob)) && new Date(dob).toISOString().slice(0, 10) === dob && dob <= new Date().toISOString().slice(0, 10));
   const canSave = loaded && !saving && form.displayName.trim().length > 0 && validDob;
 
   async function save() {
