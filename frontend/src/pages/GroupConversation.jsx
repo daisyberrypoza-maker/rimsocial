@@ -22,6 +22,7 @@ export default function GroupConversationPage() {
   const [error, setError] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [messageMenu, setMessageMenu] = useState(null);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -79,6 +80,15 @@ export default function GroupConversationPage() {
     }
   }
 
+  async function deleteGroupMessage(message) {
+    setMessageMenu(null);
+    if (!window.confirm('Delete this message for everyone in the group?')) return;
+    try {
+      await api('/v1/messages/groups/' + groupId + '/messages/' + message.id, { method: 'DELETE' });
+      setMessages((current) => (current || []).filter((row) => row.id !== message.id));
+    } catch (e) { toast(e.message || 'Could not delete message'); }
+  }
+
   const members = group?.members || [];
   const senderName = (id) => {
     const user = members.find((person) => String(person.id) === String(id));
@@ -107,9 +117,10 @@ export default function GroupConversationPage() {
             return (
               <div key={message.id} className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
-                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
+                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageMenu(message); } }}>
                   <span className="cv-text">{message.body}</span>
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
+                  {mine && <button type="button" className="cv-group-message-options" onClick={() => setMessageMenu(message)} aria-label="Message options"><Icon name="ellipsis" size={15} /></button>}
                 </div>
               </div>
             );
@@ -124,6 +135,14 @@ export default function GroupConversationPage() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
         </button>
       </form>
+      {messageMenu && (
+        <div className="cv-sheet-backdrop" onClick={() => setMessageMenu(null)}>
+          <section className="cv-sheet" role="dialog" aria-label="Group message options" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>
+            <button type="button" className="cancel" onClick={() => setMessageMenu(null)}>Cancel</button>
+          </section>
+        </div>
+      )}
       {optionsOpen && (
         <div className="cv-sheet-backdrop" onClick={() => setOptionsOpen(false)}>
           <section className="cv-sheet" role="dialog" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
