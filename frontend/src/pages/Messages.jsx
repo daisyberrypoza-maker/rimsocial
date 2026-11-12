@@ -46,6 +46,7 @@ export default function Messages() {
   const [rowMenu, setRowMenu] = useState(null);
   const snapInput = useRef(null);
   const snapTo = useRef(null);
+  const longPressTimer = useRef(null);
 
   useEffect(() => {
     if (location.state?.view === 'activity') setView('activity');
@@ -73,7 +74,11 @@ export default function Messages() {
   async function runRowAction(item, isGroup, action) {
     setRowMenu(null);
     try {
-      if (action === 'mute') {
+      if (action === 'reminder' || action === 'organizer') { toast(action === 'reminder' ? 'Reminder setup is not available yet.' : 'Chat organizer is not available yet.'); return; }
+      if (!isGroup && action === 'read') { await api(`/v1/messages/with/${item.user.id}/read`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: 0 } : row)); toast('Marked as read');
+      } else if (!isGroup && action === 'unread') { await api(`/v1/messages/with/${item.user.id}/unread`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: Math.max(1, row.unread || 0) } : row)); toast('Marked as unread');
+      } else if (!isGroup && action === 'block') { if (!window.confirm(`Block ${item.user.displayName || item.user.username}?`)) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
+      } else if (action === 'mute') {
         const endpoint = isGroup ? `/v1/messages/groups/${item.id}/mute` : `/v1/messages/direct/${item.user.id}/mute`;
         const data = await api(endpoint, { method: 'PUT', body: { enabled: !item.muted } });
         if (isGroup) setGroups((current) => current.map((row) => row.id === item.id ? { ...row, muted: Boolean(data.muted) } : row));
@@ -180,11 +185,11 @@ export default function Messages() {
                     <span className="sn-text">
                       <span className="sn-name-row">
                         <span className="sn-name">{name}</span>
-                        <span className="sn-time">{timeAgo(last.createdAt)}</span>
+                        
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
-                        <span className="sn-txt">{previewOf(last)}</span>
+                        <span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span>
                       </span>
                     </span>
                   </Link>
@@ -209,8 +214,8 @@ export default function Messages() {
                 <Link to={`/chat/group/${group.id}`} className="sn-row">
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={23} /></span>
                   <span className="sn-text">
-                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
-                    <span className="sn-sub"><span className="sn-txt">{preview}</span></span>
+                    <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
+                    <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
                   </span>
                 </Link>
                 <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item: group, isGroup: true })} aria-label={`Options for ${group.name}`}>
@@ -223,12 +228,17 @@ export default function Messages() {
       )}
       {items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</p>}
       {rowMenu && (
-        <div className="cv-sheet-backdrop" onClick={() => setRowMenu(null)}>
-          <section className="cv-sheet" role="dialog" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}>{rowMenu.item.muted ? 'Unmute notifications' : 'Mute notifications'}</button>
-            {rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) && <button type="button" className="danger" onClick={() => runRowAction(rowMenu.item, true, 'deleteAll')}>Delete group for everyone</button>}
-            <button type="button" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}>{rowMenu.isGroup ? 'Leave group' : 'Delete conversation'}</button>
-            <button type="button" className="cancel" onClick={() => setRowMenu(null)}>Cancel</button>
+        <div className="sn-menu-dismiss" onClick={() => setRowMenu(null)}>
+          <section className="sn-action-menu" role="menu" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
+            {!rowMenu.isGroup && <>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'reminder')}><Icon name="bell" size={17} />Set reminder</button>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'organizer')}><Icon name="calendar" size={17} />Organizer</button>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread')}><Icon name={rowMenu.item.unread ? 'check' : 'mail'} size={17} />Mark as {rowMenu.item.unread ? 'read' : 'unread'}</button>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'block')}><Icon name="shield" size={17} />Block</button>
+            </>}
+            <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}><Icon name={rowMenu.item.muted ? 'volume-2' : 'volume-x'} size={17} />{rowMenu.item.muted ? 'Unmute' : 'Mute'}</button>
+            {rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) && <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, true, 'deleteAll')}><Icon name="trash" size={17} />Delete group for everyone</button>}
+            <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}><Icon name="trash" size={17} />{rowMenu.isGroup ? 'Leave group' : 'Delete'}</button>
           </section>
         </div>
       )}
