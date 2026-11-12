@@ -21,7 +21,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 0;
 }
 
 .settings-head h2 {
@@ -40,7 +40,7 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #f2f2f2;
+  background: transparent;
   color: #111;
   cursor: pointer;
 }
@@ -104,15 +104,7 @@
 }
 
 /* Hairline between rows, starting at the text so the icon column stays clean */
-.settings-item + .settings-item::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 60px;
-  right: 20px;
-  height: 1px;
-  background: #efefef;
-}
+.settings-item + .settings-item::before { content: none !important; display: none !important; }
 
 .settings-item-icon {
   flex: 0 0 24px;
@@ -163,7 +155,7 @@
   justify-content: center;
   gap: 10px;
   padding: 0;
-  border: 1px solid #e3e3e3;
+  border: 0;
   border-radius: 12px;
   background: #fff;
   color: #e0243c;
@@ -201,3 +193,16 @@
 .profile-drawer-backdrop .settings-menu .settings-item { color:#111 !important; background:#fff !important; }
 .profile-drawer-backdrop .settings-menu .settings-item:active,
 .profile-drawer-backdrop .settings-menu .settings-item:hover { background:#f6f6f6 !important; }
+
+/* Keep the settings drawer free of dividers, borders, and filled close controls. */
+.profile-drawer-backdrop .settings-head,
+.profile-drawer-backdrop .settings-section,
+.profile-drawer-backdrop .settings-item,
+.profile-drawer-backdrop .settings-foot,
+.profile-drawer-backdrop .settings-logout,
+.profile-drawer-backdrop .settings-close { border: 0 !important; outline: 0 !important; }
+.profile-drawer-backdrop .settings-item + .settings-item::before { content: none !important; display: none !important; }
+.profile-drawer-backdrop .settings-close,
+.profile-drawer-backdrop .settings-close:hover,
+.profile-drawer-backdrop .settings-close:active,
+.profile-drawer-backdrop .settings-logout { background: transparent !important; box-shadow: none !important; }
