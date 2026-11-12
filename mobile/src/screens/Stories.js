@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   titleWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '500', color: colors.text },
   section: { paddingTop: 12, paddingLeft: SIDE, paddingBottom: 8 },
-  friendsHeading: { fontFamily: FONT, fontSize: 14, lineHeight: 18, fontWeight: '700', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
+  friendsHeading: { fontFamily: FONT, fontSize: 14, lineHeight: 18, fontWeight: '500', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
   h2Row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   pill: { alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: colors.text, justifyContent: 'center' },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   friend: { width: 92, alignItems: 'center' },
   plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
   // Name 12px, with a little space above it so it does not sit tight against the ring
-  name: { fontFamily: FONT, marginTop: 1.5, fontSize: 12, lineHeight: 14, fontWeight: '600', color: colors.text, maxWidth: 92 },
+  name: { fontFamily: FONT, marginTop: 1.5, fontSize: 12, lineHeight: 14, fontWeight: '500', color: colors.text, maxWidth: 92 },
   handle: { fontFamily: FONT, fontSize: 12, lineHeight: 14, fontWeight: '400', color: colors.handle, maxWidth: 92 },
   storyBorder: { borderWidth: 2, borderColor: colors.unseen },
   empty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 32 },
