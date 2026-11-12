@@ -149,6 +149,7 @@ export default function App() {
         <Route path="/live" element={<RequireAuth><LiveBroadcasts /></RequireAuth>} />
         <Route path="/algorithm" element={<RequireAuth><Algorithm /></RequireAuth>} />
         <Route path="/chat" element={<RequireAuth><Messages /></RequireAuth>} />
+        <Route path="/message" element={<RequireAuth><Messages /></RequireAuth>} />
         <Route path="/chat/new" element={<RequireAuth><NewMessage /></RequireAuth>} />
         <Route path="/chat/group/:groupId" element={<RequireAuth><GroupConversationPage /></RequireAuth>} />
         <Route path="/chat/:userId" element={<RequireAuth><Conversation /></RequireAuth>} />
