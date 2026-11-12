@@ -8,11 +8,14 @@ on:
       - clipverse-production-fixes-2026-11-05
       - clipverse-social-experience-2026-11-05
       - 'feature/**'
-      - 'fix/**'
   pull_request:
     branches:
       - main
       - rimsocial-full-feature-fixes
+
+concurrency:
+  group: rimsocial-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
