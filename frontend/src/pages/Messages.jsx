@@ -43,6 +43,7 @@ export default function Messages() {
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const [rowMenu, setRowMenu] = useState(null);
   const snapInput = useRef(null);
   const snapTo = useRef(null);
 
@@ -68,6 +69,30 @@ export default function Messages() {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  async function runRowAction(item, isGroup, action) {
+    setRowMenu(null);
+    try {
+      if (action === 'mute') {
+        const endpoint = isGroup ? `/v1/messages/groups/${item.id}/mute` : `/v1/messages/direct/${item.user.id}/mute`;
+        const data = await api(endpoint, { method: 'PUT', body: { enabled: !item.muted } });
+        if (isGroup) setGroups((current) => current.map((row) => row.id === item.id ? { ...row, muted: Boolean(data.muted) } : row));
+        else setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
+        toast(data.muted ? 'Notifications muted' : 'Notifications unmuted');
+      } else if (isGroup) {
+        if (!window.confirm(`Leave “${item.name}”?`)) return;
+        await api(`/v1/messages/groups/${item.id}`, { method: 'DELETE' });
+        setGroups((current) => current.filter((row) => row.id !== item.id));
+        toast('You left the group');
+      } else {
+        const name = item.user.displayName || item.user.username;
+        if (!window.confirm(`Delete your conversation with ${name}? This only removes it from your inbox.`)) return;
+        await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
+        setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+        toast('Conversation deleted');
+      }
+    } catch (e) { toast(e.message || 'Could not complete this action'); logError(e); }
+  }
 
   // The camera opens the phone camera; the photo or video is sent straight to that person
   function openCamera(userId) {
@@ -165,6 +190,9 @@ export default function Messages() {
                   <button type="button" className="sn-cam" onClick={() => openCamera(item.user.id)} aria-label={`Send ${name} a snap`}>
                     <Icon name="camera" size={24} strokeWidth={2} />
                   </button>
+                  <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item, isGroup: false })} aria-label={`Options for ${name}`}>
+                    <Icon name="ellipsis" size={20} />
+                  </button>
                 </li>
               );
             })}
@@ -184,12 +212,24 @@ export default function Messages() {
                     <span className="sn-sub"><span className="sn-txt">{preview}</span></span>
                   </span>
                 </Link>
+                <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item: group, isGroup: true })} aria-label={`Options for ${group.name}`}>
+                  <Icon name="ellipsis" size={20} />
+                </button>
               </li>
             );
           })}
         </ul>
       )}
       {items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</p>}
+      {rowMenu && (
+        <div className="cv-sheet-backdrop" onClick={() => setRowMenu(null)}>
+          <section className="cv-sheet" role="dialog" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}>{rowMenu.item.muted ? 'Unmute notifications' : 'Mute notifications'}</button>
+            <button type="button" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}>{rowMenu.isGroup ? 'Leave group' : 'Delete conversation'}</button>
+            <button type="button" className="cancel" onClick={() => setRowMenu(null)}>Cancel</button>
+          </section>
+        </div>
+      )}
       <button type="button" className="sn-fab" onClick={() => navigate('/chat/new')} aria-label="New message">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
       </button>
