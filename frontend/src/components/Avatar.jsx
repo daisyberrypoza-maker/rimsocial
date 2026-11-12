@@ -23,7 +23,7 @@ export default function Avatar({ user, size = 40, ring = false, storyRing }) {
   const inner = showImage
     ? <img src={src} alt="" loading="lazy" decoding="async" onError={() => setFailedSrc(src)} />
     : <span className="avatar-initial" style={{ fontSize: size * 0.4 }}>{label}</span>;
-  const ringed = Boolean(state) || ring;
+  const ringed = Boolean(state);
   const className = ['avatar', ringed ? 'ring' : '', state ? `story-${state}` : ''].filter(Boolean).join(' ');
 
   return (

@@ -321,6 +321,26 @@ export default function Profile() {
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
+  async function togglePersonMute(person) {
+    if (peopleBusy[person.id]) return;
+    setPeopleBusy((current) => ({ ...current, [person.id]: true }));
+    try {
+      const response = await api(`/v1/users/${person.id}/mute`, { method: 'PUT', body: { enabled: !person.isMuted } });
+      setPeople((current) => {
+        const updated = current.map((item) => item.id === person.id ? { ...item, isMuted: Boolean(response.muted) } : item);
+        peopleCache.current[username] = { ...(peopleCache.current[username] || {}), [listType]: updated };
+        return updated;
+      });
+      toast(response.muted ? `Muted @${person.username}` : `Unmuted @${person.username}`);
+    } catch (e) { toast(e.message || 'Could not update mute setting'); logError(e); }
+    finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
+  }
+
+  function openPersonSharedActivity(person) {
+    setListMenuPerson(null);
+    navigate(`/chat/${person.id}`, { state: { openSharedActivity: true } });
+  }
+
   async function removeFollower(person) {
     if (!profile?.isMe || peopleBusy[person.id]) return;
     if (!window.confirm(`Remove @${person.username} as a follower?`)) return;
@@ -659,12 +679,12 @@ export default function Profile() {
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
                       : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
                   {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
-                  {listType === 'following' && <div className="pv-person-menu-wrap">
+                  {listType !== 'blocked' && <div className="pv-person-menu-wrap">
                     <button type="button" className="pv-more" aria-label={`Options for ${person.username}`} aria-expanded={listMenuPerson === person.id} onClick={() => setListMenuPerson((current) => current === person.id ? null : person.id)}><Icon name="more-vertical" size={18} /></button>
                     {listMenuPerson === person.id && <div className="pv-person-menu" role="menu">
-                      <button type="button" role="menuitem" className="danger" onClick={() => { setListMenuPerson(null); toggleListFollow(person); }} disabled={Boolean(peopleBusy[person.id])}>Unfollow</button>
-                      <button type="button" role="menuitem" disabled title="Mute requires a server-side mute setting">Mute</button>
-                      <button type="button" role="menuitem" disabled title="Shared activity is not available from the current API">See shared activity</button>
+                      <button type="button" role="menuitem" className={person.isFollowing ? 'danger' : ''} onClick={() => { setListMenuPerson(null); toggleListFollow(person); }} disabled={Boolean(peopleBusy[person.id])}>{person.isFollowing ? 'Unfollow' : 'Follow back'}</button>
+                      <button type="button" role="menuitem" onClick={() => togglePersonMute(person)} disabled={Boolean(peopleBusy[person.id])}>{person.isMuted ? 'Unmute' : 'Mute'}</button>
+                      <button type="button" role="menuitem" onClick={() => openPersonSharedActivity(person)}>See shared activity</button>
                     </div>}
                   </div>}
                 </li>

@@ -345,6 +345,27 @@ const GroupMessage = sequelize.define('GroupMessage', {
   body: { type: DataTypes.STRING(2000), allowNull: false },
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
+
+
+const UserMute = sequelize.define('UserMute', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  mutedUserId: { type: DataTypes.UUID, allowNull: false },
+}, { tableName: 'user_mutes', indexes: [{ unique: true, fields: ['userId', 'mutedUserId'] }] });
+
+const ChatPreference = sequelize.define('ChatPreference', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  peerId: { type: DataTypes.UUID, allowNull: true },
+  groupId: { type: DataTypes.UUID, allowNull: true },
+  muted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+}, { tableName: 'chat_preferences', indexes: [
+  { unique: true, fields: ['userId', 'peerId'] },
+  { unique: true, fields: ['userId', 'groupId'] },
+  { fields: ['userId', 'muted'] },
+] });
+
 const DirectMessage = sequelize.define('DirectMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   senderId: { type: DataTypes.UUID, allowNull: false },
@@ -369,10 +390,10 @@ const DirectMessage = sequelize.define('DirectMessage', {
 
 module.exports = {
   AudioTrack,
-  DirectMessage, GroupConversation, GroupMember, GroupMessage,
+  DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, PostReport,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };

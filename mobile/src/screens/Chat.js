@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
-import { MoreHorizontal, SquarePen, Search, Bell, UserPlus, Camera, ChevronRight, Plus } from 'lucide-react-native';
+import { SquarePen, Search, Bell, UserPlus, Camera, MoreHorizontal, Users } from 'lucide-react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { messageTime } from '../lib/format';
 import { colors } from '../theme';
 
-// Chat to the Snapchat reference: profile and search on the left, centred title, bell / add-friend / more on the right,
-// chips My AI / Games / Stories (count) / Near Me / New and the inbox groups, a camera on each row,
-// and a floating yellow compose button. Activity lives on this same screen: the bell or more icon switches to it.
-const BLUE = '#3797f0';
+// Instagram-style inbox with API-backed Primary, General and Requests categories. Activity remains accessible from the bell.
 const GREY = '#8e8e93';
-const CHIP = '#f0f0f2';
-const CHIP_ON = '#e8eefc';
-const YELLOW = '#fffc00';
+const BLUE = '#0095f6';
 const GROUPS = [['primary', 'Primary'], ['general', 'General'], ['requests', 'Requests']];
 
 export default function Chat() {
@@ -26,41 +21,116 @@ export default function Chat() {
   const route = useRoute();
   const me = useAppStore((s) => s.user);
   const [items, setItems] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [groups, setGroups] = useState([]);
+  const [menuItem, setMenuItem] = useState(null);
+  const [menuIsGroup, setMenuIsGroup] = useState(false);
+  const [filter, setFilter] = useState('primary');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
   const [newRequests, setNewRequests] = useState(0);
   useEffect(() => {
     api('/v1/users/suggestions').then((d) => setNewRequests((d.followBack || []).filter((p) => !p.isFollowing).length)).catch(() => {});
   }, []);
-  const [pulling, setPulling] = useState(false);
-  async function pullRefresh() {
-    setPulling(true);
-    try { const d = await api('/v1/messages/conversations'); setItems(d.items || []); } catch (_) { /* keep the list */ } finally { setPulling(false); }
-  }
-
   useEffect(() => {
     if (route.params?.view === 'activity') setView('activity');
   }, [route.params?.view]);
 
   useEffect(() => {
     let alive = true;
-    const load = () => api('/v1/messages/conversations').then((d) => { if (alive) setItems(d.items || []); }).catch(() => {});
+    const load = () => Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]).then(([d, groupData]) => { if (alive) { setItems(d.items || []); setGroups(groupData.items || []); } }).catch(() => {});
     load();
     const timer = setInterval(load, 4000);
     return () => { alive = false; clearInterval(timer); };
   }, []);
 
+  async function muteChat(item) {
+    const enabled = !item.muted;
+    try {
+      const data = await api(`/v1/messages/direct/${item.user.id}/mute`, { method: 'PUT', body: { enabled } });
+      setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update mute setting'); }
+  }
+  async function setReadState(item, unread) {
+    try {
+      await api(`/v1/messages/with/${item.user.id}/${unread ? 'unread' : 'read'}`, { method: 'POST', body: {} });
+      setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: unread ? Math.max(1, Number(row.unread || 0)) : 0 } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update read status'); }
+  }
+  function blockChat(item) {
+    Alert.alert('Block account?', `You and ${item.user.displayName || item.user.username} will no longer be able to interact normally.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Block', style: 'destructive', onPress: async () => {
+        try {
+          await api(`/v1/users/${item.user.id}/block`, { method: 'POST', body: {} });
+          setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+        } catch (error) { Alert.alert('RimSocial', error.message || 'Could not block account'); }
+      } },
+    ]);
+  }
+  async function deleteChat(item) {
+    try {
+      await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
+      setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); }
+  }
+  async function toggleGroupMute(group) {
+    try {
+      const result = await api(`/v1/messages/groups/${group.id}/mute`, { method: 'PUT', body: { enabled: !group.muted } });
+      setGroups((current) => current.map((row) => row.id === group.id ? { ...row, muted: Boolean(result.muted) } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update group mute setting'); }
+  }
+  function showGroupOptions(group) { setMenuItem(group); setMenuIsGroup(true); }
+  function leaveGroup(group) {
+    Alert.alert('Leave group?', 'You will stop receiving its messages.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Leave', style: 'destructive', onPress: async () => {
+        try { await api(`/v1/messages/groups/${group.id}`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); }
+        catch (error) { Alert.alert('RimSocial', error.message || 'Could not leave group'); }
+      } },
+    ]);
+  }
+  function deleteGroup(group) {
+    Alert.alert('Delete group?', 'This permanently removes the group and its messages for every member.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await api(`/v1/messages/groups/${group.id}?scope=everyone`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); }
+        catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete group'); }
+      } },
+    ]);
+  }
+  function showChatOptions(item) { setMenuItem(item); setMenuIsGroup(false); }
+  function confirmDeleteChat(item) {
+    Alert.alert('Delete conversation?', 'This removes the chat from your inbox only. The other person keeps their messages.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteChat(item) },
+    ]);
+  }
+  function runMenuAction(action) {
+    const item = menuItem;
+    setMenuItem(null);
+    if (!item) return;
+    if (menuIsGroup) {
+      if (action === 'mute') toggleGroupMute(item);
+      if (action === 'leave') leaveGroup(item);
+      if (action === 'delete') deleteGroup(item);
+      return;
+    }
+    if (action === 'mute') muteChat(item);
+    if (action === 'read') setReadState(item, false);
+    if (action === 'unread') setReadState(item, true);
+    if (action === 'block') blockChat(item);
+    if (action === 'delete') confirmDeleteChat(item);
+  }
+
   if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
 
   const all = items || [];
-  const storyCount = all.filter((i) => i.hasStory).length;
-  const shown = all.filter((i) => {
-    if (filter === 'all') return true;
-    if (filter === 'stories') return i.hasStory;
-    return i.group === filter;
-  });
-  const totalUnread = all.reduce((sum, i) => sum + (i.unread || 0), 0);
-  const toggle = (key) => setFilter(filter === key ? 'all' : key);
+  const shown = all.filter((i) => i.group === filter);
+  const listData = filter === 'primary' ? [...shown, ...groups.map((group) => ({ ...group, isGroupRow: true }))] : shown;
+  const totalUnread = all.reduce((sum, item) => sum + Number(item.unread || 0), 0);
+  const unreadByGroup = GROUPS.reduce((counts, [key]) => {
+    counts[key] = all.reduce((sum, item) => sum + (item.group === key ? Number(item.unread || 0) : 0), 0);
+    return counts;
+  }, {});
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
@@ -74,7 +144,7 @@ export default function Chat() {
             <Search size={22} color={colors.text} strokeWidth={2.4} />
           </Pressable>
         </View>
-        <Text style={styles.title}>Chat</Text>
+        <Text style={styles.title}>Messages</Text>
         <View style={styles.actions}>
           <Pressable onPress={() => setView('activity')} accessibilityLabel="Notifications" hitSlop={8} style={styles.iconBtn}>
             <Bell size={24} color={colors.text} strokeWidth={2.2} />
@@ -83,42 +153,45 @@ export default function Chat() {
             <UserPlus size={22} color={colors.text} strokeWidth={2.2} />
             {newRequests > 0 && <View style={styles.reqBadge}><Text style={styles.reqBadgeText}>{newRequests > 99 ? '99+' : newRequests}</Text></View>}
           </Pressable>
-          <Pressable onPress={() => setView('activity')} accessibilityLabel="More" hitSlop={8} style={styles.iconBtn}>
-            <MoreHorizontal size={24} color={colors.text} />
+          <Pressable onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message" hitSlop={8} style={styles.iconBtn}>
+            <SquarePen size={22} color={colors.text} strokeWidth={2.2} />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.filters}>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>My AI</Text></Pressable>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>Games</Text></Pressable>
-        <Pressable onPress={() => toggle('stories')} accessibilityRole="tab" accessibilityState={{ selected: filter === 'stories' }} style={[styles.chip, filter === 'stories' && styles.chipOn]}>
-          <Text style={styles.chipText}>Stories</Text>
-          {storyCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{storyCount}</Text></View>}
-        </Pressable>
-        <Pressable style={styles.chip}><Text style={styles.chipText}>Near Me</Text></Pressable>
-        <Pressable onPress={() => navigation.navigate('NewMessage')} style={styles.chip}><Text style={styles.chipText}>New</Text><Plus size={16} color={colors.text} strokeWidth={2.4} /></Pressable>
+      <View style={styles.filters} accessibilityRole="tablist">
         {GROUPS.map(([key, label]) => (
-          <Pressable key={key} onPress={() => toggle(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
-            <Text style={styles.chipText}>{label}{key === 'requests' ? '  ' : ''}</Text>
-            {key === 'requests' && <ChevronRight size={14} color={colors.text} />}
+          <Pressable key={key} onPress={() => setFilter(key)} accessibilityRole="tab" accessibilityState={{ selected: filter === key }} style={[styles.chip, filter === key && styles.chipOn]}>
+            <Text style={[styles.chipText, filter === key && styles.chipTextOn]}>{label}</Text>
+            {unreadByGroup[key] > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unreadByGroup[key] > 99 ? '99+' : unreadByGroup[key]}</Text></View>}
           </Pressable>
         ))}
       </View>
 
       <FlatList
-        data={shown}
-        refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}
-        keyExtractor={(i) => String(i.user.id)}
-        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</Text>}
+        data={listData}
+        keyExtractor={(i) => i.isGroupRow ? `group-${i.id}` : `direct-${i.user.id}`}
+        ListEmptyComponent={items === null ? null : <Text style={styles.empty}>{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</Text>}
         renderItem={({ item }) => {
+          if (item.isGroupRow) return (
+            <View style={styles.rowWrap}>
+              <Pressable style={styles.row} onPress={() => navigation.navigate('GroupConversation', { groupId: item.id })} onLongPress={() => showGroupOptions(item)} delayLongPress={450}>
+                <View style={styles.groupAvatar}><Users size={23} color={colors.text} /></View>
+                <View style={styles.text}>
+                  <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.last} numberOfLines={1}>{item.lastMessage ? `${String(item.lastMessage.senderId) === String(me?.id) ? 'You: ' : ''}${item.lastMessage.body}` : 'Group conversation'}</Text>
+                </View>
+              </Pressable>
+              <Pressable onPress={() => showGroupOptions(item)} accessibilityLabel={`Options for ${item.name}`} hitSlop={10} style={styles.rowMenu}><MoreHorizontal size={21} color="#262626" /></Pressable>
+            </View>
+          );
           const mine = item.lastMessage.senderId === me?.id;
           const unread = item.unread > 0;
           const subtitle = item.isOnline ? 'Active now' : mine ? `Sent · ${messageTime(item.lastMessage.createdAt)}` : `${item.lastMessage.body} · ${messageTime(item.lastMessage.createdAt)}`;
           const open = () => navigation.navigate('Conversation', { userId: item.user.id, user: item.user });
           return (
             <View style={styles.rowWrap}>
-              <Pressable style={styles.row} onPress={open}>
+              <Pressable style={styles.row} onPress={open} onLongPress={() => showChatOptions(item)} delayLongPress={450}>
                 <View style={[styles.ring, item.hasStory && styles.ringStory]}>
                   <View style={styles.ringFace}><Avatar user={item.user} size={54} /></View>
                   {item.isOnline && <View style={styles.online} accessibilityLabel="Online" />}
@@ -140,52 +213,89 @@ export default function Chat() {
                   <Camera size={26} color={colors.text} strokeWidth={2} />
                 </Pressable>
               )}
+              <Pressable onPress={() => showChatOptions(item)} accessibilityLabel={`Options for ${item.user.displayName || item.user.username}`} hitSlop={10} style={styles.rowMenu}>
+                <MoreHorizontal size={21} color="#262626" />
+              </Pressable>
             </View>
           );
         }}
       />
 
+      <Modal visible={Boolean(menuItem)} transparent animationType="fade" onRequestClose={() => setMenuItem(null)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuItem(null)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>{menuIsGroup ? (menuItem?.name || 'Group chat') : (menuItem?.user?.displayName || menuItem?.user?.username || 'Conversation')}</Text>
+            {menuIsGroup ? (
+              <>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('mute')}><Text style={styles.menuText}>{menuItem?.muted ? 'Unmute messages' : 'Mute messages'}</Text></Pressable>
+                {String(menuItem?.createdById) === String(me?.id) && <Pressable style={styles.menuOption} onPress={() => runMenuAction('delete')}><Text style={styles.menuDanger}>Delete group for everyone</Text></Pressable>}
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('leave')}><Text style={styles.menuDanger}>Leave group</Text></Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('mute')}><Text style={styles.menuText}>{menuItem?.muted ? 'Unmute notifications' : 'Mute notifications'}</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction(menuItem?.unread > 0 ? 'read' : 'unread')}><Text style={styles.menuText}>{menuItem?.unread > 0 ? 'Mark as read' : 'Mark as unread'}</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('block')}><Text style={styles.menuDanger}>Block account</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('delete')}><Text style={styles.menuDanger}>Delete conversation</Text></Pressable>
+              </>
+            )}
+            <Pressable style={styles.menuCancel} onPress={() => setMenuItem(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
       <Pressable style={[styles.fab, { bottom: insets.bottom + 90 }]} onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message">
-        <SquarePen size={26} color="#111" strokeWidth={2.2} />
+        <SquarePen size={24} color="#fff" strokeWidth={2.2} />
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.bg },
+  page: { flex: 1, backgroundColor: '#fff' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12 },
   headLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatarBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   accountDot: { position: 'absolute', top: 0, right: 0, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.heart },
-  title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: colors.text },
+  title: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: '#111' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  addFriend: { backgroundColor: YELLOW, borderRadius: 20, position: 'relative' },
-  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  chip: { height: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: CHIP, borderRadius: 999, paddingHorizontal: 16 },
-  chipOn: { backgroundColor: CHIP_ON },
-  chipText: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  badge: { marginLeft: 6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  addFriend: { backgroundColor: 'transparent', borderRadius: 20, position: 'relative' },
+  filters: { flexDirection: 'row', flexWrap: 'nowrap', paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#efefef' },
+  chip: { flex: 1, height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  chipOn: { borderBottomColor: '#111' },
+  chipText: { color: '#8e8e93', fontSize: 14, fontWeight: '600' },
+  chipTextOn: { color: '#111' },
+
+  badge: { marginLeft: 2, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#efefef', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#262626', fontSize: 11, fontWeight: '600' },
   rowWrap: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  groupAvatar: { width: 62, height: 62, borderRadius: 31, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   row: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   ring: { width: 62, height: 62, borderRadius: 31, padding: 3, borderWidth: 3, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
   ringStory: { borderColor: '#dc2743' },
   ringFace: { width: 54, height: 54, borderRadius: 27, overflow: 'hidden', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   online: { position: 'absolute', right: 0, bottom: 2, width: 14, height: 14, borderRadius: 7, backgroundColor: '#31c75f', borderWidth: 2, borderColor: '#fff' },
   text: { flex: 1, minWidth: 0 },
-  name: { fontSize: 15, fontWeight: '600', color: colors.text },
+  name: { fontSize: 15, fontWeight: '500', color: colors.text },
   nameUnread: { fontWeight: '700' },
   last: { fontSize: 14, color: GREY, marginTop: 2 },
   lastUnread: { fontWeight: '700', color: colors.text },
   tag: { color: '#7b3ff2', fontSize: 13, fontWeight: '700', marginTop: 2 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: BLUE },
-  cam: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  snap: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 16, borderRadius: 999, backgroundColor: YELLOW },
+  cam: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
+  rowMenu: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
+  snap: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#f2f2f2' },
   snapText: { color: colors.text, fontSize: 15, fontWeight: '700' },
   reqBadge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#ff3b5c', alignItems: 'center', justifyContent: 'center' },
   reqBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  fab: { position: 'absolute', right: 16, width: 58, height: 58, borderRadius: 29, backgroundColor: YELLOW, alignItems: 'center', justifyContent: 'center', elevation: 4 },
+  fab: { position: 'absolute', right: 16, width: 54, height: 54, borderRadius: 27, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, padding: 40 },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
+  menuTitle: { fontSize: 14, fontWeight: '600', color: '#777', paddingVertical: 9 },
+  menuOption: { minHeight: 46, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  menuText: { fontSize: 15, color: '#111', fontWeight: '500' },
+  menuDanger: { fontSize: 15, color: '#d93025', fontWeight: '500' },
+  menuCancel: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
 });

@@ -4,11 +4,15 @@ name: Check React Native app
 # import or a missing file shows up here instead of on the phone.
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/**']
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: rimsocial-mobile-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   bundle:

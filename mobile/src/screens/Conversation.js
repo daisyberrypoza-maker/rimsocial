@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Modal, ScrollView, Image, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -8,6 +8,8 @@ import { api } from '../api';
 import { useAppStore } from '../store';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
+import { mediaUrl } from '../config';
+import { MoreHorizontal } from 'lucide-react-native';
 
 // Same look as the web conversation page (.dm-convo / .dm-bubble rules in styles.css)
 const BLUE = '#3797f0';
@@ -24,11 +26,17 @@ export default function Conversation() {
   const [messages, setMessages] = useState(null);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [chatMenuOpen, setChatMenuOpen] = useState(false);
+  const [sharedOpen, setSharedOpen] = useState(false);
+  const [sharedLoading, setSharedLoading] = useState(false);
+  const [sharedItems, setSharedItems] = useState([]);
   const listRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
     api(`/v1/messages/with/${userId}/info`).then((d) => { if (alive && d.user) setPartner(d.user); }).catch(logError);
+    api(`/v1/messages/direct/${userId}/preferences`).then((d) => { if (alive) setMuted(Boolean(d.muted)); }).catch(() => {});
     const load = () => api(`/v1/messages/with/${userId}`)
       .then((d) => {
         if (!alive) return;
@@ -64,6 +72,27 @@ export default function Conversation() {
     }
   }
 
+  async function toggleMute() {
+    try {
+      const result = await api(`/v1/messages/direct/${userId}/mute`, { method: 'PUT', body: { enabled: !muted } });
+      setMuted(Boolean(result.muted));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update mute setting'); }
+  }
+  async function openSharedActivity() {
+    setSharedOpen(true);
+    setSharedLoading(true);
+    try { const result = await api(`/v1/messages/with/${userId}/shared`); setSharedItems(result.items || []); }
+    catch (error) { Alert.alert('RimSocial', error.message || 'Could not load shared activity'); setSharedItems([]); }
+    finally { setSharedLoading(false); }
+  }
+  function showChatOptions() { setChatMenuOpen(true); }
+  function runConversationAction(action) {
+    setChatMenuOpen(false);
+    if (action === 'mute') return toggleMute();
+    if (action === 'shared') return openSharedActivity();
+    if (action === 'delete') Alert.alert('Delete conversation?', 'This removes the conversation from your inbox only.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/direct/${userId}`, { method: 'DELETE' }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete conversation'); } } }]);
+    if (action === 'block') Alert.alert('Block account?', 'This account will no longer be able to interact with you normally.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Block', style: 'destructive', onPress: async () => { try { await api(`/v1/users/${userId}/block`, { method: 'POST', body: {} }); navigation.goBack(); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not block account'); } } }]);
+  }
   const canSend = Boolean(body.trim()) && !sending;
 
   return (
@@ -72,6 +101,7 @@ export default function Conversation() {
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={26} /></Pressable>
         {partner && <Avatar user={partner} size={38} />}
         <Text style={styles.name} numberOfLines={1}>{partner ? (partner.displayName || partner.username) : ''}</Text>
+        <Pressable onPress={showChatOptions} accessibilityLabel="Conversation options" hitSlop={10}><MoreHorizontal size={23} color={colors.text} /></Pressable>
       </View>
       <FlatList
         ref={listRef}
@@ -106,12 +136,57 @@ export default function Conversation() {
           <Icon name="send" size={22} color="#fff" filled />
         </Pressable>
       </View>
+      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setChatMenuOpen(false)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Conversation options</Text>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('mute')}><Text style={styles.menuText}>{muted ? 'Unmute notifications' : 'Mute notifications'}</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('shared')}><Text style={styles.menuText}>Shared activity</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('delete')}><Text style={styles.menuDanger}>Delete conversation</Text></Pressable>
+            <Pressable style={styles.menuOption} onPress={() => runConversationAction('block')}><Text style={styles.menuDanger}>Block account</Text></Pressable>
+            <Pressable style={styles.menuCancel} onPress={() => setChatMenuOpen(false)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={sharedOpen} transparent animationType="slide" onRequestClose={() => setSharedOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.sharedSheet}>
+            <View style={styles.sharedHead}><Text style={styles.sharedTitle}>Shared activity</Text><Pressable onPress={() => setSharedOpen(false)}><Text style={styles.close}>Close</Text></Pressable></View>
+            {sharedLoading ? <Text style={styles.empty}>Loading shared activity…</Text> : sharedItems.length === 0 ? <Text style={styles.empty}>No photos, videos or posts shared yet.</Text> : (
+              <ScrollView contentContainerStyle={styles.sharedList}>
+                {sharedItems.map((item) => {
+                  const media = item.thumbUrl || item.mediaUrl || item.post?.thumbUrl || item.post?.mediaUrl;
+                  return <View key={String(item.id)} style={styles.sharedRow}>{!!media && <Image source={{ uri: mediaUrl(media) }} style={styles.sharedMedia} resizeMode="cover" />} {!!(item.body || item.post?.caption) && <Text style={styles.sharedText}>{item.body || item.post?.caption}</Text>} <Text style={styles.sharedTime}>{new Date(item.createdAt).toLocaleString()}</Text></View>;
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0, paddingBottom: 6 },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
+  menuTitle: { fontSize: 14, fontWeight: '600', color: '#777', paddingVertical: 9 },
+  menuOption: { minHeight: 46, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  menuText: { fontSize: 15, color: '#111', fontWeight: '500' },
+  menuDanger: { fontSize: 15, color: '#d93025', fontWeight: '500' },
+  menuCancel: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
+  modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)' },
+  sharedSheet: { maxHeight: '78%', backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 24 },
+  sharedHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  sharedTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  close: { color: '#0095f6', fontSize: 15, fontWeight: '600' },
+  sharedList: { gap: 12, paddingBottom: 12 },
+  sharedRow: { borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 12, gap: 6 },
+  sharedMedia: { width: '100%', height: 180, borderRadius: 12, backgroundColor: '#f1f1f1' },
+  sharedText: { color: colors.text, fontSize: 14 },
+  sharedTime: { color: colors.muted, fontSize: 11 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#efefef' },
   name: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   thread: { flex: 1 },

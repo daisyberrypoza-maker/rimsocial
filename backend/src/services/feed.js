@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow, UserBlock } = require('../db');
+const { Op, Post, User, Follow, UserBlock, UserMute } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
@@ -48,7 +48,7 @@ async function getDiscoverPage({ userId, cursor, limit }) {
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
-    const [candidates, follows, blocks] = await Promise.all([
+    const [candidates, follows, blocks, mutedRows] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
         attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
@@ -56,13 +56,15 @@ async function getDiscoverPage({ userId, cursor, limit }) {
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+      UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
+    const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
     // Rimlight Discover is newest-first (LIFO): the latest published post appears first.
     // Keep recommendation scoring in Explore, while Following remains chronological too.
     ids = candidates
-      .filter((p) => !blocked.has(p.authorId))
+      .filter((p) => !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map((p) => p.id);
     await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
@@ -90,7 +92,7 @@ async function getExplorePage({ userId, cursor, limit }) {
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
-    const [candidates, follows, blocks] = await Promise.all([
+    const [candidates, follows, blocks, mutedRows] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
         attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
@@ -98,13 +100,15 @@ async function getExplorePage({ userId, cursor, limit }) {
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+      UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
+    const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
     const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
     const now = Date.now();
     const scored = candidates
-      .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId))
+      .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .map((p) => {
         const views = Number(p.viewCount) || 0;
         const interactions = (Number(p.likeCount) || 0) * 2 + (Number(p.repostCount) || 0) * 3 + Math.log1p(Number(p.giftCoins) || 0) * 2;
@@ -163,12 +167,14 @@ async function getFollowingPage({ userId, cursor, limit }) {
   const hasMore = window.length > n;
   const page = window.slice(0, n);
 
-  const [rows, blockedRows] = await Promise.all([
+  const [rows, blockedRows, mutedRows] = await Promise.all([
     hydrate(page.map((e) => e.id)),
     UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+    UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
   ]);
   const blockedIds = new Set(blockedRows.map((row) => row.blockerId === userId ? row.blockedUserId : row.blockerId));
-  const visibleRows = rows.filter((post) => !blockedIds.has(post.authorId));
+  const mutedIds = new Set(mutedRows.map((row) => String(row.mutedUserId)));
+  const visibleRows = rows.filter((post) => !blockedIds.has(post.authorId) && !mutedIds.has(String(post.authorId)));
   const last = page[page.length - 1];
   return {
     items: visibleRows.map(toPostDTO),

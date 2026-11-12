@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, sequelize } = require('../db');
+const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
@@ -136,6 +136,16 @@ async function withPostPreviews(rows, me) {
 }
 
 
+
+async function preferenceFor(userId, fields) {
+  return ChatPreference.findOne({ where: { userId, ...fields } });
+}
+async function setPreference(userId, fields, patch) {
+  const [row] = await ChatPreference.findOrCreate({ where: { userId, ...fields }, defaults: { ...fields, ...patch } });
+  if (row) await row.update(patch);
+  return row;
+}
+
 // ---- group conversations --------------------------------------------------
 
 // Return groups for the signed-in user, including participants and latest message.
@@ -143,6 +153,8 @@ router.get('/groups', async (req, res, next) => {
   try {
     const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId'], raw: true });
     const ids = memberships.map((row) => row.groupId);
+    const groupPrefs = await ChatPreference.findAll({ where: { userId: req.user.id, groupId: ids }, raw: true });
+    const groupPrefById = new Map(groupPrefs.map((row) => [String(row.groupId), row]));
     if (!ids.length) return res.json({ items: [] });
     const groups = await GroupConversation.findAll({ where: { id: ids }, order: [['updatedAt', 'DESC']] });
     const members = await GroupMember.findAll({ where: { groupId: ids }, raw: true });
@@ -155,8 +167,10 @@ router.get('/groups', async (req, res, next) => {
     res.json({ items: groups.map((group) => ({
       id: group.id,
       name: group.name,
+      createdById: group.createdById,
       members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
       lastMessage: latest.get(String(group.id)) || null,
+      muted: Boolean(groupPrefById.get(String(group.id))?.muted),
     })) });
   } catch (error) { next(error); }
 });
@@ -202,7 +216,7 @@ router.get('/groups/:groupId', async (req, res, next) => {
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
     const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    res.json({ group: { id: group.id, name: group.name, members: users }, items: items.reverse() });
+    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: items.reverse() });
   } catch (error) { next(error); }
 });
 
@@ -219,6 +233,19 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Delete one of your own group messages for every current member.
+router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, attributes: ['userId'], raw: true });
+    if (!member) throw httpError(404, 'Group not found');
+    const message = await GroupMessage.findOne({ where: { id: req.params.messageId, groupId: req.params.groupId } });
+    if (!message) throw httpError(404, 'Message not found');
+    if (String(message.senderId) !== String(req.user.id)) throw httpError(403, 'You can only delete your own group messages');
+    await message.destroy();
+    res.json({ deleted: true });
+  } catch (error) { next(error); }
+});
+
 // ---- chat list ------------------------------------------------------------
 
 // Chat list: one row per person, newest conversation first, with unread counts.
@@ -227,6 +254,8 @@ router.get('/conversations', async (req, res, next) => {
     const me = req.user.id;
     await markDelivered(me);
     const blocked = await blockedUserIds(me);
+    const prefs = await ChatPreference.findAll({ where: { userId: me, peerId: { [Op.ne]: null } }, raw: true });
+    const prefByPeer = new Map(prefs.map((row) => [String(row.peerId), row]));
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me }, { recipientId: me }] },
       order: [['createdAt', 'DESC']],
@@ -237,6 +266,7 @@ router.get('/conversations', async (req, res, next) => {
     for (const row of rows) {
       if (isHiddenFor(row, me)) continue;
       const partner = String(row.senderId === me ? row.recipientId : row.senderId);
+      if (prefByPeer.get(partner)?.hidden) continue;
       if (blocked.has(partner)) continue;
       if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0 });
       if (String(row.recipientId) === me && !row.readAt) byPartner.get(partner).unread += 1;
@@ -271,6 +301,7 @@ router.get('/conversations', async (req, res, next) => {
             deliveredAt: entry.last.deliveredAt,
           },
           unread: entry.unread,
+          muted: Boolean(prefByPeer.get(partner)?.muted),
         };
       });
     res.json({ items });
@@ -288,6 +319,101 @@ router.get('/unread-count', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+/* Per-user direct-chat controls. Deleting a conversation only removes it from this inbox. */
+router.get('/direct/:userId/preferences', async (req, res, next) => {
+  try {
+    const row = await preferenceFor(req.user.id, { peerId: req.params.userId });
+    res.json({ muted: Boolean(row?.muted) });
+  } catch (error) { next(error); }
+});
+router.put('/direct/:userId/mute', async (req, res, next) => {
+  try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'Account not found');
+    const enabled = Boolean(req.body?.enabled);
+    await setPreference(req.user.id, { peerId: req.params.userId }, { muted: enabled });
+    res.json({ muted: enabled });
+  } catch (error) { next(error); }
+});
+router.delete('/direct/:userId', async (req, res, next) => {
+  try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'Account not found');
+    const rows = await DirectMessage.findAll({
+      where: { [Op.or]: [
+        { senderId: req.user.id, recipientId: req.params.userId },
+        { senderId: req.params.userId, recipientId: req.user.id },
+      ] },
+    });
+    for (const row of rows) {
+      await row.update({ hiddenFor: JSON.stringify([...new Set([...hiddenIds(row), String(req.user.id)])]) });
+    }
+    await setPreference(req.user.id, { peerId: req.params.userId }, { hidden: true });
+    res.json({ deleted: true });
+  } catch (error) { next(error); }
+});
+
+/* Group controls: mute is private; leave removes only this member. */
+router.put('/groups/:groupId/mute', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    const enabled = Boolean(req.body?.enabled);
+    await setPreference(req.user.id, { groupId: req.params.groupId }, { muted: enabled });
+    res.json({ muted: enabled });
+  } catch (error) { next(error); }
+});
+router.delete('/groups/:groupId', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    const group = await GroupConversation.findByPk(req.params.groupId);
+    if (!group) throw httpError(404, 'Group not found');
+    if (req.query.scope === 'everyone') {
+      if (String(group.createdById) !== String(req.user.id)) throw httpError(403, 'Only the group creator can delete this group for everyone');
+      await sequelize.transaction(async (transaction) => {
+        await GroupMessage.destroy({ where: { groupId: group.id }, transaction });
+        await GroupMember.destroy({ where: { groupId: group.id }, transaction });
+        await ChatPreference.destroy({ where: { groupId: group.id }, transaction });
+        await group.destroy({ transaction });
+      });
+      return res.json({ deleted: true });
+    }
+    await member.destroy();
+    await ChatPreference.destroy({ where: { userId: req.user.id, groupId: req.params.groupId } });
+    res.json({ left: true });
+  } catch (error) { next(error); }
+});
+
+/* Shared activity: actual media and post links exchanged in this direct conversation. */
+router.get('/with/:userId/shared', async (req, res, next) => {
+  try {
+    const me = String(req.user.id), other = String(req.params.userId);
+    if ((await blockedUserIds(me)).has(other)) throw httpError(404, 'Conversation not found');
+    const chatPreference = await preferenceFor(me, { peerId: other });
+    if (chatPreference?.hidden) return res.json({ items: [] });
+    const rows = await DirectMessage.findAll({
+      where: { [Op.and]: [
+        { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
+        { [Op.or]: [
+          { mediaUrl: { [Op.ne]: null } },
+          { postId: { [Op.ne]: null } },
+          { body: { [Op.like]: '%/p/%' } },
+        ] },
+      ] },
+      order: [['createdAt', 'DESC']],
+      limit: 100,
+      raw: true,
+    });
+    const visible = rows.filter((row) => !isHiddenFor(row, me)).map(sanitize);
+    const items = await withPostPreviews(visible, me);
+    res.json({ items });
+  } catch (error) { next(error); }
+});
+
 // ---- conversation -------------------------------------------------------------
 
 // Conversation with one person, oldest first. Also marks their messages as delivered, and says whether they are typing.
@@ -297,6 +423,8 @@ router.get('/with/:userId', async (req, res, next) => {
     const other = req.params.userId;
     if (other === me) return res.json({ items: [], typing: false });
     if ((await blockedUserIds(me)).has(String(other))) return res.status(404).json({ error: 'Account not found' });
+    const chatPreference = await preferenceFor(me, { peerId: other });
+    if (chatPreference?.hidden) return res.json({ items: [], typing: false });
     await DirectMessage.update({ deliveredAt: new Date() }, { where: { senderId: other, recipientId: me, deliveredAt: null } }).catch(() => {});
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
@@ -378,6 +506,14 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
 router.post('/with/:userId/read', async (req, res, next) => {
   try {
     await DirectMessage.update({ readAt: new Date(), deliveredAt: new Date() }, { where: { senderId: req.params.userId, recipientId: req.user.id, readAt: null } });
+    res.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
+// Mark all incoming messages unread from this conversation in the inbox.
+router.post('/with/:userId/unread', async (req, res, next) => {
+  try {
+    await DirectMessage.update({ readAt: null }, { where: { senderId: req.params.userId, recipientId: req.user.id } });
     res.json({ ok: true });
   } catch (error) { next(error); }
 });

@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, DirectMessage, GroupConversation, GroupMember, GroupMessage } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -134,6 +134,9 @@ async function start() {
   await GroupConversation.sync();
   await GroupMember.sync();
   await GroupMessage.sync();
+  // Per-user chat mute and inbox visibility preferences; additive table only.
+  await ChatPreference.sync();
+  await UserMute.sync();
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
   const qiDM = sequelize.getQueryInterface();

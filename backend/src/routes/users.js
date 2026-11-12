@@ -12,7 +12,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -42,10 +42,13 @@ async function withFollowState(people, viewerId) {
     attributes: ['followeeId'],
     raw: true,
   });
+  const muted = await UserMute.findAll({ where: { userId: viewerId, mutedUserId: ids }, attributes: ['mutedUserId'], raw: true });
   const followedIds = new Set(follows.map((row) => row.followeeId));
+  const mutedIds = new Set(muted.map((row) => String(row.mutedUserId)));
   return people.map((person) => ({
     ...(typeof person.toJSON === 'function' ? person.toJSON() : person),
     isFollowing: followedIds.has(person.id),
+    isMuted: mutedIds.has(String(person.id)),
   }));
 }
 
@@ -345,6 +348,24 @@ router.delete('/:id/block', requireAuth, async (req, res, next) => {
   try {
     await UserBlock.destroy({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
     res.json({ blocked: false });
+  } catch (e) { next(e); }
+});
+
+// Mute or unmute an account. This is a private preference and does not unfollow them.
+router.put('/:id/mute', requireAuth, async (req, res, next) => {
+  try {
+    const targetId = String(req.params.id);
+    if (targetId === String(req.user.id)) throw httpError(400, 'You cannot mute yourself');
+    const target = await User.findByPk(targetId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'User not found');
+    const enabled = Boolean(req.body?.enabled);
+    if (enabled) await UserMute.findOrCreate({ where: { userId: req.user.id, mutedUserId: targetId } });
+    else await UserMute.destroy({ where: { userId: req.user.id, mutedUserId: targetId } });
+    await Promise.all([
+      redis.del(`feed:discover:ranked:${req.user.id}`, `feed:explore:ranked:${req.user.id}`),
+      redis.del(`stories:rail:${req.user.id}`),
+    ]).catch(() => {});
+    res.json({ muted: enabled });
   } catch (e) { next(e); }
 });
 

@@ -29,7 +29,7 @@ export default function BottomNav() {
   }, []);
 
   // Dark on Rimlight and Following; white on LIVE
-  const dark = pathname === '/' || pathname === '/following';
+  const dark = pathname === '/';
   const light = pathname === '/live';
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (

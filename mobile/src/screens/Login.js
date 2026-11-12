@@ -35,7 +35,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
-  const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
+  const [error, setError] = useState('');
+  const set = (key) => (value) => { setError(''); setForm((f) => ({ ...f, [key]: value })); };
 
   async function finish(data) {
     setSession(data.token, data.user);
@@ -50,6 +51,7 @@ export default function Login() {
         : { username: form.username.trim(), password: form.password };
       await finish(await api(`/v1/auth/${mode}`, { method: 'POST', body: payload }));
     } catch (err) {
+      setError(err?.message || 'We could not complete that request. Please try again.');
       logError(err);
     } finally { setBusy(false); }
   }
@@ -59,8 +61,9 @@ export default function Login() {
     const key = REGISTER_STEPS[step].key;
     const value = String(form[key] || '').trim();
     if (!value) return false;
-    if (key === 'username') return value.length >= 3 && value.length <= 32 && /^[A-Za-z0-9._]+$/.test(value);
+    if (key === 'username') return value.length >= 3 && value.length <= 32 && /^[A-Za-z0-9_]+$/.test(value);
     if (key === 'password') return form.password.length >= 8;
+    if (key === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     return true;
   }
 
@@ -129,6 +132,7 @@ export default function Login() {
             <Text style={styles.footnote}>You can go back at any time to change your details.</Text>
           </>
         )}
+        {!!error && <Text style={styles.error} accessibilityRole="alert">{error}</Text>}
         <Text style={styles.terms}>By continuing, you agree to RimSocial’s Terms and Privacy Policy.</Text>
         <Text style={styles.footer}>A little more fun, a little more you. ●</Text>
       </ScrollView>
@@ -210,6 +214,7 @@ const styles = StyleSheet.create({
   btnDim: { opacity: 0.5 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   footnote: { marginTop: 12, color: '#888', fontSize: 12, textAlign: 'center' },
+  error: { color: '#d93025', fontSize: 13, lineHeight: 19, marginTop: 8 },
   terms: { marginTop: 18, textAlign: 'center', fontSize: 11, lineHeight: 16, color: '#888' },
   footer: { marginTop: 10, textAlign: 'center', fontSize: 12, fontWeight: '700', color: colors.text },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },

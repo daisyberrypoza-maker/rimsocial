@@ -5477,14 +5477,14 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .ep-avatar-block { display:flex; flex-direction:column; align-items:center; gap:10px; padding:10px 0 18px; }
 .ep-avatar { width:96px; height:96px; border-radius:50%; overflow:hidden; border:0 !important; padding:0; background:#eee !important; cursor:pointer; }
 .ep-avatar img, .ep-avatar .av { width:100%; height:100%; object-fit:cover; display:block; }
-.ep-avatar-link { border:0 !important; background:transparent !important; color:#4f5bfa !important; font-size:15px; font-weight:600; cursor:pointer; padding:4px; }
+.ep-avatar-link { border:0 !important; background:transparent !important; color:#0095f6 !important; font-size:15px; font-weight:600; cursor:pointer; padding:4px; }
 .ep-field { display:flex; flex-direction:column; gap:4px; border:1px solid #dbdbdb; border-radius:16px; padding:12px 16px 10px; min-height:60px; background:#fff; box-sizing:border-box; }
 .ep-field > span { font-size:14px; color:#737373; }
 .ep-field input, .ep-field textarea { border:0 !important; outline:none; background:transparent !important; font-size:17px; color:#111; padding:0 !important; box-shadow:none !important; resize:none; font-family:inherit; width:100%; }
 .ep-field textarea { min-height:44px; }
 .ep-field input:disabled { color:#111; opacity:1; -webkit-text-fill-color:#111; }
 .ep-field small { align-self:flex-end; font-size:12px; color:#8a8a94; }
-.ep-save { margin-top:10px; height:48px; border:0 !important; border-radius:12px !important; background:#4f5bfa !important; color:#fff !important; font-size:16px; font-weight:700; cursor:pointer; }
+.ep-save { margin-top:10px; height:48px; border:0 !important; border-radius:12px !important; background:#0095f6 !important; color:#fff !important; font-size:16px; font-weight:700; cursor:pointer; }
 .ep-save:disabled { opacity:.5; cursor:default; }
 .ep-field select { border:0 !important; outline:none; background:transparent !important; font-size:17px; color:#111; padding:0 !important; font-family:inherit; width:100%; appearance:auto; }
 .ep-row { display:flex; align-items:center; justify-content:space-between; width:100%; border:0 !important; background:transparent !important; padding:6px 2px; font-size:17px; color:#111; cursor:pointer; text-align:left; }
@@ -5556,7 +5556,7 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .sr-music { width:48px; height:48px; border-radius:7px; background:#f0f0f0; display:grid; place-items:center; font-size:22px; flex:none; color:#333; }
 .sr-track .sr-person-text { flex:1; min-width:0; }
 .sr-play { width:34px; height:34px; border-radius:50%; padding:0; display:grid; place-items:center; background:#f1f1f1 !important; color:#111 !important; font-size:13px; }
-.sr-play.playing { background:#111 !important; color:#fff !important; }
+.sr-play.playing { background:#f1f1f1 !important; color:#111 !important; }
 
 /* Full-screen, app-like layout: every screen fills the whole viewport (no centred card width, no side borders).
    Bottom sheets and pop-ups keep their own sizes. */
@@ -5566,7 +5566,7 @@ html, body, #root { width:100% !important; height:100% !important; }
 .sc-stories, .sc-profile, .profile-page, .rec-page, .live-page, .ads-sponsors-content, .creator-page, .auth, .auth-card {
   max-width:none !important; width:100% !important; margin-left:0 !important; margin-right:0 !important; box-sizing:border-box;
 }
-.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; } 50% { opacity:1; } }
+.dm-page, .sr-page, .ep-page, .sc-stories, .sc-profile, .stories-page, .rec-page, .live-page { min-height:100dvh; }
 
 /* Stories row: stays inside the screen, so scrolling stops with the last story at the edge (no extra empty scroll) */
 .st-page .st-row { margin:0 !important; padding:6px 16px 8px !important; scroll-padding:0 16px; overscroll-behavior-x:contain; }
@@ -6421,4 +6421,18 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   line-height: 1.25 !important;
   font-weight: 600 !important;
   letter-spacing: -.2px !important;
+}
+
+
+/* Rimlight alone keeps the immersive black bottom bar; Following and standard screens stay light. */
+.bottomnav.bottomnav-dark { background:#111214 !important; border-top-color:#252629 !important; }
+.bottomnav.bottomnav-dark a { color:#9a9aa1 !important; }
+.bottomnav.bottomnav-dark a.active,
+.bottomnav.bottomnav-dark a.active svg { color:#fff !important; stroke:#fff !important; }
+
+/* My Story remains present with its add control, but has no story ring until a story is active. */
+.st-page .st-ring.none,
+.st-page .st-friend:first-child .st-ring.none {
+  background:transparent !important;
+  padding:0 !important;
 }

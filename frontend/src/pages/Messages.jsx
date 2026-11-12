@@ -5,13 +5,10 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
-import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 
-// Chat inbox laid out to match the reference: profile, search, title, notifications, add friends (with the
-// count of people who follow you), more; chips My AI / Games / Stories / Near Me / New; rows with the last
-// message, time ago and ticks; the camera opens the phone camera to send a snap; yellow compose button bottom right.
+// Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
 
@@ -42,13 +39,14 @@ export default function Messages() {
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState(null);
   const [groups, setGroups] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('primary');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
+  const [rowMenu, setRowMenu] = useState(null);
   const snapInput = useRef(null);
   const snapTo = useRef(null);
-  const { indicator } = usePullRefresh(async () => { const [data, groupData] = await Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')]); setItems(data.items || []); setGroups(groupData.items || []); });
+  const longPressTimer = useRef(null);
 
   useEffect(() => {
     if (location.state?.view === 'activity') setView('activity');
@@ -72,6 +70,34 @@ export default function Messages() {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  async function runRowAction(item, isGroup, action) {
+    setRowMenu(null);
+    try {
+      if (!isGroup && action === 'read') { await api(`/v1/messages/with/${item.user.id}/read`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: 0 } : row)); toast('Marked as read');
+      } else if (!isGroup && action === 'unread') { await api(`/v1/messages/with/${item.user.id}/unread`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: Math.max(1, row.unread || 0) } : row)); toast('Marked as unread');
+      } else if (!isGroup && action === 'block') { if (!window.confirm(`Block ${item.user.displayName || item.user.username}?`)) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
+      } else if (action === 'mute') {
+        const endpoint = isGroup ? `/v1/messages/groups/${item.id}/mute` : `/v1/messages/direct/${item.user.id}/mute`;
+        const data = await api(endpoint, { method: 'PUT', body: { enabled: !item.muted } });
+        if (isGroup) setGroups((current) => current.map((row) => row.id === item.id ? { ...row, muted: Boolean(data.muted) } : row));
+        else setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
+        toast(data.muted ? 'Notifications muted' : 'Notifications unmuted');
+      } else if (isGroup) {
+        const deleteAll = action === 'deleteAll';
+        if (!window.confirm(deleteAll ? `Delete “${item.name}” for every member?` : `Leave “${item.name}”?`)) return;
+        await api(`/v1/messages/groups/${item.id}${deleteAll ? '?scope=everyone' : ''}`, { method: 'DELETE' });
+        setGroups((current) => current.filter((row) => row.id !== item.id));
+        toast(deleteAll ? 'Group deleted' : 'You left the group');
+      } else {
+        const name = item.user.displayName || item.user.username;
+        if (!window.confirm(`Delete your conversation with ${name}? This only removes it from your inbox.`)) return;
+        await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
+        setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+        toast('Conversation deleted');
+      }
+    } catch (e) { toast(e.message || 'Could not complete this action'); logError(e); }
+  }
 
   // The camera opens the phone camera; the photo or video is sent straight to that person
   function openCamera(userId) {
@@ -100,12 +126,11 @@ export default function Messages() {
   }
 
   const all = items || [];
-  const storyCount = all.filter((item) => item.hasStory).length;
-  const shown = all.filter((item) => {
-    if (filter === 'all') return true;
-    if (filter === 'stories') return item.hasStory;
-    return true;
-  });
+  const shown = all.filter((item) => item.group === filter);
+  const unreadByGroup = ['primary', 'general', 'requests'].reduce((counts, group) => {
+    counts[group] = all.reduce((sum, item) => sum + (item.group === group ? Number(item.unread || 0) : 0), 0);
+    return counts;
+  }, {});
 
   return (
     <main className="sn-page">
@@ -118,7 +143,7 @@ export default function Messages() {
             <Icon name="search" size={20} strokeWidth={2.2} />
           </button>
         </div>
-        <h1 className="sn-title">Chat</h1>
+        <h1 className="sn-title">Messages</h1>
         <div className="sn-head-right">
           <button type="button" className="sn-circle" onClick={() => setView('activity')} aria-label="Notifications">
             <Icon name="bell" size={22} strokeWidth={2} />
@@ -127,18 +152,18 @@ export default function Messages() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
             {newFriends > 0 && <span className="sn-badge">{newFriends > 99 ? '99+' : newFriends}</span>}
           </button>
-          <button type="button" className="sn-circle" onClick={() => setView('activity')} aria-label="More">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+          <button type="button" className="sn-circle" onClick={() => navigate('/chat/new')} aria-label="New message">
+            <Icon name="plus" size={22} strokeWidth={2.2} />
           </button>
         </div>
       </header>
-      {indicator}
-      <nav className="sn-filters" aria-label="Filter chats">
-        <button type="button" className="sn-chip" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>Messages</button>
-        <button type="button" className="sn-chip" aria-pressed={filter === 'stories'} onClick={() => setFilter(filter === 'stories' ? 'all' : 'stories')}>
-          Stories{storyCount > 0 && <span className="sn-count">{storyCount}</span>}
-        </button>
-        <button type="button" className="sn-chip" onClick={() => navigate('/chat/new')} aria-label="New message">New<span className="sn-plus"><Icon name="plus" size={12} strokeWidth={2.6} /></span></button>
+      <nav className="sn-filters" aria-label="Message inbox categories">
+        {['primary', 'general', 'requests'].map((category) => (
+          <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
+            {category === 'primary' ? 'Primary' : category === 'general' ? 'General' : 'Requests'}
+            {unreadByGroup[category] > 0 && <span className="sn-count">{unreadByGroup[category] > 99 ? '99+' : unreadByGroup[category]}</span>}
+          </button>
+        ))}
       </nav>
       {error && <p className="sn-empty" role="alert">{error}</p>}
       <input ref={snapInput} type="file" accept="image/*,video/*" capture="environment" hidden onChange={onSnapPicked} />
@@ -146,11 +171,12 @@ export default function Messages() {
         : shown.length ? (
           <ul className="sn-list">
             {shown.map((item) => {
-              const last = item.lastMessage;
-              const mine = last.senderId === me?.id;
+              const last = item.lastMessage || {};
+              const mine = String(last.senderId) === String(me?.id);
               const name = item.user.displayName || item.user.username;
+              const openRowMenu = () => setRowMenu({ item, isGroup: false });
               return (
-                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'}>
+                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(); }} onTouchStart={() => { longPressTimer.current = setTimeout(openRowMenu, 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
                   <Link to={`/chat/${item.user.id}`} className="sn-row">
                     <span className="sn-ring">
                       <Avatar user={item.user} size={44} />
@@ -159,23 +185,26 @@ export default function Messages() {
                     <span className="sn-text">
                       <span className="sn-name-row">
                         <span className="sn-name">{name}</span>
-                        <span className="sn-time">{timeAgo(last.createdAt)}</span>
+                        
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
-                        <span className="sn-txt">{previewOf(last)}</span>
+                        <span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span>
                       </span>
                     </span>
                   </Link>
                   <button type="button" className="sn-cam" onClick={() => openCamera(item.user.id)} aria-label={`Send ${name} a snap`}>
                     <Icon name="camera" size={24} strokeWidth={2} />
                   </button>
+                  <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item, isGroup: false })} aria-label={`Options for ${name}`}>
+                    <Icon name="ellipsis" size={20} />
+                  </button>
                 </li>
               );
             })}
           </ul>
         ) : null}
-      {filter === 'all' && groups.length > 0 && (
+      {filter === 'primary' && groups.length > 0 && (
         <ul className="sn-list sn-group-list">
           {groups.map((group) => {
             const last = group.lastMessage;
@@ -185,16 +214,32 @@ export default function Messages() {
                 <Link to={`/chat/group/${group.id}`} className="sn-row">
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={23} /></span>
                   <span className="sn-text">
-                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
-                    <span className="sn-sub"><span className="sn-txt">{preview}</span></span>
+                    <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
+                    <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
                   </span>
                 </Link>
+                <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item: group, isGroup: true })} aria-label={`Options for ${group.name}`}>
+                  <Icon name="ellipsis" size={20} />
+                </button>
               </li>
             );
           })}
         </ul>
       )}
-      {items !== null && shown.length === 0 && (filter !== 'all' || groups.length === 0) && <p className="sn-empty">{filter === 'all' ? 'No messages yet. Tap the yellow button to start one.' : 'Nothing in this view yet.'}</p>}
+      {items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</p>}
+      {rowMenu && (
+        <div className="sn-menu-dismiss" onClick={() => setRowMenu(null)}>
+          <section className="sn-action-menu" role="menu" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
+            {!rowMenu.isGroup && <>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread')}><Icon name={rowMenu.item.unread ? 'check' : 'mail'} size={17} />Mark as {rowMenu.item.unread ? 'read' : 'unread'}</button>
+              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'block')}><Icon name="shield" size={17} />Block</button>
+            </>}
+            <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}><Icon name={rowMenu.item.muted ? 'volume-2' : 'volume-x'} size={17} />{rowMenu.item.muted ? 'Unmute' : 'Mute'}</button>
+            {rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) && <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, true, 'deleteAll')}><Icon name="trash" size={17} />Delete group for everyone</button>}
+            <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}><Icon name="trash" size={17} />{rowMenu.isGroup ? 'Leave group' : 'Delete'}</button>
+          </section>
+        </div>
+      )}
       <button type="button" className="sn-fab" onClick={() => navigate('/chat/new')} aria-label="New message">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
       </button>

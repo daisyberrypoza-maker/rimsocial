@@ -1,129 +1,123 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-// Main tabs in bottom-bar order. Swipe left for the next tab, right for the previous one.
-export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/following', '/live', '/u/me'];
+// Bottom-tab order. Upload is intentionally included even though it has no visible bottom bar.
+export const TAB_PATHS = ['/search', '/chat', '/upload', '/stories', '/'];
+const IGNORE = 'input, textarea, select, audio, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
+const LOCK_PX = 10;
+const SETTLE_MS = 220;
 
-// Swipes that start on these elements belong to them (text entry, video, carousels, sheets)
-const IGNORE = 'input, textarea, select, video, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
-// Local tab surfaces own their gestures; text entry, media and horizontal carousels keep native behavior.
-const LOCK_PX = 10;          // movement needed before we decide the direction
-const SETTLE_MS = 230;       // length of the slide or spring-back
-const busyRef = { current: false };
-// Runs once the new tab has actually mounted, so the slide-in never starts on a blank frame
-const afterMount = { current: null };
-
-// Anything inside a sideways-scrolling strip (stories row, chip rows, card rows) belongs to that strip
 function insideHorizontalStrip(node) {
   for (let el = node instanceof Element ? node : node?.parentElement; el && el !== document.body; el = el.parentElement) {
     if (el.classList?.contains('app')) break;
-    const overflowX = window.getComputedStyle(el).overflowX;
-    if ((overflowX === 'auto' || overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 1) return true;
+    const style = window.getComputedStyle(el);
+    if ((style.overflowX === 'auto' || style.overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 1) return true;
   }
   return false;
 }
-
 function appEl() { return document.querySelector('.app'); }
 function setOffset(px) { appEl()?.style.setProperty('--swipe-x', `${px}px`); }
 function setClass(name, on) { appEl()?.classList.toggle(name, on); }
 
-// Follows the finger, then slides the screen to the next tab (Snapchat-style) or springs back.
 export function useTabSwipe(navigate, pathname, enabled) {
+  const busyRef = useRef(false);
+  const afterMountRef = useRef(null);
+  const fallbackRef = useRef(null);
+
   useEffect(() => {
     if (!enabled || !TAB_PATHS.includes(pathname)) return undefined;
     const index = TAB_PATHS.indexOf(pathname);
-    let gesture = null; // { x, y, time, mode: 'pending' | 'horizontal' | 'ignore', dx }
+    let gesture = null;
 
-    const targetFor = (dx) => TAB_PATHS[dx < 0 ? index + 1 : index - 1];
+    const clearMotion = () => {
+      window.clearTimeout(fallbackRef.current);
+      fallbackRef.current = null;
+      setClass('swipe-anim', false);
+      setClass('swiping', false);
+      setOffset(0);
+      busyRef.current = false;
+      afterMountRef.current = null;
+    };
 
-    function settle(to, onDone) {
+    function settle(to, done) {
       setClass('swipe-anim', true);
       setOffset(to);
-      window.setTimeout(onDone, SETTLE_MS);
+      window.setTimeout(done, SETTLE_MS);
     }
 
     function springBack() {
-      settle(0, () => {
-        setClass('swipe-anim', false);
-        setClass('swiping', false);
-        setOffset(0);
-        busyRef.current = false;
-      });
+      settle(0, clearMotion);
     }
 
     function onStart(event) {
       const target = event.target;
-      const onItem = Boolean(target.closest && (target.closest(IGNORE) || target.closest('[data-local-tab-swipe]')));
-      if (busyRef.current || event.touches.length !== 1 || onItem || insideHorizontalStrip(target)) { gesture = null; return; }
-      const touch = event.touches[0];
-      gesture = { x: touch.clientX, y: touch.clientY, time: Date.now(), mode: 'pending', dx: 0 };
+      if (busyRef.current || event.touches.length !== 1 ||
+          target.closest?.(IGNORE) || target.closest?.('[data-local-tab-swipe]') ||
+          insideHorizontalStrip(target)) {
+        gesture = null;
+        return;
+      }
+      const t = event.touches[0];
+      gesture = { x: t.clientX, y: t.clientY, time: Date.now(), mode: 'pending', dx: 0 };
     }
 
     function onMove(event) {
       if (!gesture || busyRef.current || event.touches.length !== 1) return;
-      const touch = event.touches[0];
-      const dx = touch.clientX - gesture.x;
-      const dy = touch.clientY - gesture.y;
+      const t = event.touches[0];
+      const dx = t.clientX - gesture.x;
+      const dy = t.clientY - gesture.y;
       if (gesture.mode === 'pending') {
         if (Math.abs(dx) < LOCK_PX && Math.abs(dy) < LOCK_PX) return;
-        if (Math.abs(dx) > Math.abs(dy) * 1.4) {
-          gesture.mode = 'horizontal';
-          setClass('swipe-anim', false);
-          setClass('swiping', true);
-        } else {
-          gesture.mode = 'ignore';
-          return;
-        }
+        if (Math.abs(dx) <= Math.abs(dy) * 1.25) { gesture.mode = 'ignore'; return; }
+        gesture.mode = 'horizontal';
+        setClass('swipe-anim', false);
+        setClass('swiping', true);
       }
       if (gesture.mode !== 'horizontal') return;
       event.preventDefault();
       gesture.dx = dx;
-      // Resists at the first and last tab, as Snapchat does
-      const edge = !targetFor(dx);
-      setOffset(edge ? dx * 0.3 : dx);
+      const hasTarget = dx < 0 ? index < TAB_PATHS.length - 1 : index > 0;
+      setOffset(hasTarget ? dx : dx * 0.28);
     }
 
-    function onEnd(event) {
+    function onEnd() {
       const current = gesture;
       gesture = null;
-      if (!current || current.mode !== 'horizontal' || busyRef.current) return;
+      if (!current || current.mode !== 'horizontal' || busyRef.current || Math.abs(current.dx) < 1) return;
       const dx = current.dx;
       const elapsed = Date.now() - current.time;
-      const target = targetFor(dx);
-      const commit = Boolean(target) && (Math.abs(dx) > window.innerWidth * 0.25 || (elapsed < 320 && Math.abs(dx) > 50));
+      const nextIndex = dx < 0 ? index + 1 : index - 1;
+      const valid = nextIndex >= 0 && nextIndex < TAB_PATHS.length;
+      const commit = valid && (Math.abs(dx) >= Math.max(64, window.innerWidth * 0.18) || (elapsed < 350 && Math.abs(dx) > 48));
       if (!commit) { busyRef.current = true; springBack(); return; }
 
       busyRef.current = true;
-      const width = window.innerWidth;
-      const outTo = dx < 0 ? -width : width;
-      settle(outTo, () => {
-        // The new screen starts off to the side the finger came from, then slides in
+      const outgoing = dx < 0 ? -window.innerWidth : window.innerWidth;
+      settle(outgoing, () => {
         setClass('swipe-anim', false);
-        // Park the new tab off to the side (hidden) until it has mounted, then slide it in
-        setOffset(-outTo);
+        setOffset(-outgoing);
         const slideIn = () => {
-          afterMount.current = null;
-          settle(0, () => {
-            setClass('swipe-anim', false);
-            setClass('swiping', false);
-            setOffset(0);
-            busyRef.current = false;
-          });
+          if (afterMountRef.current !== slideIn) return;
+          afterMountRef.current = null;
+          settle(0, clearMotion);
         };
-        afterMount.current = slideIn;
-        // Fallback so the swipe can never get stuck if the route does not change
-        window.setTimeout(() => { if (afterMount.current === slideIn) slideIn(); }, 700);
-        // Replace, not push: moving between bottom tabs never adds a Back step
-        navigate(target, { replace: true });
+        afterMountRef.current = slideIn;
+        window.clearTimeout(fallbackRef.current);
+        fallbackRef.current = window.setTimeout(slideIn, 900);
+        navigate(TAB_PATHS[nextIndex], { replace: true });
       });
-      void event;
     }
 
-    // The new tab has mounted: wait two frames so its first paint is done, then slide it in
-    if (afterMount.current) window.requestAnimationFrame(() => window.requestAnimationFrame(() => { const fn = afterMount.current; if (fn) fn(); }));
+    function onCancel() {
+      gesture = null;
+      if (!busyRef.current) clearMotion();
+    }
+
+    // A route change mounts the next screen; animate it in exactly once.
+    if (afterMountRef.current) {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => afterMountRef.current?.()));
+    }
     window.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: false });
-    // A cancelled touch ends the gesture too, so the page is never left pushed to the side
-    const onCancel = () => { gesture = null; if (!busyRef.current) { setClass('swiping', false); setClass('swipe-anim', false); setOffset(0); } };
     window.addEventListener('touchend', onEnd, { passive: true });
     window.addEventListener('touchcancel', onCancel, { passive: true });
     return () => {
@@ -133,4 +127,11 @@ export function useTabSwipe(navigate, pathname, enabled) {
       window.removeEventListener('touchcancel', onCancel);
     };
   }, [enabled, navigate, pathname]);
+
+  useEffect(() => () => {
+    window.clearTimeout(fallbackRef.current);
+    setClass('swipe-anim', false);
+    setClass('swiping', false);
+    setOffset(0);
+  }, []);
 }
