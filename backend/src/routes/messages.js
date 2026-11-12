@@ -359,14 +359,14 @@ router.get('/with/:userId/shared', async (req, res, next) => {
     const me = String(req.user.id), other = String(req.params.userId);
     if ((await blockedUserIds(me)).has(other)) throw httpError(404, 'Conversation not found');
     const rows = await DirectMessage.findAll({
-      where: {
-        [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }],
-        [Op.or]: [
+      where: { [Op.and]: [
+        { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
+        { [Op.or]: [
           { mediaUrl: { [Op.ne]: null } },
           { postId: { [Op.ne]: null } },
           { body: { [Op.like]: '%/p/%' } },
-        ],
-      },
+        ] },
+      ] },
       order: [['createdAt', 'DESC']],
       limit: 100,
       raw: true,
