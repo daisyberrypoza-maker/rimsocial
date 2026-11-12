@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -18,6 +18,9 @@ export default function NewMessage() {
   const [query, setQuery] = useState('');
   const [people, setPeople] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [groupName, setGroupName] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     const q = query.trim();
@@ -33,6 +36,21 @@ export default function NewMessage() {
     return () => { alive = false; clearTimeout(timer); };
   }, [query, me?.id]);
 
+  const toggle = (person) => setSelected((current) => current.some((row) => row.id === person.id) ? current.filter((row) => row.id !== person.id) : [...current, person]);
+  async function startChat() {
+    if (!selected.length || creating) return;
+    if (selected.length > 1) {
+      setCreating(true);
+      try {
+        const result = await api('/v1/messages/groups', { method: 'POST', body: { memberIds: selected.map((person) => person.id), name: groupName.trim() } });
+        navigation.replace('GroupConversation', { groupId: result.group.id });
+      } catch (error) { Alert.alert('RimSocial', error.message || 'Could not create group'); }
+      finally { setCreating(false); }
+      return;
+    }
+    navigation.navigate('Conversation', { userId: selected[0].id, user: selected[0] });
+  }
+
   let body;
   if (!query.trim()) body = <Text style={styles.empty}>Search for someone to message.</Text>;
   else if (people.length) {
@@ -41,12 +59,13 @@ export default function NewMessage() {
         data={people}
         keyExtractor={(p) => String(p.id)}
         renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => navigation.navigate('Conversation', { userId: item.id, user: item })}>
+          <Pressable style={styles.row} onPress={() => toggle(item)}>
             <Avatar user={item} size={48} />
             <View style={styles.text}>
               <Text style={styles.name} numberOfLines={1}>{item.displayName || item.username}</Text>
               <Text style={styles.handle} numberOfLines={1}>@{item.username}</Text>
             </View>
+            <View style={[styles.selectDot, selected.some((person) => person.id === item.id) && styles.selectDotOn]}>{selected.some((person) => person.id === item.id) && <Text style={styles.selectTick}>✓</Text>}</View>
           </Pressable>
         )}
       />
@@ -60,6 +79,8 @@ export default function NewMessage() {
         <Text style={styles.title}>New message</Text>
         <View style={styles.spacer} />
       </View>
+      {!!selected.length && <View style={styles.selected}><Text style={styles.selectedLabel}>{selected.length} selected</Text>{selected.map((person) => <Pressable key={person.id} onPress={() => toggle(person)} style={styles.selectedChip}><Text style={styles.selectedChipText}>{person.displayName || person.username} ×</Text></Pressable>)}</View>}
+      {selected.length > 1 && <TextInput style={styles.groupName} value={groupName} onChangeText={setGroupName} placeholder="Group name (optional)" placeholderTextColor={GREY} maxLength={80} />}
       <View style={styles.to}>
         <Text style={styles.toLabel}>To:</Text>
         <TextInput
@@ -75,6 +96,7 @@ export default function NewMessage() {
         />
       </View>
       {body}
+      <View style={styles.footer}><Pressable onPress={startChat} disabled={!selected.length || creating} style={[styles.start, (!selected.length || creating) && styles.startDisabled]}><Text style={styles.startText}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</Text></Pressable></View>
     </View>
   );
 }
@@ -92,4 +114,16 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '600', color: colors.text },
   handle: { fontSize: 14, color: GREY },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, paddingVertical: 40, paddingHorizontal: 24 },
+  selected: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  selectedLabel: { fontSize: 12, color: GREY, marginRight: 4 },
+  selectedChip: { backgroundColor: '#e8f3ff', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  selectedChipText: { color: '#0878d1', fontSize: 12, fontWeight: '600' },
+  groupName: { marginHorizontal: 14, marginVertical: 6, borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: colors.text },
+  selectDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#bdbdbd', alignItems: 'center', justifyContent: 'center' },
+  selectDotOn: { backgroundColor: '#0095f6', borderColor: '#0095f6' },
+  selectTick: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  footer: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 18, borderTopWidth: 1, borderTopColor: '#eee' },
+  start: { height: 46, borderRadius: 12, backgroundColor: '#0095f6', alignItems: 'center', justifyContent: 'center' },
+  startDisabled: { opacity: 0.4 },
+  startText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
