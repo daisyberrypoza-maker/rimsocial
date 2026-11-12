@@ -5,6 +5,7 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { logError } from '../toast.js';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
@@ -34,6 +35,8 @@ export default function Search() {
   const [tracks, setTracks] = useState([]);
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const audioRef = useRef(null);
+  const showTabs = !tagPage && Boolean(term);
+  const swipeSurfaceRef = useSwipeTabs(tab, TABS.map(([key]) => key), setTab, showTabs);
   const term = query.trim();
 
   useEffect(() => {
@@ -67,7 +70,6 @@ export default function Search() {
   const posts = term ? (search?.posts || []) : explore;
   const people = search?.people || [];
   const tags = useMemo(() => tagsFrom(search?.posts || [], term), [search, term]);
-  const showTabs = !tagPage && Boolean(term);
   const activeTab = tagPage ? 'foryou' : tab;
 
   async function toggleFollow(person) {
@@ -81,7 +83,7 @@ export default function Search() {
   }
 
   return (
-    <main className="sr-page">
+    <main ref={swipeSurfaceRef} data-local-tab-swipe className="sr-page">
       <div className="sr-bar">
         {tagPage && <button type="button" className="sr-back" onClick={() => navigate(-1)} aria-label="Back"><Icon name="arrow-left" size={24} /></button>}
         <label className="sr-field">
