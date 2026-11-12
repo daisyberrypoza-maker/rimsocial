@@ -56,7 +56,6 @@ async function getDiscoverPage({ userId, cursor, limit }) {
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
-    UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
       UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
@@ -105,6 +104,7 @@ async function getExplorePage({ userId, cursor, limit }) {
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
+    const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
     const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
     const now = Date.now();
     const scored = candidates
