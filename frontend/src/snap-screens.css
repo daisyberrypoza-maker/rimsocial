@@ -953,3 +953,24 @@
   text-align: center !important;
   color: #8e8e93 !important;
 }
+
+
+.sn-page .sn-yellow,
+.sn-page .sn-yellow:hover,
+.sn-page .sn-yellow:active {
+  background: transparent !important;
+  color: #111 !important;
+}
+.sn-page .sn-fab,
+.sn-page .sn-fab:hover,
+.sn-page .sn-fab:active {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 50% !important;
+  background: #0095f6 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(0, 149, 246, .24) !important;
+}
+.sn-page .sn-fab svg {
+  stroke: #fff !important;
+}
