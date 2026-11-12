@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
@@ -165,6 +165,7 @@ function Bubble({ message, mine }) {
 export default function Conversation() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const me = useAppStore((st) => st.user);
   const [partner, setPartner] = useState(null);
   const [online, setOnline] = useState(false);
@@ -352,6 +353,10 @@ export default function Conversation() {
     } catch (e) { toast(e.message || 'Could not load shared activity'); setSharedItems([]); }
     finally { setSharedLoading(false); }
   }
+
+  useEffect(() => {
+    if (location.state?.openSharedActivity) openSharedActivity();
+  }, [location.key]);
 
   async function deleteConversation() {
     setChatMenu(false);
