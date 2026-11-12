@@ -134,7 +134,6 @@ export default function Explore() {
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
       </div> : !peopleMode ? <button type="button" className="rim-search-launch" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button> : null}
-      {peopleMode && !searchMode && !results && <div className="friends-discovery-intro"><p>Find people you know and creators you may like.</p></div>}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
@@ -154,7 +153,7 @@ export default function Explore() {
       </> : <>
         {peopleMode && !results && <>
           {suggestedOnly.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section">
-            <div className="friends-suggestion-heading"><h2>Suggested for you</h2><button type="button" onClick={() => navigate('/recommended')}>See all</button></div>
+            <div className="friends-suggestion-heading"><h2>Suggested for you</h2></div>
             <ul className="friends-suggestion-list">{suggestedOnly.filter((person) => !dismissed[person.id]).map((person) => (
               <li className="friends-suggestion-row" key={person.id}>
                 <button type="button" className="friends-suggestion-person" onClick={() => navigate(`/u/${person.username}`)}>
@@ -167,7 +166,7 @@ export default function Explore() {
             ))}</ul>
           </section>}
           {recommendations.followBack.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section friends-followback-section">
-            <div className="friends-suggestion-heading"><h2>Follow back</h2><button type="button" onClick={() => navigate('/u/me/followers')}>See all</button></div>
+            <div className="friends-suggestion-heading"><h2>Follow back</h2></div>
             <ul className="friends-suggestion-list">{recommendations.followBack.filter((person) => !dismissed[person.id]).map((person) => (
               <li className="friends-suggestion-row" key={person.id}>
                 <button type="button" className="friends-suggestion-person" onClick={() => navigate(`/u/${person.username}`)}>
