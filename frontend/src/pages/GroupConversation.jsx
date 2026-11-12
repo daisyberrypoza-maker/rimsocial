@@ -153,12 +153,11 @@ export default function GroupConversationPage() {
         </div>
       )}
       {optionsOpen && (
-        <div className="cv-sheet-backdrop" onClick={() => setOptionsOpen(false)}>
-          <section className="cv-sheet" role="dialog" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={toggleMute}>{muted ? 'Unmute messages' : 'Mute messages'}</button>
-            {String(group?.createdById) === String(me?.id) && <button type="button" className="danger" onClick={deleteGroupForEveryone}>Delete group for everyone</button>}
-            <button type="button" className="danger" onClick={leaveGroup}>Leave group</button>
-            <button type="button" className="cancel" onClick={() => setOptionsOpen(false)}>Cancel</button>
+        <div className="sn-menu-dismiss" onClick={() => setOptionsOpen(false)}>
+          <section className="sn-action-menu cv-group-action-menu" role="menu" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
+            <button type="button" role="menuitem" onClick={toggleMute}><Icon name={muted ? 'bell' : 'bell-off'} size={17} />{muted ? 'Unmute messages' : 'Mute messages'}</button>
+            {String(group?.createdById) === String(me?.id) && <button type="button" role="menuitem" className="danger" onClick={deleteGroupForEveryone}><Icon name="trash-2" size={17} />Delete group for everyone</button>}
+            <button type="button" role="menuitem" className="danger" onClick={leaveGroup}><Icon name="log-out" size={17} />Leave group</button>
           </section>
         </div>
       )}
