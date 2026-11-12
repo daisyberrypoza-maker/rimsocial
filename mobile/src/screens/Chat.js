@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Avatar from '../components/Avatar';
 import Activity from './Activity';
@@ -22,6 +22,8 @@ export default function Chat() {
   const me = useAppStore((s) => s.user);
   const [items, setItems] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [menuItem, setMenuItem] = useState(null);
+  const [menuIsGroup, setMenuIsGroup] = useState(false);
   const [filter, setFilter] = useState('primary');
   const [view, setView] = useState(route.params?.view === 'activity' ? 'activity' : 'messages');
   const [newRequests, setNewRequests] = useState(0);
@@ -76,25 +78,47 @@ export default function Chat() {
       setGroups((current) => current.map((row) => row.id === group.id ? { ...row, muted: Boolean(result.muted) } : row));
     } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update group mute setting'); }
   }
-  function showGroupOptions(group) {
-    const actions = [{ text: group.muted ? 'Unmute messages' : 'Mute messages', onPress: () => toggleGroupMute(group) }];
-    if (String(group.createdById) === String(me?.id)) actions.push({ text: 'Delete group for everyone', style: 'destructive', onPress: () => Alert.alert('Delete group?', 'This permanently removes the group and its messages for every member.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/groups/${group.id}?scope=everyone`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete group'); } } }]) });
-    actions.push({ text: 'Leave group', style: 'destructive', onPress: () => Alert.alert('Leave group?', 'You will stop receiving its messages.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Leave', style: 'destructive', onPress: async () => { try { await api(`/v1/messages/groups/${group.id}`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); } catch (error) { Alert.alert('RimSocial', error.message || 'Could not leave group'); } } }]) });
-    actions.push({ text: 'Cancel', style: 'cancel' });
-    Alert.alert(group.name || 'Group chat', 'Group options', actions);
-  }
-  function showChatOptions(item) {
-    const name = item.user.displayName || item.user.username;
-    Alert.alert(name, 'Conversation options', [
-      { text: item.muted ? 'Unmute notifications' : 'Mute notifications', onPress: () => muteChat(item) },
-      { text: item.unread > 0 ? 'Mark as read' : 'Mark as unread', onPress: () => setReadState(item, !(item.unread > 0)) },
-      { text: 'Block account', style: 'destructive', onPress: () => blockChat(item) },
-      { text: 'Delete conversation', style: 'destructive', onPress: () => Alert.alert('Delete conversation?', 'This removes the chat from your inbox only. The other person keeps their messages.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteChat(item) },
-      ]) },
+  function showGroupOptions(group) { setMenuItem(group); setMenuIsGroup(true); }
+  function leaveGroup(group) {
+    Alert.alert('Leave group?', 'You will stop receiving its messages.', [
       { text: 'Cancel', style: 'cancel' },
+      { text: 'Leave', style: 'destructive', onPress: async () => {
+        try { await api(`/v1/messages/groups/${group.id}`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); }
+        catch (error) { Alert.alert('RimSocial', error.message || 'Could not leave group'); }
+      } },
     ]);
+  }
+  function deleteGroup(group) {
+    Alert.alert('Delete group?', 'This permanently removes the group and its messages for every member.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await api(`/v1/messages/groups/${group.id}?scope=everyone`, { method: 'DELETE' }); setGroups((current) => current.filter((row) => row.id !== group.id)); }
+        catch (error) { Alert.alert('RimSocial', error.message || 'Could not delete group'); }
+      } },
+    ]);
+  }
+  function showChatOptions(item) { setMenuItem(item); setMenuIsGroup(false); }
+  function confirmDeleteChat(item) {
+    Alert.alert('Delete conversation?', 'This removes the chat from your inbox only. The other person keeps their messages.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteChat(item) },
+    ]);
+  }
+  function runMenuAction(action) {
+    const item = menuItem;
+    setMenuItem(null);
+    if (!item) return;
+    if (menuIsGroup) {
+      if (action === 'mute') toggleGroupMute(item);
+      if (action === 'leave') leaveGroup(item);
+      if (action === 'delete') deleteGroup(item);
+      return;
+    }
+    if (action === 'mute') muteChat(item);
+    if (action === 'read') setReadState(item, false);
+    if (action === 'unread') setReadState(item, true);
+    if (action === 'block') blockChat(item);
+    if (action === 'delete') confirmDeleteChat(item);
   }
 
   if (view === 'activity') return <Activity onBack={() => setView('messages')} />;
@@ -197,6 +221,29 @@ export default function Chat() {
         }}
       />
 
+      <Modal visible={Boolean(menuItem)} transparent animationType="fade" onRequestClose={() => setMenuItem(null)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuItem(null)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>{menuIsGroup ? (menuItem?.name || 'Group chat') : (menuItem?.user?.displayName || menuItem?.user?.username || 'Conversation')}</Text>
+            {menuIsGroup ? (
+              <>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('mute')}><Text style={styles.menuText}>{menuItem?.muted ? 'Unmute messages' : 'Mute messages'}</Text></Pressable>
+                {String(menuItem?.createdById) === String(me?.id) && <Pressable style={styles.menuOption} onPress={() => runMenuAction('delete')}><Text style={styles.menuDanger}>Delete group for everyone</Text></Pressable>}
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('leave')}><Text style={styles.menuDanger}>Leave group</Text></Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('mute')}><Text style={styles.menuText}>{menuItem?.muted ? 'Unmute notifications' : 'Mute notifications'}</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction(menuItem?.unread > 0 ? 'read' : 'unread')}><Text style={styles.menuText}>{menuItem?.unread > 0 ? 'Mark as read' : 'Mark as unread'}</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('block')}><Text style={styles.menuDanger}>Block account</Text></Pressable>
+                <Pressable style={styles.menuOption} onPress={() => runMenuAction('delete')}><Text style={styles.menuDanger}>Delete conversation</Text></Pressable>
+              </>
+            )}
+            <Pressable style={styles.menuCancel} onPress={() => setMenuItem(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
       <Pressable style={[styles.fab, { bottom: insets.bottom + 90 }]} onPress={() => navigation.navigate('NewMessage')} accessibilityLabel="New message">
         <SquarePen size={24} color="#fff" strokeWidth={2.2} />
       </Pressable>
@@ -244,4 +291,11 @@ const styles = StyleSheet.create({
   reqBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   fab: { position: 'absolute', right: 16, width: 54, height: 54, borderRadius: 27, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   empty: { textAlign: 'center', color: GREY, fontSize: 15, padding: 40 },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
+  menuTitle: { fontSize: 14, fontWeight: '600', color: '#777', paddingVertical: 9 },
+  menuOption: { minHeight: 46, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  menuText: { fontSize: 15, color: '#111', fontWeight: '500' },
+  menuDanger: { fontSize: 15, color: '#d93025', fontWeight: '500' },
+  menuCancel: { minHeight: 44, justifyContent: 'center', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
 });
