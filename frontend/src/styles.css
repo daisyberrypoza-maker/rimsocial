@@ -6436,3 +6436,41 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   background:transparent !important;
   padding:0 !important;
 }
+
+/* Group conversation sizing and compact group-options popover. */
+.dm-convo.cv-convo {
+  width: 100%;
+  min-width: 0;
+  height: 100dvh;
+  min-height: 0;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 4px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  overflow: hidden;
+}
+.dm-convo.cv-convo .dm-chead {
+  flex: 0 0 auto;
+  min-height: 58px;
+  gap: 10px;
+  padding: 7px 12px;
+}
+.dm-convo.cv-convo .cv-head-text { flex: 1 1 auto; }
+.dm-convo.cv-convo .cv-head-menu { flex: 0 0 40px; margin-left: 2px; }
+.dm-convo.cv-convo .dm-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  gap: 9px;
+}
+.dm-convo.cv-convo .cv-bubble {
+  max-width: min(82%, 520px);
+  padding: 10px 13px;
+  font-size: 15px;
+}
+.dm-convo.cv-convo .dm-input { flex: 0 0 auto; }
+.cv-group-action-menu {
+  top: calc(env(safe-area-inset-top, 0px) + 58px);
+  right: 12px;
+  width: 224px;
+}
