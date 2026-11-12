@@ -5,6 +5,8 @@ name: Check React Native app
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
