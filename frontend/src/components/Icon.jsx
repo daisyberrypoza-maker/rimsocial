@@ -5,10 +5,11 @@ import {
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
-  File as FileIcon,
+  File as FileIcon, LogOut, Ban, BellOff, Copy, Reply,
 } from 'lucide-react';
 
 const ICONS = {
+  'trash-2': Trash2, 'log-out': LogOut, 'shield-ban': Ban, images: ImageIcon, 'bell-off': BellOff, copy: Copy, reply: Reply,
   file: FileIcon,
   calendar: CalendarDays,
   mail: Mail,

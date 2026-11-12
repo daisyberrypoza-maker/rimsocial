@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Icon from '../components/Icon.jsx';
+import ChatMenu from '../components/ChatMenu.jsx';
 import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast } from '../toast.js';
@@ -23,6 +24,8 @@ export default function GroupConversationPage() {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
+  const [optionsAnchor, setOptionsAnchor] = useState(null);
+  const [messageAnchor, setMessageAnchor] = useState(null);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -115,7 +118,7 @@ export default function GroupConversationPage() {
           <span className="dm-cname">{group?.name || 'Group chat'}</span>
           <small className="cv-subtitle">{members.length ? members.length + ' members' : 'Group conversation'}</small>
         </span>
-        <button type="button" className="dm-icon cv-head-menu" onClick={() => setOptionsOpen(true)} aria-label="Group options"><Icon name="ellipsis" size={22} /></button>
+        <button type="button" className="dm-icon cv-head-menu" onClick={(e) => { setOptionsAnchor(e.currentTarget.getBoundingClientRect()); setOptionsOpen(true); }} aria-label="Group options"><Icon name="more-vertical" size={22} /></button>
       </header>
 
       <div className="dm-thread">
@@ -126,10 +129,10 @@ export default function GroupConversationPage() {
             return (
               <div key={message.id} className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
-                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageMenu(message); } }}>
+                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); } }}>
                   <span className="cv-text">{message.body}</span>
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
-                  {mine && <button type="button" className="cv-group-message-options" onClick={() => setMessageMenu(message)} aria-label="Message options"><Icon name="ellipsis" size={15} /></button>}
+                  {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
                 </div>
               </div>
             );
@@ -145,21 +148,26 @@ export default function GroupConversationPage() {
         </button>
       </form>
       {messageMenu && (
-        <div className="cv-sheet-backdrop" onClick={() => setMessageMenu(null)}>
-          <section className="cv-sheet" role="dialog" aria-label="Group message options" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="danger" onClick={() => deleteGroupMessage(messageMenu)}>Delete for everyone</button>
-            <button type="button" className="cancel" onClick={() => setMessageMenu(null)}>Cancel</button>
-          </section>
-        </div>
+        <ChatMenu
+          label="Group message options"
+          anchor={messageAnchor}
+          onClose={() => setMessageMenu(null)}
+          items={[
+            { key: 'delete', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteGroupMessage(messageMenu) },
+          ]}
+        />
       )}
       {optionsOpen && (
-        <div className="sn-menu-dismiss" onClick={() => setOptionsOpen(false)}>
-          <section className="sn-action-menu cv-group-action-menu" role="menu" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
-            <button type="button" role="menuitem" onClick={toggleMute}><Icon name={muted ? 'bell' : 'bell-off'} size={17} />{muted ? 'Unmute messages' : 'Mute messages'}</button>
-            {String(group?.createdById) === String(me?.id) && <button type="button" role="menuitem" className="danger" onClick={deleteGroupForEveryone}><Icon name="trash-2" size={17} />Delete group for everyone</button>}
-            <button type="button" role="menuitem" className="danger" onClick={leaveGroup}><Icon name="log-out" size={17} />Leave group</button>
-          </section>
-        </div>
+        <ChatMenu
+          label="Group options"
+          anchor={optionsAnchor}
+          onClose={() => setOptionsOpen(false)}
+          items={[
+            { key: 'mute', label: muted ? 'Unmute messages' : 'Mute messages', icon: muted ? 'bell' : 'bell-off', onSelect: toggleMute },
+            ...(String(group?.createdById) === String(me?.id) ? [{ key: 'delete-group', label: 'Delete group for everyone', icon: 'trash-2', danger: true, onSelect: deleteGroupForEveryone }] : []),
+            { key: 'leave', label: 'Leave group', icon: 'log-out', danger: true, onSelect: leaveGroup },
+          ]}
+        />
       )}
     </main>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
+import ChatMenu from '../components/ChatMenu.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
@@ -107,7 +108,8 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
         const t = e.touches[0];
         start.current = { x: t.clientX, y: t.clientY, swiped: false };
         clearTimer();
-        timer.current = setTimeout(() => { start.current = null; onOpenMenu(message); }, 450);
+        const rect = e.currentTarget.getBoundingClientRect();
+        timer.current = setTimeout(() => { start.current = null; onOpenMenu(message, rect); }, 450);
       }}
       onTouchMove={(e) => {
         if (!start.current) return;
@@ -127,7 +129,7 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
         setOffset(0);
         if (swiped) onReply(message);
       }}
-      onContextMenu={(e) => { e.preventDefault(); onOpenMenu(message); }}
+      onContextMenu={(e) => { e.preventDefault(); onOpenMenu(message, e.currentTarget.getBoundingClientRect()); }}
     >
       {children}
     </div>
@@ -179,6 +181,8 @@ export default function Conversation() {
   const [menuFor, setMenuFor] = useState(null);
   const [forwarding, setForwarding] = useState(null);
   const [chatMenu, setChatMenu] = useState(false);
+  const [chatAnchor, setChatAnchor] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
   const [muted, setMuted] = useState(false);
   const [sharedOpen, setSharedOpen] = useState(false);
   const [sharedItems, setSharedItems] = useState([]);
@@ -295,6 +299,8 @@ export default function Conversation() {
     }
   }
 
+  function openMessageMenu(message, rect) { setMenuAnchor(rect || null); setMenuFor(message); }
+
   // Actions for a message: menu sheet
   function canEdit(m) {
     return m && String(m.senderId) === String(me?.id) && !m.deletedForEveryone && !m.mediaUrl && Date.now() - new Date(m.createdAt).getTime() <= EDIT_WINDOW_MS;
@@ -395,8 +401,8 @@ export default function Conversation() {
           <span className="dm-cname">{name}</span>
           {subtitle && <small className={typing ? 'cv-subtitle typing' : 'cv-subtitle'}>{subtitle}</small>}
         </span>
-        <button type="button" className="dm-icon cv-head-menu" onClick={() => setChatMenu(true)} aria-label="Chat options">
-          <Icon name="ellipsis" size={22} />
+        <button type="button" className="dm-icon cv-head-menu" onClick={(e) => { setChatAnchor(e.currentTarget.getBoundingClientRect()); setChatMenu(true); }} aria-label="Chat options">
+          <Icon name="more-vertical" size={22} />
         </button>
       </header>
 
@@ -407,7 +413,7 @@ export default function Conversation() {
             const mine = String(m.senderId) === String(me?.id);
             return (
               <div key={m.id} className="cv-line">
-                <MessageRow message={m} mine={mine} onReply={startReply} onOpenMenu={setMenuFor}>
+                <MessageRow message={m} mine={mine} onReply={startReply} onOpenMenu={openMessageMenu}>
                   <Bubble message={m} mine={mine} />
                 </MessageRow>
                 {mine && lastMineSeen && lastMineSeen.id === m.id && (
@@ -458,17 +464,19 @@ export default function Conversation() {
       </form>
 
       {menuFor && (
-        <div className="cv-sheet-backdrop" onClick={() => setMenuFor(null)}>
-          <section className="cv-sheet" role="dialog" aria-label="Message options" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => { startReply(menuFor); setMenuFor(null); }}>Reply</button>
-            {menuFor.body && !menuFor.deletedForEveryone && <button type="button" onClick={() => { navigator.clipboard?.writeText(menuFor.body).catch(() => {}); setMenuFor(null); }}>Copy</button>}
-            {!menuFor.deletedForEveryone && <button type="button" onClick={() => openForward(menuFor)}>Forward</button>}
-            {canEdit(menuFor) && <button type="button" onClick={() => { startEdit(menuFor); setMenuFor(null); }}>Edit</button>}
-            {!menuFor.deletedForEveryone && <button type="button" onClick={() => deleteMessage(menuFor, 'me')}>Delete for me</button>}
-            {canDeleteEveryone(menuFor) && <button type="button" className="danger" onClick={() => deleteMessage(menuFor, 'everyone')}>Delete for everyone</button>}
-            <button type="button" className="cancel" onClick={() => setMenuFor(null)}>Cancel</button>
-          </section>
-        </div>
+        <ChatMenu
+          label="Message options"
+          anchor={menuAnchor}
+          onClose={() => setMenuFor(null)}
+          items={[
+            { key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => startReply(menuFor) },
+            ...(menuFor.body && !menuFor.deletedForEveryone ? [{ key: 'copy', label: 'Copy', icon: 'copy', onSelect: () => navigator.clipboard?.writeText(menuFor.body).catch(() => {}) }] : []),
+            ...(!menuFor.deletedForEveryone ? [{ key: 'forward', label: 'Forward', icon: 'share-2', onSelect: () => openForward(menuFor) }] : []),
+            ...(canEdit(menuFor) ? [{ key: 'edit', label: 'Edit', icon: 'pencil', onSelect: () => startEdit(menuFor) }] : []),
+            ...(!menuFor.deletedForEveryone ? [{ key: 'delete-me', label: 'Delete for me', icon: 'trash-2', onSelect: () => deleteMessage(menuFor, 'me') }] : []),
+            ...(canDeleteEveryone(menuFor) ? [{ key: 'delete-all', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteMessage(menuFor, 'everyone') }] : []),
+          ]}
+        />
       )}
 
       {forwarding && (
@@ -488,14 +496,17 @@ export default function Conversation() {
       )}
 
       {chatMenu && (
-        <div className="sn-menu-dismiss" onClick={() => setChatMenu(false)}>
-          <section className="sn-action-menu cv-chat-action-menu" role="menu" aria-label="Chat options" onClick={(e) => e.stopPropagation()}>
-            <button type="button" role="menuitem" onClick={toggleMute}><Icon name={muted ? 'bell' : 'bell-off'} size={17} />{muted ? 'Unmute messages' : 'Mute messages'}</button>
-            <button type="button" role="menuitem" onClick={openSharedActivity}><Icon name="images" size={17} />See shared activity</button>
-            <button type="button" role="menuitem" className="danger" onClick={deleteConversation}><Icon name="trash-2" size={17} />Delete conversation</button>
-            <button type="button" role="menuitem" className="danger" onClick={blockPerson}><Icon name="shield-ban" size={17} />Block {name}</button>
-          </section>
-        </div>
+        <ChatMenu
+          label="Chat options"
+          anchor={chatAnchor}
+          onClose={() => setChatMenu(false)}
+          items={[
+            { key: 'mute', label: muted ? 'Unmute messages' : 'Mute messages', icon: muted ? 'bell' : 'bell-off', onSelect: toggleMute },
+            { key: 'shared', label: 'See shared activity', icon: 'images', onSelect: openSharedActivity },
+            { key: 'delete', label: 'Delete conversation', icon: 'trash-2', danger: true, onSelect: deleteConversation },
+            { key: 'block', label: `Block ${name}`, icon: 'shield-ban', danger: true, onSelect: blockPerson },
+          ]}
+        />
       )}
       {sharedOpen && (
         <div className="cv-sheet-backdrop" onClick={() => setSharedOpen(false)}>
