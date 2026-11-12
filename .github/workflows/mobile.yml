@@ -5,12 +5,14 @@ name: Check React Native app
 on:
   push:
     branches: [main, 'fix/**']
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: rimsocial-mobile-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   bundle:
