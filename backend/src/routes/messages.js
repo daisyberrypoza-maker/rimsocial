@@ -167,6 +167,7 @@ router.get('/groups', async (req, res, next) => {
     res.json({ items: groups.map((group) => ({
       id: group.id,
       name: group.name,
+      createdById: group.createdById,
       members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
       lastMessage: latest.get(String(group.id)) || null,
       muted: Boolean(groupPrefById.get(String(group.id))?.muted),
@@ -215,7 +216,7 @@ router.get('/groups/:groupId', async (req, res, next) => {
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
     const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    res.json({ group: { id: group.id, name: group.name, members: users }, items: items.reverse() });
+    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: items.reverse() });
   } catch (error) { next(error); }
 });
 
@@ -360,6 +361,18 @@ router.delete('/groups/:groupId', async (req, res, next) => {
   try {
     const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
     if (!member) throw httpError(404, 'Group not found');
+    const group = await GroupConversation.findByPk(req.params.groupId);
+    if (!group) throw httpError(404, 'Group not found');
+    if (req.query.scope === 'everyone') {
+      if (String(group.createdById) !== String(req.user.id)) throw httpError(403, 'Only the group creator can delete this group for everyone');
+      await sequelize.transaction(async (transaction) => {
+        await GroupMessage.destroy({ where: { groupId: group.id }, transaction });
+        await GroupMember.destroy({ where: { groupId: group.id }, transaction });
+        await ChatPreference.destroy({ where: { groupId: group.id }, transaction });
+        await group.destroy({ transaction });
+      });
+      return res.json({ deleted: true });
+    }
     await member.destroy();
     await ChatPreference.destroy({ where: { userId: req.user.id, groupId: req.params.groupId } });
     res.json({ left: true });
