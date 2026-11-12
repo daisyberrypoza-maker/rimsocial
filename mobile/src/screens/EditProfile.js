@@ -17,7 +17,7 @@ export default function EditProfile() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const me = useAppStore((s) => s.user);
-  const [form, setForm] = useState({ displayName: '', pronouns: '', bio: '', website: '', city: '', gender: '' });
+  const [form, setForm] = useState({ displayName: '', dateOfBirth: '', bio: '', website: '', city: '', gender: '' });
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState(null);
@@ -30,7 +30,7 @@ export default function EditProfile() {
     api('/v1/users/me')
       .then((u) => {
         if (!active) return;
-        setForm({ displayName: u.displayName || '', pronouns: u.pronouns || '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
+        setForm({ displayName: u.displayName || '', dateOfBirth: u.dateOfBirth ? String(u.dateOfBirth).slice(0, 10) : '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
         setLoaded(true);
       })
       .catch((e) => logError(e));
@@ -67,7 +67,7 @@ export default function EditProfile() {
     try {
       await api('/v1/users/me/profile', { method: 'PUT', body: form });
       const store = useAppStore.getState();
-      const updated = { ...(store.user || me), displayName: form.displayName.trim(), bio: form.bio.trim(), website: form.website.trim(), city: form.city.trim(), pronouns: form.pronouns.trim(), gender: form.gender };
+      const updated = { ...(store.user || me), displayName: form.displayName.trim(), dateOfBirth: form.dateOfBirth || null, bio: form.bio.trim(), website: form.website.trim(), city: form.city.trim(), gender: form.gender };
       store.setSession(store.token, updated);
       store.setProfile('me', { user: { ...(store.profiles.me?.user || {}), ...updated }, updatedAt: Date.now() });
       if (updated.username) {
@@ -93,7 +93,7 @@ export default function EditProfile() {
         </View>
         <Field label="Name" value={form.displayName} onChangeText={set('displayName')} maxLength={64} />
         <Field label="Username" value={me?.username ? `@${me.username}` : ''} editable={false} />
-        <Field label="Pronouns" value={form.pronouns} onChangeText={set('pronouns')} maxLength={40} placeholder="e.g. she/her" />
+        <Field label="Date of birth" value={form.dateOfBirth} onChangeText={set('dateOfBirth')} placeholder="YYYY-MM-DD" maxLength={10} keyboardType="numbers-and-punctuation" />
         <Field label="Bio" value={form.bio} onChangeText={set('bio')} maxLength={150} multiline counter={`${form.bio.length}/150`} />
         <Pressable style={styles.linksRow} onPress={() => websiteRef.current?.focus()} accessibilityLabel="Links">
           <Text style={styles.linksText}>Links</Text>
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   form: { paddingHorizontal: 16, paddingVertical: 18, gap: 12 },
   photo: { alignItems: 'center', gap: 10, marginBottom: 8 },
-  link: { color: colors.unseen, fontWeight: '600', fontSize: 15 },
+  link: { color: '#0095f6', fontWeight: '600', fontSize: 15 },
   field: { borderWidth: 1, borderColor: '#dbdbdb', borderRadius: 16, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, minHeight: 60 },
   fieldLocked: { backgroundColor: '#fff' },
   label: { fontSize: 14, color: '#737373', fontWeight: '400' },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   lockedText: { color: colors.text },
   multiline: { minHeight: 44, textAlignVertical: 'top' },
   counter: { alignSelf: 'flex-end', fontSize: 12, color: '#8a8a94' },
-  save: { height: 48, borderRadius: 12, backgroundColor: '#4f5bfa', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  save: { height: 48, borderRadius: 12, backgroundColor: '#0095f6', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   saveText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   dim: { opacity: 0.5 },
   linksRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 2 },
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   linksValue: { fontSize: 17, color: colors.muted },
   genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
   genderChip: { borderWidth: 1, borderColor: '#dbdbdb', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
-  genderChipOn: { backgroundColor: '#e8eefc', borderColor: '#4f5bfa' },
+  genderChipOn: { backgroundColor: '#e8eefc', borderColor: '#0095f6' },
   genderText: { fontSize: 14, color: colors.text },
-  genderTextOn: { color: '#4f5bfa', fontWeight: '600' },
+  genderTextOn: { color: '#0095f6', fontWeight: '600' },
 });
