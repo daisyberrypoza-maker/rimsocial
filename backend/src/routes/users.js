@@ -361,7 +361,10 @@ router.put('/:id/mute', requireAuth, async (req, res, next) => {
     const enabled = Boolean(req.body?.enabled);
     if (enabled) await UserMute.findOrCreate({ where: { userId: req.user.id, mutedUserId: targetId } });
     else await UserMute.destroy({ where: { userId: req.user.id, mutedUserId: targetId } });
-    await redis.del(`feed:discover:ranked:${req.user.id}`, `feed:explore:ranked:${req.user.id}`).catch(() => {});
+    await Promise.all([
+      redis.del(`feed:discover:ranked:${req.user.id}`, `feed:explore:ranked:${req.user.id}`),
+      redis.del(`stories:rail:${req.user.id}`),
+    ]).catch(() => {});
     res.json({ muted: enabled });
   } catch (e) { next(e); }
 });
