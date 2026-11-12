@@ -5,6 +5,10 @@ name: Check React Native app
 on:
   push:
     branches: [main, 'fix/**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile.yml'
+  workflow_dispatch:
   workflow_dispatch:
 
 permissions:
