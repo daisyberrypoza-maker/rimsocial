@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
+import StoryRail from '../components/StoryRail.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
@@ -126,9 +127,11 @@ export default function Messages() {
   }
 
   const all = items || [];
-  const shown = all.filter((item) => item.group === filter);
-  const unreadByGroup = ['primary', 'general', 'requests'].reduce((counts, group) => {
-    counts[group] = all.reduce((sum, item) => sum + (item.group === group ? Number(item.unread || 0) : 0), 0);
+  // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
+  const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
+  const shown = all.filter((item) => inGroup(item, filter));
+  const unreadByGroup = ['primary', 'requests'].reduce((counts, group) => {
+    counts[group] = all.reduce((sum, item) => sum + (inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
     return counts;
   }, {});
 
@@ -158,9 +161,9 @@ export default function Messages() {
         </div>
       </header>
       <nav className="sn-filters" aria-label="Message inbox categories">
-        {['primary', 'general', 'requests'].map((category) => (
+        {['primary', 'stories', 'requests'].map((category) => (
           <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
-            {category === 'primary' ? 'Primary' : category === 'general' ? 'General' : 'Requests'}
+            {category === 'primary' ? 'Primary' : category === 'stories' ? 'Stories' : 'Requests'}
             {unreadByGroup[category] > 0 && <span className="sn-count">{unreadByGroup[category] > 99 ? '99+' : unreadByGroup[category]}</span>}
           </button>
         ))}
@@ -204,6 +207,7 @@ export default function Messages() {
             })}
           </ul>
         ) : null}
+      {filter === 'stories' && <StoryRail />}
       {filter === 'primary' && groups.length > 0 && (
         <ul className="sn-list sn-group-list">
           {groups.map((group) => {
@@ -226,7 +230,7 @@ export default function Messages() {
           })}
         </ul>
       )}
-      {items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : filter === 'general' ? 'No general conversations yet.' : 'No message requests yet.'}</p>}
+      {filter !== 'stories' && items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : 'No message requests yet.'}</p>}
       {rowMenu && (
         <div className="sn-menu-dismiss" onClick={() => setRowMenu(null)}>
           <section className="sn-action-menu" role="menu" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
