@@ -5530,14 +5530,16 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .sr-page { min-height:100dvh; background:#fff; color:#111; max-width:620px; margin:0 auto; padding:calc(env(safe-area-inset-top,0px) + 10px) 0 calc(var(--nav-height,56px) + 16px); box-sizing:border-box; }
 .sr-bar { display:flex; align-items:center; gap:10px; padding:0 12px 10px; }
 .sr-back { border:0 !important; background:transparent !important; color:#111 !important; padding:4px; display:grid; place-items:center; cursor:pointer; }
-.sr-field { flex:1; display:flex; align-items:center; gap:8px; background:#efefef; border-radius:12px; padding:0 12px; height:40px; box-sizing:border-box; color:#737373; }
-.sr-field input { flex:1; min-width:0; border:0 !important; outline:none; background:transparent !important; font-size:16px; color:#111; padding:0 !important; box-shadow:none !important; }
+.sr-field { flex:1; display:flex; align-items:center; gap:8px; background:#efefef; border-radius:9px; padding:0 12px; height:38px; box-sizing:border-box; color:#737373; }
+.sr-field input { flex:1; min-width:0; border:0 !important; outline:none; background:transparent !important; font-size:15px; color:#111; padding:0 !important; box-shadow:none !important; }
 .sr-clear { border:0 !important; background:transparent !important; color:#737373 !important; padding:2px; cursor:pointer; display:grid; place-items:center; }
-.sr-tabs { display:flex; gap:8px; padding:4px 12px 12px; overflow-x:auto; scrollbar-width:none; }
-.sr-tab { flex:none; height:34px; padding:0 16px; border-radius:999px; border:1px solid #e5e5e5 !important; background:#fff !important; color:#111 !important; font-size:15px; font-weight:600; cursor:pointer; }
-.sr-tab.on { background:#efefef !important; border-color:#efefef !important; }
-.sr-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
-.sr-cell { border:0 !important; padding:0 !important; background:#efefef !important; aspect-ratio:1; overflow:hidden; cursor:pointer; }
+.sr-tabs { display:flex; gap:0; padding:0 12px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #efefef; }
+.sr-tab { position:relative; flex:1 0 auto; height:42px; padding:0 14px; border-radius:0; border:0 !important; background:#fff !important; color:#737373 !important; font-size:14px; font-weight:600; cursor:pointer; }
+.sr-tab.on { color:#111 !important; }
+.sr-tab.on::after { content:''; position:absolute; left:12px; right:12px; bottom:0; height:2px; border-radius:2px; background:#111; }
+.sr-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:calc((100vw - 4px)/3); gap:2px; }
+.sr-cell { border:0 !important; padding:0 !important; background:#efefef !important; aspect-ratio:1; overflow:hidden; cursor:pointer; min-width:0; }
+.sr-cell:nth-child(6n + 2) { grid-row:span 2; aspect-ratio:auto; }
 .sr-cell img, .sr-cell video { width:100%; height:100%; object-fit:cover; display:block; }
 .sr-list { list-style:none; margin:0; padding:0; }
 .sr-person { display:flex; align-items:center; gap:12px; padding:10px 16px; }
@@ -5549,19 +5551,12 @@ html.bleed-top .sc-profile .sc-compact-nav { padding-top: calc(env(safe-area-ins
 .sr-follow.on { background:#efefef !important; color:#111 !important; }
 .sr-hash { width:52px; height:52px; border-radius:50%; border:1px solid #e5e5e5; display:grid; place-items:center; font-size:22px; flex:none; }
 .sr-empty { text-align:center; color:#737373; padding:40px 24px; font-size:15px; }
-
-/* Audio tab: upload form and track list */
-.sr-audio { padding:0 12px 24px; }
-.sr-upload { display:grid; gap:8px; padding:12px; border:1px solid #e5e5e5; border-radius:14px; margin-bottom:12px; }
-.sr-upload strong { font-size:15px; }
-.sr-upload input { height:40px; border:1px solid #dbdbdb; border-radius:10px; padding:0 12px; font-size:15px; font-family:inherit; color:#111; background:#fff; box-sizing:border-box; }
-.sr-upload input[type=file] { height:auto; padding:6px 0; border:0; }
-.sr-upload button { height:40px; border:0 !important; border-radius:10px; background:#4f5bfa !important; color:#fff !important; font-size:15px; font-weight:600; cursor:pointer; }
-.sr-upload button:disabled { opacity:.5; cursor:default; }
-.sr-track { display:flex; align-items:center; gap:12px; padding:10px 4px; flex-wrap:wrap; }
-.sr-track audio { width:100%; }
-.sr-music { width:52px; height:52px; border-radius:12px; background:#efefef; display:grid; place-items:center; font-size:22px; flex:none; }
+.sr-audio { padding:4px 12px 24px; }
+.sr-track { display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid #f2f2f2; }
+.sr-music { width:48px; height:48px; border-radius:7px; background:#f0f0f0; display:grid; place-items:center; font-size:22px; flex:none; color:#333; }
 .sr-track .sr-person-text { flex:1; min-width:0; }
+.sr-play { width:34px; height:34px; border-radius:50%; padding:0; display:grid; place-items:center; background:#f1f1f1 !important; color:#111 !important; font-size:13px; }
+.sr-play.playing { background:#111 !important; color:#fff !important; }
 
 /* Full-screen, app-like layout: every screen fills the whole viewport (no centred card width, no side borders).
    Bottom sheets and pop-ups keep their own sizes. */
