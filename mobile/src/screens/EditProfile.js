@@ -33,7 +33,7 @@ export default function EditProfile() {
         setForm({ displayName: u.displayName || '', dateOfBirth: u.dateOfBirth ? String(u.dateOfBirth).slice(0, 10) : '', bio: u.bio || '', website: u.website || '', city: u.city || '', gender: u.gender || '' });
         setLoaded(true);
       })
-      .catch((e) => logError(e));
+      .catch((e) => { if (active) { logError(e); setLoaded(true); } });
     return () => { active = false; };
   }, []);
 
@@ -56,7 +56,7 @@ export default function EditProfile() {
       }
       store.setProfile('me', { user: { ...(store.profiles.me?.user || {}), avatarUrl }, updatedAt: Date.now() });
       toast('Profile photo updated');
-    } catch (e) { logError(e); }
+    } catch (e) { setAvatar(null); logError(e); }
   }
 
   const dob = form.dateOfBirth.trim();
