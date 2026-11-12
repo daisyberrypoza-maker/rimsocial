@@ -20,10 +20,13 @@ export default function GroupConversationPage() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [muted, setMuted] = useState(false);
   const endRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
+    api('/v1/messages/groups').then((data) => { const item = (data.items || []).find((row) => String(row.id) === String(groupId)); if (alive) setMuted(Boolean(item?.muted)); }).catch(() => {});
     const load = () => api('/v1/messages/groups/' + groupId)
       .then((data) => {
         if (!alive) return;
@@ -38,6 +41,25 @@ export default function GroupConversationPage() {
   }, [groupId]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages?.length]);
+
+  async function toggleMute() {
+    const next = !muted;
+    setOptionsOpen(false);
+    try {
+      const data = await api('/v1/messages/groups/' + groupId + '/mute', { method: 'PUT', body: { enabled: next } });
+      setMuted(Boolean(data.muted));
+      toast(data.muted ? 'Group notifications muted' : 'Group notifications unmuted');
+    } catch (e) { toast(e.message || 'Could not update mute setting'); }
+  }
+
+  async function leaveGroup() {
+    setOptionsOpen(false);
+    if (!window.confirm('Leave this group? You will stop receiving its messages.')) return;
+    try {
+      await api('/v1/messages/groups/' + groupId, { method: 'DELETE' });
+      navigate('/chat', { replace: true });
+    } catch (e) { toast(e.message || 'Could not leave group'); }
+  }
 
   async function send(event) {
     event.preventDefault();
@@ -74,6 +96,7 @@ export default function GroupConversationPage() {
           <span className="dm-cname">{group?.name || 'Group chat'}</span>
           <small className="cv-subtitle">{members.length ? members.length + ' members' : 'Group conversation'}</small>
         </span>
+        <button type="button" className="dm-icon cv-head-menu" onClick={() => setOptionsOpen(true)} aria-label="Group options"><Icon name="ellipsis" size={22} /></button>
       </header>
 
       <div className="dm-thread">
@@ -101,6 +124,15 @@ export default function GroupConversationPage() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
         </button>
       </form>
+      {optionsOpen && (
+        <div className="cv-sheet-backdrop" onClick={() => setOptionsOpen(false)}>
+          <section className="cv-sheet" role="dialog" aria-label="Group options" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={toggleMute}>{muted ? 'Unmute messages' : 'Mute messages'}</button>
+            <button type="button" className="danger" onClick={leaveGroup}>Leave group</button>
+            <button type="button" className="cancel" onClick={() => setOptionsOpen(false)}>Cancel</button>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
