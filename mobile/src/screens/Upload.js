@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, PermissionsAndroid, Platform, useWindowDimensions, Switch, Modal } from 'react-native';
+import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, PermissionsAndroid, Platform, useWindowDimensions, Switch, Modal, PanResponder } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -65,6 +65,13 @@ export default function Upload() {
   const [mention, setMention] = useState(null);
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
   const caretRef = useRef(0);
+  const swipeResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 60 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.7,
+    onPanResponderRelease: (_, gesture) => {
+      if (Math.abs(gesture.dx) < 90) return;
+      navigation.navigate('Main', { screen: gesture.dx < 0 ? 'Stories' : 'Chat' });
+    },
+  })).current;
 
   const isVideo = Boolean(file && String(file.type).startsWith('video/'));
   const sponsorValid = sponsorName.trim().length > 0 && /^https?:\/\//i.test(sponsorUrl.trim());
@@ -189,7 +196,7 @@ export default function Upload() {
 
   if (view === 'gallery') {
     return (
-      <View style={[styles.gallery, { paddingTop: insets.top }]}>
+      <View style={[styles.gallery, { paddingTop: insets.top }]} {...swipeResponder.panHandlers}>
         <View style={styles.galleryTop}>
           <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" hitSlop={10}><Icon name="chevron-down" size={30} color={colors.text} /></Pressable>
           <Text style={styles.title}>{toStory ? 'Post To Story' : 'Post'}</Text>
@@ -230,7 +237,7 @@ export default function Upload() {
 
   const captionText = caption.trim() ? caption.trim().slice(0, 28) : 'Add a caption';
   return (
-    <View style={[styles.editor, { paddingTop: insets.top }]}>
+    <View style={[styles.editor, { paddingTop: insets.top }]} {...swipeResponder.panHandlers}>
       <View style={styles.editorTop}>
         <Pressable onPress={() => setView('gallery')} accessibilityLabel="Back to gallery" hitSlop={10}><Icon name="x" size={28} color="#fff" /></Pressable>
         <Pressable style={styles.captionPill} onPress={() => setSheetOpen(true)}>
