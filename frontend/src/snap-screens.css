@@ -1069,3 +1069,16 @@
 }
 .cv-group-message-options:hover { background: rgba(0,0,0,.06); opacity: 1; }
 .cv-bubble { position: relative; }
+
+
+/* Compact, white chat action popover — same visual language as /followers. */
+.sn-menu-dismiss { position: fixed; inset: 0; z-index: 450; background: transparent; }
+.sn-action-menu { position: fixed; z-index: 451; top: 46%; right: 16px; width: 218px; max-width: calc(100vw - 32px); padding: 7px; border: 1px solid rgba(20,24,32,.08); border-radius: 15px; background: #fff !important; color: #17191f !important; box-shadow: 0 14px 38px rgba(17,24,39,.18), 0 3px 9px rgba(17,24,39,.08); animation: pv-menu-enter 140ms cubic-bezier(.2,.8,.2,1) both; }
+.sn-action-menu button, .sn-action-menu button:hover, .sn-action-menu button:focus-visible, .sn-action-menu button:active { display: flex !important; align-items: center; gap: 11px; width: 100%; min-height: 41px; padding: 0 11px !important; border: 0 !important; border-radius: 9px !important; background: #fff !important; color: #17191f !important; box-shadow: none !important; text-align: left; font-size: 13px; font-weight: 500; }
+.sn-action-menu button:hover, .sn-action-menu button:focus-visible { background: #f4f6f8 !important; }
+.sn-action-menu button svg { flex: 0 0 17px; color: #555e69; }
+.sn-action-menu button.danger { color: #d93045 !important; }
+.sn-action-menu button.danger svg { color: #d93045; }
+.sn-name, .sn-item.unread .sn-name { font-size: 15px !important; font-weight: 500 !important; }
+.sn-time { font-size: 12px !important; margin-left: 5px; }
+.sn-sub { gap: 5px; }
