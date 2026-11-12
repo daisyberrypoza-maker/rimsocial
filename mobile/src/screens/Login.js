@@ -63,7 +63,7 @@ export default function Login() {
     if (!value) return false;
     if (key === 'username') return value.length >= 3 && value.length <= 32 && /^[A-Za-z0-9._]+$/.test(value);
     if (key === 'password') return form.password.length >= 8;
-    if (key === 'email') return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+    if (key === 'email') return /^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(value);
     return true;
   }
 
