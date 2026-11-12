@@ -301,14 +301,16 @@ async function peopleInRelationshipOrder(rows, idField, viewerId) {
   const byId = new Map(people.map((person) => [String(person.id), person]));
   const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
   const visible = await excludeBlockedPeople(ordered, viewerId);
-  return withFollowState(visible, viewerId);
+  const withState = await withFollowState(visible, viewerId);
+  const dates = new Map(rows.map((row) => [String(row[idField]), row.createdAt || null]));
+  return withState.map((person) => ({ ...person, relationshipCreatedAt: dates.get(String(person.id)) }));
 }
 
 router.get('/:username/followers', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
-    const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId'], order: [['createdAt', 'DESC'], ['followerId', 'ASC']], raw: true });
+    const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId', 'createdAt'], order: [['createdAt', 'DESC'], ['followerId', 'ASC']], raw: true });
     res.json({ items: await peopleInRelationshipOrder(rows, 'followerId', req.user.id) });
   } catch (e) { next(e); }
 });
@@ -317,7 +319,7 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
   try {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
-    const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId'], order: [['createdAt', 'DESC'], ['followeeId', 'ASC']], raw: true });
+    const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId', 'createdAt'], order: [['createdAt', 'DESC'], ['followeeId', 'ASC']], raw: true });
     res.json({ items: await peopleInRelationshipOrder(rows, 'followeeId', req.user.id) });
   } catch (e) { next(e); }
 });
@@ -387,6 +389,22 @@ router.put('/:id/follow/notify', requireAuth, async (req, res, next) => {
       throw err;
     }
     res.json({ isNotifying: enabled });
+  } catch (e) { next(e); }
+});
+
+// Remove a follower from the authenticated user's own followers list.
+router.delete('/:id/follower', requireAuth, async (req, res, next) => {
+  try {
+    if (req.params.id === req.user.id) throw httpError(400, 'You cannot remove yourself as a follower');
+    const target = await User.findByPk(req.params.id, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'User not found');
+    let removed = 0;
+    await sequelize.transaction(async (t) => {
+      removed = await Follow.destroy({ where: { followerId: req.params.id, followeeId: req.user.id }, transaction: t });
+      if (removed) await User.decrement('followerCount', { by: removed, where: { id: req.user.id }, transaction: t });
+    });
+    const fresh = await User.findByPk(req.user.id, { attributes: ['followerCount'] });
+    res.json({ removed: Boolean(removed), followerCount: fresh?.followerCount || 0 });
   } catch (e) { next(e); }
 });
 

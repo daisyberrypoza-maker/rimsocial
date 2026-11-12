@@ -3659,8 +3659,8 @@ html, body, #root { min-height:100%; }
 .pv-sheet-title { margin:0; text-align:center; font-size:18px; font-weight:700; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pv-icon-btn { width:40px; height:40px; border:0 !important; border-radius:50%; background:transparent !important; color:#111 !important; display:grid; place-items:center; padding:0; cursor:pointer; }
 .pv-icon-spacer { width:40px; height:40px; }
-.pv-sheet-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; border-bottom:1px solid #ececf0; }
-.pv-sheet-tabs button { position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; padding:8px 0 10px; border:0 !important; background:transparent !important; color:#8a8a94 !important; cursor:pointer; }
+.pv-sheet-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; border-bottom:1px solid #ececf0 !important; }
+.pv-sheet-tabs button { position:relative; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; padding:10px 0 12px; border:0 !important; background:transparent !important; color:#8a8a94 !important; cursor:pointer; }
 .pv-sheet-tabs strong { font-size:17px; font-weight:700; }
 .pv-sheet-tabs span { font-size:13px; }
 .pv-sheet-tabs button.on { color:#111 !important; }
@@ -5899,3 +5899,417 @@ input, textarea, select, [contenteditable="true"] { scroll-margin-block:90px; }
 .ep-page > .ep-top { position:sticky !important; top:0 !important; z-index:40 !important; min-height:54px; padding-top:calc(6px + env(safe-area-inset-top, 0px)); margin-top:calc(-1 * env(safe-area-inset-top, 0px)); }
 .keyboard-open .ep-page > .ep-top { position:sticky !important; top:0 !important; }
 .ep-page .ep-form { padding-bottom:24px; }
+
+
+/* Discover People — reference-matched white list layout */
+.rec-page.rec-discover-page { background:#fff !important; color:#111 !important; padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 18px) !important; }
+.rec-discover-page .rec-top { position:sticky; top:0; z-index:2; grid-template-columns:44px 1fr 44px; padding:12px 16px 14px !important; border:0; background:#fff; }
+.rec-discover-page .rec-top h1 { font-size:20px !important; font-weight:700 !important; text-align:left; }
+.rec-discover-page .rec-back { justify-content:start; }
+.rec-discover-section { margin:20px 0 0; }
+.rec-discover-section h2 { margin:0 16px 12px; font-size:17px; line-height:1.3; font-weight:500; color:#111; }
+.rec-discover-section-head { display:flex; align-items:center; justify-content:space-between; padding-right:16px; margin-bottom:8px; }
+.rec-discover-section-head h2 { margin-bottom:0; }
+.rec-discover-section-head > button { border:0; background:transparent; color:#4f5df5; font-size:14px; font-weight:600; padding:8px 0; }
+.rec-discover-list { list-style:none; margin:0; padding:0 16px; }
+.rec-discover-row { display:flex; align-items:center; gap:10px; min-height:104px; padding:10px 0; border:0; }
+.rec-discover-person { flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0; background:transparent; color:#111; padding:0; text-align:left; }
+.rec-discover-person .avatar { width:56px !important; height:56px !important; flex:0 0 56px; }
+.rec-discover-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:4px; }
+.rec-discover-copy strong { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; line-height:1.25; font-weight:600; color:#262626; }
+.rec-discover-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; color:#85858d; }
+.rec-discover-follow { flex:0 0 auto; width:136px; max-width:34vw; height:42px; padding:0 10px; border:0 !important; border-radius:10px !important; background:#4f5df5 !important; color:#fff !important; font-size:14px; font-weight:600; white-space:nowrap; }
+.rec-discover-follow.is-following { background:#f0f1f5 !important; color:#111 !important; }
+.rec-discover-dismiss { flex:0 0 24px; width:24px; height:40px; display:grid; place-items:center; padding:0; border:0; background:transparent; color:#8a8a90; }
+.rec-followback-section { margin-top:24px; }
+.rec-discover-page .rec-empty { margin:0; padding:14px 16px; font-size:14px; }
+.rec-discover-row + .rec-discover-row { border-top:0; }
+
+/* Connection list rows follow the supplied reference's left-aligned identity and action layout. */
+.pv-person { text-align:left !important; }
+.pv-person-text { align-items:flex-start !important; text-align:left !important; }
+.pv-person-text strong { font-size:15px !important; font-weight:600 !important; }
+.pv-person-text small { font-size:14px !important; }
+.pv-follow { min-width:0 !important; width:136px; max-width:34vw; height:40px !important; border-radius:10px !important; background:#4f5df5 !important; color:#fff !important; font-size:14px !important; }
+.pv-follow.added { background:#f0f1f5 !important; color:#111 !important; }
+.pv-row { grid-template-columns:minmax(0,1fr) auto auto !important; gap:10px !important; border-bottom:0 !important; padding:8px 0 !important; }
+.pv-remove-follower { width:32px; height:40px; display:grid; place-items:center; border:0 !important; border-radius:50% !important; background:transparent !important; box-shadow:none !important; color:#262626 !important; padding:0; }
+.pv-sort-row { position:relative; display:flex; align-items:center; justify-content:space-between; padding:12px 24px 6px; color:#111; font-size:14px; }
+.pv-sort-row strong { font-weight:700; }
+.pv-sort-trigger { width:36px; height:36px; display:grid; place-items:center; border:0; background:transparent; color:#111; }
+.pv-sort-menu { position:absolute; z-index:5; right:18px; top:46px; min-width:190px; padding:6px; background:#fff; border:1px solid #ececf0; border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,.14); }
+.pv-sort-menu button { display:block; width:100%; padding:10px 12px; border:0; border-radius:8px; background:transparent; color:#111; text-align:left; font-size:14px; }
+.pv-sort-menu button.on { background:#f1f2f6; font-weight:700; }
+
+
+/* Instagram-style Discover People suggestions: compact, consistent account rows */
+.rec-page.rec-discover-page .rec-discover-section { margin-top:18px; }
+.rec-page.rec-discover-page .rec-discover-section h2 { margin:0 16px 8px; font-size:16px; line-height:1.3; font-weight:600; letter-spacing:-.1px; }
+.rec-page.rec-discover-page .rec-discover-section-head { margin:0 16px 8px; padding:0; }
+.rec-page.rec-discover-page .rec-discover-section-head h2 { margin:0; }
+.rec-page.rec-discover-page .rec-discover-list { padding:0 16px; }
+.rec-page.rec-discover-page .rec-discover-row { min-height:68px; gap:8px; padding:8px 0; }
+.rec-page.rec-discover-page .rec-discover-person { gap:11px; }
+.rec-page.rec-discover-page .rec-discover-person .avatar { width:44px !important; height:44px !important; flex:0 0 44px; }
+.rec-page.rec-discover-page .rec-discover-copy { gap:3px; }
+.rec-page.rec-discover-page .rec-discover-copy strong { font-size:14px; line-height:1.25; font-weight:600; color:#171717; }
+.rec-page.rec-discover-page .rec-discover-copy small { font-size:12px; line-height:1.3; color:#8a8a8a; }
+.rec-page.rec-discover-page .rec-discover-follow { width:auto; min-width:92px; max-width:none; height:34px; padding:0 16px; border-radius:8px !important; background:#0095f6 !important; color:#fff !important; font-size:13px; font-weight:600; }
+.rec-page.rec-discover-page .rec-discover-follow.is-following { background:#efefef !important; color:#262626 !important; }
+.rec-page.rec-discover-page .rec-discover-dismiss { flex:0 0 28px; width:28px; height:34px; border-radius:50%; color:#8e8e8e; }
+.rec-page.rec-discover-page .rec-discover-dismiss:active { background:#f3f3f3; }
+.rec-page.rec-discover-page .rec-followback-section { margin-top:24px; padding-top:16px; border-top:1px solid #efefef; }
+.rec-page.rec-discover-page .rec-empty { color:#8a8a8a; }
+@media (max-width:360px) {
+  .rec-page.rec-discover-page .rec-discover-follow { min-width:78px; padding:0 12px; }
+  .rec-page.rec-discover-page .rec-discover-row { gap:6px; }
+}
+
+
+/* Connections sheet: clear separator between Followers/Following tabs and the search field. */
+.pv-sheet .pv-sheet-tabs {
+  border: 0 !important;
+  border-bottom: 1px solid #e8e8e8 !important;
+  box-shadow: none !important;
+  margin-bottom: 12px !important;
+}
+.pv-sheet .pv-search {
+  margin-top: 0 !important;
+}
+
+ 
+/* Instagram-style account discovery for /friends. Keep this scoped to the Add Friends route. */
+.ig-explore.friends-page {
+  background:#fff !important;
+  color:#111 !important;
+  padding:calc(env(safe-area-inset-top,0px) + 4px) 0 calc(env(safe-area-inset-bottom,0px) + 24px) !important;
+}
+.ig-explore.friends-page .friends-discovery-header {
+  min-height:48px;
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) 40px;
+  align-items:center;
+  padding:0 14px;
+  background:#fff;
+}
+.ig-explore.friends-page .friends-discovery-header h1 {
+  margin:0;
+  text-align:center;
+  color:#111;
+  font-size:18px;
+  line-height:1.2;
+  font-weight:650;
+  letter-spacing:-.2px;
+}
+.ig-explore.friends-page .friends-discovery-back {
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#111;
+}
+.ig-explore.friends-page .friends-discovery-search {
+  width:calc(100% - 32px);
+  height:40px;
+  margin:8px 16px 0;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  border-radius:9px;
+  background:#efeff0;
+  color:#8e8e93;
+  text-align:left;
+  font-size:14px;
+  font-weight:400;
+}
+.ig-explore.friends-page .friends-discovery-search span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-explore.friends-page .friends-discovery-intro {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px 4px;
+}
+.ig-explore.friends-page .friends-discovery-intro p {
+  margin:0;
+  color:#737373;
+  font-size:12px;
+  line-height:1.4;
+}
+.ig-explore.friends-page .friends-discovery-intro button {
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:4px 0 4px 8px;
+  border:0;
+  background:transparent;
+  color:#0095f6;
+  font-size:13px;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-section { margin:18px 0 0; }
+.ig-explore.friends-page .friends-suggestion-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px 7px;
+}
+.ig-explore.friends-page .friends-suggestion-heading h2 {
+  margin:0;
+  color:#171717;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:650;
+  letter-spacing:-.15px;
+}
+.ig-explore.friends-page .friends-suggestion-heading > button {
+  flex:none;
+  padding:4px 0 4px 8px;
+  border:0;
+  background:transparent;
+  color:#0095f6;
+  font-size:13px;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-list {
+  list-style:none;
+  margin:0;
+  padding:0 16px;
+}
+.ig-explore.friends-page .friends-suggestion-row {
+  min-height:68px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 0;
+  border:0;
+  border-bottom:1px solid #f2f2f2;
+}
+.ig-explore.friends-page .friends-suggestion-row:last-child { border-bottom:0; }
+.ig-explore.friends-page .friends-suggestion-person {
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#111;
+  text-align:left;
+}
+.ig-explore.friends-page .friends-suggestion-person .avatar {
+  width:44px !important;
+  height:44px !important;
+  flex:0 0 44px;
+}
+.ig-explore.friends-page .friends-suggestion-person > span {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.ig-explore.friends-page .friends-suggestion-person strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#171717;
+  font-size:14px;
+  line-height:1.25;
+  font-weight:600;
+}
+.ig-explore.friends-page .friends-suggestion-person small {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#8a8a8a;
+  font-size:12px;
+  line-height:1.3;
+  font-weight:400;
+}
+.ig-explore.friends-page .friends-suggestion-follow {
+  flex:none;
+  min-width:82px;
+  height:32px;
+  padding:0 13px;
+  border:0;
+  border-radius:7px;
+  background:#0095f6;
+  color:#fff;
+  font-size:13px;
+  line-height:1;
+  font-weight:600;
+  white-space:nowrap;
+}
+.ig-explore.friends-page .friends-suggestion-follow.following {
+  background:#efefef;
+  color:#262626;
+}
+.ig-explore.friends-page .friends-suggestion-follow:disabled { opacity:.65; }
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  flex:0 0 26px;
+  width:26px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#8e8e8e;
+}
+.ig-explore.friends-page .friends-followback-section {
+  margin-top:18px;
+  padding-top:15px;
+  border-top:1px solid #efefef;
+}
+.ig-explore.friends-page .ig-empty {
+  margin:20px 16px;
+  color:#8a8a8a;
+  font-size:13px;
+  text-align:center;
+}
+@media (max-width:360px) {
+  .ig-explore.friends-page .friends-suggestion-row { gap:4px; }
+  .ig-explore.friends-page .friends-suggestion-person { gap:8px; }
+  .ig-explore.friends-page .friends-suggestion-follow { min-width:74px; padding:0 10px; }
+}
+
+
+/* Light surfaces throughout the app; only the immersive Reels/Spotlight players stay dark. */
+html, body, #root, .app { background:#fff !important; color:#17191f; }
+.page, .profile-page, .ig-explore, .friends-page, .live-page, .rec-page,
+.pv-sheet, .pv-sheet-body, .people-sheet, .settings-page, .activity-page {
+  background:#fff !important;
+  color:#17191f !important;
+}
+.sc-grid .sc-tile { background:#fff !important; }
+.pv-sheet-top { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important; }
+.pv-sheet-top .pv-sheet-title { flex:1; text-align:left !important; margin:0 !important; }
+.pv-sheet-top .pv-icon-spacer { width:40px; flex:none; }
+.pv-empty, .pv-empty-row { text-align:center !important; }
+.pv-sheet .pv-empty { min-height:48vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pv-activity-empty { min-height:52vh; display:flex; align-items:center; justify-content:center; padding:24px !important; }
+.pv-person-menu-wrap { position:relative; flex:none; }
+.pv-person-menu { position:absolute; z-index:30; top:calc(100% + 6px); right:0; width:190px; padding:5px; border:1px solid #e8e8e8; border-radius:12px; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.14); }
+.pv-person-menu button { display:block; width:100%; padding:11px 12px; border:0; border-radius:8px; background:#fff; color:#17191f; text-align:left; font-size:14px; font-weight:500; }
+.pv-person-menu button + button { border-top:1px solid #f0f0f0; }
+.pv-person-menu button.danger { color:#e53950; }
+.pv-person-menu button:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Following and all standard navigation stay light; dark treatment is limited to immersive video. */
+.bottomnav.bottomnav-dark { background:#fff !important; border-top-color:#e5e7eb !important; }
+.bottomnav.bottomnav-dark a { color:#777 !important; }
+.bottomnav.bottomnav-dark a.active { color:#17191f !important; }
+
+/* /friends: isolate every suggestion control from global button theme defaults. */
+.ig-explore.friends-page .friends-suggestion-row,
+.ig-explore.friends-page .friends-suggestion-person,
+.ig-explore.friends-page .friends-suggestion-person strong,
+.ig-explore.friends-page .friends-suggestion-person small,
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-person {
+  color: #171717 !important;
+  box-shadow: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-person strong { color: #171717 !important; }
+.ig-explore.friends-page .friends-suggestion-person small { color: #8a8a8a !important; }
+.ig-explore.friends-page .friends-suggestion-follow {
+  background: #0095f6 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.ig-explore.friends-page .friends-suggestion-follow.following {
+  background: #efefef !important;
+  color: #262626 !important;
+}
+.ig-explore.friends-page .friends-suggestion-dismiss {
+  color: #8e8e8e !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+
+/* Connection and activity sheets: compact header and truly centered empty states. */
+.pv-sheet-top {
+  gap: 4px !important;
+}
+.pv-sheet-top > .pv-icon-btn:first-child {
+  margin-right: 0 !important;
+  flex: 0 0 36px !important;
+}
+.pv-sheet-top .pv-sheet-title {
+  margin-left: 0 !important;
+  text-align: left !important;
+}
+.pv-sheet .pv-empty,
+.pv-sheet .pv-empty-row,
+.pv-sheet .pv-activity-empty {
+  text-align: center !important;
+}
+.pv-sheet .pv-list:has(.pv-activity-empty) {
+  min-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.pv-sheet .pv-activity-empty {
+  width: 100%;
+  min-height: 48vh;
+  padding: 24px !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep non-video application surfaces light; immersive Reels/Spotlight media retain black. */
+.topbar:not(.overlay),
+.profile-top,
+.activity-heading,
+.activity-filters,
+.activity-read-row,
+.activity-list,
+.pv-row,
+.pv-person,
+.pv-person-text,
+.pv-search,
+.pv-sort-row,
+.pf-tabs,
+.pf-body,
+.sc-profile-stats,
+.settings-menu,
+.settings-body {
+  background: #fff !important;
+  color: #17191f !important;
+}
+.profile-top { background-image: none !important; }
+
+
+/* /friends suggestions: no search/contact controls; keep the back control unfilled. */
+.ig-explore.friends-page .friends-discovery-back,
+.ig-explore.friends-page .friends-discovery-back:hover,
+.ig-explore.friends-page .friends-discovery-back:focus,
+.ig-explore.friends-page .friends-discovery-back:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.ig-explore.friends-page .friends-discovery-back svg {
+  background: transparent !important;
+}
+.ig-explore.friends-page .friends-discovery-search,
+.ig-explore.friends-page .friends-discovery-intro {
+  display: none !important;
+}

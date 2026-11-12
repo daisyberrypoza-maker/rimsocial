@@ -74,6 +74,9 @@ export default function Profile() {
   const [peopleLoading, setPeopleLoading] = useState(false);
   const [peopleQuery, setPeopleQuery] = useState('');
   const [peopleBusy, setPeopleBusy] = useState({});
+  const [peopleSort, setPeopleSort] = useState('default');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [listMenuPerson, setListMenuPerson] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -267,7 +270,25 @@ export default function Profile() {
       setPeople((current) => current.map((item) => item.id === person.id
         ? { ...item, isFollowing: response.isFollowing, followerCount: response.followerCount }
         : item));
+      // Keep the profile's connection totals in sync with the list immediately.
+      const delta = response.isFollowing ? 1 : -1;
+      setProfile(username, { user: {
+        ...profile,
+        followingCount: Math.max(0, Number(profile.followingCount || 0) + delta),
+      } });
     } catch (e) { logError(e); }
+    finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
+  }
+
+  async function removeFollower(person) {
+    if (!profile?.isMe || peopleBusy[person.id]) return;
+    if (!window.confirm(`Remove @${person.username} as a follower?`)) return;
+    setPeopleBusy((current) => ({ ...current, [person.id]: true }));
+    try {
+      await api(`/v1/users/${person.id}/follower`, { method: 'DELETE' });
+      setPeople((current) => current.filter((item) => item.id !== person.id));
+      setProfile(username, { user: { ...profile, followerCount: Math.max(0, Number(profile.followerCount || 0) - 1) } });
+    } catch (error) { logError(error); }
     finally { setPeopleBusy((current) => ({ ...current, [person.id]: false })); }
   }
 
@@ -405,6 +426,7 @@ export default function Profile() {
 
   if (!profile) return <div className="page profile-page" />;
 
+  const compactConnectionCount = (value) => formatCount(Number(value) || 0).toLowerCase();
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
@@ -447,7 +469,7 @@ export default function Profile() {
               {profile.isMe && <button type="button" className="pf-chev" aria-label="Profile options" onClick={() => setDrawerOpen(true)}><Icon name="chevron-down" size={18} /></button>}
             </h2>
             <p className="pf-handle">{profile.username}</p>
-            <p className="pf-sub"><button type="button" className="pf-link" onClick={() => openPeople('followers')}>{formatCount(profile.followerCount || 0)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
+            <p className="pf-sub"><button type="button" className="pf-link" onClick={() => openPeople('followers')}>{compactConnectionCount(profile.followerCount)} Followers</button>{profile.isCreator && <> · Creator</>}</p>
           </div>
         </div>
         {profile.isMe ? (
@@ -473,11 +495,11 @@ export default function Profile() {
         )}
       </div>
       <section className="sc-profile-stats" aria-label="Profile statistics">
-        <button type="button" onClick={() => openPeople('followers')} aria-label={`${formatCount(profile.followerCount || 0)} followers`}>
-          <strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span>
+        <button type="button" onClick={() => openPeople('followers')} aria-label={`${compactConnectionCount(profile.followerCount)} followers`}>
+          <strong>{compactConnectionCount(profile.followerCount)}</strong><span>Followers</span>
         </button>
-        <button type="button" onClick={() => openPeople('following')} aria-label={`${formatCount(profile.followingCount || 0)} following`}>
-          <strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span>
+        <button type="button" onClick={() => openPeople('following')} aria-label={`${compactConnectionCount(profile.followingCount)} following`}>
+          <strong>{compactConnectionCount(profile.followingCount)}</strong><span>Following</span>
         </button>
         <button type="button" onClick={() => setTab('posts')} aria-label={`${formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))} creations`}>
           <strong>{formatCount(Math.max(Number(profile.creationCount) || 0, Number(profile.postCount) || 0, posts.length))}</strong><span>Posts</span>
@@ -553,14 +575,14 @@ export default function Profile() {
             {profile.isMe && listType !== 'blocked' ? <button type="button" className="pv-icon-btn" aria-label="Find people" onClick={() => navigate('/explore')}><Icon name="user-plus" size={22} /></button> : <span className="pv-icon-spacer" aria-hidden="true" />}
           </header>
           {listType !== 'blocked' && <nav className="pv-sheet-tabs" role="tablist" aria-label="Connections">
-            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers', true); }}><strong>{formatCount(profile.followerCount || 0)}</strong><span>Followers</span></button>
-            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following', true); }}><strong>{formatCount(profile.followingCount || 0)}</strong><span>Following</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'followers'} className={listType === 'followers' ? 'on' : ''} onClick={() => { if (listType !== 'followers') openPeople('followers', true); }}><strong>{compactConnectionCount(profile.followerCount)}</strong><span>Followers</span></button>
+            <button type="button" role="tab" aria-selected={listType === 'following'} className={listType === 'following' ? 'on' : ''} onClick={() => { if (listType !== 'following') openPeople('following', true); }}><strong>{compactConnectionCount(profile.followingCount)}</strong><span>Following</span></button>
             {profile.isMe && <button type="button" role="tab" aria-selected={listType === 'activity'} className={listType === 'activity' ? 'on' : ''} onClick={() => { if (listType !== 'activity') openActivity(true); }}><strong>{activity.length ? formatCount(activity.length) : '0'}</strong><span>Activity</span></button>}
           </nav>}
           {listType === 'activity' ? (
             <ul className="pv-list" aria-label="Activity">
               
-              {!activityLoading && !activity.length && <li className="pv-empty-row">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
+              {!activityLoading && !activity.length && <li className="pv-empty-row pv-activity-empty">No activity yet. Likes, comments, follows and new posts from creators you follow will appear here.</li>}
               {activity.map((item) => (
                 <li className="pv-row pv-activity-row" key={item.id}>
                   <button type="button" className="pv-person" onClick={() => { if (item.actor?.username) navigate(`/u/${item.actor.username}`); }}>
@@ -572,9 +594,15 @@ export default function Profile() {
             </ul>
           ) : <>
             {listType !== 'blocked' && <label className="pv-search"><Icon name="search" size={18} /><input aria-label="Search people" value={peopleQuery} onChange={(e) => setPeopleQuery(e.target.value)} placeholder="Search" /></label>}
-            {listType !== 'blocked' && <div className="pv-sort">Sorted by <strong>Default</strong></div>}
+            {listType !== 'blocked' && <div className="pv-sort-row">
+              <span>Sorted by <strong>{peopleSort === 'default' ? 'Default' : peopleSort === 'newest' ? 'Date followed: Latest' : 'Date followed: Earliest'}</strong></span>
+              {profile.isMe && <button type="button" className="pv-sort-trigger" aria-label="Change sort order" onClick={() => setSortOpen((open) => !open)}><Icon name="arrow-down-up" size={22} /></button>}
+              {sortOpen && <div className="pv-sort-menu">
+                {[['default', 'Default'], ['newest', 'Date followed: Latest'], ['oldest', 'Date followed: Earliest']].map(([value, label]) => <button type="button" key={value} className={peopleSort === value ? 'on' : ''} onClick={() => { setPeopleSort(value); setSortOpen(false); }}>{label}</button>)}
+              </div>}
+            </div>}
             <ul className="pv-list">
-              {people.filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).map((person) => (
+              {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => { if (peopleSort === 'default') return 0; const delta = new Date(a.relationshipCreatedAt || 0).getTime() - new Date(b.relationshipCreatedAt || 0).getTime(); return peopleSort === 'newest' ? -delta : delta; }).map((person) => (
                 <li className="pv-row" key={person.id}>
                   <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
                     <Avatar user={person} size={52} />
@@ -584,10 +612,16 @@ export default function Profile() {
                     ? <button type="button" className="pv-follow" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
                     : listType === 'followers' && !person.isFollowing
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
-                      : <>
-                          <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>
-                          {listType === 'following' && <button type="button" className="pv-more" aria-label={`More options for ${person.username}`} onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="more-vertical" size={18} /></button>}
-                        </>}
+                      : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
+                  {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
+                  {listType === 'following' && <div className="pv-person-menu-wrap">
+                    <button type="button" className="pv-more" aria-label={`Options for ${person.username}`} aria-expanded={listMenuPerson === person.id} onClick={() => setListMenuPerson((current) => current === person.id ? null : person.id)}><Icon name="more-vertical" size={18} /></button>
+                    {listMenuPerson === person.id && <div className="pv-person-menu" role="menu">
+                      <button type="button" role="menuitem" className="danger" onClick={() => { setListMenuPerson(null); toggleListFollow(person); }} disabled={Boolean(peopleBusy[person.id])}>Unfollow</button>
+                      <button type="button" role="menuitem" disabled title="Mute requires a server-side mute setting">Mute</button>
+                      <button type="button" role="menuitem" disabled title="Shared activity is not available from the current API">See shared activity</button>
+                    </div>}
+                  </div>}
                 </li>
               ))}
             </ul>
