@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 // Bottom-tab order. Upload is intentionally included even though it has no visible bottom bar.
 export const TAB_PATHS = ['/stories', '/chat', '/upload', '/', '/following', '/live', '/u/me'];
-const IGNORE = 'input, textarea, select, video, audio, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
+const IGNORE = 'input, textarea, select, audio, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
 const LOCK_PX = 10;
 const SETTLE_MS = 220;
 
