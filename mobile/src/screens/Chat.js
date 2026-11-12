@@ -46,6 +46,23 @@ export default function Chat() {
       setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, muted: Boolean(data.muted) } : row));
     } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update mute setting'); }
   }
+  async function setReadState(item, unread) {
+    try {
+      await api(`/v1/messages/with/${item.user.id}/${unread ? 'unread' : 'read'}`, { method: 'POST', body: {} });
+      setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: unread ? Math.max(1, Number(row.unread || 0)) : 0 } : row));
+    } catch (error) { Alert.alert('RimSocial', error.message || 'Could not update read status'); }
+  }
+  function blockChat(item) {
+    Alert.alert('Block account?', `You and ${item.user.displayName || item.user.username} will no longer be able to interact normally.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Block', style: 'destructive', onPress: async () => {
+        try {
+          await api(`/v1/users/${item.user.id}/block`, { method: 'POST', body: {} });
+          setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
+        } catch (error) { Alert.alert('RimSocial', error.message || 'Could not block account'); }
+      } },
+    ]);
+  }
   async function deleteChat(item) {
     try {
       await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
@@ -56,6 +73,8 @@ export default function Chat() {
     const name = item.user.displayName || item.user.username;
     Alert.alert(name, 'Conversation options', [
       { text: item.muted ? 'Unmute notifications' : 'Mute notifications', onPress: () => muteChat(item) },
+      { text: item.unread > 0 ? 'Mark as read' : 'Mark as unread', onPress: () => setReadState(item, !(item.unread > 0)) },
+      { text: 'Block account', style: 'destructive', onPress: () => blockChat(item) },
       { text: 'Delete conversation', style: 'destructive', onPress: () => Alert.alert('Delete conversation?', 'This removes the chat from your inbox only. The other person keeps their messages.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: () => deleteChat(item) },
@@ -121,7 +140,7 @@ export default function Chat() {
           const open = () => navigation.navigate('Conversation', { userId: item.user.id, user: item.user });
           return (
             <View style={styles.rowWrap}>
-              <Pressable style={styles.row} onPress={open}>
+              <Pressable style={styles.row} onPress={open} onLongPress={() => showChatOptions(item)} delayLongPress={450}>
                 <View style={[styles.ring, item.hasStory && styles.ringStory]}>
                   <View style={styles.ringFace}><Avatar user={item.user} size={54} /></View>
                   {item.isOnline && <View style={styles.online} accessibilityLabel="Online" />}
@@ -183,7 +202,7 @@ const styles = StyleSheet.create({
   ringFace: { width: 54, height: 54, borderRadius: 27, overflow: 'hidden', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   online: { position: 'absolute', right: 0, bottom: 2, width: 14, height: 14, borderRadius: 7, backgroundColor: '#31c75f', borderWidth: 2, borderColor: '#fff' },
   text: { flex: 1, minWidth: 0 },
-  name: { fontSize: 15, fontWeight: '600', color: colors.text },
+  name: { fontSize: 15, fontWeight: '500', color: colors.text },
   nameUnread: { fontWeight: '700' },
   last: { fontSize: 14, color: GREY, marginTop: 2 },
   lastUnread: { fontWeight: '700', color: colors.text },
