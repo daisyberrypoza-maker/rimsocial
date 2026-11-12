@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   h2Row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   pill: { alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: colors.text, justifyContent: 'center' },
   pillText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  row: { paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
+  row: { paddingLeft: 2.5, paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
   plus: { position: 'absolute', right: 0, top: 50, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.myRing, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
   // Name 12px, with a little space above it so it does not sit tight against the ring
