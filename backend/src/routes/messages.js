@@ -510,6 +510,14 @@ router.post('/with/:userId/read', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Mark all incoming messages unread from this conversation in the inbox.
+router.post('/with/:userId/unread', async (req, res, next) => {
+  try {
+    await DirectMessage.update({ readAt: null }, { where: { senderId: req.params.userId, recipientId: req.user.id } });
+    res.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
 // ---- message actions ----------------------------------------------------------
 
 // Edit my own text message within 15 minutes.
