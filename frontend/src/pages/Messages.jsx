@@ -137,6 +137,10 @@ export default function Messages() {
     counts[group] = all.reduce((sum, item) => sum + (group === 'all' || inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
     return counts;
   }, {});
+  // Stories tab: creators with a story you have not watched yet (your own story is not counted)
+  const storyRail = useAppStore((st) => st.storyRail);
+  const storiesUnseen = (Array.isArray(storyRail) ? storyRail : []).filter((g) => g.unseen && String(g.user?.id) !== String(me?.id)).length;
+  const countFor = { ...unreadByGroup, stories: storiesUnseen };
 
   return (
     <main className="sn-page">
@@ -161,7 +165,7 @@ export default function Messages() {
         {['all', 'primary', 'stories', 'requests'].map((category) => (
           <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
             {category === 'all' ? 'All' : category === 'primary' ? 'Primary' : category === 'stories' ? 'Stories' : 'Requests'}
-            {unreadByGroup[category] > 0 && <span className="sn-count">{unreadByGroup[category] > 99 ? '99+' : unreadByGroup[category]}</span>}
+            {countFor[category] > 0 && <span className="sn-count">{countFor[category] > 99 ? '99+' : countFor[category]}</span>}
           </button>
         ))}
       </nav>

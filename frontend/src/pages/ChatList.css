@@ -114,3 +114,41 @@
   flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   text-align: left; font-size: 20px; font-weight: 500; color: #000;
 }
+
+/* Chat tabs: equal pills, no underline, counts beside the label */
+.sn-page .sn-filters {
+  display: flex !important; align-items: center !important; gap: 8px !important; padding: 8px 16px 12px !important;
+  margin: 0 !important; border-bottom: 0 !important; background: #fff !important; overflow-x: auto !important; scrollbar-width: none;
+}
+.sn-page .sn-filters::-webkit-scrollbar { display: none; }
+.sn-page .sn-chip,
+.sn-page .sn-chip:hover,
+.sn-page .sn-chip:focus,
+.sn-page .sn-chip:active {
+  position: static !important; flex: 0 0 auto !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  gap: 6px !important; height: 36px !important; min-width: 0 !important; margin: 0 !important; padding: 0 16px !important;
+  border: 0 !important; border-radius: 999px !important; background: #f0f2f5 !important; color: #111 !important;
+  box-shadow: none !important; font-size: 15px !important; font-weight: 600 !important; line-height: 1 !important; white-space: nowrap !important;
+}
+.sn-page .sn-chip.active,
+.sn-page .sn-chip[aria-selected="true"] { background: #e7f0ff !important; color: #0064e0 !important; }
+.sn-page .sn-chip.active::after,
+.sn-page .sn-chip[aria-selected="true"]::after { content: none !important; display: none !important; }
+.sn-page .sn-count {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; min-width: 18px !important; height: 18px !important;
+  margin: 0 !important; padding: 0 5px !important; border-radius: 9px !important; background: #0064e0 !important; color: #fff !important;
+  font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;
+}
+.sn-page .sn-chip.active .sn-count { background: #0064e0 !important; }
+
+/* Rows: aligned avatar, name and preview; no reserved space for hidden buttons */
+.sn-page .sn-item { padding: 0 16px 0 16px !important; min-height: 0 !important; }
+.sn-page .sn-item .sn-row { min-width: 0; padding: 10px 0 !important; align-items: center !important; }
+.sn-page .sn-row .sn-ring { flex: 0 0 56px !important; }
+.sn-page .sn-text { flex: 1 1 auto; min-width: 0; justify-content: center; }
+.sn-page .sn-name-row { display: flex !important; align-items: center !important; justify-content: flex-start !important; min-width: 0; }
+.sn-page .sn-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sn-page .sn-sub { display: flex !important; align-items: center !important; min-width: 0; }
+.sn-page .sn-sub .sn-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sn-page .sn-time { flex: none; margin-left: 6px !important; }
+.sn-page .sn-group-list .sn-item { padding-right: 16px !important; }
