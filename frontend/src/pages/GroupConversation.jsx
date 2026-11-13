@@ -7,6 +7,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast } from '../toast.js';
 import '../snap-screens.css';
+import './Conversation.css';
 
 function clock(value) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -142,8 +143,8 @@ export default function GroupConversationPage() {
 
       {error && <p className="dm-error" role="alert">{error}</p>}
       <form className="dm-input cv-form" onSubmit={send}>
-        <input value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="Message the group" aria-label="Message the group" />
-        <button type="submit" disabled={!text.trim() || sending} aria-label="Send message">
+        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="Message the group" aria-label="Message the group" />
+        <button type="submit" onPointerDown={(e) => e.preventDefault()} disabled={!text.trim() || sending} aria-label="Send message">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
         </button>
       </form>

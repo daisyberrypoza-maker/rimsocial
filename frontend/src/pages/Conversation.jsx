@@ -9,6 +9,7 @@ import { goBack } from '../lib/goBack.js';
 import { mediaUrl } from '../lib/config.js';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
+import './Conversation.css';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -457,8 +458,8 @@ export default function Conversation() {
           </button>
         )}
         <input ref={fileRef} type="file" hidden onChange={pickFile} />
-        <input value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Send a message'} aria-label="Message" />
-        <button type="submit" disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>
+        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Send a message'} aria-label="Message" />
+        <button type="submit" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
         </button>
       </form>

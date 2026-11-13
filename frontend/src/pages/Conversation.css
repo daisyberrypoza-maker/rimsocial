@@ -1,0 +1,79 @@
+/* Direct and group chat screens.
+   The screen is exactly the visual viewport: when the keyboard opens the header stays at the top,
+   the message box sits right above the keyboard, and the thread scrolls in between. */
+
+.dm-convo.cv-convo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--app-viewport-height, 100dvh) !important;
+  max-height: var(--app-viewport-height, 100dvh) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.dm-convo.cv-convo .dm-chead {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 7px 12px;
+  background: #fff;
+}
+
+/* Avatar keeps its size; the name sits in its own column beside it, never over the avatar */
+.dm-convo.cv-convo .dm-chead > .avatar,
+.dm-convo.cv-convo .dm-chead > .sn-group-avatar {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+}
+.dm-convo.cv-convo .cv-head-text {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.dm-convo.cv-convo .cv-head-text .dm-cname {
+  display: block;
+  max-width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-convo.cv-convo .cv-subtitle { font-size: 13px; color: #65676b; line-height: 1.2; }
+
+.dm-convo.cv-convo .dm-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Composer is always the last row, above the keyboard and the safe area */
+.dm-convo.cv-convo .cv-form {
+  flex: 0 0 auto;
+  margin: 6px 12px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  position: relative;
+  z-index: 3;
+  background: #fff;
+}
+.dm-convo.cv-convo .cv-form input { font-size: 16px; }
