@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, StoryLike, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -137,6 +137,9 @@ async function start() {
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
   await UserMute.sync();
+  // Story likes are stored separately from post likes. Create the table when absent;
+  // sync() without alter/force is additive and preserves existing rows.
+  await StoryLike.sync();
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
   const qiDM = sequelize.getQueryInterface();
@@ -193,6 +196,11 @@ async function start() {
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
   const DataTypes = require('sequelize').DataTypes;
+  // Carousel media is optional for legacy single-media posts. Add the nullable JSON
+  // column only when missing; never rewrite or remove existing post content.
+  if (!currentPostColumns.mediaItems) {
+    await qi.addColumn('posts', 'mediaItems', { type: DataTypes.JSON, allowNull: true });
+  }
   if (!currentPostColumns.mediaPublicId) await qi.addColumn('posts', 'mediaPublicId', { type: DataTypes.STRING(255), allowNull: true });
   if (!currentPostColumns.allowRemix) await qi.addColumn('posts', 'allowRemix', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sourcePostId) await qi.addColumn('posts', 'sourcePostId', { type: DataTypes.UUID, allowNull: true });
