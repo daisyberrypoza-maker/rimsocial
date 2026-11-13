@@ -1,18 +1,24 @@
-import { api } from '../api.js';
+import { uploadApi, api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from './paged.js';
 import { toast, logError } from '../toast.js';
 
-// Uploads a post or story in the background. The person lands on Rimlight or Stories at once,
-// the upload carries on there (spinner on the screen), and the new item appears when it finishes.
+// Keep the upload visible until the server confirms success or failure.
 export function startUpload(job) {
   const { toStory, file, storyFile, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
   const thumb = URL.createObjectURL(file);
-  useAppStore.getState().setPendingUpload({
+  const store = useAppStore.getState();
+  store.setPendingUpload({
     kind: toStory ? 'story' : 'post',
     thumb,
     mediaKind: String(file.type).startsWith('video/') ? 'video' : 'image',
+    progress: 0,
+    status: 'uploading',
   });
+  const updateProgress = (progress) => {
+    const current = useAppStore.getState().pendingUpload;
+    if (current) useAppStore.getState().setPendingUpload({ ...current, progress, status: progress >= 100 ? 'processing' : 'uploading' });
+  };
 
   (async () => {
     const fd = new FormData();
@@ -31,28 +37,40 @@ export function startUpload(job) {
     }
     if (toStory) fd.append('media', storyFile || file);
     else (files?.length ? files : [file]).forEach((item) => fd.append('media', item));
-    await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
+
+    await uploadApi(toStory ? '/v1/stories' : '/v1/posts', fd, updateProgress);
 
     if (!toStory && shareToStory) {
       const storyFd = new FormData();
       storyFd.append('media', storyFile || file);
       storyFd.append('caption', (caption || '').slice(0, 200));
-      try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
-      catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
+      try {
+        await uploadApi('/v1/stories', storyFd, updateProgress);
+      } catch (storyError) {
+        toast('Post published, but Story sharing failed: ' + storyError.message);
+      }
     }
 
-    if (toStory) {
+    if (toStory || shareToStory) {
       const rail = await api('/v1/stories/rail');
-      useAppStore.getState().setStoryRail(rail.items || []);
-    } else {
+      useAppStore.getState().setStoryRail({ items: rail.items || [], updatedAt: Date.now() });
+    }
+    if (!toStory) {
       useAppStore.getState().setFeed('following', { updatedAt: 0 });
       await loadPage('discover', '/v1/feed/discover', true);
     }
-    toast(toStory ? 'Public story posted. It disappears in 24 hours.' : visibility === 'public' ? 'Post published publicly' : 'Post saved as Only me');
-  })()
-    .catch((error) => logError(error))
-    .finally(() => {
+    const current = useAppStore.getState().pendingUpload;
+    if (current) useAppStore.getState().setPendingUpload({ ...current, progress: 100, status: 'success' });
+    toast(toStory ? 'Story published successfully' : visibility === 'public' ? 'Post published successfully' : 'Post saved successfully');
+  })().catch((error) => {
+    const current = useAppStore.getState().pendingUpload;
+    if (current) useAppStore.getState().setPendingUpload({ ...current, status: 'error', error: error.message });
+    logError(error);
+  }).finally(() => {
+    setTimeout(() => {
+      const current = useAppStore.getState().pendingUpload;
+      if (current?.thumb === thumb) useAppStore.getState().setPendingUpload(null);
       URL.revokeObjectURL(thumb);
-      useAppStore.getState().setPendingUpload(null);
-    });
+    }, 3500);
+  });
 }
