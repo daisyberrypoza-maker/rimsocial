@@ -188,6 +188,7 @@ export default function Stories() {
             </button>
           ))}
         </div>
+        {!loaded && <p className="st-loading" role="status">Loading stories…</p>}
         {!loading && loaded && others.length === 0 && !myGroup && (
           <div className="st-empty">
             <span className="st-empty-icon" aria-hidden="true"><Icon name="users" size={28} /></span>
