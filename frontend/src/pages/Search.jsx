@@ -35,9 +35,9 @@ export default function Search() {
   const [tracks, setTracks] = useState([]);
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const audioRef = useRef(null);
+  const term = query.trim();
   const showTabs = !tagPage && Boolean(term);
   const swipeSurfaceRef = useSwipeTabs(tab, TABS.map(([key]) => key), setTab, showTabs);
-  const term = query.trim();
 
   useEffect(() => {
     if (tagPage) return;
