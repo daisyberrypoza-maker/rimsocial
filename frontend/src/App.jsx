@@ -25,6 +25,7 @@ import Activity from './pages/Activity.jsx';
 import Stories from './pages/Stories.jsx';
 import Recommended from './pages/Recommended.jsx';
 import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
+import LiveCreate from './pages/LiveCreate.jsx';
 import AdsSponsors from './pages/AdsSponsors.jsx';
 import ExploreWatch from './pages/ExploreWatch.jsx';
 import Search from './pages/Search.jsx';
@@ -147,6 +148,7 @@ export default function App() {
         <Route path="/stories" element={<RequireAuth><Stories /></RequireAuth>} />
         <Route path="/recommended" element={<RequireAuth><Recommended /></RequireAuth>} />
         <Route path="/live" element={<RequireAuth><LiveBroadcasts /></RequireAuth>} />
+        <Route path="/live/create" element={<RequireAuth><LiveCreate /></RequireAuth>} />
         <Route path="/algorithm" element={<RequireAuth><Algorithm /></RequireAuth>} />
         <Route path="/chat" element={<RequireAuth><Messages /></RequireAuth>} />
         <Route path="/message" element={<RequireAuth><Messages /></RequireAuth>} />

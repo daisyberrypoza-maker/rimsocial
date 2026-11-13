@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 const ICONS = {
+  'refresh-cw': RefreshCw,
   'trash-2': Trash2, 'log-out': LogOut, 'shield-ban': Ban, images: ImageIcon, 'bell-off': BellOff, copy: Copy, reply: Reply,
   file: FileIcon,
   calendar: CalendarDays,

@@ -1,0 +1,76 @@
+/* LIVE setup screen: full-screen camera, title and Go LIVE. */
+.live-create {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.live-create-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.live-create-video.mirror { transform: scaleX(-1); }
+.live-create-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+}
+.live-create button {
+  background: transparent !important;
+  color: #fff !important;
+  border: 0;
+  padding: 6px;
+  box-shadow: none;
+  display: flex;
+  cursor: pointer;
+}
+.live-create-bottom {
+  position: relative;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  background: linear-gradient(to top, rgba(0,0,0,.7), rgba(0,0,0,0));
+}
+.live-create-audience {
+  align-self: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.55);
+  font-size: 14px;
+  font-weight: 600;
+}
+.live-create input {
+  width: 100%;
+  height: 50px !important;
+  padding: 0 14px !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  border-radius: 8px !important;
+  background: rgba(0,0,0,.55) !important;
+  color: #fff !important;
+  font-size: 16px !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.live-create input::placeholder { color: rgba(255,255,255,.7); }
+.live-create-error { margin: 0; color: #ff667a; font-size: 14px; }
+.live-create button.live-create-go {
+  height: 50px;
+  width: 100%;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #fff !important;
+  color: #000 !important;
+  font-size: 16px;
+  font-weight: 600;
+}
+.live-create button.live-create-go:disabled { opacity: .5; }

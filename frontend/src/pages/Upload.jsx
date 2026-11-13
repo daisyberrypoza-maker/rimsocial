@@ -80,7 +80,8 @@ export default function Upload() {
   const draft = useAppStore((s) => s.uploadDraft);
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const asStory = searchParams.get('story') === '1';
-  const [view, setView] = useState(remixId || asStory ? 'gallery' : 'camera');
+  const asReel = searchParams.get('reel') === '1';
+  const [view, setView] = useState(remixId || asStory || asReel ? 'gallery' : 'camera');
   const [tab, setTab] = useState('Camera Roll');
   const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
@@ -252,12 +253,13 @@ export default function Upload() {
 
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
-    const preview = onRecents ? recents[0] : null;
-    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/' }, { key: 'live', label: 'LIVE', path: '/live' }];
+    const shownRecents = recents.filter((item) => !asReel || String(item.file.type).startsWith('video/'));
+    const preview = onRecents ? shownRecents[0] : null;
+    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/upload?reel=1' }, { key: 'live', label: 'LIVE', path: '/live/create' }];
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={26} /></button>
-        <h1>{asStory ? 'New story' : 'New post'}</h1>
+        <h1>{asStory ? 'New story' : asReel ? 'New reel' : 'New post'}</h1>
         <span className="ig-create-spacer" aria-hidden="true" />
       </header>
       <div className="ig-create-preview">
@@ -273,7 +275,7 @@ export default function Upload() {
       </div>
       {onRecents ? <div className="up-grid ig-create-grid">
         <button type="button" className="up-tile ig-create-camera" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={30} /><span>Camera</span></button>
-        {recents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => chooseFile(item.file)} aria-label="Select this media">
+        {shownRecents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => chooseFile(item.file)} aria-label="Select this media">
           {String(item.file.type).startsWith('video/') ? <video src={item.url} muted playsInline preload="metadata" /> : <img src={item.url} alt="" />}
         </button>)}
       </div> : <div className="up-grid ig-create-grid">
@@ -282,9 +284,9 @@ export default function Upload() {
         </button>)}
       </div>}
       <nav className="ig-create-modes" aria-label="Create type">
-        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : asReel ? 'reel' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
       </nav>
-      <input id="up-file" className="hidden" type="file" accept={ACCEPT} onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
+      <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
     </main>;
   }

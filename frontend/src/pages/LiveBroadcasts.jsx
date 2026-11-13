@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 
 export default function LiveBroadcasts() {
+  const location = useLocation();
+  // Arrives from the LIVE setup screen with the new broadcast: start as host right away
+  useEffect(() => {
+    const hosted = location.state?.hostBroadcast;
+    if (hosted) { window.history.replaceState(null, ''); connectToBroadcast(hosted, true); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [items, setItems] = useState([]);
   const [title, setTitle] = useState('');
   const [selected, setSelected] = useState(null);
