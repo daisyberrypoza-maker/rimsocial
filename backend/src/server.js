@@ -59,9 +59,28 @@ app.get('/health', (req, res) => res.status(200).json({ ok: true, service: 'rims
 app.get('/ready', async (req, res) => {
   try {
     await sequelize.authenticate();
-    res.status(200).json({ ok: true, service: 'rimsocial-api', database: 'connected' });
+    const postColumns = await sequelize.getQueryInterface().describeTable('posts');
+    const requiredPostColumns = [
+      'id', 'authorId', 'kind', 'mediaUrl', 'status', 'isStory', 'expiresAt',
+      'storyText', 'storyBackground', 'voiceUrl', 'musicUrl', 'musicTitle',
+    ];
+    const missing = requiredPostColumns.filter((column) => !postColumns[column]);
+    const kindType = String(postColumns.kind?.type || '').toLowerCase();
+    if (!kindType.includes("'text'") && !kindType.includes('"text"')) missing.push('posts.kind:text');
+    if (missing.length) {
+      return res.status(503).json({
+        ok: false, service: 'rimsocial-api', database: 'connected',
+        schema: 'incomplete', missing,
+      });
+    }
+    // Exercise the new story enum in a zero-row query; this validates the live DB, not just the model.
+    await sequelize.query("SELECT id FROM posts WHERE kind = 'text' LIMIT 0");
+    return res.status(200).json({
+      ok: true, service: 'rimsocial-api', database: 'connected', schema: 'ready',
+    });
   } catch (error) {
-    res.status(503).json({ ok: false, service: 'rimsocial-api', database: 'unavailable' });
+    console.error('Readiness check failed:', error.message);
+    return res.status(503).json({ ok: false, service: 'rimsocial-api', database: 'unavailable' });
   }
 });
 
