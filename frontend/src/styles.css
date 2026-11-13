@@ -6746,3 +6746,5 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
   border:1px solid var(--line); border-radius:12px;
   background:var(--surface); color:var(--text); font-size:13px;
 }
+
+.st-loading { margin:8px 16px; padding:12px 0; color:var(--muted); font-size:13px; text-align:center; }
