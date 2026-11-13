@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { playChime } from '../lib/notify.js';
 import Icon from './Icon.jsx';
 
-// Bottom bar, in this order: Stories, Chat (Instagram direct icon), Upload (+), Rimlight. Swipe between these pages follows the same order (see lib/tabSwipe.js).
+// Bottom bar, in this order: Stories, Chat (Instagram direct icon), Upload (+), Search, Rimlight. Swipe between these pages follows the same order (see lib/tabSwipe.js).
 // No text labels. The active icon is filled. Profile opens from the Stories header avatar.
 export default function BottomNav() {
   const { pathname } = useLocation();
@@ -40,6 +40,7 @@ export default function BottomNav() {
         {unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}
       </NavLink>
       <NavLink to="/upload" replace aria-label="Create post"><Icon name="plus" size={28} /></NavLink>
+      <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
       <NavLink to="/" end replace aria-label="Rimlight"><Icon name="play" /></NavLink>
     </nav>
   );
