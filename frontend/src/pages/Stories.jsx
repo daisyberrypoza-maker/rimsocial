@@ -159,6 +159,10 @@ export default function Stories() {
         </div>
       </header>
       {indicator}
+      {uploading && <div className="st-upload-status" role="status" aria-live="polite">
+        <span>{pending.status === 'success' ? 'Story published' : pending.status === 'error' ? (pending.error || 'Story upload failed') : pending.status === 'processing' ? 'Finishing story…' : `Uploading story ${pending.progress || 0}%`}</span>
+        {pending.status !== 'error' && <progress max="100" value={pending.progress || 0} />}
+      </div>}
 
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
