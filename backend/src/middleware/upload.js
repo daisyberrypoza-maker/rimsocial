@@ -17,7 +17,7 @@ const upload = multer({
     filename: (req, file, cb) =>
       cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase()),
   }),
-  limits: { fileSize: config.maxUploadBytes, files: 1 },
+  limits: { fileSize: config.maxUploadBytes, files: 10 },
   fileFilter: (req, file, cb) => cb(null, Boolean(ALLOWED[file.mimetype])),
 });
 

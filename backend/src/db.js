@@ -30,6 +30,7 @@ const Post = sequelize.define('Post', {
   kind: { type: DataTypes.ENUM('video', 'photo'), allowNull: false },
   mediaUrl: { type: DataTypes.STRING(512), allowNull: false },
   mediaPublicId: { type: DataTypes.STRING(255), allowNull: true },
+  mediaItems: { type: DataTypes.JSON, allowNull: true },
   allowRemix: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   sourcePostId: { type: DataTypes.UUID, allowNull: true },
   thumbUrl: DataTypes.STRING(512),

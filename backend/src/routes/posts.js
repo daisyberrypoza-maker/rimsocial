@@ -22,11 +22,12 @@ const { toPostDTO } = require('../lib/serialize');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
 
-router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
-  let uploadedAsset = null;
+router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) => {
+  const uploadedAssets = [];
   let postPersisted = false;
   try {
-    if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (!files.length) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const visibility = req.body.visibility === 'private' ? 'private' : 'public';
     const isSponsored = req.body.isSponsored === 'true';
     if (isSponsored) throw httpError(403, 'Sponsored posts must be created through an approved, funded advertiser campaign. Self-declared sponsored posts are disabled.');
@@ -45,10 +46,16 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (isSponsored && (!sponsorName || !/^https?:\/\//i.test(sponsorUrl))) {
       throw httpError(400, 'Sponsored posts need a sponsor name and a valid http(s) destination URL');
     }
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial', { maxSeconds: 20 * 60 });
-    uploadedAsset = asset;
+    // A post can hold up to 10 photos and/or videos (carousel). The first item is the cover.
+    const items = [];
+    for (const file of files) {
+      const asset = await cloudinary.uploadFile(file, 'rimsocial', { maxSeconds: 20 * 60 });
+      uploadedAssets.push({ ...asset, mimetype: file.mimetype });
+      items.push({ url: asset.url, publicId: asset.publicId, kind: kindFor(file.mimetype) });
+    }
+    const cover = items[0];
     const post = await Post.create({
-      authorId: req.user.id, kind: kindFor(req.file.mimetype), mediaUrl: asset.url, mediaPublicId: asset.publicId,
+      authorId: req.user.id, kind: cover.kind, mediaUrl: cover.url, mediaPublicId: cover.publicId, mediaItems: items.length > 1 ? items : null,
       caption: String(req.body.caption || '').slice(0, 500),
       topic: String(req.body.topic || '').trim().slice(0, 60) || null,
       aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId,
@@ -64,8 +71,11 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     }
     res.status(201).json(toPostDTO(post));
   } catch (e) {
-    if (uploadedAsset?.publicId && !postPersisted) {
-      await requestAssetCleanup(uploadedAsset.publicId, uploadedAsset.resourceType || (req.file?.mimetype?.startsWith('video/') ? 'video' : 'image'), 'orphan_post_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan post upload cleanup failed:', cleanupError.message));
+    if (!postPersisted) {
+      for (const asset of uploadedAssets) {
+        if (!asset?.publicId) continue;
+        await requestAssetCleanup(asset.publicId, asset.resourceType || (asset.mimetype?.startsWith('video/') ? 'video' : 'image'), 'orphan_post_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan post upload cleanup failed:', cleanupError.message));
+      }
     }
     next(e);
   }

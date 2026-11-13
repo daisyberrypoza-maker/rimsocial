@@ -88,6 +88,9 @@ export default function Upload() {
   const [file, setFile] = useState(null);
   const [rawFile, setRawFile] = useState(null);
   const [trimming, setTrimming] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selection, setSelection] = useState([]);
+  const [carousel, setCarousel] = useState([]);
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -145,6 +148,7 @@ export default function Upload() {
   // Choosing a file: video is trimmed to the post length, then the editor opens
   async function chooseFile(picked) {
     if (!picked) return;
+    setCarousel([]);
     setRecents((list) => [{ file: picked, url: URL.createObjectURL(picked) }, ...list.filter((item) => item.file !== picked)].slice(0, 15));
     setRawFile(picked);
     if (!String(picked.type).startsWith('video/')) { setFile(picked); setView('editor'); return; }
@@ -159,6 +163,23 @@ export default function Upload() {
     } finally {
       setTrimming(false);
     }
+  }
+
+  // Select mode: tap photos and/or videos in order to post them as one carousel post (up to 10)
+  function onTileTap(picked) {
+    if (!selectMode) return chooseFile(picked);
+    setSelection((list) => (list.includes(picked) ? list.filter((f) => f !== picked) : list.length < 10 ? [...list, picked] : list));
+  }
+
+  function openSelection() {
+    if (!selection.length) return;
+    setSelectMode(false);
+    if (selection.length === 1) { const only = selection[0]; setSelection([]); chooseFile(only); return; }
+    setCarousel(selection);
+    setRawFile(selection[0]);
+    setFile(selection[0]);
+    setSelection([]);
+    setView('editor');
   }
 
   useEffect(() => {
@@ -230,7 +251,7 @@ export default function Upload() {
         ? await trimVideo(rawFile || file, STORY_MAX_SECONDS)
         : null;
       startUpload({
-        toStory, file: toStory ? (storyFile || file) : file, storyFile,
+        toStory, file: toStory ? (storyFile || file) : file, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
         sourcePostId: sourcePost?.id, sponsor, shareToStory,
       });
@@ -238,6 +259,7 @@ export default function Upload() {
       setTopic(''); setAiLabel(false); setShareToStory(false);
       setFile(null);
       setRawFile(null);
+      setCarousel([]);
       setSourcePost(null);
       setSheetOpen(false);
       navigate(toStory ? '/stories' : '/');
@@ -272,17 +294,20 @@ export default function Upload() {
           {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
         {onRecents && <button type="button" className="ig-create-pick" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={18} /> Choose</button>}
+        {onRecents && !asStory && !asReel && <button type="button" className={selectMode ? 'ig-create-select on' : 'ig-create-select'} onClick={() => { setSelectMode((on) => !on); setSelection([]); }} aria-pressed={selectMode}>{selectMode ? 'Cancel' : 'Select'}</button>}
       </div>
       {onRecents ? <div className="up-grid ig-create-grid">
         <button type="button" className="up-tile ig-create-camera" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={30} /><span>Camera</span></button>
-        {shownRecents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => chooseFile(item.file)} aria-label="Select this media">
+        {shownRecents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => onTileTap(item.file)} aria-label="Select this media">
           {String(item.file.type).startsWith('video/') ? <video src={item.url} muted playsInline preload="metadata" /> : <img src={item.url} alt="" />}
+          {selectMode && <span className={selection.includes(item.file) ? 'up-tile-num' : 'up-tile-ring'}>{selection.includes(item.file) ? selection.indexOf(item.file) + 1 : ''}</span>}
         </button>)}
       </div> : <div className="up-grid ig-create-grid">
         {memories.map((item) => <button type="button" key={item.id} className="up-tile" onClick={() => navigate(`/p/${item.id}`)} aria-label="Open this post">
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
+      {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <nav className="ig-create-modes" aria-label="Create type">
         {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : asReel ? 'reel' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
       </nav>
@@ -293,6 +318,7 @@ export default function Upload() {
 
   return <main className="up-page up-editor">
     <div className="up-media">
+      {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
       {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
     </div>
     <header className="up-editor-top">

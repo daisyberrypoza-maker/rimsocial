@@ -1,0 +1,34 @@
+/* Carousel posts: photos and videos side by side, swipe or scroll between them. */
+.post-carousel-wrap { position: absolute; inset: 0; width: 100%; height: 100%; }
+.post-carousel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.post-carousel::-webkit-scrollbar { display: none; }
+.post-carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: center;
+}
+.post-carousel-slide img,
+.post-carousel-slide video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post-carousel-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.post .post-carousel-slide { position: relative; }
+.post .post-carousel-slide img,
+.post .post-carousel-slide video { position: static; }

@@ -84,3 +84,54 @@
   font-size: 14px;
   font-weight: 600;
 }
+
+/* Creator battle panel (invite a creator, accept invitations, open live battles) */
+.live-battle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 42vh;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.6);
+}
+.live-battle h3 {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,.7);
+}
+.live-battle-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.live-battle-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #333;
+  font-size: 15px;
+  font-weight: 600;
+}
+.live-battle-name { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; }
+.live-battle-name small { display: block; color: rgba(255,255,255,.7); font-size: 13px; }
+.live-create .live-battle button.live-battle-btn,
+.live-create .live-battle a.live-battle-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff !important;
+  color: #000 !important;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.live-create .live-battle button.live-battle-btn.ghost { background: rgba(255,255,255,.18) !important; color: #fff !important; }
+.live-create .live-battle button.live-battle-btn:disabled { opacity: .5; }
+.live-battle-empty { margin: 0; color: rgba(255,255,255,.7); font-size: 14px; }
+.live-battle-error { margin: 0; color: #ff667a; font-size: 13px; }

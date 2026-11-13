@@ -7,6 +7,7 @@ import { mediaUrl, postShareUrl, videoStreamUrl } from '../lib/config.js';
 import { startWhenReady } from '../lib/playVideo.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
+import './PostCarousel.css';
 
 // Sound preference is shared by every video in the feed, like TikTok.
 let feedSoundOn = true;
@@ -160,9 +161,13 @@ export default function PostCard({ post, active }) {
   const [hidden, setHidden] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [repostBusy, setRepostBusy] = useState(false);
+  const [slide, setSlide] = useState(0);
   const username = post.author?.username || 'unknown';
   const src = post.kind === 'video' ? videoStreamUrl(mediaUrl(post.mediaUrl)) : mediaUrl(post.mediaUrl);
   const poster = mediaUrl(post.thumbUrl) || undefined;
+  // Carousel: several photos and/or videos in one post (mediaItems is null for single-media posts)
+  const carouselItems = Array.isArray(post.mediaItems) && post.mediaItems.length > 1 ? post.mediaItems : null;
+  const isVideoMedia = !carouselItems && post.kind === 'video';
 
   // Pause when the app is hidden (closed or switched away) and resume when it is shown again.
   useEffect(() => {
@@ -360,14 +365,15 @@ export default function PostCard({ post, active }) {
     setShowMenu(true);
   }
   return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
-    {post.kind === 'video' ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
+    {carouselItems ? <div className="post-carousel-wrap"><div className="post-carousel" onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}>{carouselItems.map((item, i) => <div className="post-carousel-slide" key={i}>{item.kind === 'video' ? <video src={active ? videoStreamUrl(mediaUrl(item.url)) : undefined} muted playsInline controls preload={active ? 'metadata' : 'none'} /> : <img src={mediaUrl(item.url)} alt="" loading="lazy" />}</div>)}</div><span className="post-carousel-count">{slide + 1}/{carouselItems.length}</span></div>
+      : isVideoMedia ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
       : <img src={src} alt="" loading="lazy" />}
-    {post.kind === 'video' && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
-    {post.kind === 'video' && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
+    {isVideoMedia && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
+    {isVideoMedia && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
       onPointerDown={() => { seekingRef.current = true; }} onPointerUp={() => { seekingRef.current = false; }} onPointerCancel={() => { seekingRef.current = false; }}
       onChange={(e) => { const v = videoRef.current; const ratio = Number(e.target.value) / 1000; setProgress(ratio); if (v && Number.isFinite(v.duration)) v.currentTime = ratio * v.duration; }} />}
     {flash && flash.kind !== 'pause' && <span key={flash.key} className="post-flash" style={{ color: flash.kind === 'heart' ? '#ff3040' : '#fff' }} aria-hidden="true"><Icon name={{ back: 'skip-back', forward: 'skip-forward', play: 'play', pause: 'pause', heart: 'heart' }[flash.kind]} size={34} /></span>}
-    {post.kind === 'video' && paused && <div className="post-paused">
+    {isVideoMedia && paused && <div className="post-paused">
       <button type="button" className="post-paused-sound" onPointerDown={(e) => e.stopPropagation()} onClick={toggleSound} aria-label={soundOn ? 'Mute video' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={32} /></button>
       <span className="post-paused-play" aria-hidden="true"><Icon name="play" size={56} /></span>
     </div>}

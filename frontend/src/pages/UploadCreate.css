@@ -125,3 +125,54 @@
   background: #262626 !important;
   color: #fff !important;
 }
+
+/* Select mode (carousel posts) */
+.ig-create .ig-create-select {
+  margin-left: auto;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #262626;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ig-create .ig-create-select.on { background: #0095f6; }
+.ig-create .up-tile-ring,
+.ig-create .up-tile-num {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ig-create .up-tile-ring { border: 2px solid #fff; background: rgba(0,0,0,.25); }
+.ig-create .up-tile-num { background: #0095f6; color: #fff; border: 2px solid #fff; }
+.ig-create .up-select-next {
+  margin: 8px 16px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: #0095f6;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.up-carousel-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}

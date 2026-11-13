@@ -5,6 +5,7 @@ function toPostDTO(post) {
     id: p.id,
     kind: p.kind,
     mediaUrl: p.mediaUrl,
+    mediaItems: Array.isArray(p.mediaItems) && p.mediaItems.length > 1 ? p.mediaItems.map((m) => ({ url: m.url, kind: m.kind })) : null,
     thumbUrl: p.thumbUrl || null,
     caption: p.caption || '',
     topic: p.topic || null,

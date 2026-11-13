@@ -6,7 +6,7 @@ import { toast, logError } from '../toast.js';
 // Uploads a post or story in the background. The person lands on Rimlight or Stories at once,
 // the upload carries on there (spinner on the screen), and the new item appears when it finishes.
 export function startUpload(job) {
-  const { toStory, file, storyFile, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
+  const { toStory, file, storyFile, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
   const thumb = URL.createObjectURL(file);
   useAppStore.getState().setPendingUpload({
     kind: toStory ? 'story' : 'post',
@@ -29,7 +29,8 @@ export function startUpload(job) {
       fd.append('sponsorCta', sponsor.cta);
       fd.append('sponsorUrl', sponsor.url);
     }
-    fd.append('media', toStory ? (storyFile || file) : file);
+    if (toStory) fd.append('media', storyFile || file);
+    else (files?.length ? files : [file]).forEach((item) => fd.append('media', item));
     await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
 
     if (!toStory && shareToStory) {
