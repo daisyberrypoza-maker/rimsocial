@@ -114,7 +114,8 @@ export default function Stories() {
   // Reopening the page reuses the saved rail; it is requested again only when it is old
   const { indicator } = usePullRefresh(() => loadRail());
   useEffect(() => {
-    if (Date.now() - (useAppStore.getState().storyRailAt || 0) < RAIL_FRESH_MS) { setLoaded(true); return; }
+    const cachedRail = useAppStore.getState().storyRail;
+    if (Array.isArray(cachedRail?.items) && Date.now() - (useAppStore.getState().storyRailAt || 0) < RAIL_FRESH_MS) { setLoaded(true); return; }
     loadRail();
   }, [loadRail]);
 
