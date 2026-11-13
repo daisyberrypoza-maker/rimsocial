@@ -41,6 +41,10 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
   const [paused, setPaused] = useState(false);
+  // Press and hold anywhere pauses the story; releasing carries on (like Rimlight and Instagram)
+  const [holding, setHolding] = useState(false);
+  const holdRef = useRef({ timer: null, held: false });
+  const suppressTapRef = useRef(false);
   const [muted, setMuted] = useState(false);
   const [flash, setFlash] = useState(null);
   const [resharing, setResharing] = useState(false);
@@ -72,7 +76,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
-  const frozen = paused || typing || shareOpen || reportOpen || menuOpen || viewersOpen;
+  const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen;
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
@@ -270,9 +274,19 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   function onPointerDown(event) {
     swipeRef.current = { x: event.clientX, y: event.clientY, startedLow: event.clientY > window.innerHeight / 2 };
+    // A press held for a moment pauses the story until the finger lifts
+    suppressTapRef.current = false;
+    clearTimeout(holdRef.current.timer);
+    holdRef.current = { timer: setTimeout(() => { holdRef.current.held = true; setHolding(true); }, 180), held: false };
   }
 
   function onPointerUp(event) {
+    clearTimeout(holdRef.current.timer);
+    if (holdRef.current.held) {
+      holdRef.current.held = false;
+      suppressTapRef.current = true;   // the tap that follows a hold is not a tap
+      setHolding(false);
+    }
     const start = swipeRef.current;
     swipeRef.current = null;
     if (!start) return;
@@ -290,6 +304,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   function onStageTap(event) {
     if (swipedRef.current) { swipedRef.current = false; return; }
+    if (suppressTapRef.current) { suppressTapRef.current = false; return; }
     if (typing) { setTyping(false); return; }
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
