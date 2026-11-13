@@ -60,7 +60,10 @@ export default function LiveCreate() {
         <button type="button" onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} aria-label="Switch camera"><Icon name="refresh-cw" size={24} /></button>
       </header>
       <form className="live-create-bottom" onSubmit={goLive}>
-        <span className="live-create-audience">Everyone</span>
+        <div className="live-create-row">
+          <span className="live-create-audience">Everyone</span>
+          <button type="button" className="live-create-battle" onClick={() => navigate('/creator/matches')}>Battle a creator</button>
+        </div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="What are you going LIVE about?" aria-label="LIVE title" />
         {error && <p className="live-create-error" role="alert">{error}</p>}
         <button className="live-create-go" type="submit" disabled={busy}>{busy ? 'Starting…' : 'Go LIVE'}</button>
