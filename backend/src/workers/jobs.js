@@ -26,7 +26,7 @@ async function flushViews() {
 async function purgeExpiredStories() {
   const expired = await Post.findAll({
     where: { isStory: true, expiresAt: { [Op.lt]: new Date() } },
-    attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind'],
+    attributes: ['id', 'mediaUrl', 'mediaPublicId', 'kind', 'voiceUrl'],
     limit: 500,
   });
   if (!expired.length) return 0;
@@ -53,6 +53,16 @@ async function purgeExpiredStories() {
         const fs = require('fs');
         const path = require('path');
         fs.promises.unlink(path.join(config.uploadDir, path.basename(p.mediaUrl))).catch(() => {});
+      }
+    }
+    if (p.voiceUrl) {
+      const voiceId = cloudinary.publicIdFromUrl(p.voiceUrl);
+      if (voiceId) {
+        const remaining = await Post.count({ where: { voiceUrl: p.voiceUrl, status: 'live' } });
+        if (!remaining) {
+          try { await cloudinary.deleteAsset(voiceId, 'video'); }
+          catch (e) { console.error('Expired story voice cleanup failed:', voiceId, e.message); }
+        }
       }
     }
   }

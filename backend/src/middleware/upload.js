@@ -24,6 +24,16 @@ const upload = multer({
 const kindFor = (mimetype) => ALLOWED[mimetype];
 const mediaPath = (filename) => `/uploads/${filename}`;
 
+// Story uploads: one photo or video (field 'media') plus an optional voice note (field 'voice')
+const storyUpload = multer({
+  storage: multer.diskStorage({
+    destination: config.uploadDir,
+    filename: (req, file, cb) =>
+      cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase()),
+  }),
+  limits: { fileSize: config.maxUploadBytes, files: 2 },
+});
+
 // Chat attachments: any file type up to the same size limit (photos, videos, audio, documents, archives).
 const anyFileUpload = multer({
   storage: multer.diskStorage({
@@ -42,4 +52,4 @@ function chatKindFor(mimetype = '') {
   return 'file';
 }
 
-module.exports = { upload, kindFor, mediaPath, anyFileUpload, chatKindFor };
+module.exports = { upload, kindFor, mediaPath, anyFileUpload, storyUpload, chatKindFor };

@@ -64,3 +64,17 @@
   padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 600;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
 }
+
+/* Music and voice-note chips (text composer and photo/video story editor) */
+.sa-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.sa-row button.sa-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 40px; padding: 0 14px; border: 0 !important; border-radius: 999px;
+  background: rgba(0,0,0,.45) !important; color: #fff !important; font-size: 14px; font-weight: 600; box-shadow: none !important;
+}
+.sa-row button.sa-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+.sa-row button.sa-chip:disabled { opacity: .5; }
+.sa-row button.sa-chip.recording { background: #ed4956 !important; }
+.sa-row button.sa-chip i { display: inline-flex; margin-left: 2px; }
+
+/* Story audio row above the share buttons in the editor */
+.up-story-audio { position: relative; z-index: 3; padding: 0 12px 8px; }

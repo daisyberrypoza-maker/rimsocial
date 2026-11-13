@@ -5,6 +5,7 @@ import { startUpload } from '../lib/uploader.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
+import StoryAudioControls from '../components/StoryAudioControls.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
@@ -101,6 +102,8 @@ export default function Upload() {
   const [selectMode, setSelectMode] = useState(false);
   const [selection, setSelection] = useState([]);
   const [carousel, setCarousel] = useState([]);
+  const [storyTrack, setStoryTrack] = useState(null);
+  const [storyVoice, setStoryVoice] = useState(null);
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -273,12 +276,15 @@ export default function Upload() {
         toStory, file: toStory ? (storyFile || file) : file, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
         sourcePostId: sourcePost?.id, sponsor, shareToStory,
+        storyAudio: { musicId: storyTrack?.id || null, voice: storyVoice?.file || null },
       });
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
       setTopic(''); setAiLabel(false); setShareToStory(false);
       setFile(null);
       setRawFile(null);
       setCarousel([]);
+      setStoryTrack(null);
+      setStoryVoice(null);
       setSourcePost(null);
       setSheetOpen(false);
       navigate(toStory ? '/stories' : '/');
@@ -354,6 +360,7 @@ export default function Upload() {
     </div>
     <footer className="up-bottom">
       <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
+      {(asStory || shareToStory) && <div className="up-story-audio"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
       <button type="button" className="up-pill up-post" onClick={() => publish(false)} disabled={trimming}>+ Post</button>
       <button type="button" className="up-pill up-story" onClick={() => publish(true)} disabled={trimming}>My Story <Icon name="send" size={20} /></button>
     </footer>

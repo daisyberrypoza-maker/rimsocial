@@ -6,7 +6,7 @@ import { toast, logError } from '../toast.js';
 // Uploads a post or story in the background. The person lands on Rimlight or Stories at once,
 // the upload carries on there (spinner on the screen), and the new item appears when it finishes.
 export function startUpload(job) {
-  const { toStory, file, storyFile, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
+  const { toStory, file, storyFile, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
   const thumb = URL.createObjectURL(file);
   useAppStore.getState().setPendingUpload({
     kind: toStory ? 'story' : 'post',
@@ -29,13 +29,19 @@ export function startUpload(job) {
       fd.append('sponsorCta', sponsor.cta);
       fd.append('sponsorUrl', sponsor.url);
     }
-    if (toStory) fd.append('media', storyFile || file);
+    if (toStory) {
+      fd.append('media', storyFile || file);
+      if (storyAudio?.musicId) fd.append('musicId', storyAudio.musicId);
+      if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
+    }
     else (files?.length ? files : [file]).forEach((item) => fd.append('media', item));
     await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
 
     if (!toStory && shareToStory) {
       const storyFd = new FormData();
       storyFd.append('media', storyFile || file);
+      if (storyAudio?.musicId) storyFd.append('musicId', storyAudio.musicId);
+      if (storyAudio?.voice) storyFd.append('voice', storyAudio.voice);
       storyFd.append('caption', (caption || '').slice(0, 200));
       try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
       catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }

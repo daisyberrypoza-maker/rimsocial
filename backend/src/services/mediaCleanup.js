@@ -51,6 +51,16 @@ async function cleanupLocalUpload(mediaUrl, excludePostIds = []) {
   return { done: true };
 }
 
+// A story's voice note is its own file. It is removed once no live post still uses it (reposts share it).
+async function cleanupStoryVoice(story) {
+  if (!story?.voiceUrl) return;
+  const publicId = cloudinary.publicIdFromUrl(story.voiceUrl);
+  if (!publicId) return;
+  const remaining = await Post.count({ where: { voiceUrl: story.voiceUrl, status: 'live', id: { [Op.ne]: story.id } } });
+  if (remaining) return;
+  await requestAssetCleanup(publicId, 'video', 'story_voice_removed', { knownUnreferenced: true });
+}
+
 async function requestAssetCleanup(publicId, resourceType = 'image', reason = 'cleanup', options = {}) {
   if (!publicId) return { done: true };
   const excluded = options.excludePostIds || [];
@@ -143,4 +153,4 @@ async function processPendingMediaCleanup(limit = 50) {
   return jobs.length;
 }
 
-module.exports = { isAssetReferenced, requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup, localUploadPath };
+module.exports = { isAssetReferenced, requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup, localUploadPath, cleanupStoryVoice };

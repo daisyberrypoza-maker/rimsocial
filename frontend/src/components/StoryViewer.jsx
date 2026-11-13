@@ -429,7 +429,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
                 ref={activeFillRef}
                 className={isVideo ? 'sv-fill-live' : 'sv-fill-run'}
                 style={isVideo ? undefined : { animationPlayState: frozen ? 'paused' : 'running' }}
-                onAnimationEnd={(e) => { if (e.animationName === 'sv-fill') next(); }}
+                onAnimationEnd={(e) => { if (e.animationName === 'sv-fill' && !current?.voiceUrl) next(); }}
               />
             </div>
           ) : (
@@ -463,7 +463,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         </div>
       </div>
 
-      {current?.voiceUrl && <audio key={`voice-${current.id}`} ref={voiceRef} src={mediaUrl(current.voiceUrl)} preload="auto" />}
+      {current?.voiceUrl && <audio key={`voice-${current.id}`} ref={voiceRef} src={mediaUrl(current.voiceUrl)} preload="auto" onEnded={() => { if (!isVideo) next(); }} onError={() => { if (!isVideo) next(); }} />}
       {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
       {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
 
@@ -476,7 +476,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               className="sv-media"
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
               playsInline
-              muted={muted}
+              muted={muted || Boolean(current.musicUrl)}
               preload="auto"
               onEnded={next}
               onError={next}

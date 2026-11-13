@@ -11,7 +11,19 @@ const ranking = require('../services/ranking');
 const { User: UserModel } = require('../db');
 const { assertNotBlocked } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
-const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
+const { requestAssetCleanup, cleanupRemovedPostMedia, cleanupStoryVoice } = require('../services/mediaCleanup');
+
+// Music is picked from the shared library; the story keeps a copy of the track's link and title
+async function musicFor(musicId) {
+  if (!musicId) return null;
+  const track = await require('../db').AudioTrack.findByPk(String(musicId));
+  if (!track) throw httpError(404, 'Music track not found');
+  return track;
+}
+const musicFields = (track) => ({
+  musicUrl: track ? track.mediaUrl : null,
+  musicTitle: track ? `${track.title} · ${track.artist}`.slice(0, 120) : null,
+});
 
 // GET /v1/stories/rail  -> creators with active stories, unseen first
 router.get('/rail', requireAuth, async (req, res, next) => {
@@ -40,18 +52,30 @@ router.get('/users/:userId', requireAuth, async (req, res, next) => {
 });
 
 // POST /v1/stories  (multipart: media, caption). Expires after storyTtlHours.
-router.post('/', requireAuth, upload.single('media'), async (req, res, next) => {
-  let uploadedAsset = null;
+router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'voice', maxCount: 1 }]), async (req, res, next) => {
+  const uploadedAssets = [];
   let storyPersisted = false;
   try {
-    if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
-    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/stories', { maxSeconds: 60 });
-    uploadedAsset = asset;
+    const media = req.files?.media?.[0] || null;
+    const voice = req.files?.voice?.[0] || null;
+    if (!media || !kindFor(media.mimetype)) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
+    if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
+    const track = await musicFor(req.body.musicId);
+    const asset = await cloudinary.uploadFile(media, 'rimsocial/stories', { maxSeconds: 60 });
+    uploadedAssets.push({ ...asset, mimetype: media.mimetype });
+    let voiceUrl = null;
+    if (voice) {
+      const voiceAsset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });
+      uploadedAssets.push({ ...voiceAsset, mimetype: voice.mimetype });
+      voiceUrl = voiceAsset.url;
+    }
     const story = await Post.create({
       authorId: req.user.id,
-      kind: kindFor(req.file.mimetype),
+      kind: kindFor(media.mimetype),
       mediaUrl: asset.url,
       mediaPublicId: asset.publicId,
+      voiceUrl,
+      ...musicFields(track),
       caption: String(req.body.caption || '').slice(0, 200),
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
@@ -60,8 +84,11 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) {
-    if (uploadedAsset?.publicId && !storyPersisted) {
-      await requestAssetCleanup(uploadedAsset.publicId, uploadedAsset.resourceType || (req.file?.mimetype?.startsWith('video/') ? 'video' : 'image'), 'orphan_story_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan story upload cleanup failed:', cleanupError.message));
+    if (!storyPersisted) {
+      for (const asset of uploadedAssets) {
+        if (!asset?.publicId) continue;
+        await requestAssetCleanup(asset.publicId, asset.resourceType || (asset.mimetype?.startsWith('video/') || asset.mimetype?.startsWith('audio/') ? 'video' : 'image'), 'orphan_story_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan story upload cleanup failed:', cleanupError.message));
+      }
     }
     next(e);
   }
@@ -78,11 +105,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
     const voice = req.file || null;
     if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
     if (!text && !voice) throw httpError(400, 'Write some text or record a voice note');
-    let track = null;
-    if (req.body.musicId) {
-      track = await require('../db').AudioTrack.findByPk(String(req.body.musicId));
-      if (!track) throw httpError(404, 'Music track not found');
-    }
+    const track = await musicFor(req.body.musicId);
     let voiceUrl = null;
     if (voice) {
       const asset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });
@@ -96,8 +119,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
       storyText: text || null,
       storyBackground: background,
       voiceUrl,
-      musicUrl: track ? track.mediaUrl : null,
-      musicTitle: track ? `${track.title} · ${track.artist}`.slice(0, 120) : null,
+      ...musicFields(track),
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
@@ -128,6 +150,11 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       mediaUrl: original.mediaUrl,
       mediaPublicId: original.mediaPublicId,
       thumbUrl: original.thumbUrl,
+      storyText: original.storyText,
+      storyBackground: original.storyBackground,
+      voiceUrl: original.voiceUrl,
+      musicUrl: original.musicUrl,
+      musicTitle: original.musicTitle,
       caption: `Shared from @${original.author?.username || 'creator'}: ${original.caption || ''}`.slice(0, 200),
       isStory: true,
       visibility: 'public',
@@ -255,6 +282,7 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     await story.update({ status: 'removed' });
     try {
       await cleanupRemovedPostMedia(story);
+      await cleanupStoryVoice(story).catch((voiceError) => console.error('Story voice cleanup failed:', voiceError.message));
     } catch (cleanupError) {
       console.error('Removed story media cleanup deferred:', cleanupError.message);
     }
