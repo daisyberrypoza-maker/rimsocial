@@ -72,9 +72,11 @@ export default function Feed({ tab }) {
 
   return (
     <>
-      {pending?.kind === 'post' && <span className="feed-uploading" aria-hidden="true">
+      {pending?.kind === 'post' && <div className="feed-uploading" aria-live="polite">
         {pending.mediaKind === 'video' ? <video src={pending.thumb} muted playsInline preload="metadata" /> : <img src={pending.thumb} alt="" />}
-      </span>}
+        <span>{pending.status === 'success' ? 'Published' : pending.status === 'error' ? (pending.error || 'Upload failed') : pending.status === 'processing' ? 'Processing…' : `Uploading ${pending.progress || 0}%`}</span>
+        {pending.status !== 'error' && <progress max="100" value={pending.progress || 0} />}
+      </div>}
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
         {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
         {items.map((p, i) =>

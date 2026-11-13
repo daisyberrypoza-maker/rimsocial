@@ -47,16 +47,24 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     if (!req.file) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/stories', { maxSeconds: 60 });
     uploadedAsset = asset;
+    const storyKind = kindFor(req.file.mimetype);
+    // Cloudinary can serve a real first-frame JPEG for video story previews.
+    const thumbUrl = storyKind === 'video' && asset.url.includes('res.cloudinary.com/')
+      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\.[^/.]+$/, '.jpg')
+      : storyKind === 'image' ? asset.url : null;
     const story = await Post.create({
       authorId: req.user.id,
-      kind: kindFor(req.file.mimetype),
+      kind: storyKind,
       mediaUrl: asset.url,
+      thumbUrl,
       mediaPublicId: asset.publicId,
       caption: String(req.body.caption || '').slice(0, 200),
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     storyPersisted = true;
+    // A creator's rail must reflect the new story immediately, not after the Redis TTL.
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     res.status(201).json(toPostDTO(story));
   } catch (e) {
     if (uploadedAsset?.publicId && !storyPersisted) {
