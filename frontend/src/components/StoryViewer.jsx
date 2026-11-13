@@ -453,7 +453,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
             <img key={current.id} className="sv-media" src={mediaUrl(current.thumbUrl || current.mediaUrl)} alt="" onError={next} />
           )
         ) : (
-          <p className="sv-empty">{stories ? 'No stories' : ''}</p>
+          <p className="sv-empty">{stories ? 'No stories available' : 'Loading story…'}</p>
         )}
         {current?.caption && <p className="sv-caption">{current.caption}</p>}
         {flash && <span key={flash.key} className="sv-flash" aria-hidden="true"><Icon name={flash.icon} size={34} /></span>}
