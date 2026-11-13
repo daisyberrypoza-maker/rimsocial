@@ -10,6 +10,16 @@ import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
 import './UploadCreate.css';
 
+// Gallery video tile: shows the clip length (m:ss) once the metadata loads
+function GalleryVideo({ url }) {
+  const [seconds, setSeconds] = useState(null);
+  const shown = Number.isFinite(seconds) ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : null;
+  return <>
+    <video src={url} muted playsInline preload="metadata" onLoadedMetadata={(e) => setSeconds(e.currentTarget.duration)} />
+    {shown && <span className="up-tile-dur">{shown}</span>}
+  </>;
+}
+
 const ACCEPT = 'video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif';
 
 function DownloadGlyph() {
@@ -166,6 +176,15 @@ export default function Upload() {
   }
 
   // Select mode: tap photos and/or videos in order to post them as one carousel post (up to 10)
+  function pickMany(list) {
+    if (!list.length) return;
+    if (list.length === 1) { chooseFile(list[0]); return; }
+    const chosen = list.slice(0, 10);
+    setRecents((current) => [...chosen.map((f) => ({ file: f, url: URL.createObjectURL(f) })), ...current].slice(0, 40));
+    setSelectMode(true);
+    setSelection(chosen);
+  }
+
   function onTileTap(picked) {
     if (!selectMode) return chooseFile(picked);
     setSelection((list) => (list.includes(picked) ? list.filter((f) => f !== picked) : list.length < 10 ? [...list, picked] : list));
@@ -282,7 +301,7 @@ export default function Upload() {
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={26} /></button>
         <h1>{asStory ? 'New story' : asReel ? 'New reel' : 'New post'}</h1>
-        <span className="ig-create-spacer" aria-hidden="true" />
+        <button type="button" className="ig-create-cam" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={26} /></button>
       </header>
       <div className="ig-create-preview">
         {preview
@@ -297,9 +316,9 @@ export default function Upload() {
         {onRecents && !asStory && !asReel && <button type="button" className={selectMode ? 'ig-create-select on' : 'ig-create-select'} onClick={() => { setSelectMode((on) => !on); setSelection([]); }} aria-pressed={selectMode}>{selectMode ? 'Cancel' : 'Select'}</button>}
       </div>
       {onRecents ? <div className="up-grid ig-create-grid">
-        <button type="button" className="up-tile ig-create-camera" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={30} /><span>Camera</span></button>
+        {shownRecents.length === 0 && <button type="button" className="ig-create-empty" onClick={() => document.getElementById('up-file')?.click()}><Icon name="image" size={34} /><span>Choose photos and videos from your phone</span></button>}
         {shownRecents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => onTileTap(item.file)} aria-label="Select this media">
-          {String(item.file.type).startsWith('video/') ? <video src={item.url} muted playsInline preload="metadata" /> : <img src={item.url} alt="" />}
+          {String(item.file.type).startsWith('video/') ? <GalleryVideo url={item.url} /> : <img src={item.url} alt="" />}
           {selectMode && <span className={selection.includes(item.file) ? 'up-tile-num' : 'up-tile-ring'}>{selection.includes(item.file) ? selection.indexOf(item.file) + 1 : ''}</span>}
         </button>)}
       </div> : <div className="up-grid ig-create-grid">
@@ -311,7 +330,7 @@ export default function Upload() {
       <nav className="ig-create-modes" aria-label="Create type">
         {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : asReel ? 'reel' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
       </nav>
-      <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
+      <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel && !asStory} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
     </main>;
   }

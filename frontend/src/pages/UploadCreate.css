@@ -176,3 +176,34 @@
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Gallery: phone media first (no camera tile), empty state, video length, camera button */
+.ig-create .ig-create-cam { justify-self: end; margin-left: auto; padding: 6px; border: 0; background: transparent; color: #fff; display: flex; }
+.ig-create .ig-create-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  padding: 24px;
+  border: 0;
+  background: #1c1c1e;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+.ig-create .up-tile-dur {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
