@@ -9,6 +9,7 @@ import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
+import './ChatList.css';
 
 // Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
@@ -39,7 +40,6 @@ export default function Messages() {
   const navigate = useNavigate();
   const location = useLocation();
   const me = useAppStore((st) => st.user);
-  const storyRail = useAppStore((st) => st.storyRail);
   const [items, setItems] = useState(null);
   const [groups, setGroups] = useState([]);
   const [filter, setFilter] = useState('all');
@@ -132,7 +132,6 @@ export default function Messages() {
   // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
   const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
   const shown = filter === 'all' ? all : all.filter((item) => inGroup(item, filter));
-  const storyUserIds = new Set((storyRail?.items || []).map((group) => String(group.user?.id)));
   const unreadByGroup = ['all', 'primary', 'requests'].reduce((counts, group) => {
     counts[group] = all.reduce((sum, item) => sum + (group === 'all' || inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
     return counts;
@@ -163,6 +162,10 @@ export default function Messages() {
           </button>
         </div>
       </header>
+      <button type="button" className="sn-search-pill" onClick={() => navigate('/search')} aria-label="Search people">
+        <Icon name="search" size={18} strokeWidth={2.2} />
+        <span>Search</span>
+      </button>
       <nav className="sn-filters" aria-label="Message inbox categories">
         {['all', 'primary', 'stories', 'requests'].map((category) => (
           <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
@@ -180,19 +183,18 @@ export default function Messages() {
               const last = item.lastMessage || {};
               const mine = String(last.senderId) === String(me?.id);
               const name = item.user.displayName || item.user.username;
-              const openRowMenu = () => setRowMenu({ item, isGroup: false });
+              const openRowMenu = (rect) => setRowMenu({ item, isGroup: false, anchor: rect || null });
               return (
-                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(); }} onTouchStart={() => { longPressTimer.current = setTimeout(openRowMenu, 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
+                <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(event.currentTarget.getBoundingClientRect()); }} onTouchStart={(event) => { const rect = event.currentTarget.getBoundingClientRect(); clearTimeout(longPressTimer.current); longPressTimer.current = setTimeout(() => openRowMenu(rect), 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
                   <Link to={`/chat/${item.user.id}`} className="sn-row">
-                    <span className={storyUserIds.has(String(item.user.id)) ? 'sn-ring sn-ring-story' : 'sn-ring'}>
-                      <Avatar user={item.user} size={44} />
+                    <span className="sn-ring">
+                      <Avatar user={item.user} size={56} storyRing={item.storyRing || null} />
                       {item.isOnline && <span className="sn-online" aria-label="Online" />}
                     </span>
                     <span className="sn-text">
                       <span className="sn-name-row">
                         <span className="sn-name">{name}</span>
-                        {item.user.verified && <span className="sn-verified" aria-label="Verified">✓</span>}
-                        
+                        {item.user.verified && <span className="sn-verified" aria-label="Verified"><svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" /></svg></span>}
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
@@ -200,12 +202,6 @@ export default function Messages() {
                       </span>
                     </span>
                   </Link>
-                  <button type="button" className="sn-cam" onClick={() => openCamera(item.user.id)} aria-label={`Send ${name} a snap`}>
-                    <Icon name="camera" size={24} strokeWidth={2} />
-                  </button>
-                  <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item, isGroup: false })} aria-label={`Options for ${name}`}>
-                    <Icon name="ellipsis" size={20} />
-                  </button>
                 </li>
               );
             })}
@@ -218,17 +214,21 @@ export default function Messages() {
             const last = group.lastMessage;
             const preview = last ? (String(last.senderId) === String(me?.id) ? 'You: ' : '') + last.body : 'Group conversation';
             return (
-              <li key={group.id} className="sn-item">
+              <li
+                key={group.id}
+                className="sn-item"
+                onContextMenu={(event) => { event.preventDefault(); setRowMenu({ item: group, isGroup: true, anchor: event.currentTarget.getBoundingClientRect() }); }}
+                onTouchStart={(event) => { const rect = event.currentTarget.getBoundingClientRect(); clearTimeout(longPressTimer.current); longPressTimer.current = setTimeout(() => setRowMenu({ item: group, isGroup: true, anchor: rect }), 550); }}
+                onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                onTouchMove={() => clearTimeout(longPressTimer.current)}
+              >
                 <Link to={`/chat/group/${group.id}`} className="sn-row">
-                  <span className="sn-ring sn-group-avatar"><Icon name="users" size={23} /></span>
+                  <span className="sn-ring sn-group-avatar"><Icon name="users" size={26} /></span>
                   <span className="sn-text">
                     <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
                     <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
                   </span>
                 </Link>
-                <button type="button" className="sn-row-options" onClick={() => setRowMenu({ item: group, isGroup: true })} aria-label={`Options for ${group.name}`}>
-                  <Icon name="ellipsis" size={20} />
-                </button>
               </li>
             );
           })}
@@ -238,12 +238,14 @@ export default function Messages() {
       {rowMenu && (
         <ChatMenu
           label="Conversation options"
+          title={rowMenu.isGroup ? rowMenu.item.name : (rowMenu.item.user.displayName || rowMenu.item.user.username)}
           anchor={rowMenu.anchor || null}
           onClose={() => setRowMenu(null)}
           items={[
             ...(!rowMenu.isGroup ? [
+              { key: 'snap', label: 'Send a snap', icon: 'camera', onSelect: () => openCamera(rowMenu.item.user.id) },
               { key: 'unread', label: rowMenu.item.unread ? 'Mark as read' : 'Mark as unread', icon: rowMenu.item.unread ? 'check' : 'mail', onSelect: () => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread') },
-              { key: 'block', label: 'Block', icon: 'shield', danger: true, onSelect: () => runRowAction(rowMenu.item, false, 'block') },
+              { key: 'block', label: 'Block', icon: 'shield-ban', danger: true, onSelect: () => runRowAction(rowMenu.item, false, 'block') },
             ] : []),
             { key: 'mute', label: rowMenu.item.muted ? 'Unmute' : 'Mute', icon: rowMenu.item.muted ? 'volume-2' : 'volume-x', onSelect: () => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute') },
             ...(rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) ? [{ key: 'delete-all', label: 'Delete group for everyone', icon: 'trash', danger: true, onSelect: () => runRowAction(rowMenu.item, true, 'deleteAll') }] : []),

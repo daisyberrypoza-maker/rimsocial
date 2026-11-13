@@ -498,6 +498,7 @@ export default function Conversation() {
       {chatMenu && (
         <ChatMenu
           label="Chat options"
+          title={name}
           anchor={chatAnchor}
           onClose={() => setChatMenu(false)}
           items={[

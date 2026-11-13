@@ -1,4 +1,5 @@
-/* Shared chat popover menu (direct chats, group chats, message options).
+/* Shared chat popover menu (chat list rows, direct chats, group chats, message options).
+   Matches the reference: rounded white card, title row, large outline icons, no dividers.
    Overrides the global black button rule in styles.css so every item is white with dark text. */
 
 .chat-menu-layer {
@@ -10,17 +11,28 @@
 
 .chat-menu {
   position: fixed;
-  width: 250px;
+  box-sizing: border-box;
+  width: 340px;
   max-width: calc(100vw - 24px);
   display: flex;
   flex-direction: column;
-  gap: 0;
   padding: 8px 0;
   background: #fff;
-  color: #111;
+  color: #000;
   border: 0;
-  border-radius: 16px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, .18);
+  border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+  overflow: hidden;
+}
+
+.chat-menu-title {
+  padding: 12px 22px 10px;
+  color: #65676b;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-menu button,
@@ -29,72 +41,34 @@
 .chat-menu button:active {
   display: flex !important;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
-  height: 52px;
+  height: 60px;
   margin: 0 !important;
-  padding: 0 20px !important;
+  padding: 0 22px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: #fff !important;
-  color: #111 !important;
+  color: #000 !important;
   box-shadow: none !important;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
   outline: none !important;
 }
 .chat-menu button:hover,
-.chat-menu button:focus-visible { background: #f2f2f2 !important; }
-.chat-menu button svg { flex: 0 0 20px; color: #111; }
+.chat-menu button:focus-visible { background: #f0f2f5 !important; }
+.chat-menu button svg { flex: 0 0 24px; width: 24px; height: 24px; color: #000; }
 .chat-menu button.danger,
-.chat-menu button.danger svg { color: #d93045 !important; }
+.chat-menu button.danger svg { color: #ed4956 !important; }
 
 /* Bottom sheets that remain (forward picker, shared activity) use the same light buttons. */
 .cv-sheet button {
   background: #fff !important;
-  color: #111 !important;
+  color: #000 !important;
   box-shadow: none !important;
 }
 .cv-sheet button:hover,
-.cv-sheet button:active { background: #f2f2f2 !important; }
-.cv-sheet button.danger { color: #d93045 !important; }
-
-/* Chat category pills (All/Primary/Stories/Requests) match the reference */
-.sn-page .sn-chip {
-  padding: 8px 18px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: #f0f2f5 !important;
-  color: #111 !important;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: none !important;
-}
-.sn-page .sn-chip.active {
-  background: #e7f0ff !important;
-  color: #0064e0 !important;
-}
-
-/* Chat list: story ring on users with an active story, verified badge */
-.sn-page .sn-ring-story {
-  padding: 2px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
-}
-.sn-page .sn-ring-story > * { border: 2px solid #fff; border-radius: 50%; }
-.sn-page .sn-verified {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  margin-left: 4px;
-  border-radius: 50%;
-  background: #0095f6;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  vertical-align: middle;
-}
+.cv-sheet button:active { background: #f0f2f5 !important; }
+.cv-sheet button.danger { color: #ed4956 !important; }

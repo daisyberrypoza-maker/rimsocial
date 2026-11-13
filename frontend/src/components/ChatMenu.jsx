@@ -5,7 +5,7 @@ import './ChatMenu.css';
 // Small popover menu shared by direct chats, group chats and messages.
 // `anchor` is the trigger's bounding rect; the menu opens just below it (or above if there is no room).
 // `items`: [{ key, label, icon?, danger?, onSelect }]
-export default function ChatMenu({ label, anchor, items, onClose }) {
+export default function ChatMenu({ label, title, anchor, items, onClose }) {
   const panel = useRef(null);
   const [pos, setPos] = useState(null);
 
@@ -39,6 +39,7 @@ export default function ChatMenu({ label, anchor, items, onClose }) {
         style={pos ? { top: pos.top, left: pos.left } : { top: 0, left: 0, visibility: 'hidden' }}
         onClick={(e) => e.stopPropagation()}
       >
+        {title && <div className="chat-menu-title">{title}</div>}
         {items.map((item) => (
           <button
             key={item.key}
@@ -47,7 +48,7 @@ export default function ChatMenu({ label, anchor, items, onClose }) {
             className={item.danger ? 'danger' : undefined}
             onClick={() => { onClose(); item.onSelect(); }}
           >
-            {item.icon && <Icon name={item.icon} size={20} />}
+            {item.icon && <Icon name={item.icon} size={24} strokeWidth={1.9} />}
             <span>{item.label}</span>
           </button>
         ))}

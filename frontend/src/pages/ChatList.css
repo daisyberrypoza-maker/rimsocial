@@ -1,0 +1,90 @@
+/* Messages inbox (chat list): matches the reference layout.
+   Scoped to .sn-page so it overrides the older sn-* rules without touching other screens. */
+
+.sn-page .sn-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  height: 44px;
+  margin: 6px 16px 8px;
+  padding: 0 16px;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #f0f2f5 !important;
+  color: #65676b !important;
+  box-shadow: none !important;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: left;
+}
+.sn-page .sn-search-pill svg { flex: none; color: #65676b; }
+
+.sn-page .sn-filters { padding: 0 16px 8px; gap: 8px; }
+.sn-page .sn-chip { height: 36px; padding: 0 16px !important; }
+
+.sn-page .sn-list { padding: 4px 0 96px; }
+.sn-page .sn-item {
+  min-height: 0;
+  padding: 0 16px;
+}
+.sn-page .sn-item + .sn-item::before { display: none; }
+
+.sn-page .sn-row {
+  gap: 12px;
+  padding: 8px 0;
+  color: #000;
+}
+
+.sn-page .sn-ring {
+  width: 56px;
+  height: 56px;
+  border: 0;
+}
+.sn-page .sn-group-avatar {
+  display: grid;
+  place-items: center;
+  background: #e4e6eb;
+  color: #111;
+  border-radius: 50%;
+}
+
+.sn-page .sn-text { gap: 2px; }
+.sn-page .sn-name-row { justify-content: flex-start; align-items: center; gap: 4px; }
+.sn-page .sn-name {
+  font-size: 16px;
+  font-weight: 400;
+  color: #000;
+}
+.sn-page .sn-item.unread .sn-name { font-weight: 600; }
+
+.sn-page .sn-sub {
+  font-size: 15px;
+  color: #65676b;
+  gap: 4px;
+}
+.sn-page .sn-item.unread .sn-sub { color: #000; font-weight: 600; }
+.sn-page .sn-time { color: #65676b; }
+
+.sn-page .sn-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border-radius: 50%;
+  background: #0095f6;
+}
+.sn-page .sn-verified svg { display: block; }
+
+.sn-page .sn-online {
+  width: 14px;
+  height: 14px;
+  background: #31a24c;
+  border: 2px solid #fff;
+}
+
+.sn-page .sn-empty { padding: 32px 16px; color: #65676b; text-align: center; }

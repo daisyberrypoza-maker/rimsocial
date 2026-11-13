@@ -160,6 +160,7 @@ export default function GroupConversationPage() {
       {optionsOpen && (
         <ChatMenu
           label="Group options"
+          title={group?.name}
           anchor={optionsAnchor}
           onClose={() => setOptionsOpen(false)}
           items={[
