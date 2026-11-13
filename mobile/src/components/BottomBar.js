@@ -45,7 +45,7 @@ export default function BottomBar({ activeTab, onPress }) {
         const focused = activeTab === tab.name;
         return (
           <Pressable key={tab.name} style={styles.item} accessibilityLabel={tab.name} onPress={() => onPress(tab.name)}>
-            <Icon name={tab.icon} size={21} color={tint(focused)} filled={focused} strokeWidth={1.8} />
+            <Icon name={tab.icon} size={19} color={tint(focused)} filled={focused} strokeWidth={1.8} />
             {tab.name === 'Chat' && unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text></View>}
           </Pressable>
         );
