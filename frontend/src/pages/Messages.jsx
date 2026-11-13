@@ -139,6 +139,12 @@ export default function Messages() {
   }, {});
   // Stories tab: creators with a story you have not watched yet (your own story is not counted)
   const storyRail = useAppStore((st) => st.storyRail);
+  const setStoryRail = useAppStore((st) => st.setStoryRail);
+  useEffect(() => {
+    let alive = true;
+    api('/v1/stories/rail').then((data) => { if (alive) setStoryRail(data.items || []); }).catch(() => {});
+    return () => { alive = false; };
+  }, [setStoryRail]);
   const storiesUnseen = (Array.isArray(storyRail) ? storyRail : []).filter((g) => g.unseen && String(g.user?.id) !== String(me?.id)).length;
   const countFor = { ...unreadByGroup, stories: storiesUnseen };
 
