@@ -253,7 +253,7 @@ export default function Upload() {
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
     const preview = onRecents ? recents[0] : null;
-    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }];
+    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/' }, { key: 'live', label: 'LIVE', path: '/live' }];
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={26} /></button>
@@ -282,7 +282,7 @@ export default function Upload() {
         </button>)}
       </div>}
       <nav className="ig-create-modes" aria-label="Create type">
-        {modes.map((mode) => <button key={mode.key} type="button" className={(mode.key === 'story') === asStory ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
       </nav>
       <input id="up-file" className="hidden" type="file" accept={ACCEPT} onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />

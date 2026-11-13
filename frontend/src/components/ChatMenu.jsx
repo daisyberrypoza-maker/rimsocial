@@ -47,7 +47,7 @@ export default function ChatMenu({ label, anchor, items, onClose }) {
             className={item.danger ? 'danger' : undefined}
             onClick={() => { onClose(); item.onSelect(); }}
           >
-            {item.icon && <Icon name={item.icon} size={16} />}
+            {item.icon && <Icon name={item.icon} size={20} />}
             <span>{item.label}</span>
           </button>
         ))}

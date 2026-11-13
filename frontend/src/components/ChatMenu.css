@@ -10,17 +10,17 @@
 
 .chat-menu {
   position: fixed;
-  width: 220px;
+  width: 250px;
   max-width: calc(100vw - 24px);
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 6px;
+  gap: 0;
+  padding: 8px 0;
   background: #fff;
   color: #111;
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .14);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .18);
 }
 
 .chat-menu button,
@@ -29,17 +29,17 @@
 .chat-menu button:active {
   display: flex !important;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   width: 100%;
-  height: 40px;
+  height: 52px;
   margin: 0 !important;
-  padding: 0 12px !important;
+  padding: 0 20px !important;
   border: 0 !important;
-  border-radius: 8px !important;
+  border-radius: 0 !important;
   background: #fff !important;
   color: #111 !important;
   box-shadow: none !important;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -47,7 +47,7 @@
 }
 .chat-menu button:hover,
 .chat-menu button:focus-visible { background: #f2f2f2 !important; }
-.chat-menu button svg { flex: 0 0 16px; color: #444; }
+.chat-menu button svg { flex: 0 0 20px; color: #111; }
 .chat-menu button.danger,
 .chat-menu button.danger svg { color: #d93045 !important; }
 
@@ -60,3 +60,19 @@
 .cv-sheet button:hover,
 .cv-sheet button:active { background: #f2f2f2 !important; }
 .cv-sheet button.danger { color: #d93045 !important; }
+
+/* Chat category pills (All/Primary/Stories/Requests) match the reference */
+.sn-page .sn-chip {
+  padding: 8px 18px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #f0f2f5 !important;
+  color: #111 !important;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+.sn-page .sn-chip.active {
+  background: #e7f0ff !important;
+  color: #0064e0 !important;
+}

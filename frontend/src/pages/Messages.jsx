@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import StoryRail from '../components/StoryRail.jsx';
+import ChatMenu from '../components/ChatMenu.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
 import Activity from './Activity.jsx';
@@ -232,17 +233,20 @@ export default function Messages() {
       )}
       {filter !== 'stories' && items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : 'No message requests yet.'}</p>}
       {rowMenu && (
-        <div className="sn-menu-dismiss" onClick={() => setRowMenu(null)}>
-          <section className="sn-action-menu" role="menu" aria-label="Conversation options" onClick={(event) => event.stopPropagation()}>
-            {!rowMenu.isGroup && <>
-              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread')}><Icon name={rowMenu.item.unread ? 'check' : 'mail'} size={17} />Mark as {rowMenu.item.unread ? 'read' : 'unread'}</button>
-              <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, false, 'block')}><Icon name="shield" size={17} />Block</button>
-            </>}
-            <button type="button" role="menuitem" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute')}><Icon name={rowMenu.item.muted ? 'volume-2' : 'volume-x'} size={17} />{rowMenu.item.muted ? 'Unmute' : 'Mute'}</button>
-            {rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) && <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, true, 'deleteAll')}><Icon name="trash" size={17} />Delete group for everyone</button>}
-            <button type="button" role="menuitem" className="danger" onClick={() => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete')}><Icon name="trash" size={17} />{rowMenu.isGroup ? 'Leave group' : 'Delete'}</button>
-          </section>
-        </div>
+        <ChatMenu
+          label="Conversation options"
+          anchor={rowMenu.anchor || null}
+          onClose={() => setRowMenu(null)}
+          items={[
+            ...(!rowMenu.isGroup ? [
+              { key: 'unread', label: rowMenu.item.unread ? 'Mark as read' : 'Mark as unread', icon: rowMenu.item.unread ? 'check' : 'mail', onSelect: () => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread') },
+              { key: 'block', label: 'Block', icon: 'shield', danger: true, onSelect: () => runRowAction(rowMenu.item, false, 'block') },
+            ] : []),
+            { key: 'mute', label: rowMenu.item.muted ? 'Unmute' : 'Mute', icon: rowMenu.item.muted ? 'volume-2' : 'volume-x', onSelect: () => runRowAction(rowMenu.item, rowMenu.isGroup, 'mute') },
+            ...(rowMenu.isGroup && String(rowMenu.item.createdById) === String(me?.id) ? [{ key: 'delete-all', label: 'Delete group for everyone', icon: 'trash', danger: true, onSelect: () => runRowAction(rowMenu.item, true, 'deleteAll') }] : []),
+            { key: 'delete', label: rowMenu.isGroup ? 'Leave group' : 'Delete', icon: 'trash', danger: true, onSelect: () => runRowAction(rowMenu.item, rowMenu.isGroup, 'delete') },
+          ]}
+        />
       )}
       <button type="button" className="sn-fab" onClick={() => navigate('/chat/new')} aria-label="New message">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
