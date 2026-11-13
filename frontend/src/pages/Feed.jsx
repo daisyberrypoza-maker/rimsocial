@@ -3,6 +3,7 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
+import '../pages/UploadStatus.css';
 import { logError } from '../toast.js';
 
 const STALE_AFTER_MS = 60 * 1000;

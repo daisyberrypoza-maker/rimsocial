@@ -57,6 +57,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     storyPersisted = true;
+    await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) {
     if (uploadedAsset?.publicId && !storyPersisted) {
@@ -87,6 +88,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       visibility: 'public',
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
+    await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) { next(e); }
 });

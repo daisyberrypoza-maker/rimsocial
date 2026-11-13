@@ -11,28 +11,29 @@ const REFRESH_AFTER_MS = 30 * 1000;
 // Top strip of creators with active stories. Expired groups are hidden on the device too.
 export default function StoryRail() {
   const rail = useAppStore((s) => s.storyRail);
+  const items = Array.isArray(rail) ? rail : [];
   const setStoryRail = useAppStore((s) => s.setStoryRail);
   const [openAt, setOpenAt] = useState(null);
 
   // Re-reads the rail from the server, so rings reflect what this account has watched
   function refreshRail() {
     api('/v1/stories/rail')
-      .then((data) => setStoryRail({ items: data.items, updatedAt: Date.now() }))
+      .then((data) => setStoryRail(data.items || []))
       .catch(() => {});
   }
 
   useEffect(() => {
-    const stale = Date.now() - (rail.updatedAt || 0) > REFRESH_AFTER_MS;
+    const stale = Date.now() - (useAppStore.getState().storyRailAt || 0) > REFRESH_AFTER_MS;
     if (stale) {
       api('/v1/stories/rail')
-        .then((data) => setStoryRail({ items: data.items, updatedAt: Date.now() }))
+        .then((data) => setStoryRail(data.items || []))
         .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const now = Date.now();
-  const groups = (rail.items || []).filter((g) => new Date(g.expiresAt).getTime() > now);
+  const groups = items.filter((g) => new Date(g.expiresAt).getTime() > now);
 
   // Behind the scenes: avatars for everyone on the rail, and the first story of the first few creators
   const groupKey = groups.map((g) => g.user.id).join(',');

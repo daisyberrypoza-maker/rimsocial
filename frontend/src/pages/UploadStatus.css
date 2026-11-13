@@ -1,0 +1,13 @@
+/* Posting state: a turning ring on the story tile and the post thumbnail while an upload is sending */
+@keyframes up-status-spin { to { transform: rotate(360deg); } }
+.up-status-spin {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #0095f6;
+  border-right-color: #0095f6;
+  animation: up-status-spin .9s linear infinite;
+  pointer-events: none;
+}
+.feed-uploading::before { animation: up-status-spin 1s linear infinite; }

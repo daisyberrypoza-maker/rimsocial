@@ -125,4 +125,11 @@ async function storyRingsFor(viewerId, authorIds) {
   return rings;
 }
 
-module.exports = { getStoryRail, getUserStories, getSubscription, storyRingsFor };
+// Clears cached story rails for the author and everyone who follows them, so a new story shows at once
+async function invalidateRailsFor(authorId) {
+  const followers = await Follow.findAll({ where: { followeeId: authorId }, attributes: ['followerId'], raw: true });
+  const keys = [authorId, ...followers.map((f) => f.followerId)].map((id) => `stories:rail:${id}`);
+  for (let i = 0; i < keys.length; i += 500) await redis.del(...keys.slice(i, i + 500));
+}
+
+module.exports = { getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor };

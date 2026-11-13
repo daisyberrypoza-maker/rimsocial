@@ -1,4 +1,5 @@
 import { Component, useCallback, useEffect, useState } from 'react';
+import './UploadStatus.css';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -32,6 +33,14 @@ class ViewerBoundary extends Component {
 
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
+
+// The newest story of a creator, shown as the thumbnail on their tile (video thumbnail when there is one)
+function previewSrc(group) {
+  const p = group?.preview;
+  if (!p) return null;
+  if (p.kind === 'video') return p.thumbUrl ? mediaUrl(p.thumbUrl) : null;
+  return mediaUrl(p.mediaUrl);
+}
 
 export default function Stories() {
   const navigate = useNavigate();
@@ -163,20 +172,21 @@ export default function Stories() {
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
-          <button className="st-friend" aria-label={myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
+          <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
-                <Avatar user={me || {}} />
+                {previewSrc(myGroup) ? <img src={previewSrc(myGroup)} alt="" /> : <Avatar user={me || {}} />}
+                {uploading && <span className="up-status-spin" role="status" aria-label="Posting your story" />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
-            <span className="st-name">My Story</span>
+            <span className="st-name">{uploading ? 'Posting…' : 'My Story'}</span>
           </button>
           
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
-                <span className="st-face"><Avatar user={group.user} /></span>
+                <span className="st-face">{previewSrc(group) ? <img src={previewSrc(group)} alt="" /> : <Avatar user={group.user} />}</span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}

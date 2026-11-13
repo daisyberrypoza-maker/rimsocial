@@ -50,7 +50,7 @@ export function startUpload(job) {
     }
     toast(toStory ? 'Public story posted. It disappears in 24 hours.' : visibility === 'public' ? 'Post published publicly' : 'Post saved as Only me');
   })()
-    .catch((error) => logError(error))
+    .catch((error) => { logError(error); toast(`${toStory ? 'Story' : 'Post'} not posted: ${error?.message || 'try again'}`); })
     .finally(() => {
       URL.revokeObjectURL(thumb);
       useAppStore.getState().setPendingUpload(null);

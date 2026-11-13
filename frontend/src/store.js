@@ -28,7 +28,7 @@ const EMPTY_STORIES = { items: [], updatedAt: 0 };
 // regardless of whether they have viewed it; absent authors have no active story.
 function ringsFromRail(rail, ownId) {
   const out = {};
-  for (const g of rail?.items || []) {
+  for (const g of Array.isArray(rail) ? rail : []) {
     if (!g.user?.id) continue;
     out[g.user.id] = String(g.user.id) === String(ownId) ? 'mine' : g.unseen ? 'unseen' : 'seen';
   }
@@ -75,10 +75,12 @@ export const useAppStore = create(
       },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
-      setStoryRail: (storyRail) => set((s) => {
+      setStoryRail: (incoming) => set((s) => {
+        // Always stored as a list of creators, whether the caller passes the list or the server's { items } object
+        const storyRail = Array.isArray(incoming) ? incoming : (incoming?.items || []);
         const nextRings = { ...s.storyRings };
         // Remove stale states for people in the previous rail before applying the fresh rail.
-        for (const group of s.storyRail?.items || []) if (group.user?.id) delete nextRings[group.user.id];
+        for (const group of Array.isArray(s.storyRail) ? s.storyRail : []) if (group.user?.id) delete nextRings[group.user.id];
         return { storyRail, storyRailAt: Date.now(), storyRings: { ...nextRings, ...ringsFromRail(storyRail, s.user?.id) } };
       }),
       setStoryRings: (rings) => set((s) => {
