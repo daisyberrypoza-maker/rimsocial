@@ -106,3 +106,11 @@
 .sn-page .wa-status-text strong { font-size: 16px; font-weight: 500; color: #000; }
 .sn-page .wa-status-text small { font-size: 14px; color: #65676b; }
 .sn-page .wa-status-empty { padding: 32px 16px; color: #65676b; text-align: center; }
+
+/* Chat header: profile name next to the avatar, medium weight, truncated when long */
+.sn-page .sn-head { gap: 8px; }
+.sn-page .sn-head-left { flex: 1; min-width: 0; gap: 10px; }
+.sn-page h1.sn-title {
+  flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-align: left; font-size: 20px; font-weight: 500; color: #000;
+}

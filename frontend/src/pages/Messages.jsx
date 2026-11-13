@@ -128,6 +128,7 @@ export default function Messages() {
     return <Activity onBack={() => setView('messages')} />;
   }
 
+  const headerName = me?.displayName || me?.username || 'Messages';
   const all = items || [];
   // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
   const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
@@ -144,19 +145,9 @@ export default function Messages() {
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
             <Avatar user={me} size={40} />
           </button>
-          <button type="button" className="sn-circle" onClick={() => navigate('/search')} aria-label="Search">
-            <Icon name="search" size={20} strokeWidth={2.2} />
-          </button>
+          <h1 className="sn-title" title={headerName}>{headerName}</h1>
         </div>
-        <h1 className="sn-title">Messages</h1>
         <div className="sn-head-right">
-          <button type="button" className="sn-circle" onClick={() => setView('activity')} aria-label="Notifications">
-            <Icon name="bell" size={22} strokeWidth={2} />
-          </button>
-          <button type="button" className="sn-circle sn-yellow" onClick={() => navigate('/friends')} aria-label={newFriends ? `Add friends, ${newFriends} new` : 'Add friends'}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
-            {newFriends > 0 && <span className="sn-badge">{newFriends > 99 ? '99+' : newFriends}</span>}
-          </button>
           <button type="button" className="sn-circle" onClick={() => navigate('/chat/new')} aria-label="New message">
             <Icon name="plus" size={22} strokeWidth={2.2} />
           </button>
