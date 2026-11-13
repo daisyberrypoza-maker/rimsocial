@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import '../pages/StoryComposer.css';
+import './StoryOwnerSheet.css';
 import { createPortal } from 'react-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
@@ -398,6 +399,21 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     );
   }
 
+  // Share and save for the creator's own story (the options sheet on their own stories)
+  async function shareStory() {
+    const url = `${window.location.origin}/u/${group.user.username}`;
+    if (navigator.share) navigator.share({ title: 'RimSocial Story', text: `View ${creatorName}'s story on RimSocial`, url }).catch(() => {});
+    else copyProfileLink();
+  }
+
+  function saveMedia() {
+    if (!current?.mediaUrl) return;
+    const link = document.createElement('a');
+    link.href = mediaUrl(current.mediaUrl);
+    link.download = isVideo ? 'story.mp4' : 'story.jpg';
+    link.click();
+  }
+
   async function copyProfileLink() {
     const link = `${window.location.origin}/u/${group.user.username}`;
     try {
@@ -537,10 +553,25 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       </div>}
 
       {viewersOpen && current && <StoryViewersSheet storyId={current.id} onClose={() => setViewersOpen(false)} />}
-      {menuOpen && <ActionSheet
-        actions={[{ label: 'Delete story', icon: 'trash', danger: true, onClick: deleteCurrent }]}
-        onClose={() => setMenuOpen(false)}
-      />}
+      {menuOpen && (
+        <div className="sv-owner-backdrop" role="presentation" onClick={() => setMenuOpen(false)}>
+          <section className="sv-owner-sheet" role="dialog" aria-label="Story options" onClick={(e) => e.stopPropagation()}>
+            <span className="sv-owner-grip" aria-hidden="true" />
+            <div className="sv-owner-top">
+              <button type="button" onClick={() => { setMenuOpen(false); shareStory(); }}><span className="sv-owner-circle"><Icon name="share-2" size={28} /></span>Share</button>
+              <button type="button" onClick={() => { setMenuOpen(false); copyProfileLink(); }}><span className="sv-owner-circle"><Icon name="link" size={28} /></span>Link</button>
+            </div>
+            <button type="button" className="sv-owner-row danger" onClick={() => { setMenuOpen(false); deleteCurrent(); }}><Icon name="trash" size={24} /><span>Delete</span></button>
+            {current?.mediaUrl && <button type="button" className="sv-owner-row" onClick={() => { setMenuOpen(false); saveMedia(); }}><Icon name="download" size={24} /><span>{isVideo ? 'Save video' : 'Save photo'}</span></button>}
+            <button type="button" className="sv-owner-row" onClick={() => { setMenuOpen(false); navigate('/chat/new'); }}><Icon name="send" size={24} /><span>Send to...</span></button>
+            <button type="button" className="sv-owner-row" onClick={() => { setMenuOpen(false); setViewersOpen(true); }}><Icon name="settings" size={24} /><span>Story settings</span></button>
+            <button type="button" className="sv-owner-row sv-owner-broken" onClick={() => { setMenuOpen(false); setReportOpen(true); }}>
+              <Icon name="flag" size={24} />
+              <span>Is something broken?<small>Let us know</small></span>
+            </button>
+          </section>
+        </div>
+      )}
 
       {reportOpen && <ActionSheet
         title="Report story"
