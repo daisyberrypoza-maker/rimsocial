@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { playChime } from '../lib/notify.js';
 import Icon from './Icon.jsx';
 
-// Bottom bar, Snapchat order: Search (discovery, first slot), Chat, Add (camera), Stories, Rimlight (spotlight). Explore is Find friends, opened from the user+ icon.
+// Bottom bar, in this order: Stories, Chat (Instagram direct icon), Upload (+), Rimlight. Swipe between these pages follows the same order (see lib/tabSwipe.js).
 // No text labels. The active icon is filled. Profile opens from the Stories header avatar.
 export default function BottomNav() {
   const { pathname } = useLocation();
@@ -34,13 +34,12 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
+      <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
       <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}>
-        <Icon name="message-circle" />
+        <Icon name="send" />
         {unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}
       </NavLink>
-      <NavLink to="/upload" replace aria-label="Add post"><Icon name="camera" /></NavLink>
-      <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
+      <NavLink to="/upload" replace aria-label="Create post"><Icon name="plus" size={28} /></NavLink>
       <NavLink to="/" end replace aria-label="Rimlight"><Icon name="play" /></NavLink>
     </nav>
   );
