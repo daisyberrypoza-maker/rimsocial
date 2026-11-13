@@ -39,9 +39,10 @@ export default function Messages() {
   const navigate = useNavigate();
   const location = useLocation();
   const me = useAppStore((st) => st.user);
+  const storyRail = useAppStore((st) => st.storyRail);
   const [items, setItems] = useState(null);
   const [groups, setGroups] = useState([]);
-  const [filter, setFilter] = useState('primary');
+  const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
@@ -130,9 +131,10 @@ export default function Messages() {
   const all = items || [];
   // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
   const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
-  const shown = all.filter((item) => inGroup(item, filter));
-  const unreadByGroup = ['primary', 'requests'].reduce((counts, group) => {
-    counts[group] = all.reduce((sum, item) => sum + (inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
+  const shown = filter === 'all' ? all : all.filter((item) => inGroup(item, filter));
+  const storyUserIds = new Set((storyRail?.items || []).map((group) => String(group.user?.id)));
+  const unreadByGroup = ['all', 'primary', 'requests'].reduce((counts, group) => {
+    counts[group] = all.reduce((sum, item) => sum + (group === 'all' || inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
     return counts;
   }, {});
 
@@ -162,9 +164,9 @@ export default function Messages() {
         </div>
       </header>
       <nav className="sn-filters" aria-label="Message inbox categories">
-        {['primary', 'stories', 'requests'].map((category) => (
+        {['all', 'primary', 'stories', 'requests'].map((category) => (
           <button key={category} type="button" role="tab" aria-selected={filter === category} className={filter === category ? 'sn-chip active' : 'sn-chip'} onClick={() => setFilter(category)}>
-            {category === 'primary' ? 'Primary' : category === 'stories' ? 'Stories' : 'Requests'}
+            {category === 'all' ? 'All' : category === 'primary' ? 'Primary' : category === 'stories' ? 'Stories' : 'Requests'}
             {unreadByGroup[category] > 0 && <span className="sn-count">{unreadByGroup[category] > 99 ? '99+' : unreadByGroup[category]}</span>}
           </button>
         ))}
@@ -182,18 +184,19 @@ export default function Messages() {
               return (
                 <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(); }} onTouchStart={() => { longPressTimer.current = setTimeout(openRowMenu, 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
                   <Link to={`/chat/${item.user.id}`} className="sn-row">
-                    <span className="sn-ring">
+                    <span className={storyUserIds.has(String(item.user.id)) ? 'sn-ring sn-ring-story' : 'sn-ring'}>
                       <Avatar user={item.user} size={44} />
                       {item.isOnline && <span className="sn-online" aria-label="Online" />}
                     </span>
                     <span className="sn-text">
                       <span className="sn-name-row">
                         <span className="sn-name">{name}</span>
+                        {item.user.verified && <span className="sn-verified" aria-label="Verified">✓</span>}
                         
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
-                        <span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span>
+                        {mine ? <span className="sn-txt">{`Sent ${timeAgo(last.createdAt)} ago`}</span> : <><span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span></>}
                       </span>
                     </span>
                   </Link>
@@ -209,7 +212,7 @@ export default function Messages() {
           </ul>
         ) : null}
       {filter === 'stories' && <StoryRail />}
-      {filter === 'primary' && groups.length > 0 && (
+      {(filter === 'primary' || filter === 'all') && groups.length > 0 && (
         <ul className="sn-list sn-group-list">
           {groups.map((group) => {
             const last = group.lastMessage;
@@ -231,7 +234,7 @@ export default function Messages() {
           })}
         </ul>
       )}
-      {filter !== 'stories' && items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'primary' ? 'No primary conversations yet.' : 'No message requests yet.'}</p>}
+      {filter !== 'stories' && items !== null && shown.length === 0 && (filter !== 'primary' || groups.length === 0) && <p className="sn-empty">{filter === 'all' ? 'No conversations yet.' : filter === 'primary' ? 'No primary conversations yet.' : 'No message requests yet.'}</p>}
       {rowMenu && (
         <ChatMenu
           label="Conversation options"

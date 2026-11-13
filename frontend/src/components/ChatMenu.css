@@ -76,3 +76,25 @@
   background: #e7f0ff !important;
   color: #0064e0 !important;
 }
+
+/* Chat list: story ring on users with an active story, verified badge */
+.sn-page .sn-ring-story {
+  padding: 2px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+}
+.sn-page .sn-ring-story > * { border: 2px solid #fff; border-radius: 50%; }
+.sn-page .sn-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: #0095f6;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+}
