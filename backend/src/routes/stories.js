@@ -50,7 +50,7 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
     const storyKind = kindFor(req.file.mimetype);
     // Cloudinary can serve a real first-frame JPEG for video story previews.
     const thumbUrl = storyKind === 'video' && asset.url.includes('res.cloudinary.com/')
-      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\\.[^/.]+$/, '.jpg')
+      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\.[^/.]+$/, '.jpg')
       : storyKind === 'image' ? asset.url : null;
     const story = await Post.create({
       authorId: req.user.id,
