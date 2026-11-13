@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
+import '../pages/StoryComposer.css';
 import { createPortal } from 'react-dom';
 import { api } from '../api.js';
 import { mediaUrl, videoStreamUrl } from '../lib/config.js';
@@ -62,17 +64,20 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const swipeRef = useRef(null);
   const swipedRef = useRef(false);
   const videoRef = useRef(null);
+  const voiceRef = useRef(null);
+  const musicRef = useRef(null);
   const activeFillRef = useRef(null);
   const tapRef = useRef({ time: 0, middle: false });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   // Closing the viewer stops its video at once (a removed video can otherwise keep playing sound)
-  useLayoutEffect(() => () => { videoRef.current?.pause(); }, []);
+  useLayoutEffect(() => () => { videoRef.current?.pause(); voiceRef.current?.pause(); musicRef.current?.pause(); }, []);
 
   const group = groups[gi] || { user: {} };
   const creatorName = group.user?.displayName || group.user?.username;
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
+  const isText = current?.kind === 'text';
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
@@ -100,6 +105,16 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       .catch(() => { if (alive && !saved) setStories([]); });
     return () => { alive = false; };
   }, [group.user.id]);
+
+  // Voice note and music follow the same pause rules as the story itself
+  useEffect(() => {
+    [voiceRef.current, musicRef.current].forEach((media) => {
+      if (!media) return;
+      if (frozen) media.pause();
+      else media.play().catch(() => {});
+    });
+    return undefined;
+  }, [current?.id, frozen]);
 
   // Behind the scenes: warm the next story (and the one after) while this one plays
   // Waits a moment so it never competes with the story on screen.
@@ -448,6 +463,10 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         </div>
       </div>
 
+      {current?.voiceUrl && <audio key={`voice-${current.id}`} ref={voiceRef} src={mediaUrl(current.voiceUrl)} preload="auto" />}
+      {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
+      {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
+
       <div className="sv-stage" onClick={onStageTap}>
         {current ? (
           isVideo ? (
@@ -463,6 +482,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               onError={next}
               onTimeUpdate={onVideoTime}
             />
+          ) : isText ? (
+            <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText}</div>
           ) : (
             <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
           )

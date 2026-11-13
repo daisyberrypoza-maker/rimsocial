@@ -312,6 +312,7 @@ export default function Upload() {
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
           {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
+        {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="sc-aa">Aa</span> Text story</button>}
         {onRecents && <button type="button" className="ig-create-pick" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={18} /> Choose</button>}
         {onRecents && !asStory && !asReel && <button type="button" className={selectMode ? 'ig-create-select on' : 'ig-create-select'} onClick={() => { setSelectMode((on) => !on); setSelection([]); }} aria-pressed={selectMode}>{selectMode ? 'Cancel' : 'Select'}</button>}
       </div>

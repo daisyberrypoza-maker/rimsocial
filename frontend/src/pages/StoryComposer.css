@@ -1,0 +1,66 @@
+/* Text story composer and text story viewer */
+.sc-page {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+.sc-page button { background: transparent !important; color: #fff !important; box-shadow: none !important; border: 0; }
+.sc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+}
+.sc-page button.sc-round {
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.35) !important; display: grid; place-items: center; padding: 0;
+}
+.sc-page button.sc-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(0,0,0,.35) !important; font-size: 15px; font-weight: 600;
+}
+.sc-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px; }
+.sc-page textarea.sc-text {
+  width: 100%; min-height: 160px; resize: none; border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important;
+  color: #fff !important; font-size: 30px; font-weight: 700; text-align: center; padding: 0; border-radius: 0 !important;
+}
+.sc-page textarea.sc-text::placeholder { color: rgba(255,255,255,.7); }
+.sc-bottom { padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 16px); display: flex; flex-direction: column; gap: 14px; }
+.sc-swatches { display: flex; justify-content: center; gap: 10px; }
+.sc-page button.sc-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5) !important; padding: 0; }
+.sc-page button.sc-swatch.on { border: 3px solid #fff !important; }
+.sc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sc-page button.sc-voice {
+  display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 16px; border-radius: 999px; background: rgba(0,0,0,.35) !important; font-size: 15px; font-weight: 600;
+}
+.sc-page button.sc-voice.recording { background: #ed4956 !important; }
+.sc-page button.sc-voice i { display: inline-flex; margin-left: 4px; }
+.sc-page button.sc-share {
+  width: 56px; height: 56px; border-radius: 50%; background: #fff !important; color: #000 !important; display: grid; place-items: center; padding: 0; flex: none;
+}
+.sc-page button.sc-share:disabled { opacity: .45; }
+.sc-spin { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #d0d0d0; border-top-color: #0095f6; animation: sc-spin .8s linear infinite; }
+@keyframes sc-spin { to { transform: rotate(360deg); } }
+
+.sc-sheet-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; }
+.sc-sheet {
+  width: 100%; max-height: 70vh; overflow-y: auto; box-sizing: border-box; padding: 16px; border-radius: 18px 18px 0 0; background: #fff; color: #000;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sc-sheet input { height: 44px; padding: 0 14px; border: 0 !important; border-radius: 8px !important; background: #f0f2f5 !important; font-size: 16px; outline: none !important; box-shadow: none !important; margin-bottom: 8px; }
+.sc-sheet button.sc-sheet-row { display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 12px 6px; border: 0; background: #fff !important; color: #000 !important; text-align: left; font-size: 16px; font-weight: 500; }
+.sc-sheet button.sc-sheet-row.on { color: #0064e0 !important; }
+.sc-sheet button.sc-sheet-row small { color: #65676b; font-size: 13px; font-weight: 400; }
+.sc-empty { margin: 8px 0; color: #65676b; }
+
+/* Text story in the viewer */
+.sv-text {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 32px; box-sizing: border-box;
+  text-align: center; color: #fff; font-size: 30px; font-weight: 700; white-space: pre-wrap; word-break: break-word;
+}
+.sv-music {
+  position: absolute; left: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); z-index: 2; max-width: 70%;
+  padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
+}

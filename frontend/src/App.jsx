@@ -16,6 +16,7 @@ import Login from './pages/Login.jsx';
 import Feed from './pages/Feed.jsx';
 import Explore from './pages/Explore.jsx';
 import Upload from './pages/Upload.jsx';
+import StoryComposer from './pages/StoryComposer.jsx';
 import Profile from './pages/Profile.jsx';
 import ProfileFeed from './pages/ProfileFeed.jsx';
 import CreatorStudio from './pages/CreatorStudio.jsx';
@@ -156,6 +157,7 @@ export default function App() {
         <Route path="/chat/group/:groupId" element={<RequireAuth><GroupConversationPage /></RequireAuth>} />
         <Route path="/chat/:userId" element={<RequireAuth><Conversation /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
+        <Route path="/story/text" element={<RequireAuth><StoryComposer /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
         <Route path="/creator/earnings" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
@@ -169,7 +171,7 @@ export default function App() {
         <Route path="/u/:username/:list" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && location.pathname !== '/upload' && <BottomNav />}
+      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && location.pathname !== '/upload' && location.pathname !== '/story/text' && <BottomNav />}
       <Toast />
     </div>
   );

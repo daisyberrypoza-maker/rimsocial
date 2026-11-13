@@ -67,6 +67,51 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
   }
 });
 
+// POST /v1/stories/composed  (multipart: text, background, musicId, voice audio file)
+// A text story on a background, with an optional music track and voice note. Expires like other stories.
+router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpload.single('voice'), async (req, res, next) => {
+  let uploadedAsset = null;
+  let storyPersisted = false;
+  try {
+    const text = String(req.body.text || '').trim().slice(0, 200);
+    const background = String(req.body.background || 'sunset').slice(0, 40);
+    const voice = req.file || null;
+    if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
+    if (!text && !voice) throw httpError(400, 'Write some text or record a voice note');
+    let track = null;
+    if (req.body.musicId) {
+      track = await require('../db').AudioTrack.findByPk(String(req.body.musicId));
+      if (!track) throw httpError(404, 'Music track not found');
+    }
+    let voiceUrl = null;
+    if (voice) {
+      const asset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });
+      uploadedAsset = asset;
+      voiceUrl = asset.url;
+    }
+    const story = await Post.create({
+      authorId: req.user.id,
+      kind: 'text',
+      mediaUrl: null,
+      storyText: text || null,
+      storyBackground: background,
+      voiceUrl,
+      musicUrl: track ? track.mediaUrl : null,
+      musicTitle: track ? `${track.title} · ${track.artist}`.slice(0, 120) : null,
+      isStory: true,
+      expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
+    });
+    storyPersisted = true;
+    await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
+    res.status(201).json(toPostDTO(story));
+  } catch (e) {
+    if (uploadedAsset?.publicId && !storyPersisted) {
+      await requestAssetCleanup(uploadedAsset.publicId, uploadedAsset.resourceType || 'video', 'orphan_story_upload', { knownUnreferenced: true }).catch((cleanupError) => console.error('Orphan story voice cleanup failed:', cleanupError.message));
+    }
+    next(e);
+  }
+});
+
 // Reshare a public story to the current user's story rail for a fresh 24-hour window.
 router.post('/:id/repost', requireAuth, async (req, res, next) => {
   try {
