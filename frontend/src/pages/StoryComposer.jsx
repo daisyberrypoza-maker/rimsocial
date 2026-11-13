@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import StoryAudioControls from '../components/StoryAudioControls.jsx';
 import { goBack } from '../lib/goBack.js';
@@ -17,6 +18,13 @@ export default function StoryComposer() {
   const [track, setTrack] = useState(null);
   const [voice, setVoice] = useState(null);
   const [posting, setPosting] = useState(false);
+  const me = useAppStore((st) => st.user);
+
+  // The circle cycles through the backgrounds, like the editor reference
+  function cycleBackground() {
+    const index = STORY_BACKGROUNDS.findIndex((bg) => bg.key === bgKey);
+    setBgKey(STORY_BACKGROUNDS[(index + 1) % STORY_BACKGROUNDS.length].key);
+  }
 
   async function share() {
     if (posting || (!text.trim() && !voice)) return;
@@ -43,7 +51,13 @@ export default function StoryComposer() {
   return (
     <main className="sc-page" style={{ background: backgroundCss(bgKey) }}>
       <header className="sc-top">
-        <button type="button" className="sc-round" aria-label="Close" onClick={() => goBack(navigate)}><Icon name="x" size={24} /></button>
+        <button type="button" className="sc-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
+        <div className="sc-tools">
+          <StoryAudioControls compact track={track} onTrack={setTrack} voice={voice} onVoice={setVoice} disabled={posting} />
+          <button type="button" className="sa-round sc-bg" aria-label="Change background" onClick={cycleBackground} disabled={posting}>
+            <span className="sc-bg-dot" style={{ background: backgroundCss(bgKey) }} />
+          </button>
+        </div>
       </header>
 
       <div className="sc-body">
@@ -59,25 +73,13 @@ export default function StoryComposer() {
       </div>
 
       <div className="sc-bottom">
-        <div className="sc-swatches" role="radiogroup" aria-label="Background">
-          {STORY_BACKGROUNDS.map((bg) => (
-            <button
-              key={bg.key}
-              type="button"
-              role="radio"
-              aria-checked={bgKey === bg.key}
-              aria-label={bg.label}
-              className={bgKey === bg.key ? 'sc-swatch on' : 'sc-swatch'}
-              style={{ background: bg.css }}
-              onClick={() => setBgKey(bg.key)}
-            />
-          ))}
-        </div>
-
         <div className="sc-row">
-          <StoryAudioControls track={track} onTrack={setTrack} voice={voice} onVoice={setVoice} disabled={posting} />
+          <button type="button" className="sc-owner" onClick={share} disabled={!canShare} aria-label="Share to your stories">
+            <Avatar user={me || {}} size={36} />
+            <span>Your stories</span>
+          </button>
           <button type="button" className="sc-share" aria-label={posting ? 'Posting story' : 'Share story'} onClick={share} disabled={!canShare}>
-            {posting ? <span className="sc-spin" role="status" aria-label="Posting story" /> : <Icon name="send" size={22} />}
+            {posting ? <span className="sc-spin" role="status" aria-label="Posting story" /> : <Icon name="arrow-right" size={26} />}
           </button>
         </div>
       </div>

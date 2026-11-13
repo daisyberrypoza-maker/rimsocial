@@ -8,7 +8,7 @@ export const MAX_VOICE_SECONDS = 60;
 
 // Music and voice-note controls for every kind of story (text, photo, video).
 // track: { id, title, artist } or null. voice: { file, seconds } or null.
-export default function StoryAudioControls({ track, onTrack, voice, onVoice, disabled = false }) {
+export default function StoryAudioControls({ track, onTrack, voice, onVoice, disabled = false, compact = false }) {
   const [musicOpen, setMusicOpen] = useState(false);
   const [musicQuery, setMusicQuery] = useState('');
   const [musicItems, setMusicItems] = useState([]);
@@ -77,6 +77,48 @@ export default function StoryAudioControls({ track, onTrack, voice, onVoice, dis
     }
   }
 
+  const MUSIC_SHEET = (
+        <div className="sc-sheet-backdrop" onClick={() => setMusicOpen(false)}>
+          <section className="sc-sheet" role="dialog" aria-label="Choose music" onClick={(event) => event.stopPropagation()}>
+            <input value={musicQuery} onChange={(event) => setMusicQuery(event.target.value)} placeholder="Search music" aria-label="Search music" />
+            {track && <button type="button" className="sc-sheet-row" onClick={() => { onTrack(null); setMusicOpen(false); }}>No music</button>}
+            {musicItems.length === 0 && <p className="sc-empty">No music found.</p>}
+            {musicItems.map((item) => (
+              <button key={item.id} type="button" className={track?.id === item.id ? 'sc-sheet-row on' : 'sc-sheet-row'} onClick={() => { onTrack(item); setMusicOpen(false); }}>
+                <span>{item.title}</span><small>{item.artist}</small>
+              </button>
+            ))}
+          </section>
+        </div>
+  );
+
+  if (compact) {
+    return (
+      <>
+        <div className="sa-round-row">
+          <button type="button" className="sa-round" aria-label={track ? `Music: ${track.title}` : 'Add music'} disabled={disabled} onClick={() => setMusicOpen(true)}>
+            <Icon name="music" size={22} />
+            {track && <span className="sa-dot" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className={recording ? 'sa-round sa-voice recording' : voice ? 'sa-round sa-voice' : 'sa-round'}
+            aria-label={voice ? `Voice note ${voice.seconds} seconds. Hold to replace` : 'Hold to record a voice note'}
+            disabled={disabled}
+            onPointerDown={startVoice}
+            onPointerUp={stopVoice}
+            onPointerLeave={stopVoice}
+            onPointerCancel={stopVoice}
+          >
+            {recording ? <span className="sa-timer">{seconds}s</span> : <Icon name="mic" size={22} />}
+            {voice && !recording && <span className="sa-dot" aria-hidden="true" />}
+          </button>
+        </div>
+        {musicOpen && MUSIC_SHEET}
+      </>
+    );
+  }
+
   return (
     <>
       <div className="sa-row">
@@ -101,20 +143,7 @@ export default function StoryAudioControls({ track, onTrack, voice, onVoice, dis
         </button>
       </div>
 
-      {musicOpen && (
-        <div className="sc-sheet-backdrop" onClick={() => setMusicOpen(false)}>
-          <section className="sc-sheet" role="dialog" aria-label="Choose music" onClick={(event) => event.stopPropagation()}>
-            <input value={musicQuery} onChange={(event) => setMusicQuery(event.target.value)} placeholder="Search music" aria-label="Search music" />
-            {track && <button type="button" className="sc-sheet-row" onClick={() => { onTrack(null); setMusicOpen(false); }}>No music</button>}
-            {musicItems.length === 0 && <p className="sc-empty">No music found.</p>}
-            {musicItems.map((item) => (
-              <button key={item.id} type="button" className={track?.id === item.id ? 'sc-sheet-row on' : 'sc-sheet-row'} onClick={() => { onTrack(item); setMusicOpen(false); }}>
-                <span>{item.title}</span><small>{item.artist}</small>
-              </button>
-            ))}
-          </section>
-        </div>
-      )}
+      {musicOpen && MUSIC_SHEET}
     </>
   );
 }

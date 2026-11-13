@@ -78,3 +78,22 @@
 
 /* Story audio row above the share buttons in the editor */
 .up-story-audio { position: relative; z-index: 3; padding: 0 12px 8px; }
+
+/* Editor reference: round tools on top, "Your stories" pill and arrow below */
+.sc-tools { display: flex; align-items: center; gap: 10px; }
+.sc-page button.sa-round {
+  position: relative; width: 44px; height: 44px; border-radius: 50%; padding: 0; display: grid; place-items: center;
+  background: rgba(0,0,0,.35) !important; color: #fff !important;
+}
+.sc-page button.sa-round.recording { width: auto; padding: 0 14px; border-radius: 999px; display: inline-flex; gap: 6px; background: #ed4956 !important; }
+.sc-page button.sa-round:disabled { opacity: .5; }
+.sa-round-row { display: flex; align-items: center; gap: 10px; }
+.sa-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #0095f6; border: 2px solid #111; }
+.sa-timer { font-size: 14px; font-weight: 700; }
+.sc-bg-dot { display: block; width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; box-sizing: border-box; }
+.sc-page button.sc-owner {
+  display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 20px 0 8px; border-radius: 999px;
+  background: rgba(0,0,0,.45) !important; font-size: 16px; font-weight: 600;
+}
+.sc-page button.sc-owner:disabled { opacity: .45; }
+.sc-page button.sc-share { width: 56px; height: 56px; }
