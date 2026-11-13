@@ -42,9 +42,9 @@ export default function Stories() {
   const pending = useAppStore((s) => s.pendingUpload);
   const uploading = pending?.kind === 'story';
   const storedDiscover = useAppStore((s) => s.storyDiscover);
-  const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
+  const [rail, setRail] = useState(() => (Array.isArray(storedRail?.items) ? storedRail.items : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
-  const loading = false;
+  const loading = !loaded;
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
   const [friendsActive, setFriendsActive] = useState(false);
   // Badge on the add-friend icon: people who followed you since you last opened it
@@ -69,7 +69,7 @@ export default function Stories() {
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
   // The saved rail changes when a story finishes uploading
-  useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
+  useEffect(() => { if (Array.isArray(storedRail?.items)) setRail(storedRail.items); }, [storedRail]);
 
   // Discover and ordering: people you don't follow yet, ranked Snapchat-style by the server
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function Stories() {
       const result = await api('/v1/stories/rail');
       const items = result.items || [];
       setRail(items);
-      useAppStore.getState().setStoryRail(items);
+      useAppStore.getState().setStoryRail({ items, updatedAt: Date.now() });
     } catch (error) {
       logError(error);
     } finally {
@@ -124,7 +124,7 @@ export default function Stories() {
     if (i >= 0) setOpenAt(i);
   }
 
-  const myGroup = rail.find((group) => group.user?.id === me?.id);
+  const myGroup = rail.find((group) => String(group.user?.id) === String(me?.id));
 
   // A suggested person with stories opens the viewer; otherwise their profile opens
   function openSuggested(person) {
