@@ -57,6 +57,8 @@ router.post('/', requireAuth, upload.single('media'), async (req, res, next) => 
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     storyPersisted = true;
+    // A creator's rail must reflect the new story immediately, not after the Redis TTL.
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     res.status(201).json(toPostDTO(story));
   } catch (e) {
     if (uploadedAsset?.publicId && !storyPersisted) {
