@@ -152,3 +152,18 @@
 .sn-page .sn-sub .sn-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sn-page .sn-time { flex: none; margin-left: 6px !important; }
 .sn-page .sn-group-list .sn-item { padding-right: 16px !important; }
+
+/* Inbox rows: the avatar keeps its own box; the name and message text always start to its right */
+.sn-page .sn-row .sn-ring {
+  display: block !important;
+  position: relative;
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px;
+  overflow: visible;
+  border: 0 !important;
+}
+.sn-page .sn-row .sn-ring > .avatar { position: absolute; inset: 0; width: 56px !important; height: 56px !important; }
+.sn-page .sn-row .sn-text { position: relative; margin-left: 0; padding-left: 0; }
+.sn-page .sn-row .sn-name-row,
+.sn-page .sn-row .sn-sub { position: relative; }
