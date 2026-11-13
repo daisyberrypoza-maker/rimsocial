@@ -201,6 +201,18 @@ async function start() {
   if (!currentPostColumns.mediaItems) {
     await qi.addColumn('posts', 'mediaItems', { type: DataTypes.JSON, allowNull: true });
   }
+  // Text, voice and music stories (migration 034). Each change runs only when missing, so re-running is safe.
+  if (!currentPostColumns.storyText) await qi.addColumn('posts', 'storyText', { type: DataTypes.TEXT, allowNull: true });
+  if (!currentPostColumns.storyBackground) await qi.addColumn('posts', 'storyBackground', { type: DataTypes.STRING(40), allowNull: true });
+  if (!currentPostColumns.voiceUrl) await qi.addColumn('posts', 'voiceUrl', { type: DataTypes.STRING(512), allowNull: true });
+  if (!currentPostColumns.musicUrl) await qi.addColumn('posts', 'musicUrl', { type: DataTypes.STRING(512), allowNull: true });
+  if (!currentPostColumns.musicTitle) await qi.addColumn('posts', 'musicTitle', { type: DataTypes.STRING(120), allowNull: true });
+  if (currentPostColumns.mediaUrl && currentPostColumns.mediaUrl.allowNull === false) {
+    await qi.changeColumn('posts', 'mediaUrl', { type: DataTypes.STRING(512), allowNull: true });
+  }
+  if (!String(currentPostColumns.kind?.type || '').includes("'text'")) {
+    await sequelize.query("ALTER TABLE posts MODIFY COLUMN kind ENUM('video', 'photo', 'text') NOT NULL");
+  }
   if (!currentPostColumns.mediaPublicId) await qi.addColumn('posts', 'mediaPublicId', { type: DataTypes.STRING(255), allowNull: true });
   if (!currentPostColumns.allowRemix) await qi.addColumn('posts', 'allowRemix', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sourcePostId) await qi.addColumn('posts', 'sourcePostId', { type: DataTypes.UUID, allowNull: true });
