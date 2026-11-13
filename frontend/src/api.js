@@ -72,3 +72,32 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
 
   return data;
 }
+
+// Multipart upload with real browser upload progress (fetch does not expose upload progress).
+export function uploadApi(path, body, onProgress = () => {}) {
+  return new Promise((resolve, reject) => {
+    const { token, logout } = useAppStore.getState();
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_BASE}${path}`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    });
+    xhr.addEventListener('error', () => {
+      useAppStore.getState().setOffline(true);
+      reject(new ApiError(safeErrorMessage(0), 0));
+    });
+    xhr.addEventListener('load', () => {
+      useAppStore.getState().setOffline(false);
+      const data = xhr.status === 204 ? null : (() => { try { return JSON.parse(xhr.responseText); } catch { return null; } })();
+      if (xhr.status === 401 && token) logout();
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new ApiError(safeErrorMessage(xhr.status), xhr.status));
+        return;
+      }
+      onProgress(100);
+      resolve(data);
+    });
+    xhr.send(body);
+  });
+}
