@@ -88,3 +88,21 @@
 }
 
 .sn-page .sn-empty { padding: 32px 16px; color: #65676b; text-align: center; }
+
+/* Stories filter: vertical status list (WhatsApp-style) */
+.sn-page .wa-status { padding: 4px 0 96px; }
+.sn-page .wa-status h3 { margin: 16px 16px 6px; font-size: 14px; font-weight: 600; color: #65676b; }
+.sn-page .wa-status button.wa-status-row {
+  display: flex !important; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; padding: 10px 16px !important;
+  border: 0 !important; border-radius: 0 !important; background: #fff !important; color: #000 !important; box-shadow: none !important; text-align: left; cursor: pointer;
+}
+.sn-page .wa-status button.wa-status-row:hover { background: #f0f2f5 !important; }
+.sn-page .wa-status-avatar { position: relative; flex: none; display: inline-flex; }
+.sn-page .wa-status-plus {
+  position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff;
+  background: #0064e0; color: #fff; display: grid; place-items: center;
+}
+.sn-page .wa-status-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.sn-page .wa-status-text strong { font-size: 16px; font-weight: 500; color: #000; }
+.sn-page .wa-status-text small { font-size: 14px; color: #65676b; }
+.sn-page .wa-status-empty { padding: 32px 16px; color: #65676b; text-align: center; }

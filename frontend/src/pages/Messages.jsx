@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
-import StoryRail from '../components/StoryRail.jsx';
+import StoryList from '../components/StoryList.jsx';
 import ChatMenu from '../components/ChatMenu.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
@@ -207,7 +207,7 @@ export default function Messages() {
             })}
           </ul>
         ) : null}
-      {filter === 'stories' && <StoryRail />}
+      {filter === 'stories' && <StoryList />}
       {(filter === 'primary' || filter === 'all') && groups.length > 0 && (
         <ul className="sn-list sn-group-list">
           {groups.map((group) => {
