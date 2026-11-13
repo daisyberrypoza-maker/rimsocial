@@ -441,6 +441,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               ref={videoRef}
               className="sv-media"
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
+              poster={current.thumbUrl ? mediaUrl(current.thumbUrl) : undefined}
               playsInline
               muted={muted}
               preload="auto"
@@ -449,7 +450,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
               onTimeUpdate={onVideoTime}
             />
           ) : (
-            <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
+            <img key={current.id} className="sv-media" src={mediaUrl(current.thumbUrl || current.mediaUrl)} alt="" onError={next} />
           )
         ) : (
           <p className="sv-empty">{stories ? 'No stories' : ''}</p>
