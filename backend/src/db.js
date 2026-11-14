@@ -355,9 +355,19 @@ const GroupMessage = sequelize.define('GroupMessage', {
   mediaName: { type: DataTypes.STRING(255), allowNull: true },
   // Message this one replies to (within the same group)
   replyToId: { type: DataTypes.UUID, allowNull: true },
+  // View limit for a photo: 0 = unlimited, 1 = once, 2 = twice (each member counts separately)
+  viewLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
 
+
+// How many times each group member has opened a view-limited photo
+const GroupMessageView = sequelize.define('GroupMessageView', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  messageId: { type: DataTypes.UUID, allowNull: false },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  viewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+}, { tableName: 'group_message_views', indexes: [{ unique: true, fields: ['messageId', 'userId'] }] });
 
 const UserMute = sequelize.define('UserMute', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -423,7 +433,7 @@ const Order = sequelize.define('Order', {
 module.exports = {
   Order,
   AudioTrack,
-  DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference,
+  DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,

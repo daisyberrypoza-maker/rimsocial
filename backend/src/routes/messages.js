@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, ChatPreference, sequelize } = require('../db');
+const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
@@ -245,7 +245,11 @@ router.get('/groups/:groupId', async (req, res, next) => {
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
     const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(items.reverse()) });
+    const limitedIds = items.filter((m) => m.viewLimit > 0).map((m) => m.id);
+    const views = limitedIds.length ? await GroupMessageView.findAll({ where: { messageId: limitedIds, userId: req.user.id }, raw: true }) : [];
+    const myViews = new Map(views.map((row) => [String(row.messageId), row.viewCount]));
+    const withViews = items.map((m) => ({ ...m, viewedByMe: myViews.get(String(m.id)) || 0 }));
+    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(withViews.reverse()) });
   } catch (error) { next(error); }
 });
 
@@ -273,6 +277,21 @@ async function withGroupReplyPreviews(rows) {
   return rows.map((row) => (row.replyToId ? { ...row, replyTo: byId.get(String(row.replyToId)) || null } : row));
 }
 
+// Open a view-limited group photo: counts this member's view (the sender is never limited)
+router.post('/groups/:groupId/messages/:messageId/view', async (req, res, next) => {
+  try {
+    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
+    if (!membership) throw httpError(404, 'Group not found');
+    const row = await GroupMessage.findOne({ where: { id: req.params.messageId, groupId: req.params.groupId }, raw: true });
+    if (!row || !row.viewLimit) throw httpError(404, 'Photo not available');
+    if (String(row.senderId) === String(req.user.id)) return res.json({ viewedByMe: 0 });
+    const [seen] = await GroupMessageView.findOrCreate({ where: { messageId: row.id, userId: req.user.id }, defaults: { viewCount: 0 } });
+    if (seen.viewCount >= row.viewLimit) return res.json({ viewedByMe: seen.viewCount });
+    await seen.update({ viewCount: seen.viewCount + 1 });
+    res.json({ viewedByMe: seen.viewCount });
+  } catch (error) { next(error); }
+});
+
 // Send a group text message to every current member.
 router.post('/groups/:groupId/messages', async (req, res, next) => {
   try {
@@ -297,11 +316,13 @@ router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req,
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
     const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
+    const viewLimit = [1, 2].includes(Number(req.body?.viewLimit)) && chatKindFor(req.file.mimetype) === 'photo' ? Number(req.body.viewLimit) : 0;
     const message = await GroupMessage.create({
       groupId: req.params.groupId,
       senderId: req.user.id,
       body,
       replyToId,
+      viewLimit,
       mediaUrl: asset.url,
       mediaKind: chatKindFor(req.file.mimetype),
       mediaName: fileName,

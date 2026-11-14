@@ -16,8 +16,13 @@ function formatClock(total) {
 }
 
 // Photo, video, audio or file in a group message; photos open in the viewer
-function GroupMedia({ message, onOpenPhoto }) {
+function GroupMedia({ message, mine, onOpenPhoto, onView }) {
   const src = mediaUrl(message.mediaUrl);
+  // A view-limited photo from someone else opens with Tap to view
+  if (!mine && message.mediaKind === 'photo' && message.viewLimit > 0) {
+    if ((message.viewedByMe || 0) >= message.viewLimit) return <span className="cv-once opened">Opened</span>;
+    return <button type="button" className="cv-once" onClick={() => onView(message)}>Tap to view</button>;
+  }
   if (message.mediaKind === 'photo') return <button type="button" className="cv-media-link" onClick={() => onOpenPhoto(src)} aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" /></button>;
   if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
@@ -107,7 +112,7 @@ export default function GroupConversationPage() {
   }
 
   // Photo, video or file from the phone, or a voice note, sent to every member
-  async function sendMediaFile(file, caption = '') {
+  async function sendMediaFile(file, caption = '', viewLimit = 0) {
     setSending(true);
     setError('');
     try {
@@ -116,6 +121,7 @@ export default function GroupConversationPage() {
       form.append('media', file);
       if (caption) form.append('body', caption);
       if (quoted) form.append('replyToId', quoted.id);
+      if (viewLimit) form.append('viewLimit', String(viewLimit));
       const data = await api('/v1/messages/groups/' + groupId + '/media', { method: 'POST', body: form });
       setMessages((current) => [...(current || []), { ...data.message, replyTo: quoteOf(quoted) }]);
       setReply(null);
@@ -144,6 +150,18 @@ export default function GroupConversationPage() {
     sendMediaFile(picked, caption);
   }
 
+  // Opening a view-limited photo counts this member's view, then shows it
+  async function viewGroupPhoto(message) {
+    try {
+      const data = await api('/v1/messages/groups/' + groupId + '/messages/' + message.id + '/view', { method: 'POST', body: {} });
+      setMessages((current) => (current || []).map((row) => (row.id === message.id ? { ...row, viewedByMe: data.viewedByMe } : row)));
+      setViewer({ src: mediaUrl(message.mediaUrl), kind: 'photo' });
+    } catch (e) {
+      logError(e);
+      toast(e.message || 'Could not open photo');
+    }
+  }
+
   function closePreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
@@ -166,9 +184,10 @@ export default function GroupConversationPage() {
       }
     }
     const caption = text.trim();
+    const viewLimit = /^image\//.test(file.type) ? edit.viewLimit : 0;
     setText('');
     closePreview();
-    sendMediaFile(toSend, caption);
+    sendMediaFile(toSend, caption, viewLimit);
   }
 
   // Hold the mic to record, release to send, slide left to cancel
@@ -315,7 +334,7 @@ export default function GroupConversationPage() {
                     );
                   })()}
                   {message.replyToId && !message.replyTo && <div className="cv-quote"><span>Original message is no longer available</span></div>}
-                  {message.mediaUrl && <GroupMedia message={message} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} />}
+                  {message.mediaUrl && <GroupMedia message={message} mine={mine} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} onView={viewGroupPhoto} />}
                   {!!message.body && <span className="cv-text">{message.body}</span>}
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
@@ -387,7 +406,6 @@ export default function GroupConversationPage() {
           edit={edit}
           setEdit={setEdit}
           editorRef={editorRef}
-          viewLimits={false}
           onClose={closePreview}
         />
       )}

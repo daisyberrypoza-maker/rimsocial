@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -153,6 +153,7 @@ async function start() {
   await GroupConversation.sync();
   await GroupMember.sync();
   await GroupMessage.sync();
+  await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
     const qiGroup = sequelize.getQueryInterface();
@@ -163,6 +164,8 @@ async function start() {
       ['mediaKind', { type: DataTypesGroup.STRING(12), allowNull: true }],
       ['mediaName', { type: DataTypesGroup.STRING(255), allowNull: true }],
       ['replyToId', { type: DataTypesGroup.UUID, allowNull: true }],
+      ['viewLimit', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
+      ['viewCount', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
     ]) {
       if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
     }
