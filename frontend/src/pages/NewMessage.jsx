@@ -8,6 +8,15 @@ import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 import './NewMessage.css';
 
+// Suggestions the user removed stay removed (per account) until they search for that person again
+const dismissKey = (id) => `rs_dismissed_suggestions_${id}`;
+function readDismissed(id) {
+  try { return new Set(JSON.parse(window.localStorage.getItem(dismissKey(id)) || '[]')); } catch { return new Set(); }
+}
+function writeDismissed(id, set) {
+  try { window.localStorage.setItem(dismissKey(id), JSON.stringify([...set])); } catch { /* storage unavailable: still works for this visit */ }
+}
+
 const icon = (path) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 );
@@ -22,7 +31,7 @@ export default function NewMessage() {
   const [loadingPeople, setLoadingPeople] = useState(true);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState([]);
-  const [hidden, setHidden] = useState(() => new Set());
+  const [hidden, setHidden] = useState(() => readDismissed(me?.id));
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
   const groupMode = mode === 'group';
@@ -77,11 +86,16 @@ export default function NewMessage() {
   const base = results ?? recents;
   const isSelected = (person) => selected.some((s) => s.id === person.id);
   // Selected people appear as chips in group mode, so they are not repeated in the list
-  const list = base.filter((person) => !hidden.has(String(person.id)) && !(groupMode && isSelected(person)));
+  // Search results always show; removed suggestions only hide from the suggested list
+  const list = base.filter((person) => (results ? true : !hidden.has(String(person.id))) && !(groupMode && isSelected(person)));
   const toggle = (person) => setSelected((cur) => (
     cur.some((s) => s.id === person.id) ? cur.filter((s) => s.id !== person.id) : [...cur, person]
   ));
-  const hide = (person) => setHidden((cur) => new Set(cur).add(String(person.id)));
+  const hide = (person) => setHidden((cur) => {
+    const next = new Set(cur).add(String(person.id));
+    writeDismissed(me?.id, next);
+    return next;
+  });
 
   function onRow(person) {
     if (groupMode) toggle(person);

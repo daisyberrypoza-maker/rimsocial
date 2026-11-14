@@ -13,7 +13,7 @@
 .nm-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 96px); }
 
 .nm-to { display: flex; align-items: center; gap: 14px; height: 48px; }
-.nm-to-label { flex: none; font-size: 17px; font-weight: 500; color: #000; }
+.nm-to-label { flex: none; font-size: 17px; font-weight: 400; color: #000; }
 .nm-page .nm-to input, .nm-page .nm-search input, .nm-page .nm-name-input {
   flex: 1 1 auto; min-width: 0; height: 36px; margin: 0; padding: 0;
   border: 0 !important; outline: 0 !important; box-shadow: none !important; border-radius: 0;
@@ -22,7 +22,7 @@
 .nm-page .nm-to input::placeholder, .nm-page .nm-search input::placeholder, .nm-page .nm-name-input::placeholder { color: #8e8e8e; opacity: 1; }
 
 .nm-actions { display: flex; flex-direction: column; margin-top: 8px; }
-.nm-action { display: flex; align-items: center; gap: 18px; width: 100%; min-height: 80px; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; font-size: 17px; font-weight: 400; text-align: left; cursor: pointer; }
+.nm-action { display: flex; align-items: center; gap: 18px; width: 100%; min-height: 80px; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; font-size: 17px; font-weight: 300; text-align: left; cursor: pointer; }
 .nm-action:disabled { opacity: 0.5; cursor: default; }
 .nm-action-icon { flex: none; width: 56px; height: 56px; border-radius: 50%; background: #f0f2f5; display: grid; place-items: center; color: #000; }
 
@@ -37,13 +37,13 @@
 .nm-chip-badge { position: absolute; top: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: #fff; color: #000; border: 1px solid #dbdbdb; box-shadow: 0 1px 3px rgba(0,0,0,.15); display: grid; place-items: center; }
 .nm-chip-name { width: 100%; font-size: 15px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.nm-section { margin: 22px 0 6px; font-size: 20px; font-weight: 700; color: #000; }
+.nm-section { margin: 22px 0 6px; font-size: 20px; font-weight: 500; color: #000; }
 .nm-list { list-style: none; margin: 0; padding: 0; }
 .nm-item { display: flex; align-items: center; gap: 8px; }
 .nm-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 10px 0; border: 0 !important; background: transparent !important; color: #000 !important; text-align: left; cursor: pointer; }
 .nm-row > .avatar { flex: none; width: 56px !important; height: 56px !important; }
 .nm-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.nm-row-name { font-size: 17px; font-weight: 500; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nm-row-name { font-size: 17px; font-weight: 400; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nm-row-handle { font-size: 16px; font-weight: 400; color: #8e8e8e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nm-x { flex: none; width: 40px; height: 40px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #8e8e8e; display: grid; place-items: center; cursor: pointer; }
 .nm-check { flex: none; width: 28px; height: 28px; margin-right: 4px; box-sizing: border-box; border: 2px solid #c7c7c7; border-radius: 50%; display: grid; place-items: center; color: #fff; }
@@ -53,3 +53,7 @@
 .nm-create { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); width: min(86%, 420px); height: 52px; margin: 0; border: 0 !important; border-radius: 999px; background: #e4e6ea !important; color: #8e8e8e !important; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); }
 .nm-create.on { background: #0095f6 !important; color: #fff !important; }
 .nm-create:disabled { cursor: default; }
+
+/* Thin text for names and labels, like the chat list */
+.nm-page .nm-row-name, .nm-page .nm-chip-name, .nm-page .nm-to-label, .nm-page .nm-action { font-weight: 400 !important; }
+.nm-page .nm-row-handle { font-weight: 300 !important; }
