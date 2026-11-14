@@ -9,7 +9,8 @@ import { useAppStore } from '../store';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
 import { mediaUrl } from '../config';
-import { MoreHorizontal, Plus } from 'lucide-react-native';
+import { MoreHorizontal, Plus, Image as ImageIcon } from 'lucide-react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Video from 'react-native-video';
 
 // Same look as the web conversation page (.dm-convo / .dm-bubble rules in styles.css)
@@ -60,6 +61,7 @@ export default function Conversation() {
   const [orderSaving, setOrderSaving] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [menuFor, setMenuFor] = useState(null);
+  const [photoPick, setPhotoPick] = useState(null);
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -81,6 +83,42 @@ export default function Conversation() {
     const timer = setInterval(load, 3000);
     return () => { alive = false; clearInterval(timer); };
   }, [userId]);
+
+  // Photo or video from the phone, with the caption, reply and view limit the web app sends
+  async function uploadMedia(asset, viewLimit) {
+    const video = String(asset.type || '').startsWith('video');
+    const text = body.trim();
+    const quoted = replyTo;
+    setSending(true);
+    try {
+      const form = new FormData();
+      form.append('media', { uri: asset.uri, name: asset.fileName || `media-${Date.now()}.${video ? 'mp4' : 'jpg'}`, type: asset.type || (video ? 'video/mp4' : 'image/jpeg') });
+      if (text) form.append('body', text);
+      if (quoted) form.append('replyToId', quoted.id);
+      if (!video && viewLimit) form.append('viewLimit', String(viewLimit));
+      const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
+      const sent = { ...data.message, replyTo: quoteOf(quoted) };
+      setMessages((current) => {
+        const list = current || [];
+        return list.some((m) => m.id === sent.id) ? list : [...list, sent];
+      });
+      setBody('');
+      setReplyTo(null);
+    } catch (e) {
+      logError(e);
+      Alert.alert('Photo not sent', e.message || 'Check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function pickAndSend() {
+    const result = await launchImageLibrary({ mediaType: 'mixed', selectionLimit: 1 }).catch((e) => { logError(e); return null; });
+    const asset = result?.assets?.[0];
+    if (!asset?.uri) return;
+    if (String(asset.type || '').startsWith('video')) return uploadMedia(asset, 0);
+    setPhotoPick(asset);
+  }
 
   async function send() {
     const text = body.trim();
@@ -266,6 +304,7 @@ export default function Conversation() {
       )}
       <View style={styles.composer}>
         <Pressable onPress={() => setOrderOpen(true)} accessibilityLabel="Create order" hitSlop={8}><Plus size={24} color={colors.text} /></Pressable>
+        <Pressable onPress={pickAndSend} disabled={sending} accessibilityLabel="Send photo or video" hitSlop={8}><ImageIcon size={22} color={colors.text} /></Pressable>
         <TextInput
           style={styles.input}
           value={body}
@@ -285,6 +324,20 @@ export default function Conversation() {
         <Pressable style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
           {!!imagePreview && <Image source={{ uri: imagePreview }} style={styles.imagePreview} resizeMode="contain" />}
         </Pressable>
+      </Modal>
+      <Modal visible={Boolean(photoPick)} transparent animationType="fade" onRequestClose={() => setPhotoPick(null)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPhotoPick(null)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Who can view this photo?</Text>
+            {[{ value: 0, label: 'Unlimited views' }, { value: 1, label: 'View once' }, { value: 2, label: 'View twice' }].map((choice) => (
+              <Pressable key={choice.value} style={styles.menuOption} onPress={() => { const asset = photoPick; setPhotoPick(null); uploadMedia(asset, choice.value); }}>
+                <Text style={styles.menuText}>{choice.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable style={styles.menuCancel} onPress={() => setPhotoPick(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
       </Modal>
       <Modal visible={Boolean(menuFor)} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
         <View style={styles.menuBackdrop}>

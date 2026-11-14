@@ -243,9 +243,16 @@ router.put('/me/profile', requireAuth, async (req, res, next) => {
 });
 
 const { storyRingsFor } = require('../services/stories');
-router.get('/:username', requireAuth, async (req, res, next) => {
+// The signed-in user is addressed as "me"
+async function ownUsername(req) {
+  const row = await User.findByPk(req.user.id, { attributes: ['username'], raw: true });
+  if (!row) throw httpError(404, 'User not found');
+  return row.username;
+}
+
+const profileFor = async (req, res, next, username) => {
   try {
-    const user = await resolveUser(req, req.params.username, PUBLIC_ATTRS);
+    const user = await resolveUser(req, username, PUBLIC_ATTRS);
     if (!user) throw httpError(404, 'User not found');
     await assertNotBlocked(req.user.id, user.id);
     const [postCount, follow, followerCount, followingCount, storyCount] = await Promise.all([
@@ -262,12 +269,17 @@ router.get('/:username', requireAuth, async (req, res, next) => {
     if (user.id !== req.user.id) delete extras.dateOfBirth;
     res.json({ ...user.toJSON(), ...extras, followerCount, isOnline, storyRing, postCount, followingCount, isFollowing: Boolean(follow), isNotifying: Boolean(follow) && await readNotify(req.user.id, user.id), isMe: user.id === req.user.id, hasStory: storyCount > 0 });
   } catch (e) { next(e); }
+};
+
+router.get('/me', requireAuth, async (req, res, next) => {
+  try { await profileFor(req, res, next, await ownUsername(req)); } catch (e) { next(e); }
 });
+router.get('/:username', requireAuth, (req, res, next) => profileFor(req, res, next, req.params.username));
 
 // GET /v1/users/:username/posts?cursor=...&limit=...
-router.get('/:username/posts', requireAuth, async (req, res, next) => {
+const postsFor = async (req, res, next, username) => {
   try {
-    const user = await resolveUser(req, req.params.username, ['id']);
+    const user = await resolveUser(req, username, ['id']);
     if (!user) throw httpError(404, 'User not found');
     await assertNotBlocked(req.user.id, user.id);
     res.json(await feed.pagePosts({
@@ -276,7 +288,12 @@ router.get('/:username/posts', requireAuth, async (req, res, next) => {
       limit: feed.clampLimit(req.query.limit),
     }));
   } catch (e) { next(e); }
+};
+
+router.get('/me/posts', requireAuth, async (req, res, next) => {
+  try { await postsFor(req, res, next, await ownUsername(req)); } catch (e) { next(e); }
 });
+router.get('/:username/posts', requireAuth, (req, res, next) => postsFor(req, res, next, req.params.username));
 
 // GET a creator's reposted posts for the Reposts profile tab.
 router.get('/:username/reposts', requireAuth, async (req, res, next) => {
