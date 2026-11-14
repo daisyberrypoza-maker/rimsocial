@@ -9,7 +9,7 @@ import { useAppStore } from '../store';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
 import { mediaUrl } from '../config';
-import { MoreHorizontal } from 'lucide-react-native';
+import { MoreHorizontal, Plus } from 'lucide-react-native';
 import Video from 'react-native-video';
 
 // Same look as the web conversation page (.dm-convo / .dm-bubble rules in styles.css)
@@ -41,6 +41,11 @@ export default function Conversation() {
   const [sharedOpen, setSharedOpen] = useState(false);
   const [sharedLoading, setSharedLoading] = useState(false);
   const [sharedItems, setSharedItems] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [orderAmount, setOrderAmount] = useState('');
+  const [orderDescription, setOrderDescription] = useState('');
+  const [orderSaving, setOrderSaving] = useState(false);
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -80,6 +85,39 @@ export default function Conversation() {
       Alert.alert('Message not sent', e.message || 'Check your connection and try again.');
     } finally {
       setSending(false);
+    }
+  }
+
+  // Seller creates an order for this person; the buyer sees it as a card in the chat
+  async function createOrder() {
+    const amount = Number(orderAmount);
+    if (!(amount > 0) || orderSaving) return;
+    setOrderSaving(true);
+    try {
+      const data = await api(`/v1/messages/with/${userId}/order`, { method: 'POST', body: { amount, description: orderDescription.trim() } });
+      setMessages((current) => {
+        const list = current || [];
+        return list.some((m) => m.id === data.message.id) ? list : [...list, { ...data.message, order: data.order }];
+      });
+      setOrderOpen(false);
+      setOrderAmount('');
+      setOrderDescription('');
+    } catch (e) {
+      logError(e);
+      Alert.alert('Order not created', e.message || 'Check your connection and try again.');
+    } finally {
+      setOrderSaving(false);
+    }
+  }
+
+  // Seller marks the order as paid, or cancels it while it is waiting for payment
+  async function orderAction(order, action) {
+    try {
+      const data = await api(`/v1/messages/orders/${order.id}/${action}`, { method: 'POST', body: {} });
+      setMessages((current) => (current || []).map((m) => (m.order && m.order.id === order.id ? { ...m, order: data.order } : m)));
+    } catch (e) {
+      logError(e);
+      Alert.alert('Order', e.message || 'Could not update the order.');
     }
   }
 
@@ -124,14 +162,35 @@ export default function Conversation() {
         ListEmptyComponent={messages === null ? null : <Text style={styles.empty}>Say hello to start the conversation.</Text>}
         renderItem={({ item }) => {
           const mine = String(item.senderId) === String(me?.id);
+          if (item.order) {
+            const order = item.order;
+            const isSeller = String(order.sellerId) === String(me?.id);
+            const title = order.status === 'paid' ? 'Order paid' : order.status === 'cancelled' ? 'Order cancelled' : 'Order created';
+            return (
+              <View style={[styles.orderCard, mine ? styles.orderMine : styles.orderTheirs]}>
+                <Text style={styles.orderTitle}>{title}</Text>
+                <Text style={styles.orderSub}>Order number {String(order.id).slice(0, 8).toUpperCase()}</Text>
+                <Text style={styles.orderAmount}>${(Number(order.amountCents || 0) / 100).toFixed(2)} {order.currency || 'USD'}</Text>
+                {!!order.description && <Text style={styles.orderSub}>{order.description}</Text>}
+                {order.status === 'created' && isSeller && (
+                  <View style={styles.orderButtons}>
+                    <Pressable style={styles.orderPrimary} onPress={() => orderAction(order, 'paid')} accessibilityLabel="Mark as paid"><Text style={styles.orderPrimaryText}>Mark as paid</Text></Pressable>
+                    <Pressable style={styles.orderGhost} onPress={() => orderAction(order, 'cancel')} accessibilityLabel="Cancel order"><Text style={styles.orderGhostText}>Cancel</Text></Pressable>
+                  </View>
+                )}
+              </View>
+            );
+          }
           return (
             <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-              <Text style={mine ? styles.mineText : styles.theirsText}>{item.body}</Text>
+              {!!item.mediaUrl && <MessageAttachment message={item} onOpenImage={setImagePreview} />}
+              {!!item.body && <Text style={mine ? styles.mineText : styles.theirsText}>{item.body}</Text>}
             </View>
           );
         }}
       />
       <View style={styles.composer}>
+        <Pressable onPress={() => setOrderOpen(true)} accessibilityLabel="Create order" hitSlop={8}><Plus size={24} color={colors.text} /></Pressable>
         <TextInput
           style={styles.input}
           value={body}
@@ -147,7 +206,34 @@ export default function Conversation() {
           <Icon name="send" size={22} color="#fff" filled />
         </Pressable>
       </View>
-      <Modal visible={Boolean(imagePreview)} transparent animationType="fade" onRequestClose={() => setImagePreview(null)}>\n        <Pressable style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>\n          {!!imagePreview && <Image source={{ uri: imagePreview }} style={styles.imagePreview} resizeMode="contain" />}\n        </Pressable>\n      </Modal>\n      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
+      <Modal visible={Boolean(imagePreview)} transparent animationType="fade" onRequestClose={() => setImagePreview(null)}>
+        <Pressable style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
+          {!!imagePreview && <Image source={{ uri: imagePreview }} style={styles.imagePreview} resizeMode="contain" />}
+        </Pressable>
+      </Modal>
+      <Modal visible={orderOpen} transparent animationType="slide" onRequestClose={() => setOrderOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.orderSheet}>
+            <View style={styles.sharedHead}>
+              <Pressable onPress={() => setOrderOpen(false)} disabled={orderSaving}><Text style={styles.close}>Close</Text></Pressable>
+              <Text style={styles.sharedTitle}>Create order</Text>
+              <View style={{ width: 44 }} />
+            </View>
+            <Text style={styles.orderLead}>Create an order in chat</Text>
+            <Text style={styles.orderSub}>This helps you track orders easily and share updates with customers directly in chat.</Text>
+            <View style={styles.amountRow}>
+              <Text style={styles.amountSign}>$</Text>
+              <TextInput style={styles.amountInput} value={orderAmount} onChangeText={setOrderAmount} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={GREY} accessibilityLabel="Total price in USD" />
+            </View>
+            <Text style={styles.orderSub}>Total Price (USD)</Text>
+            <TextInput style={styles.descInput} value={orderDescription} onChangeText={setOrderDescription} maxLength={500} placeholder="Write a description..." placeholderTextColor={GREY} accessibilityLabel="Description" />
+            <Pressable onPress={createOrder} disabled={!(Number(orderAmount) > 0) || orderSaving} style={[styles.orderSubmit, (!(Number(orderAmount) > 0) || orderSaving) && styles.sendOff]}>
+              <Text style={styles.orderPrimaryText}>{orderSaving ? 'Creating…' : 'Create order'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
         <View style={styles.menuBackdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setChatMenuOpen(false)} />
           <View style={styles.menuCard}>
@@ -202,7 +288,16 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   thread: { flex: 1 },
   threadContent: { paddingHorizontal: 12, paddingVertical: 14, gap: 8 },
-  messageRow: { width: '100%', flexDirection: 'row' },\n  messageRowMine: { justifyContent: 'flex-end' },\n  messageRowTheirs: { justifyContent: 'flex-start' },\n  bubble: { maxWidth: '82%', minWidth: 48, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 20, gap: 5 },\n  messageImage: { width: 220, height: 220, maxWidth: '100%', borderRadius: 12, backgroundColor: '#ddd' },\n  messageVideo: { width: 240, height: 210, maxWidth: '100%', borderRadius: 12, backgroundColor: '#111' },\n  messageTime: { alignSelf: 'flex-end', color: '#777', fontSize: 10, marginTop: 3 },\n  attachmentLabel: { color: colors.text, fontSize: 13, paddingVertical: 8 },\n  imagePreviewBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,.96)', justifyContent: 'center', alignItems: 'center' },\n  imagePreview: { width: '100%', height: '85%' },
+  messageRow: { width: '100%', flexDirection: 'row' },
+  messageRowMine: { justifyContent: 'flex-end' },
+  messageRowTheirs: { justifyContent: 'flex-start' },
+  bubble: { maxWidth: '82%', minWidth: 48, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 20, gap: 5 },
+  messageImage: { width: 220, height: 220, maxWidth: '100%', borderRadius: 12, backgroundColor: '#ddd' },
+  messageVideo: { width: 240, height: 210, maxWidth: '100%', borderRadius: 12, backgroundColor: '#111' },
+  messageTime: { alignSelf: 'flex-end', color: '#777', fontSize: 10, marginTop: 3 },
+  attachmentLabel: { color: colors.text, fontSize: 13, paddingVertical: 8 },
+  imagePreviewBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,.96)', justifyContent: 'center', alignItems: 'center' },
+  imagePreview: { width: '100%', height: '85%' },
   mine: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 6 },
   theirs: { alignSelf: 'flex-start', backgroundColor: BUBBLE_THEIRS, borderBottomLeftRadius: 6 },
   mineText: { color: '#fff', fontSize: 15, lineHeight: 20 },
@@ -212,4 +307,22 @@ const styles = StyleSheet.create({
   input: { flex: 1, minWidth: 0, fontSize: 15, color: colors.text, paddingVertical: 8 },
   send: { width: 38, height: 38, borderRadius: 19, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center' },
   sendOff: { opacity: 0.4 },
+  orderCard: { maxWidth: '82%', borderRadius: 18, padding: 14, gap: 4, backgroundColor: BUBBLE_THEIRS },
+  orderMine: { alignSelf: 'flex-end' },
+  orderTheirs: { alignSelf: 'flex-start' },
+  orderTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  orderSub: { color: GREY, fontSize: 13 },
+  orderAmount: { color: colors.text, fontSize: 15, marginTop: 4 },
+  orderButtons: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  orderPrimary: { flex: 1, height: 40, borderRadius: 10, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center' },
+  orderPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  orderGhost: { height: 40, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  orderGhostText: { color: '#ed4956', fontSize: 15, fontWeight: '600' },
+  orderSheet: { maxHeight: '90%', backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 28, gap: 10 },
+  orderLead: { color: colors.text, fontSize: 17, fontWeight: '600', marginTop: 6 },
+  amountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 18 },
+  amountSign: { fontSize: 48, fontWeight: '700', color: colors.text, marginRight: 4 },
+  amountInput: { fontSize: 48, fontWeight: '700', color: colors.text, minWidth: 120, textAlign: 'center', padding: 0 },
+  descInput: { borderBottomWidth: 1, borderBottomColor: '#dbdbdb', fontSize: 16, color: colors.text, paddingVertical: 10 },
+  orderSubmit: { height: 48, borderRadius: 12, backgroundColor: '#4f5bff', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
 });
