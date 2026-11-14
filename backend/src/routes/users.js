@@ -12,7 +12,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -308,6 +308,21 @@ router.get('/:username/reposts', requireAuth, async (req, res, next) => {
       where: { id: ids, status: 'live', isStory: false, ...(user.id === req.user.id ? {} : { visibility: 'public' }) },
       limit: Math.min(100, ids.length),
     });
+    const byId = new Map((page.items || []).map((post) => [post.id, post]));
+    res.json({ items: ids.map((id) => byId.get(id)).filter(Boolean), nextCursor: null });
+  } catch (e) { next(e); }
+});
+
+// GET a person's saved posts for the Saved profile tab. Only the owner can see their saved list.
+router.get('/:username/saved', requireAuth, async (req, res, next) => {
+  try {
+    const user = await resolveUser(req, req.params.username, ['id']);
+    if (!user) throw httpError(404, 'User not found');
+    if (String(user.id) !== String(req.user.id)) return res.json({ items: [], nextCursor: null });
+    const rows = await SavedPost.findAll({ where: { userId: user.id }, attributes: ['postId', 'createdAt'], order: [['createdAt', 'DESC']], limit: 100, raw: true });
+    if (!rows.length) return res.json({ items: [], nextCursor: null });
+    const ids = rows.map((row) => row.postId);
+    const page = await feed.pagePosts({ where: { id: ids, status: 'live', isStory: false }, limit: Math.min(100, ids.length) });
     const byId = new Map((page.items || []).map((post) => [post.id, post]));
     res.json({ items: ids.map((id) => byId.get(id)).filter(Boolean), nextCursor: null });
   } catch (e) { next(e); }

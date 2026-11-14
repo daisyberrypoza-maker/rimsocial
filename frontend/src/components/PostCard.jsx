@@ -162,6 +162,8 @@ export default function PostCard({ post, active }) {
   const [hidden, setHidden] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [repostBusy, setRepostBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
   const [slide, setSlide] = useState(0);
   const username = post.author?.username || 'unknown';
   const src = post.kind === 'video' ? videoStreamUrl(mediaUrl(post.mediaUrl)) : mediaUrl(post.mediaUrl);
@@ -264,7 +266,7 @@ export default function PostCard({ post, active }) {
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/engagement`).then((r) => {
-      if (alive) { setLiked(Boolean(r.liked)); setReposted(Boolean(r.reposted)); }
+      if (alive) { setLiked(Boolean(r.liked)); setReposted(Boolean(r.reposted)); setSaved(Boolean(r.saved)); }
     }).catch(() => {});
     return () => { alive = false; };
   }, [post.id]);
@@ -334,6 +336,17 @@ export default function PostCard({ post, active }) {
     } catch (e) { logError(e); }
     finally { setReporting(false); }
   }
+  async function toggleSave() {
+    if (saveBusy) return;
+    setSaveBusy(true);
+    try {
+      const r = await api(`/v1/posts/${post.id}/save`, { method: saved ? 'DELETE' : 'POST' });
+      setSaved(Boolean(r.saved));
+      toast(r.saved ? 'Saved to your profile' : 'Removed from saved');
+    } catch (e) { toast(e.message || 'Could not save this post'); }
+    finally { setSaveBusy(false); }
+  }
+
   async function repost() {
     if (repostBusy) return;
     setRepostBusy(true);
@@ -392,6 +405,9 @@ export default function PostCard({ post, active }) {
       <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" />{post.commentCount > 0 && <span>{formatCount(post.commentCount)}</span>}</button>
       <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={repost} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
         <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
+      </button>
+      <button className={`rail-btn save-btn ${saved ? 'saved' : ''}`} onClick={toggleSave} disabled={saveBusy} aria-pressed={saved} aria-label={saved ? 'Remove from saved' : 'Save post'}>
+        <Icon name={saved ? 'bookmark-check' : 'bookmark'} />
       </button>
       <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>

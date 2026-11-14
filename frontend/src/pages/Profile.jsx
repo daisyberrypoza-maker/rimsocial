@@ -20,7 +20,7 @@ import { logError } from '../toast.js';
 import '../settings-menu.css';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
-const PROFILE_TABS = ['posts', 'stories', 'reposts'];
+const PROFILE_TABS = ['posts', 'stories', 'reposts', 'saved'];
 
 // Settings menu building blocks: grouped sections with aligned rows (see settings-menu.css).
 function SettingsSection({ title, children }) {
@@ -63,6 +63,8 @@ export default function Profile() {
   const [tab, setTab] = useState('posts');
   const [reposts, setReposts] = useState([]);
   const [repostsLoading, setRepostsLoading] = useState(false);
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
   const [stories, setStories] = useState([]);
   const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -132,6 +134,13 @@ export default function Profile() {
     if (tab !== 'reposts' || !profile) return;
     setRepostsLoading(true);
     api(`/v1/users/${username}/reposts`).then((data) => setReposts(data.items || [])).catch(() => setReposts([])).finally(() => setRepostsLoading(false));
+  }, [tab, profile, username]);
+
+  // Saved posts are private: only the owner's profile loads them
+  useEffect(() => {
+    if (tab !== 'saved' || !profile?.isMe) return;
+    setSavedLoading(true);
+    api(`/v1/users/${username}/saved`).then((data) => setSavedPosts(data.items || [])).catch(() => setSavedPosts([])).finally(() => setSavedLoading(false));
   }, [tab, profile, username]);
 
   // Switching profiles must never leave the previous person's stories or reposts on screen
@@ -703,6 +712,7 @@ export default function Profile() {
         <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
+        {profile?.isMe && <button type="button" role="tab" aria-selected={tab === 'saved'} className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Saved</button>}
       </nav>
 
       <div ref={swipeRef} data-local-tab-swipe style={{ width: '100%', overflowX: 'clip' }} onTouchStart={onTabSwipeStart} onTouchMove={onTabSwipeMove} onTouchEnd={onTabSwipeEnd} onTouchCancel={onTabSwipeEnd}>
@@ -745,6 +755,11 @@ export default function Profile() {
           {viewing !== false && stories.length > 0 && (
             <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
           )}
+        </>
+      ) : tab === 'saved' ? (
+        <>
+          {savedLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{savedPosts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</div>)}</div>}
+          {!savedLoading && !savedPosts.length && <div className="sc-empty-grid" role="status"><strong>No saved posts yet</strong></div>}
         </>
       ) : tab === 'reposts' ? (
         <>

@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -179,6 +179,7 @@ async function start() {
     if (!prefColumns.markedUnread) await qiPref.addColumn('chat_preferences', 'markedUnread', { type: require('sequelize').DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   }
   await UserMute.sync();
+  await SavedPost.sync();
   // Group photo column (additive, idempotent)
   {
     const qiConv = sequelize.getQueryInterface();

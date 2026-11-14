@@ -12,7 +12,7 @@ async function assertPostAuthorNotBlocked(viewerId, authorId) {
   if (relation) throw httpError(404, 'Post not found');
 }
 const { Op } = require('sequelize');
-const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, sequelize } = require('../db');
+const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, SavedPost, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -162,11 +162,12 @@ router.get('/:id/engagement', requireAuth, async (req, res, next) => {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     await assertPostAuthorNotBlocked(req.user.id, post.authorId);
-    const [liked, reposted] = await Promise.all([
+    const [liked, reposted, saved] = await Promise.all([
       PostLike.findOne({ where: { postId: post.id, userId: req.user.id } }),
       Repost.findOne({ where: { postId: post.id, userId: req.user.id } }),
+      SavedPost.findOne({ where: { postId: post.id, userId: req.user.id } }),
     ]);
-    res.json({ liked: Boolean(liked), reposted: Boolean(reposted) });
+    res.json({ liked: Boolean(liked), reposted: Boolean(reposted), saved: Boolean(saved) });
   } catch (e) { next(e); }
 });
 
@@ -225,6 +226,25 @@ router.delete('/:id/comments/:commentId', requireAuth, async (req, res, next) =>
     if (!comment) throw httpError(404, 'Comment not found');
     await comment.destroy();
     res.status(204).end();
+  } catch (e) { next(e); }
+});
+
+// Save a post to your Saved list (bookmark)
+router.post('/:id/save', requireAuth, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
+    if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
+    await assertPostAuthorNotBlocked(req.user.id, post.authorId);
+    await SavedPost.findOrCreate({ where: { postId: post.id, userId: req.user.id }, defaults: { postId: post.id, userId: req.user.id } });
+    res.json({ saved: true });
+  } catch (e) { next(e); }
+});
+
+// Remove a post from your Saved list
+router.delete('/:id/save', requireAuth, async (req, res, next) => {
+  try {
+    await SavedPost.destroy({ where: { postId: req.params.id, userId: req.user.id } });
+    res.json({ saved: false });
   } catch (e) { next(e); }
 });
 

@@ -390,6 +390,12 @@ const ChatPreference = sequelize.define('ChatPreference', {
   { fields: ['userId', 'muted'] },
 ] });
 
+// Posts a person saved (bookmark); shown on their own profile's Saved tab
+const SavedPost = sequelize.define('SavedPost', {
+  userId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  postId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+}, { tableName: 'saved_posts', indexes: [{ fields: ['userId', 'createdAt'] }] });
+
 const DirectMessage = sequelize.define('DirectMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   senderId: { type: DataTypes.UUID, allowNull: false },
@@ -435,7 +441,7 @@ const Order = sequelize.define('Order', {
 module.exports = {
   Order,
   AudioTrack,
-  DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference,
+  DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
