@@ -260,6 +260,28 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Send a photo, video, audio file or voice note to every current member of a group.
+router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req, res, next) => {
+  try {
+    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
+    if (!membership) throw httpError(404, 'Group not found');
+    if (!req.file) throw httpError(400, 'Choose a file to send');
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages', { resourceType: 'auto' });
+    const body = String(req.body?.body || '').trim().slice(0, 2000);
+    const fileName = String(req.file.originalname || 'File').slice(0, 255);
+    const message = await GroupMessage.create({
+      groupId: req.params.groupId,
+      senderId: req.user.id,
+      body,
+      mediaUrl: asset.url,
+      mediaKind: chatKindFor(req.file.mimetype),
+      mediaName: fileName,
+    });
+    await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
+    res.status(201).json({ message: message.toJSON() });
+  } catch (error) { next(error); }
+});
+
 // Delete one of your own group messages for every current member.
 router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => {
   try {

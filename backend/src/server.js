@@ -153,6 +153,19 @@ async function start() {
   await GroupConversation.sync();
   await GroupMember.sync();
   await GroupMessage.sync();
+  // Group media columns (photos, videos, voice notes); added only when missing
+  {
+    const qiGroup = sequelize.getQueryInterface();
+    const DataTypesGroup = require('sequelize').DataTypes;
+    const groupColumns = await qiGroup.describeTable('group_messages');
+    for (const [column, definition] of [
+      ['mediaUrl', { type: DataTypesGroup.STRING(512), allowNull: true }],
+      ['mediaKind', { type: DataTypesGroup.STRING(12), allowNull: true }],
+      ['mediaName', { type: DataTypesGroup.STRING(255), allowNull: true }],
+    ]) {
+      if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
+    }
+  }
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
   await UserMute.sync();

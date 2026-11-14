@@ -5,9 +5,23 @@ import Icon from '../components/Icon.jsx';
 import ChatMenu from '../components/ChatMenu.jsx';
 import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
-import { toast } from '../toast.js';
+import { toast, logError } from '../toast.js';
+import { mediaUrl } from '../lib/config.js';
 import '../snap-screens.css';
 import './Conversation.css';
+
+function formatClock(total) {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+// Photo, video, audio or file in a group message; photos open in the viewer
+function GroupMedia({ message, onOpenPhoto }) {
+  const src = mediaUrl(message.mediaUrl);
+  if (message.mediaKind === 'photo') return <button type="button" className="cv-media-link" onClick={() => onOpenPhoto(src)} aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" /></button>;
+  if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
+  if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
+  return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={message.mediaName || 'File'}><span className="cv-file-name">{message.mediaName || 'File'}</span></a>;
+}
 
 function clock(value) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -28,6 +42,15 @@ export default function GroupConversationPage() {
   const [optionsAnchor, setOptionsAnchor] = useState(null);
   const [messageAnchor, setMessageAnchor] = useState(null);
   const endRef = useRef(null);
+  const [viewer, setViewer] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const holdRef = useRef({ active: false });
+  const cancelRecordRef = useRef(false);
+  const recordTimerRef = useRef(null);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -73,6 +96,90 @@ export default function GroupConversationPage() {
       await api('/v1/messages/groups/' + groupId, { method: 'DELETE' });
       navigate('/chat', { replace: true });
     } catch (e) { toast(e.message || 'Could not leave group'); }
+  }
+
+  // Photo, video or file from the phone, or a voice note, sent to every member
+  async function sendMediaFile(file, caption = '') {
+    setSending(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('media', file);
+      if (caption) form.append('body', caption);
+      const data = await api('/v1/messages/groups/' + groupId + '/media', { method: 'POST', body: form });
+      setMessages((current) => [...(current || []), data.message]);
+    } catch (e) {
+      logError(e);
+      setError(e.message || 'Could not send');
+      toast(e.message || 'Could not send');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function pickFile(event) {
+    const picked = event.target.files?.[0];
+    event.target.value = '';
+    if (!picked) return;
+    const caption = text.trim();
+    setText('');
+    sendMediaFile(picked, caption);
+  }
+
+  // Hold the mic to record, release to send, slide left to cancel
+  async function startVoice() {
+    if (recorderRef.current || sending) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { toast('Voice notes are not supported in this browser'); return; }
+    const onMove = (ev) => { if (ev.clientX - holdRef.current.startX < -80) cancelRecordRef.current = true; };
+    const onRelease = (ev) => {
+      holdRef.current.active = false;
+      window.removeEventListener('pointerup', onRelease);
+      window.removeEventListener('pointercancel', onRelease);
+      window.removeEventListener('pointermove', onMove);
+      if (ev.type === 'pointercancel') cancelRecordRef.current = true;
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop();
+    };
+    window.addEventListener('pointerup', onRelease);
+    window.addEventListener('pointercancel', onRelease);
+    window.addEventListener('pointermove', onMove);
+    const cleanup = () => {
+      window.removeEventListener('pointerup', onRelease);
+      window.removeEventListener('pointercancel', onRelease);
+      window.removeEventListener('pointermove', onMove);
+    };
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported?.(t)) || '';
+      const recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+      chunksRef.current = [];
+      cancelRecordRef.current = false;
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        cleanup();
+        stream.getTracks().forEach((track) => track.stop());
+        clearInterval(recordTimerRef.current);
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const cancelled = cancelRecordRef.current;
+        chunksRef.current = [];
+        recorderRef.current = null;
+        setRecording(false);
+        if (!cancelled && blob.size > 0) {
+          const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+          sendMediaFile(new File([blob], `voice-note-${Date.now()}.${ext}`, { type: blob.type || 'audio/webm' }));
+        }
+      };
+      recorderRef.current = recorder;
+      holdRef.current = { active: holdRef.current.active, startX: holdRef.current.startX };
+      setRecordSeconds(0);
+      setRecording(true);
+      recorder.start();
+      recordTimerRef.current = setInterval(() => setRecordSeconds((n) => n + 1), 1000);
+      if (!holdRef.current.active) recorder.stop();
+    } catch (e) {
+      cleanup();
+      logError(e);
+      toast('Allow microphone access to record a voice note');
+    }
   }
 
   async function send(event) {
@@ -131,7 +238,8 @@ export default function GroupConversationPage() {
               <div key={message.id} className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
                 <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); } }}>
-                  <span className="cv-text">{message.body}</span>
+                  {message.mediaUrl && <GroupMedia message={message} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} />}
+                  {!!message.body && <span className="cv-text">{message.body}</span>}
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
                 </div>
@@ -142,12 +250,42 @@ export default function GroupConversationPage() {
       </div>
 
       {error && <p className="dm-error" role="alert">{error}</p>}
-      <form className="dm-input cv-form" onSubmit={send}>
-        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="Message the group" aria-label="Message the group" />
-        <button type="submit" onPointerDown={(e) => e.preventDefault()} disabled={!text.trim() || sending} aria-label="Send message">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
+      {recording && (
+        <div className="cv-recording" role="status" aria-live="polite">
+          <span className="cv-rec-dot" aria-hidden="true" />
+          <span className="cv-rec-time">{formatClock(recordSeconds)}</span>
+          <span className="cv-rec-hint">Slide left to cancel</span>
+        </div>
+      )}
+      {!recording && (
+      <form className="dm-input cv-form cv-ig-form" onSubmit={send}>
+        <button type="button" className="cv-camera" onClick={() => fileRef.current?.click()} aria-label="Attach photo, video or file" disabled={sending}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
         </button>
+        <input ref={fileRef} type="file" hidden onChange={pickFile} />
+        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="Message the group" aria-label="Message the group" />
+        {text.trim() ? (
+          <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={sending} aria-label="Send message">Send</button>
+        ) : (
+          <span className="cv-tools">
+            <button type="button" className="cv-tool" aria-label="Hold to record a voice note" disabled={sending} onContextMenu={(e) => e.preventDefault()} onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); holdRef.current = { active: true, startX: e.clientX }; startVoice(); }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4" /></svg>
+            </button>
+            <button type="button" className="cv-tool" aria-label="Photos and videos" disabled={sending} onClick={() => fileRef.current?.click()}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
+            </button>
+          </span>
+        )}
       </form>
+      )}
+      {viewer && (
+        <div className="cv-viewer" role="dialog" aria-label="Photo preview" onClick={() => setViewer(null)}>
+          <button type="button" className="cv-viewer-close" onClick={() => setViewer(null)} aria-label="Close preview">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+          <img src={viewer.src} alt="" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
       {messageMenu && (
         <ChatMenu
           label="Group message options"

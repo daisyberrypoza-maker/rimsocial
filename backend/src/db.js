@@ -348,7 +348,11 @@ const GroupMessage = sequelize.define('GroupMessage', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   groupId: { type: DataTypes.UUID, allowNull: false },
   senderId: { type: DataTypes.UUID, allowNull: false },
-  body: { type: DataTypes.STRING(2000), allowNull: false },
+  body: { type: DataTypes.STRING(2000), allowNull: false, defaultValue: '' },
+  // Photo, video, audio or file sent in the group (and voice notes)
+  mediaUrl: { type: DataTypes.STRING(512), allowNull: true },
+  mediaKind: { type: DataTypes.STRING(12), allowNull: true },
+  mediaName: { type: DataTypes.STRING(255), allowNull: true },
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
 
