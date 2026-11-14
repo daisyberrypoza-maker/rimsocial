@@ -111,8 +111,20 @@
 .sn-page .sn-head { gap: 8px; }
 .sn-page .sn-head-left { flex: 1; min-width: 0; gap: 10px; }
 .sn-page h1.sn-title {
-  flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  text-align: left; font-size: 20px; font-weight: 500; color: #000;
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 500;
+  color: #000;
 }
 
 /* Chat tabs: equal pills, no underline, counts beside the label */
