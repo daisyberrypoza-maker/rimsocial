@@ -1,6 +1,6 @@
 {
   "appId": "com.clipverse.app",
-  "appName": "Clipverse",
+  "appName": "RimSocial",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
