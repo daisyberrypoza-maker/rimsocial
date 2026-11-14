@@ -80,15 +80,156 @@ function openMedia(src, kind, createdAt) {
   window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt } }));
 }
 
-// Full-screen media: before sending (pending) it shows the Send button; after sending it shows the chat viewer
-function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name }) {
+// Editable photo before sending: the image plus draw, text and sticker layers, flattened on send
+function PhotoEditor({ src, tool, texts, emojis, editorRef }) {
+  const wrap = useRef(null);
+  const img = useRef(null);
+  const canvas = useRef(null);
+  const stroke = useRef(null);
+  const latest = useRef({ texts, emojis });
+  latest.current = { texts, emojis };
+  const [box, setBox] = useState(null);
+
+  // Where the photo is actually drawn inside the box (object-fit: contain), so overlays line up with the saved image
+  function measure() {
+    const i = img.current;
+    const w = wrap.current;
+    if (!i || !w || !i.naturalWidth) return;
+    const wr = w.getBoundingClientRect();
+    const scale = Math.min(wr.width / i.naturalWidth, wr.height / i.naturalHeight);
+    const width = i.naturalWidth * scale;
+    const height = i.naturalHeight * scale;
+    setBox({ left: (wr.width - width) / 2, top: (wr.height - height) / 2, width, height });
+  }
+
+  useEffect(() => {
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  useEffect(() => {
+    if (box && canvas.current) {
+      canvas.current.width = Math.round(box.width * 2);
+      canvas.current.height = Math.round(box.height * 2);
+    }
+  }, [box]);
+
+  useEffect(() => {
+    editorRef.current = {
+      compose: () => new Promise((resolve, reject) => {
+        const i = img.current;
+        if (!i || !i.naturalWidth) { reject(new Error('Photo not ready')); return; }
+        const W = i.naturalWidth;
+        const H = i.naturalHeight;
+        const out = document.createElement('canvas');
+        out.width = W;
+        out.height = H;
+        const ctx = out.getContext('2d');
+        ctx.drawImage(i, 0, 0, W, H);
+        if (canvas.current) ctx.drawImage(canvas.current, 0, 0, W, H);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,.45)';
+        ctx.shadowBlur = Math.round(W * 0.01);
+        latest.current.texts.forEach((t) => { ctx.font = `700 ${Math.round(W * 0.06)}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(t.text, W * 0.5, H * t.y); });
+        latest.current.emojis.forEach((e) => { ctx.font = `${Math.round(W * 0.14)}px sans-serif`; ctx.fillText(e.emoji, W * 0.5, H * e.y); });
+        out.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not prepare the photo'))), 'image/jpeg', 0.92);
+      }),
+    };
+  });
+
+  function pointAt(event) {
+    const c = canvas.current;
+    const r = c.getBoundingClientRect();
+    return { x: (event.clientX - r.left) * (c.width / r.width), y: (event.clientY - r.top) * (c.height / r.height) };
+  }
+
+  return (
+    <div className="cv-edit-wrap" ref={wrap}>
+      <img
+        ref={img}
+        src={src}
+        alt=""
+        onLoad={measure}
+        className="cv-edit-img"
+        style={box ? { left: box.left, top: box.top, width: box.width, height: box.height } : { visibility: 'hidden' }}
+      />
+      {box && (
+        <div className="cv-edit-box" style={{ left: box.left, top: box.top, width: box.width, height: box.height }}>
+          <canvas
+            ref={canvas}
+            className="cv-draw"
+            style={{ pointerEvents: tool === 'draw' ? 'auto' : 'none' }}
+            onPointerDown={(e) => {
+              if (tool !== 'draw') return;
+              e.currentTarget.setPointerCapture?.(e.pointerId);
+              stroke.current = pointAt(e);
+            }}
+            onPointerMove={(e) => {
+              if (!stroke.current || tool !== 'draw') return;
+              const from = stroke.current;
+              const to = pointAt(e);
+              const ctx = canvas.current.getContext('2d');
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.strokeStyle = '#fff';
+              ctx.lineWidth = canvas.current.width * 0.012;
+              ctx.beginPath();
+              ctx.moveTo(from.x, from.y);
+              ctx.lineTo(to.x, to.y);
+              ctx.stroke();
+              stroke.current = to;
+            }}
+            onPointerUp={() => { stroke.current = null; }}
+            onPointerCancel={() => { stroke.current = null; }}
+          />
+          {texts.map((t, index) => (
+            <span key={`t${index}`} className="cv-edit-text-item" style={{ top: `${t.y * 100}%` }}>{t.text}</span>
+          ))}
+          {emojis.map((item, index) => (
+            <span key={`e${index}`} className="cv-edit-emoji" style={{ top: `${item.y * 100}%` }}>{item.emoji}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const VIEW_OPTIONS = [
+  { value: 0, label: 'Unlimited views' },
+  { value: 1, label: 'View once' },
+  { value: 2, label: 'View twice' },
+];
+
+// Full-screen media: before sending (pending) it shows the editing tools and Send; after sending it shows the chat viewer
+function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name, edit, setEdit, editorRef }) {
   const isVideo = media.kind === 'video';
+  const [draft, setDraft] = useState('');
+  const [viewSheet, setViewSheet] = useState(false);
+  const count = edit ? edit.texts.length + edit.emojis.length : 0;
+
+  function toggleTool(tool) {
+    setEdit((current) => ({ ...current, tool: current.tool === tool ? null : tool }));
+  }
+  function addText(event) {
+    event.preventDefault();
+    const value = draft.trim();
+    setDraft('');
+    if (!value) { setEdit((current) => ({ ...current, tool: null })); return; }
+    setEdit((current) => ({ ...current, tool: null, texts: [...current.texts, { text: value, y: Math.min(0.85, 0.5 + 0.09 * count) }] }));
+  }
+  function addEmoji(emoji) {
+    setEdit((current) => ({ ...current, emojis: [...current.emojis, { emoji, y: Math.min(0.85, 0.5 + 0.09 * count) }] }));
+  }
+
   return (
     <div className="cv-viewer cv-viewer-full" role="dialog" aria-label="Media preview">
       <div className="cv-viewer-stage">
-        {isVideo
-          ? <video src={media.src} controls={!pending} muted={pending} autoPlay playsInline />
-          : <img src={media.src} alt="" />}
+        {pending && !isVideo && edit
+          ? <PhotoEditor src={media.src} tool={edit.tool} texts={edit.texts} emojis={edit.emojis} editorRef={editorRef} />
+          : isVideo
+            ? <video src={media.src} controls={!pending} muted={pending} autoPlay playsInline />
+            : <img src={media.src} alt="" />}
       </div>
       <div className="cv-viewer-top">
         <button type="button" className="cv-viewer-close" onClick={onClose} aria-label="Close preview">
@@ -101,7 +242,34 @@ function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, o
           </div>
         )}
       </div>
-      {!pending && <div className="cv-viewer-progress" aria-hidden="true"><span /></div>}
+      {pending && edit && !isVideo && (
+        <div className="cv-edit-tools" role="toolbar" aria-label="Edit photo">
+          <button type="button" className={edit.tool === 'text' ? 'on' : ''} onClick={() => toggleTool('text')} aria-label="Add text">Aa</button>
+          <button type="button" className={edit.tool === 'sticker' ? 'on' : ''} onClick={() => toggleTool('sticker')} aria-label="Add sticker">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c0 3 2 5 5 5 1.3 0 3 .6 4 4z" /><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" /></svg>
+          </button>
+          <button type="button" className={edit.tool === 'draw' ? 'on' : ''} onClick={() => toggleTool('draw')} aria-label="Draw">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /></svg>
+          </button>
+          <button type="button" onClick={() => setViewSheet(true)} aria-label="Who can view" className={edit.viewLimit ? 'on' : ''}>
+            <span className="cv-view-badge">{edit.viewLimit === 1 ? '1' : edit.viewLimit === 2 ? '2' : '∞'}</span>
+          </button>
+        </div>
+      )}
+      {pending && edit && edit.tool === 'text' && (
+        <form className="cv-edit-text-form" onSubmit={addText}>
+          <input autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={80} placeholder="Type something" aria-label="Text on photo" />
+          <button type="submit">Done</button>
+        </form>
+      )}
+      {pending && edit && edit.tool === 'sticker' && (
+        <div className="cv-emoji-panel cv-sticker-panel" aria-label="Stickers">
+          {EMOJIS.map((emoji) => (
+            <button key={emoji} type="button" onClick={() => addEmoji(emoji)} aria-label={`Add ${emoji}`}>{emoji}</button>
+          ))}
+        </div>
+      )}
+      {!pending && <div className="cv-viewer-progress" aria-hidden="true"><span key={media.src} /></div>}
       <form className="cv-viewer-bottom" onSubmit={(e) => { e.preventDefault(); onSend(text); }}>
         <input value={text} onChange={(e) => onText(e.target.value)} maxLength={2000} placeholder={pending ? 'Add a message...' : 'Message...'} aria-label="Message" />
         {pending ? (
@@ -120,12 +288,41 @@ function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, o
           </span>
         )}
       </form>
+      {pending && viewSheet && edit && (
+        <div className="cv-view-sheet-backdrop" onClick={() => setViewSheet(false)}>
+          <div className="cv-view-sheet" role="dialog" aria-label="Who can view this photo" onClick={(e) => e.stopPropagation()}>
+            <p>Set how many times this photo can be viewed.</p>
+            {VIEW_OPTIONS.map((option) => (
+              <button key={option.value} type="button" onClick={() => { setEdit((current) => ({ ...current, viewLimit: option.value })); setViewSheet(false); }}>
+                <span>{option.label}</span>
+                {edit.viewLimit === option.value && <span className="cv-view-check" aria-hidden="true">✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Attachment({ message, storyAuthorId }) {
+// Recipient opens a view-limited photo: the server counts the view, then the photo opens
+async function openViewOnce(message) {
+  try {
+    const data = await api(`/v1/messages/message/${message.id}/view`, { method: 'POST', body: {} });
+    window.dispatchEvent(new CustomEvent('cv-viewed', { detail: { id: message.id, viewCount: data.viewCount } }));
+    openMedia(mediaUrl(message.mediaUrl), 'photo', message.createdAt);
+  } catch (e) {
+    logError(e);
+    toast(e.message || 'This photo can no longer be viewed');
+  }
+}
+
+function Attachment({ message, storyAuthorId, mine }) {
   const src = mediaUrl(message.mediaUrl);
+  if (message.mediaKind === 'photo' && message.viewLimit > 0 && !mine) {
+    if (message.viewCount >= message.viewLimit) return <span className="cv-once opened">Opened</span>;
+    return <button type="button" className="cv-once" onClick={() => openViewOnce(message)}>Tap to view</button>;
+  }
   if (message.mediaKind === 'video' || message.mediaKind === 'photo') {
     const media = message.mediaKind === 'video'
       ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
@@ -234,7 +431,7 @@ function Bubble({ message, mine }) {
   const reply = message.replyTo;
   // A photo, video or story sent on its own shows without a bubble, like the reference
   if (!deleted && message.mediaUrl && !hasText && !reply && !message.replyToId && !message.post) {
-    return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} storyAuthorId={message.storyAuthorId || null} /></div>;
+    return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} /></div>;
   }
   return (
     <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
@@ -246,7 +443,7 @@ function Bubble({ message, mine }) {
       )}
       {message.replyToId && !reply && <div className="cv-quote"><span>Original message is no longer available</span></div>}
       {deleted && <span className="cv-deleted">This message was deleted</span>}
-      {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} />}
+      {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} />}
       {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
       {!deleted && message.post && <PostCard post={message.post} />}
       {!deleted && message.post === null && <span className="cv-unavailable">This post is no longer available.</span>}
@@ -291,6 +488,14 @@ export default function Conversation() {
   const [orderOpen, setOrderOpen] = useState(false);
   const [viewerMedia, setViewerMedia] = useState(null);
   const [viewerText, setViewerText] = useState('');
+  const [edit, setEdit] = useState({ tool: null, texts: [], emojis: [], viewLimit: 0 });
+  const editorRef = useRef(null);
+  useEffect(() => { setEdit({ tool: null, texts: [], emojis: [], viewLimit: 0 }); }, [file]);
+  useEffect(() => {
+    const onViewed = (event) => setMessages((current) => (current || []).map((m) => (m.id === event.detail.id ? { ...m, viewCount: event.detail.viewCount } : m)));
+    window.addEventListener('cv-viewed', onViewed);
+    return () => window.removeEventListener('cv-viewed', onViewed);
+  }, []);
   useEffect(() => {
     const onOpen = (event) => setViewerMedia(event.detail);
     window.addEventListener('cv-open-media', onOpen);
@@ -519,7 +724,14 @@ export default function Conversation() {
       let data;
       if (file) {
         const form = new FormData();
-        form.append('media', file);
+        let toSend = file;
+        const photo = kindOfFile(file) === 'photo';
+        if (photo && editorRef.current) {
+          const blob = await editorRef.current.compose();
+          toSend = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        }
+        form.append('media', toSend);
+        if (photo && edit.viewLimit) form.append('viewLimit', String(edit.viewLimit));
         if (body) form.append('body', body);
         if (replyTo) form.append('replyToId', replyTo.id);
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
@@ -792,6 +1004,9 @@ export default function Conversation() {
           onSend={() => send({ preventDefault() {} })}
           onQuick={() => {}}
           sending={sending}
+          edit={edit}
+          setEdit={setEdit}
+          editorRef={editorRef}
           onClose={() => setFile(null)}
         />
       )}
