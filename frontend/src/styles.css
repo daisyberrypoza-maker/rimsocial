@@ -6723,3 +6723,6 @@ html, body, #root, .app { background:#fff !important; color:#17191f; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
 textarea,
 select { border: 0 !important; border-bottom: 0 !important; box-shadow: none !important; }
+
+/* Bottom tab bar icons: final size (4px smaller than the previous 31px) */
+.bottomnav a svg, .bottomnav svg { width: 27px !important; height: 27px !important; }

@@ -206,3 +206,15 @@
 .sn-page .sn-name { font-weight: 500 !important; }
 .sn-page .sn-sub,
 .sn-page .sn-txt { font-weight: 400 !important; }
+
+/* Final chat tab rules: four tabs share the row evenly, 8px corners, thin text, 4px less padding */
+.sn-page .sn-filters.sn-filters { display: flex !important; gap: 8px !important; padding: 8px 16px 12px !important; overflow: visible !important; }
+.sn-page .sn-filters .sn-chip {
+  flex: 1 1 0 !important; min-width: 0 !important; height: 36px !important; padding: 0 8px !important;
+  border: 0 !important; border-radius: 8px !important; background: #f0f2f5 !important; color: #111 !important;
+  justify-content: center !important; gap: 4px !important; font-size: 13px !important; font-weight: 400 !important;
+  white-space: nowrap !important; overflow: hidden !important;
+}
+.sn-page .sn-filters .sn-chip.active,
+.sn-page .sn-filters .sn-chip[aria-selected="true"] { background: #e7f0ff !important; color: #0064e0 !important; font-weight: 400 !important; }
+.sn-page .sn-chat-search-row strong, .sn-page .sn-name { font-weight: 400 !important; }
