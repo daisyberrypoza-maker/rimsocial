@@ -325,3 +325,16 @@
 }
 .cv-order-amount-box > label { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .cv-order-amount-box > label > input { width: 200px; text-align: left; }
+
+/* Create order sheet: black and white to match the app */
+.cv-order-sheet { gap: 22px; }
+.cv-order-lead strong { font-size: 20px; font-weight: 700; }
+.cv-order-amount-box { min-height: 200px; }
+.cv-order-amount-box > label { gap: 4px; }
+.cv-order-amount-box > label > .cv-order-currency { font-size: 52px; color: #000; }
+.cv-order-amount-box > label > input { width: 180px; font-size: 52px; }
+.cv-order-amount-box small { font-size: 15px; }
+.cv-order-desc { border: 0 !important; border-radius: 14px; background: #f0f2f5 !important; padding: 14px 16px !important; font-size: 16px !important; }
+.cv-order-desc::placeholder { color: #8e8e8e; }
+.cv-order-submit { height: 52px; border-radius: 999px; background: #000 !important; color: #fff !important; font-size: 16px !important; font-weight: 600 !important; }
+.cv-order-submit:disabled { background: #e4e6ea !important; color: #8e8e8e !important; opacity: 1; }
