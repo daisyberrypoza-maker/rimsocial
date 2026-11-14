@@ -202,7 +202,7 @@ function Bubble({ message, mine }) {
       )}
       {message.replyToId && !reply && <div className="cv-quote"><span>Original message is no longer available</span></div>}
       {deleted && <span className="cv-deleted">This message was deleted</span>}
-      {!deleted && message.mediaUrl && <Attachment message={message} />}
+      {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} />}
       {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
       {!deleted && message.post && <PostCard post={message.post} />}
       {!deleted && message.post === null && <span className="cv-unavailable">This post is no longer available.</span>}
