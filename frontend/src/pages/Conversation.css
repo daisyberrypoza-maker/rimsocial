@@ -184,3 +184,16 @@
   width: 100%; height: 48px; border: 0; border-radius: 12px; background: #4f5bff; color: #fff; font-size: 17px; font-weight: 600; cursor: pointer;
 }
 .cv-order-submit:disabled { opacity: .45; cursor: default; }
+
+/* Photos, videos and stories sent without text: no bubble, shown at full size */
+.dm-convo.cv-convo .cv-media-only { display: flex; }
+.dm-convo.cv-convo .cv-media-only.mine { justify-content: flex-end; }
+.dm-convo.cv-convo .cv-media-only.theirs { justify-content: flex-start; }
+.dm-convo.cv-convo .cv-media-only .cv-media,
+.dm-convo.cv-convo .cv-media-only video.cv-media { width: 220px; max-width: 70vw; max-height: 380px; border-radius: 18px; object-fit: cover; background: #111; }
+.dm-convo.cv-convo .cv-media-only .cv-media-link { display: block; line-height: 0; }
+
+/* Preview of the file waiting to be sent: large enough to check before sending */
+.dm-convo.cv-convo .cv-pending { align-items: center; }
+.dm-convo.cv-convo .cv-pending img,
+.dm-convo.cv-convo .cv-pending video { width: 96px !important; height: 96px !important; border-radius: 14px !important; }

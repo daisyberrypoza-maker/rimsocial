@@ -78,7 +78,7 @@ function PostCard({ post }) {
 function Attachment({ message }) {
   const src = mediaUrl(message.mediaUrl);
   if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
-  if (message.mediaKind === 'photo') return <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
+  if (message.mediaKind === 'photo') return <a href={src} target="_blank" rel="noopener noreferrer" className="cv-media-link" aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" /></a>;
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   const name = message.mediaName || 'File';
   return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={name}>
@@ -178,6 +178,10 @@ function Bubble({ message, mine }) {
   const deleted = Boolean(message.deletedForEveryone);
   const hasText = Boolean(message.body) && !deleted;
   const reply = message.replyTo;
+  // A photo, video or story sent on its own shows without a bubble, like the reference
+  if (!deleted && message.mediaUrl && !hasText && !reply && !message.replyToId && !message.post) {
+    return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} /></div>;
+  }
   return (
     <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
       {reply && (
