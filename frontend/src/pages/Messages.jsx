@@ -182,7 +182,6 @@ export default function Messages() {
             )))}
           </ul>
           {chatQuery && chatSearchResults.length === 0 && <p className="sn-empty">No chats match “{query.trim()}”.</p>}
-          <button type="button" className="sn-chat-search-explore" onClick={() => navigate('/search')}>Search people and posts</button>
         </div>
       )}
       <header className="sn-head">
