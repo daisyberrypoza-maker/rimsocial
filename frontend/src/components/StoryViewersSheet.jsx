@@ -1,3 +1,4 @@
+import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -21,7 +22,7 @@ export default function StoryViewersSheet({ storyId, onClose }) {
   }, [storyId]);
 
   const open = (username) => { onClose(); navigate(`/u/${encodeURIComponent(username)}`); };
-  const chat = (id) => { onClose(); navigate(`/chat/${id}`); };
+  const chat = (id) => { onClose(); navigate(chatPath('direct', id)); };
 
   function Row({ user, at, liked }) {
     const name = user.displayName || user.username;

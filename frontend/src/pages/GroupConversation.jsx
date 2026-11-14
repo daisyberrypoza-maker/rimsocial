@@ -7,7 +7,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
-import { MessageRow, MediaViewer, attachmentLabel } from './Conversation.jsx';
+import { MessageRow, MediaViewer, LinkPreview, attachmentLabel } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
 
@@ -33,8 +33,7 @@ function clock(value) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function GroupConversationPage() {
-  const { groupId } = useParams();
+export default function GroupConversationPage({ groupId }) {
   const navigate = useNavigate();
   const me = useAppStore((state) => state.user);
   const [group, setGroup] = useState(null);
@@ -336,6 +335,7 @@ export default function GroupConversationPage() {
                   {message.replyToId && !message.replyTo && <div className="cv-quote"><span>Original message is no longer available</span></div>}
                   {message.mediaUrl && <GroupMedia message={message} mine={mine} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} onView={viewGroupPhoto} />}
                   {!!message.body && <span className="cv-text">{message.body}</span>}
+                  {!!message.body && <LinkPreview text={message.body} />}
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
                 </div>

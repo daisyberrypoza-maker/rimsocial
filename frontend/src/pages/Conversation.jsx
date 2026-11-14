@@ -454,6 +454,91 @@ function OrderCard({ order, mine }) {
   );
 }
 
+// Photos and videos that arrive together from one person form a gallery
+function isGalleryItem(m) {
+  return !m.order && !m.deletedForEveryone && !m.body && !m.replyToId && !m.post && !m.viewLimit
+    && !!m.mediaUrl && (m.mediaKind === 'photo' || m.mediaKind === 'video');
+}
+
+// Consecutive gallery items from the same person within two minutes share one row
+function groupRows(list) {
+  const rows = [];
+  list.forEach((m, idx) => {
+    const prev = rows[rows.length - 1];
+    const last = prev && prev.items[prev.items.length - 1].m;
+    const sameRun = prev && prev.gallery && isGalleryItem(m) && last
+      && String(prev.senderId) === String(m.senderId)
+      && new Date(m.createdAt) - new Date(last.createdAt) <= 2 * 60 * 1000;
+    if (sameRun) { prev.items.push({ m, idx }); return; }
+    rows.push({ gallery: isGalleryItem(m), senderId: m.senderId, items: [{ m, idx }] });
+  });
+  return rows;
+}
+
+// The time is shown once, under the last message of a run from the same person
+function isLastOfRun(list, i) {
+  const next = list[i + 1];
+  if (!next) return true;
+  if (String(next.senderId) !== String(list[i].senderId)) return true;
+  return new Date(next.createdAt) - new Date(list[i].createdAt) > 2 * 60 * 1000;
+}
+
+function TimeLine({ message, mine }) {
+  return (
+    <div className={mine ? 'cv-time mine' : 'cv-time'}>
+      {message.forwarded && !message.deletedForEveryone && <em>Forwarded ·</em>}
+      {message.editedAt && !message.deletedForEveryone && <em>Edited ·</em>}
+      <span>{timeOf(message.createdAt)}</span>
+      {mine && !message.deletedForEveryone && <Ticks message={message} />}
+    </div>
+  );
+}
+
+const URL_PATTERN = /https?:\/\/[^\s<>"']+/i;
+const previewCache = new Map();
+
+// The first link in a message shows a small card; tapping it opens the page in an in-app browser
+export function LinkPreview({ text }) {
+  const match = URL_PATTERN.exec(text || '');
+  const url = match ? match[0].replace(/[.,;:!?)]+$/, '') : '';
+  const [preview, setPreview] = useState(() => (url && previewCache.has(url) ? previewCache.get(url) : null));
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!url || previewCache.has(url)) { setPreview(url ? previewCache.get(url) || null : null); return undefined; }
+    let alive = true;
+    api(`/v1/messages/link-preview?url=${encodeURIComponent(url)}`)
+      .then((data) => { previewCache.set(url, data.preview || null); if (alive) setPreview(data.preview || null); })
+      .catch(() => { previewCache.set(url, null); });
+    return () => { alive = false; };
+  }, [url]);
+  if (!url || !preview) return null;
+  return (
+    <>
+      <button type="button" className="cv-link-card" onClick={() => setOpen(true)}>
+        {preview.image && <img src={preview.image} alt="" loading="lazy" />}
+        <span className="cv-link-text">
+          <strong>{preview.title || preview.domain}</strong>
+          {preview.description && <small>{preview.description}</small>}
+          <em>{preview.domain}</em>
+        </span>
+      </button>
+      {open && (
+        <div className="cv-browser" role="dialog" aria-label="Link preview">
+          <div className="cv-browser-top">
+            <button type="button" className="cv-viewer-close" onClick={() => setOpen(false)} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+            <strong>{preview.title || preview.domain}</strong>
+            <a href={url} target="_blank" rel="noopener noreferrer">Open</a>
+          </div>
+          <iframe src={url} title={preview.title || preview.domain} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+          <p className="cv-browser-note">If the page does not load here, tap Open to view it in your browser.</p>
+        </div>
+      )}
+    </>
+  );
+}
+
 function Bubble({ message, mine }) {
   if (message.order) return <OrderCard order={message.order} mine={mine} />;
   const deleted = Boolean(message.deletedForEveryone);
@@ -478,20 +563,14 @@ function Bubble({ message, mine }) {
       {deleted && <span className="cv-deleted">This message was deleted</span>}
       {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} />}
       {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
+      {hasText && <LinkPreview text={message.body} />}
       {!deleted && message.post && <PostCard post={message.post} />}
       {!deleted && message.post === null && <span className="cv-unavailable">This post is no longer available.</span>}
-      <span className="cv-meta">
-        {message.forwarded && !deleted && <em>Forwarded · </em>}
-        {message.editedAt && !deleted && <em>Edited · </em>}
-        <span>{timeOf(message.createdAt)}</span>
-        {mine && !deleted && <Ticks message={message} />}
-      </span>
     </div>
   );
 }
 
-export default function Conversation() {
-  const { userId } = useParams();
+export default function Conversation({ userId }) {
   const navigate = useNavigate();
   const location = useLocation();
   const me = useAppStore((st) => st.user);
@@ -587,12 +666,31 @@ export default function Conversation() {
     }
   }
 
+  // Several photos or videos picked at once are sent as they are, and show together as a gallery
+  async function sendFiles(files) {
+    for (const item of files) {
+      try {
+        const form = new FormData();
+        form.append('media', item);
+        const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
+        setMessages((current) => {
+          const list = current || [];
+          return list.some((m) => m.id === data.message.id) ? list : [...list, data.message];
+        });
+      } catch (e) {
+        logError(e);
+        setError(e.message || 'Could not send');
+      }
+    }
+  }
+
   function pickFile(event) {
-    const picked = event.target.files?.[0];
+    const picked = Array.from(event.target.files || []);
     event.target.value = '';
-    if (!picked) return;
+    if (!picked.length) return;
     setError('');
-    setFile(picked);
+    if (picked.length > 1) { sendFiles(picked); return; }
+    setFile(picked[0]);
   }
 
   function startReply(message) {
@@ -908,14 +1006,31 @@ export default function Conversation() {
       <div className="dm-thread">
         {messages === null ? <p className="dm-empty"></p>
           : messages.length === 0 ? <p className="dm-empty">Say hello to start the conversation.</p>
-          : messages.map((m, i, all) => {
-            const mine = String(m.senderId) === String(me?.id);
+          : groupRows(messages).map((row) => {
+            const mine = String(row.senderId) === String(me?.id);
+            if (row.items.length > 1) {
+              const lastItem = row.items[row.items.length - 1];
+              return (
+                <div key={'gallery-' + row.items[0].m.id} className="cv-line">
+                  {needsStamp(messages, row.items[0].idx) && <div className="cv-stamp">{stampOf(row.items[0].m.createdAt)}</div>}
+                  <div className={mine ? 'cv-gallery mine' : 'cv-gallery'} style={{ gridTemplateColumns: row.items.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
+                    {row.items.map(({ m }) => (
+                      <div key={m.id} className="cv-gallery-cell"><Attachment message={m} storyAuthorId={null} mine={mine} /></div>
+                    ))}
+                  </div>
+                  {isLastOfRun(messages, lastItem.idx) && <TimeLine message={lastItem.m} mine={mine} />}
+                </div>
+              );
+            }
+            const m = row.items[0].m;
+            const i = row.items[0].idx;
             return (
               <div key={m.id} className="cv-line">
-                {needsStamp(all, i) && <div className="cv-stamp">{stampOf(m.createdAt)}</div>}
+                {needsStamp(messages, i) && <div className="cv-stamp">{stampOf(m.createdAt)}</div>}
                 <MessageRow message={m} mine={mine} onReply={startReply} onOpenMenu={openMessageMenu}>
                   <Bubble message={m} mine={mine} />
                 </MessageRow>
+                {isLastOfRun(messages, i) && <TimeLine message={m} mine={mine} />}
                 {mine && lastMineSeen && lastMineSeen.id === m.id && (
                   <span className={mine ? 'cv-seen mine' : 'cv-seen'}>
                     {m.readAt ? `Seen ${ago(m.readAt)}` : m.deliveredAt ? `Delivered ${ago(m.deliveredAt)}` : 'Sent'}
@@ -971,7 +1086,7 @@ export default function Conversation() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
           </button>
         )}
-        <input ref={fileRef} type="file" hidden onChange={pickFile} />
+        <input ref={fileRef} type="file" multiple hidden onChange={pickFile} />
         <input enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Message...'} aria-label="Message" />
         {(text.trim() || file || editing) ? (
           <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>{editing ? 'Save' : 'Send'}</button>

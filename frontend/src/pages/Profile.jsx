@@ -1,3 +1,4 @@
+import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { createPortal } from 'react-dom';
@@ -338,7 +339,7 @@ export default function Profile() {
 
   function openPersonSharedActivity(person) {
     setListMenuPerson(null);
-    navigate(`/chat/${person.id}`, { state: { openSharedActivity: true } });
+    navigate(chatPath('direct', person.id), { state: { openSharedActivity: true } });
   }
 
   async function removeFollower(person) {
@@ -623,7 +624,7 @@ export default function Profile() {
           <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(`/chat/${profile.id}`); }}><span>Contact</span><Icon name="mail" size={18} /></button>
+          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(chatPath('direct', profile.id)); }}><span>Contact</span><Icon name="mail" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate('/recommended'); }}><span>Recommended</span><Icon name="chevron-right" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); shareProfile(); }}><span>Send Profile to…</span><Icon name="send" size={18} /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
@@ -677,7 +678,7 @@ export default function Profile() {
                     ? <button type="button" className="pv-follow" onClick={() => unblockPerson(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Unblock'}</button>
                     : listType === 'followers' && !person.isFollowing
                       ? <button type="button" className="pv-follow primary" onClick={() => toggleListFollow(person)} disabled={Boolean(peopleBusy[person.id])}>{peopleBusy[person.id] ? '…' : 'Follow back'}</button>
-                      : <button type="button" className="pv-follow added" onClick={() => navigate(`/chat/${person.id}`)}>Message</button>}
+                      : <button type="button" className="pv-follow added" onClick={() => navigate(chatPath('direct', person.id))}>Message</button>}
                   {listType === 'followers' && profile.isMe && <button type="button" className="pv-remove-follower" aria-label={`Remove ${person.username} as follower`} onClick={() => removeFollower(person)} disabled={Boolean(peopleBusy[person.id])}><Icon name="x" size={20} /></button>}
                   {listType === 'following' && <div className="pv-person-menu-wrap">
                     <button type="button" className="pv-more" aria-label={`Options for ${person.username}`} aria-expanded={listMenuPerson === person.id} onClick={() => setListMenuPerson((current) => current === person.id ? null : person.id)}><Icon name="more-vertical" size={18} /></button>

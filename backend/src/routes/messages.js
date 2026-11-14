@@ -659,6 +659,111 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
   } catch (error) { next(error); }
 });
 
+// Link preview for a chat message: title, description, image and site name of a public page.
+// Private and local addresses are refused, redirects are checked one by one, and results are cached.
+const dns = require('dns').promises;
+const net = require('net');
+const linkCache = new Map();
+
+function isPrivateAddress(ip) {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31)
+      || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+  }
+  if (net.isIPv6(ip)) {
+    const v = ip.toLowerCase();
+    if (v.startsWith('::ffff:')) return isPrivateAddress(v.slice(7));
+    return v === '::1' || v === '::' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe80');
+  }
+  return true;
+}
+
+async function safeLinkUrl(raw) {
+  let url;
+  try { url = new URL(raw); } catch { throw httpError(400, 'That link is not valid'); }
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw httpError(400, 'That link is not valid');
+  const addresses = await dns.lookup(url.hostname, { all: true }).catch(() => []);
+  if (!addresses.length || addresses.some((entry) => isPrivateAddress(entry.address))) throw httpError(400, 'That link cannot be previewed');
+  return url;
+}
+
+async function readCapped(res, max) {
+  const reader = res.body && res.body.getReader ? res.body.getReader() : null;
+  if (!reader) return (await res.text()).slice(0, max);
+  const chunks = [];
+  let size = 0;
+  while (size < max) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    size += value.length;
+  }
+  try { await reader.cancel(); } catch { /* already finished */ }
+  return Buffer.concat(chunks).toString('utf8').slice(0, max);
+}
+
+async function fetchLinkPage(start) {
+  let current = start;
+  for (let hop = 0; hop < 4; hop += 1) {
+    await safeLinkUrl(current.toString());
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    let res;
+    try {
+      res = await fetch(current, { redirect: 'manual', signal: controller.signal, headers: { 'User-Agent': 'RimSocialLinkPreview/1.0', Accept: 'text/html' } });
+    } catch {
+      throw httpError(502, 'Could not load that link');
+    } finally {
+      clearTimeout(timer);
+    }
+    const location = res.headers.get('location');
+    if (res.status >= 300 && res.status < 400 && location) { current = new URL(location, current); continue; }
+    if (!res.ok) throw httpError(404, 'No preview for that link');
+    if (!/text\/html/i.test(res.headers.get('content-type') || '')) return { url: current, html: '' };
+    return { url: current, html: await readCapped(res, 300000) };
+  }
+  throw httpError(400, 'That link redirects too many times');
+}
+
+function decodeHtml(value) {
+  return String(value).replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+}
+
+function previewFrom(html, url) {
+  const meta = (name) => {
+    const tag = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]*>`, 'i'));
+    if (!tag) return '';
+    const content = tag[0].match(/content=["']([^"']*)["']/i);
+    return content ? decodeHtml(content[1]) : '';
+  };
+  const titleTag = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  let image = meta('og:image') || meta('twitter:image');
+  if (image) { try { image = new URL(image, url).toString(); } catch { image = ''; } }
+  return {
+    url: url.toString(),
+    title: (meta('og:title') || meta('twitter:title') || (titleTag ? decodeHtml(titleTag[1]) : '')).trim().slice(0, 200),
+    description: (meta('og:description') || meta('description') || meta('twitter:description')).trim().slice(0, 300),
+    image,
+    siteName: meta('og:site_name').slice(0, 80),
+    domain: url.hostname.replace(/^www\./, ''),
+  };
+}
+
+router.get('/link-preview', async (req, res, next) => {
+  try {
+    const raw = String(req.query.url || '').slice(0, 2000);
+    const hit = linkCache.get(raw);
+    if (hit && hit.at > Date.now() - 60 * 60 * 1000) return res.json({ preview: hit.preview });
+    const start = await safeLinkUrl(raw);
+    const page = await fetchLinkPage(start);
+    const preview = previewFrom(page.html, page.url);
+    if (linkCache.size > 500) linkCache.clear();
+    linkCache.set(raw, { at: Date.now(), preview });
+    res.json({ preview });
+  } catch (error) { next(error); }
+});
+
 // Mark everything another person sent to you as read (seen).
 router.post('/with/:userId/read', async (req, res, next) => {
   try {

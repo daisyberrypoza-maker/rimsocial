@@ -1,3 +1,4 @@
+import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -78,12 +79,12 @@ export default function NewMessage() {
       setCreating(true);
       try {
         const data = await api('/v1/messages/groups', { method: 'POST', body: { memberIds: selected.map((person) => person.id), name: groupName.trim() } });
-        navigate(`/chat/group/${data.group.id}`, { replace: true });
+        navigate(chatPath('group', data.group.id), { replace: true });
       } catch (e) { toast(e.message || 'Could not create group'); }
       finally { setCreating(false); }
       return;
     }
-    navigate(`/chat/${selected[0].id}`);
+    navigate(chatPath('direct', selected[0].id));
   }
 
   const removeSelected = (personId) => {

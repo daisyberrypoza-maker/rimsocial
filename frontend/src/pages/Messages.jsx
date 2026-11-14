@@ -1,3 +1,4 @@
+import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -167,14 +168,14 @@ export default function Messages() {
           <ul className="sn-chat-search-list">
             {chatSearchResults.map((result) => (result.kind === 'chat' ? (
               <li key={result.key}>
-                <Link to={`/chat/${result.user.id}`} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
+                <Link to={chatPath('direct', result.user.id)} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
                   <Avatar user={result.user} size={44} />
                   <span><strong>{result.user.displayName || result.user.username}</strong><small>@{result.user.username}</small></span>
                 </Link>
               </li>
             ) : (
               <li key={result.key}>
-                <Link to={`/chat/group/${result.group.id}`} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
+                <Link to={chatPath('group', result.group.id)} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
                   <span className="sn-group-avatar"><Icon name="users" size={22} /></span>
                   <span><strong>{result.group.name}</strong><small>Group</small></span>
                 </Link>
@@ -221,7 +222,7 @@ export default function Messages() {
               const openRowMenu = (rect) => setRowMenu({ item, isGroup: false, anchor: rect || null });
               return (
                 <li key={item.user.id} className={item.unread ? 'sn-item unread' : 'sn-item'} onContextMenu={(event) => { event.preventDefault(); openRowMenu(event.currentTarget.getBoundingClientRect()); }} onTouchStart={(event) => { const rect = event.currentTarget.getBoundingClientRect(); clearTimeout(longPressTimer.current); longPressTimer.current = setTimeout(() => openRowMenu(rect), 550); }} onTouchEnd={() => clearTimeout(longPressTimer.current)} onTouchMove={() => clearTimeout(longPressTimer.current)}>
-                  <Link to={`/chat/${item.user.id}`} className="sn-row">
+                  <Link to={chatPath('direct', item.user.id)} className="sn-row">
                     <span className="sn-ring">
                       <Avatar user={item.user} size={56} storyRing={item.storyRing || null} />
                       {item.isOnline && <span className="sn-online" aria-label="Online" />}
@@ -257,7 +258,7 @@ export default function Messages() {
                 onTouchEnd={() => clearTimeout(longPressTimer.current)}
                 onTouchMove={() => clearTimeout(longPressTimer.current)}
               >
-                <Link to={`/chat/group/${group.id}`} className="sn-row">
+                <Link to={chatPath('group', group.id)} className="sn-row">
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={26} /></span>
                   <span className="sn-text">
                     <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
