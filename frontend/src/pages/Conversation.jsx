@@ -76,8 +76,52 @@ function PostCard({ post }) {
 }
 
 // Photos and videos open in the chat's own preview; a story sent from a story opens that story instead
-function openMedia(src, kind) {
-  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind } }));
+function openMedia(src, kind, createdAt) {
+  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt } }));
+}
+
+// Full-screen media: before sending (pending) it shows the Send button; after sending it shows the chat viewer
+function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name }) {
+  const isVideo = media.kind === 'video';
+  return (
+    <div className="cv-viewer cv-viewer-full" role="dialog" aria-label="Media preview">
+      <div className="cv-viewer-stage">
+        {isVideo
+          ? <video src={media.src} controls={!pending} muted={pending} autoPlay playsInline />
+          : <img src={media.src} alt="" />}
+      </div>
+      <div className="cv-viewer-top">
+        <button type="button" className="cv-viewer-close" onClick={onClose} aria-label="Close preview">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+        {!pending && (
+          <div className="cv-viewer-who">
+            {partner && <Avatar user={partner} size={34} />}
+            <div><strong>{name}</strong><small>{media.createdAt ? timeOf(media.createdAt) : 'now'}</small></div>
+          </div>
+        )}
+      </div>
+      {!pending && <div className="cv-viewer-progress" aria-hidden="true"><span /></div>}
+      <form className="cv-viewer-bottom" onSubmit={(e) => { e.preventDefault(); onSend(text); }}>
+        <input value={text} onChange={(e) => onText(e.target.value)} maxLength={2000} placeholder={pending ? 'Add a message...' : 'Message...'} aria-label="Message" />
+        {pending ? (
+          <button type="submit" className="cv-viewer-send" disabled={sending} aria-label="Send">
+            {partner && <Avatar user={partner} size={30} />}
+            <span>Send</span>
+          </button>
+        ) : text.trim() ? (
+          <button type="submit" className="cv-viewer-send-text" aria-label="Send">Send</button>
+        ) : (
+          <span className="cv-viewer-quick">
+            {['❤️', '😂', '😮'].map((emoji) => (
+              <button key={emoji} type="button" onClick={() => onQuick(emoji)} aria-label={`Send ${emoji}`}>{emoji}</button>
+            ))}
+            <button type="button" onClick={onClose} aria-label="Close">+</button>
+          </span>
+        )}
+      </form>
+    </div>
+  );
 }
 
 function Attachment({ message, storyAuthorId }) {
@@ -87,7 +131,7 @@ function Attachment({ message, storyAuthorId }) {
       ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
       : <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
     if (storyAuthorId) return <Link to="/stories" state={{ openUserId: storyAuthorId }} className="cv-media-link" aria-label="Open story">{media}</Link>;
-    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
+    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind, message.createdAt)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
   }
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   const name = message.mediaName || 'File';
@@ -246,6 +290,7 @@ export default function Conversation() {
   const fileRef = useRef(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [viewerMedia, setViewerMedia] = useState(null);
+  const [viewerText, setViewerText] = useState('');
   useEffect(() => {
     const onOpen = (event) => setViewerMedia(event.detail);
     window.addEventListener('cv-open-media', onOpen);
@@ -328,6 +373,24 @@ export default function Conversation() {
     setEditing(null);
     setText('');
     setFile(null);
+  }
+
+  // Send a short text (or emoji) to this person straight from the media viewer
+  async function sendQuick(body) {
+    const clean = String(body || '').trim();
+    if (!clean) return;
+    setViewerText('');
+    try {
+      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: clean } });
+      setMessages((current) => {
+        const list = current || [];
+        return list.some((m) => m.id === data.message.id) ? list : [...list, data.message];
+      });
+      setViewerMedia(null);
+    } catch (e) {
+      logError(e);
+      toast(e.message || 'Message not sent');
+    }
   }
 
   async function createOrder(event) {
@@ -705,15 +768,32 @@ export default function Conversation() {
         />
       )}
 
-      {viewerMedia && (
-        <div className="cv-viewer" role="dialog" aria-label="Media preview" onClick={() => setViewerMedia(null)}>
-          <button type="button" className="cv-viewer-close" onClick={() => setViewerMedia(null)} aria-label="Close preview">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-          {viewerMedia.kind === 'video'
-            ? <video src={viewerMedia.src} controls autoPlay playsInline onClick={(e) => e.stopPropagation()} />
-            : <img src={viewerMedia.src} alt="" onClick={(e) => e.stopPropagation()} />}
-        </div>
+      {viewerMedia && !file && (
+        <MediaViewer
+          media={viewerMedia}
+          partner={partner}
+          name={name}
+          pending={false}
+          text={viewerText}
+          onText={setViewerText}
+          onSend={sendQuick}
+          onQuick={sendQuick}
+          onClose={() => setViewerMedia(null)}
+        />
+      )}
+      {file && (kindOfFile(file) === 'photo' || kindOfFile(file) === 'video') && previewUrl && (
+        <MediaViewer
+          media={{ src: previewUrl, kind: kindOfFile(file) }}
+          partner={partner}
+          name={name}
+          pending
+          text={text}
+          onText={onTextChange}
+          onSend={() => send({ preventDefault() {} })}
+          onQuick={() => {}}
+          sending={sending}
+          onClose={() => setFile(null)}
+        />
       )}
       {orderOpen && (
         <div className="cv-order-backdrop" onClick={() => !orderSaving && setOrderOpen(false)}>
