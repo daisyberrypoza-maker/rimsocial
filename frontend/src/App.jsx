@@ -42,6 +42,14 @@ function RequireAuth({ children }) {
 }
 
 const IMMERSIVE_PATHS = ['/', '/following', '/live'];
+// The bottom tab bar and its swipe only appear on these five screens: Stories, Chat, Add post, Search and Rimlight
+const TAB_SCREENS = ['/stories', '/chat', '/upload', '/search', '/'];
+function isTabScreen(pathname, search = '') {
+  if (!TAB_SCREENS.includes(pathname)) return false;
+  // Story and reel creation share the add-post route but are not the Add post tab
+  if (pathname === '/upload' && /(^|[?&])(story|reel)=1/.test(search)) return false;
+  return true;
+}
 
 // /explore is now Find friends; keeps any search in the address
 function ExploreRedirect() {
@@ -97,7 +105,7 @@ export default function App() {
   const showChrome = Boolean(token) && location.pathname !== '/login';
   const setOffline = useAppStore((s) => s.setOffline);
   // Moving between screens never waits on the network: screens draw from saved data
-  useTabSwipe(navigate, location.pathname, showChrome);
+  useTabSwipe(navigate, location.pathname, showChrome && isTabScreen(location.pathname, location.search));
 
   // Minimised or closed: stop all playback immediately
   useEffect(() => {
@@ -173,7 +181,7 @@ export default function App() {
         <Route path="/u/:username/:list" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {showChrome && !profileWatch && !exploreWatch && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/recommended' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/chat/') && location.pathname !== '/upload' && location.pathname !== '/story/text' && <BottomNav />}
+      {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && <BottomNav />}
       <Toast />
     </div>
   );
