@@ -6741,3 +6741,23 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
 /* Logout: red text and icon, centred at the bottom of settings */
 .profile-drawer-backdrop .settings-logout, .settings-logout { color: #e0243c !important; background: transparent !important; }
 .profile-drawer-backdrop .settings-logout svg, .settings-logout svg { color: #e0243c !important; stroke: #e0243c !important; }
+
+/* Followers / Following list: Instagram layout. Thin names, grey Message, blue Follow back, X on the right */
+.pv-sheet .pv-list { padding: 0 16px 32px !important; }
+.pv-sheet .pv-row { display: grid !important; grid-template-columns: minmax(0, 1fr) auto auto !important; align-items: center !important; gap: 10px !important; padding: 10px 0 !important; border: 0 !important; }
+.pv-sheet .pv-person { display: flex !important; align-items: center !important; gap: 12px !important; min-width: 0 !important; justify-content: flex-start !important; text-align: left !important; }
+.pv-sheet .pv-person > .avatar { flex: none !important; width: 52px !important; height: 52px !important; }
+.pv-sheet .pv-person-text { align-items: flex-start !important; text-align: left !important; min-width: 0 !important; gap: 2px !important; }
+.pv-sheet .pv-person-text strong { font-size: 16px !important; font-weight: 400 !important; color: #000 !important; }
+.pv-sheet .pv-person-text small { font-size: 15px !important; font-weight: 400 !important; color: #8e8e8e !important; }
+.pv-sheet .pv-follow { width: auto !important; min-width: 112px !important; max-width: none !important; height: 36px !important; padding: 0 16px !important; border: 0 !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer; }
+.pv-sheet .pv-follow.primary { background: #0095f6 !important; color: #fff !important; }
+.pv-sheet .pv-follow.added { background: #efefef !important; color: #000 !important; }
+.pv-sheet .pv-follow:disabled { opacity: .6; }
+.pv-sheet .pv-remove-follower, .pv-sheet .pv-more { width: 36px !important; height: 36px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
+.pv-sheet .pv-search { margin: 12px 20px 0 !important; height: 44px !important; background: #f0f2f5 !important; border-radius: 999px !important; }
+.pv-sheet .pv-search input { font-size: 16px !important; font-weight: 400 !important; color: #000 !important; }
+.pv-sheet .pv-search input::placeholder { color: #8e8e8e; }
+.pv-sheet .pv-sort-row { padding: 14px 20px 8px !important; font-size: 15px !important; font-weight: 400 !important; color: #000 !important; }
+.pv-sheet .pv-sort-row strong { font-weight: 600 !important; }
+.pv-sheet .pv-sort-trigger { color: #000 !important; }
