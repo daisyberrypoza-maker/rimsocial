@@ -137,6 +137,18 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
   );
 }
 
+const ICON = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+function stampOf(value) {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+// A centred time shows before the first message and after any gap of more than 30 minutes
+function needsStamp(list, i) {
+  if (i === 0) return true;
+  const gap = new Date(list[i].createdAt) - new Date(list[i - 1].createdAt);
+  return gap > 30 * 60 * 1000;
+}
+
 function Bubble({ message, mine }) {
   const deleted = Boolean(message.deletedForEveryone);
   const hasText = Boolean(message.body) && !deleted;
@@ -391,7 +403,7 @@ export default function Conversation() {
     return mine.length ? mine[mine.length - 1] : null;
   })();
   const name = partner ? (partner.displayName || partner.username) : '';
-  const subtitle = typing ? 'typing…' : online ? 'Online' : '';
+  const subtitle = typing ? 'typing…' : online ? 'Active now' : (partner?.username || '');
 
   return (
     <main className="dm-convo cv-convo">
@@ -399,23 +411,30 @@ export default function Conversation() {
         <button type="button" className="dm-icon" onClick={() => goBack(navigate, '/chat')} aria-label="Back">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         </button>
-        {partner && <Avatar user={partner} size={38} />}
+        {partner && <Avatar user={partner} size={36} />}
         <span className="cv-head-text">
           <span className="dm-cname">{name}</span>
           {subtitle && <small className={typing ? 'cv-subtitle typing' : 'cv-subtitle'}>{subtitle}</small>}
         </span>
-        <button type="button" className="dm-icon cv-head-menu" onClick={(e) => { setChatAnchor(e.currentTarget.getBoundingClientRect()); setChatMenu(true); }} aria-label="Chat options">
-          <Icon name="more-vertical" size={22} />
+        <button type="button" className="dm-icon cv-head-action" onClick={() => toast('Calls are not available yet')} aria-label="Voice call">
+          <svg {...ICON}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" /></svg>
+        </button>
+        <button type="button" className="dm-icon cv-head-action" onClick={() => toast('Video calls are not available yet')} aria-label="Video call">
+          <svg {...ICON}><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+        </button>
+        <button type="button" className="dm-icon cv-head-action" onClick={(e) => { setChatAnchor(e.currentTarget.getBoundingClientRect()); setChatMenu(true); }} aria-label="Chat options">
+          <svg {...ICON}><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
         </button>
       </header>
 
       <div className="dm-thread">
         {messages === null ? <p className="dm-empty"></p>
           : messages.length === 0 ? <p className="dm-empty">Say hello to start the conversation.</p>
-          : messages.map((m) => {
+          : messages.map((m, i, all) => {
             const mine = String(m.senderId) === String(me?.id);
             return (
               <div key={m.id} className="cv-line">
+                {needsStamp(all, i) && <div className="cv-stamp">{stampOf(m.createdAt)}</div>}
                 <MessageRow message={m} mine={mine} onReply={startReply} onOpenMenu={openMessageMenu}>
                   <Bubble message={m} mine={mine} />
                 </MessageRow>
@@ -453,17 +472,32 @@ export default function Conversation() {
         </div>
       )}
 
-      <form className="dm-input cv-form" onSubmit={send}>
+      <form className="dm-input cv-form cv-ig-form" onSubmit={send}>
         {!editing && (
-          <button type="button" className="cv-attach" onClick={() => fileRef.current?.click()} aria-label="Attach file" disabled={sending}>
-            <Icon name="plus" size={22} strokeWidth={2.2} />
+          <button type="button" className="cv-camera" onClick={() => fileRef.current?.click()} aria-label="Attach photo or video" disabled={sending}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
           </button>
         )}
         <input ref={fileRef} type="file" hidden onChange={pickFile} />
-        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Send a message'} aria-label="Message" />
-        <button type="submit" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.5 21 3l-5 18-4-7.5z" /></svg>
-        </button>
+        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Message...'} aria-label="Message" />
+        {(text.trim() || file || editing) ? (
+          <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>{editing ? 'Save' : 'Send'}</button>
+        ) : (
+          <span className="cv-tools">
+            <button type="button" className="cv-tool" onClick={() => toast('Voice messages are not available yet')} aria-label="Voice message">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4" /></svg>
+            </button>
+            <button type="button" className="cv-tool" onClick={() => fileRef.current?.click()} aria-label="Photos and videos" disabled={sending}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
+            </button>
+            <button type="button" className="cv-tool" onClick={() => toast('Stickers are not available yet')} aria-label="Stickers">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" /></svg>
+            </button>
+            <button type="button" className="cv-tool" onClick={() => fileRef.current?.click()} aria-label="More" disabled={sending}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
+            </button>
+          </span>
+        )}
       </form>
 
       {menuFor && (
