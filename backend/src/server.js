@@ -179,6 +179,12 @@ async function start() {
     if (!prefColumns.markedUnread) await qiPref.addColumn('chat_preferences', 'markedUnread', { type: require('sequelize').DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   }
   await UserMute.sync();
+  // Group photo column (additive, idempotent)
+  {
+    const qiConv = sequelize.getQueryInterface();
+    const convColumns = await qiConv.describeTable('group_conversations').catch(() => ({}));
+    if (!convColumns.avatarUrl) await qiConv.addColumn('group_conversations', 'avatarUrl', { type: require('sequelize').DataTypes.STRING(512), allowNull: true });
+  }
   // Story likes are stored separately from post likes. Create the table when absent;
   // sync() without alter/force is additive and preserves existing rows.
   await StoryLike.sync();

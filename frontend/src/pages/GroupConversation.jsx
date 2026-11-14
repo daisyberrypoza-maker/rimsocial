@@ -1,3 +1,4 @@
+import GroupInfoSheet from '../components/GroupInfoSheet.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -46,6 +47,7 @@ export default function GroupConversationPage({ groupId }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const [messageMenu, setMessageMenu] = useState(null);
   const [optionsAnchor, setOptionsAnchor] = useState(null);
@@ -337,11 +339,11 @@ export default function GroupConversationPage({ groupId }) {
         <button type="button" className="dm-icon" onClick={() => navigate('/chat', { replace: true })} aria-label="Back">
           <Icon name="arrow-left" size={24} />
         </button>
-        <span className="sn-group-avatar cv-group-head"><Icon name="users" size={22} /></span>
-        <span className="cv-head-text">
+        <span className="sn-group-avatar cv-group-head">{group?.avatarUrl ? <img src={group.avatarUrl} alt="" /> : <Icon name="users" size={20} />}</span>
+        <button type="button" className="cv-head-text cv-head-btn" onClick={() => setInfoOpen(true)} aria-label="Group info">
           <span className="dm-cname">{group?.name || 'Group chat'}</span>
           <small className="cv-subtitle">{members.length ? members.length + ' members' : 'Group conversation'}</small>
-        </span>
+        </button>
         <button type="button" className="dm-icon cv-head-menu" onClick={(e) => { setOptionsAnchor(e.currentTarget.getBoundingClientRect()); setOptionsOpen(true); }} aria-label="Group options"><Icon name="more-vertical" size={22} /></button>
       </header>
 
@@ -459,6 +461,16 @@ export default function GroupConversationPage({ groupId }) {
           ]}
         />
       )}
+      {infoOpen && (
+        <GroupInfoSheet
+          groupId={groupId}
+          group={group}
+          meId={me?.id}
+          onClose={() => setInfoOpen(false)}
+          onChanged={(fields) => setGroup((current) => (current ? { ...current, ...fields } : current))}
+          onLeave={() => { setInfoOpen(false); leaveGroup(); }}
+        />
+      )}
       {optionsOpen && (
         <ChatMenu
           label="Group options"
@@ -466,6 +478,7 @@ export default function GroupConversationPage({ groupId }) {
           anchor={optionsAnchor}
           onClose={() => setOptionsOpen(false)}
           items={[
+            { key: 'info', label: 'Group info', icon: 'users', onSelect: () => { setOptionsOpen(false); setInfoOpen(true); } },
             { key: 'mute', label: muted ? 'Unmute messages' : 'Mute messages', icon: muted ? 'bell' : 'bell-off', onSelect: toggleMute },
             ...(String(group?.createdById) === String(me?.id) ? [{ key: 'delete-group', label: 'Delete group for everyone', icon: 'trash-2', danger: true, onSelect: deleteGroupForEveryone }] : []),
             { key: 'leave', label: 'Leave group', icon: 'log-out', danger: true, onSelect: leaveGroup },

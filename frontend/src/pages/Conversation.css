@@ -345,3 +345,8 @@
   bottom: auto !important;
   height: var(--app-viewport-height, 100dvh) !important;
 }
+
+/* Group header matches the direct chat header: 36px photo avatar and a tappable name */
+.dm-convo.cv-convo .cv-group-head { width: 36px !important; height: 36px !important; min-width: 36px; overflow: hidden; padding: 0; }
+.dm-convo.cv-convo .cv-group-head img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dm-convo.cv-convo .cv-head-btn { flex: 1 1 auto; min-width: 0; border: 0 !important; background: transparent !important; padding: 0 !important; text-align: left; cursor: pointer; color: inherit; }

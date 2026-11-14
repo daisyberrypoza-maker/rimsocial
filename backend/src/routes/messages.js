@@ -199,6 +199,7 @@ router.get('/groups', async (req, res, next) => {
     res.json({ items: groups.map((group) => ({
       id: group.id,
       name: group.name,
+      avatarUrl: group.avatarUrl || null,
       createdById: group.createdById,
       members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
       lastMessage: latest.get(String(group.id)) || null,
@@ -252,7 +253,7 @@ router.get('/groups/:groupId', async (req, res, next) => {
     const views = limitedIds.length ? await GroupMessageView.findAll({ where: { messageId: limitedIds, userId: req.user.id }, raw: true }) : [];
     const myViews = new Map(views.map((row) => [String(row.messageId), row.viewCount]));
     const withViews = items.map((m) => ({ ...m, viewedByMe: myViews.get(String(m.id)) || 0 }));
-    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(withViews.reverse()) });
+    res.json({ group: { id: group.id, name: group.name, avatarUrl: group.avatarUrl || null, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(withViews.reverse()) });
   } catch (error) { next(error); }
 });
 
@@ -766,6 +767,34 @@ router.get('/link-preview', async (req, res, next) => {
     if (linkCache.size > 500) linkCache.clear();
     linkCache.set(raw, { at: Date.now(), preview });
     res.json({ preview });
+  } catch (error) { next(error); }
+});
+
+// Rename a group (any member can, like WhatsApp)
+router.patch('/groups/:groupId', async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    const name = String(req.body?.name || '').trim().slice(0, 80);
+    if (!name) throw httpError(400, 'Give the group a name');
+    const group = await GroupConversation.findByPk(req.params.groupId);
+    await group.update({ name });
+    publishToGroup(group.id);
+    res.json({ group: { id: group.id, name: group.name, avatarUrl: group.avatarUrl || null } });
+  } catch (error) { next(error); }
+});
+
+// Change the group photo (any member)
+router.post('/groups/:groupId/avatar', anyFileUpload.single('media'), async (req, res, next) => {
+  try {
+    const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
+    if (!member) throw httpError(404, 'Group not found');
+    if (!req.file || !/^image\//.test(String(req.file.mimetype || ''))) throw httpError(400, 'Choose a photo');
+    const asset = await cloudinary.uploadFile(req.file, 'rimsocial/groups', { resourceType: 'image' });
+    const group = await GroupConversation.findByPk(req.params.groupId);
+    await group.update({ avatarUrl: asset.url });
+    publishToGroup(group.id);
+    res.json({ group: { id: group.id, name: group.name, avatarUrl: group.avatarUrl } });
   } catch (error) { next(error); }
 });
 

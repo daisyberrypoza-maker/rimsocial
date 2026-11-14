@@ -335,6 +335,7 @@ const MediaCleanupJob = sequelize.define('MediaCleanupJob', {
 const GroupConversation = sequelize.define('GroupConversation', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING(80), allowNull: false },
+  avatarUrl: { type: DataTypes.STRING(512), allowNull: true },
   createdById: { type: DataTypes.UUID, allowNull: false },
 }, { tableName: 'group_conversations', indexes: [{ fields: ['createdById', 'createdAt'] }] });
 

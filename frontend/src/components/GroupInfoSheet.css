@@ -1,0 +1,30 @@
+/* Group info sheet: white, black text, Instagram blue for actions, red only for leaving */
+.gi-backdrop { position: fixed; inset: 0; z-index: 420; display: flex; flex-direction: column; background: #fff; color: #000; height: var(--app-viewport-height, 100dvh); padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; }
+.gi-top { flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; height: 56px; padding: 0 12px; border-bottom: 1px solid #efefef; }
+.gi-top strong { text-align: center; font-size: 17px; font-weight: 600; }
+.gi-close { width: 36px; height: 36px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
+.gi-spacer { display: block; }
+.gi-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 24px); }
+.gi-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 16px 8px; }
+.gi-photo { width: 104px; height: 104px; margin: 0; padding: 0; border: 0 !important; border-radius: 50%; background: #f0f2f5 !important; color: #000 !important; display: grid; place-items: center; overflow: hidden; cursor: pointer; }
+.gi-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gi-link { margin: 0; padding: 6px 10px; border: 0 !important; background: transparent !important; color: #0095f6 !important; font-size: 15px; font-weight: 600; cursor: pointer; }
+.gi-name-block { padding: 8px 20px 4px; }
+.gi-name { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0; padding: 8px 0; border: 0 !important; background: transparent !important; color: #000 !important; text-align: center; cursor: pointer; }
+.gi-name strong { font-size: 20px; font-weight: 700; }
+.gi-name small { font-size: 14px; color: #8e8e8e; }
+.gi-name-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.gi-name-edit input { flex: 1 1 180px; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid #dbdbdb !important; border-radius: 12px; font-size: 16px; color: #000; background: #fff; outline: 0 !important; box-shadow: none !important; }
+.gi-name-edit button { height: 44px; padding: 0 14px; margin: 0; border: 0 !important; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.gi-save { background: #0095f6 !important; color: #fff !important; }
+.gi-save:disabled { background: #e4e6ea !important; color: #8e8e8e !important; cursor: default; }
+.gi-cancel { background: #f0f2f5 !important; color: #000 !important; }
+.gi-section { margin: 18px 20px 6px; font-size: 15px; font-weight: 600; color: #8e8e8e; }
+.gi-members { list-style: none; margin: 0; padding: 0; }
+.gi-member { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 20px; border: 0 !important; background: transparent !important; color: #000 !important; text-align: left; cursor: pointer; }
+.gi-member > .avatar { flex: none; width: 44px !important; height: 44px !important; }
+.gi-member-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gi-member-text strong { font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gi-member-text small { font-size: 14px; color: #8e8e8e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gi-owner { flex: none; font-size: 13px; font-style: normal; color: #8e8e8e; }
+.gi-leave { display: block; width: calc(100% - 40px); height: 48px; margin: 24px 20px 0; border: 0 !important; border-radius: 12px; background: #fff !important; color: #e0243c !important; font-size: 16px; font-weight: 600; cursor: pointer; }
