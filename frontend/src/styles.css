@@ -6761,3 +6761,52 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
 .pv-sheet .pv-sort-row { padding: 14px 20px 8px !important; font-size: 15px !important; font-weight: 400 !important; color: #000 !important; }
 .pv-sheet .pv-sort-row strong { font-weight: 600 !important; }
 .pv-sheet .pv-sort-trigger { color: #000 !important; }
+
+
+/* Connection-list sort controls: explicit light surfaces override the app-wide dark button skin. */
+.pv-sheet .pv-sort-trigger,
+.pv-sheet .pv-sort-trigger:hover,
+.pv-sheet .pv-sort-trigger:focus-visible,
+.pv-sheet .pv-sort-trigger:active {
+  background: transparent !important;
+  background-image: none !important;
+  color: #262626 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+.pv-sheet .pv-sort-trigger svg { color: #262626 !important; stroke: currentColor !important; }
+.pv-sheet .pv-sort-menu {
+  min-width: 238px !important;
+  padding: 6px !important;
+  border: 1px solid #dbdbdb !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.16) !important;
+}
+.pv-sheet .pv-sort-menu button,
+.pv-sheet .pv-sort-menu button:hover,
+.pv-sheet .pv-sort-menu button:focus-visible,
+.pv-sheet .pv-sort-menu button:active {
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  width: 100% !important;
+  min-height: 46px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  background-image: none !important;
+  color: #262626 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+.pv-sheet .pv-sort-menu button:hover,
+.pv-sheet .pv-sort-menu button:focus-visible { background: #f5f5f5 !important; }
+.pv-sheet .pv-sort-menu button.on { background: #f0f0f0 !important; font-weight: 650 !important; }
+.pv-sheet .pv-sort-menu button > svg { flex: 0 0 18px; width: 18px; height: 18px; color: #262626 !important; stroke: currentColor !important; }
+.pv-sheet .pv-sort-menu button .pv-sort-check { margin-left: auto; }
