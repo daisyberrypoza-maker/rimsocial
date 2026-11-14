@@ -81,8 +81,9 @@ function openMedia(src, kind, createdAt, from = null) {
 }
 
 // Editable photo before sending: the image plus draw, text and sticker layers, flattened on send
-function PhotoEditor({ src, tool, texts, emojis, editorRef }) {
+function PhotoEditor({ src, tool, texts, emojis, editorRef, onMove }) {
   const wrap = useRef(null);
+  const boxEl = useRef(null);
   const img = useRef(null);
   const canvas = useRef(null);
   const stroke = useRef(null);
@@ -131,12 +132,34 @@ function PhotoEditor({ src, tool, texts, emojis, editorRef }) {
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,.45)';
         ctx.shadowBlur = Math.round(W * 0.01);
-        latest.current.texts.forEach((t) => { ctx.font = `700 ${Math.round(W * 0.06)}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(t.text, W * 0.5, H * t.y); });
-        latest.current.emojis.forEach((e) => { ctx.font = `${Math.round(W * 0.14)}px sans-serif`; ctx.fillText(e.emoji, W * 0.5, H * e.y); });
+        latest.current.texts.forEach((t) => { ctx.font = `700 ${Math.round(W * 0.06)}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(t.text, W * (t.x ?? 0.5), H * t.y); });
+        latest.current.emojis.forEach((e) => { ctx.font = `${Math.round(W * 0.14)}px sans-serif`; ctx.fillText(e.emoji, W * (e.x ?? 0.5), H * e.y); });
         out.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not prepare the photo'))), 'image/jpeg', 0.92);
       }),
     };
   });
+
+  // Drag a text or sticker anywhere on the photo; the position is kept as a fraction of the photo
+  function startDrag(kind, index, event) {
+    if (!onMove || tool === 'draw') return;
+    event.stopPropagation();
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const clamp = (v) => Math.min(0.95, Math.max(0.05, v));
+    const move = (ev) => {
+      const r = boxEl.current?.getBoundingClientRect();
+      if (!r || !r.width || !r.height) return;
+      onMove(kind, index, clamp((ev.clientX - r.left) / r.width), clamp((ev.clientY - r.top) / r.height));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }
 
   function pointAt(event) {
     const c = canvas.current;
@@ -155,7 +178,7 @@ function PhotoEditor({ src, tool, texts, emojis, editorRef }) {
         style={box ? { left: box.left, top: box.top, width: box.width, height: box.height } : { visibility: 'hidden' }}
       />
       {box && (
-        <div className="cv-edit-box" style={{ left: box.left, top: box.top, width: box.width, height: box.height }}>
+        <div ref={boxEl} className="cv-edit-box" style={{ left: box.left, top: box.top, width: box.width, height: box.height }}>
           <canvas
             ref={canvas}
             className="cv-draw"
@@ -184,10 +207,10 @@ function PhotoEditor({ src, tool, texts, emojis, editorRef }) {
             onPointerCancel={() => { stroke.current = null; }}
           />
           {texts.map((t, index) => (
-            <span key={`t${index}`} className="cv-edit-text-item" style={{ top: `${t.y * 100}%` }}>{t.text}</span>
+            <span key={`t${index}`} className="cv-edit-text-item" style={{ left: `${(t.x ?? 0.5) * 100}%`, top: `${t.y * 100}%`, pointerEvents: tool === 'draw' ? 'none' : 'auto', touchAction: 'none' }} onPointerDown={(e) => startDrag('text', index, e)}>{t.text}</span>
           ))}
           {emojis.map((item, index) => (
-            <span key={`e${index}`} className="cv-edit-emoji" style={{ top: `${item.y * 100}%` }}>{item.emoji}</span>
+            <span key={`e${index}`} className="cv-edit-emoji" style={{ left: `${(item.x ?? 0.5) * 100}%`, top: `${item.y * 100}%`, pointerEvents: tool === 'draw' ? 'none' : 'auto', touchAction: 'none' }} onPointerDown={(e) => startDrag('emoji', index, e)}>{item.emoji}</span>
           ))}
         </div>
       )}
@@ -204,6 +227,13 @@ const VIEW_OPTIONS = [
 // Full-screen media: before sending (pending) it shows the editing tools and Send; after sending it shows the chat viewer
 export function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name, edit, setEdit, editorRef, viewLimits = true }) {
   const isVideo = media.kind === 'video';
+  // Keeps a dragged text or sticker where it was dropped
+  function moveItem(kind, index, x, y) {
+    setEdit((current) => {
+      const key = kind === 'text' ? 'texts' : 'emojis';
+      return { ...current, [key]: current[key].map((item, i) => (i === index ? { ...item, x, y } : item)) };
+    });
+  }
   const [draft, setDraft] = useState('');
   const [viewSheet, setViewSheet] = useState(false);
   const count = edit ? edit.texts.length + edit.emojis.length : 0;
@@ -226,7 +256,7 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
     <div className="cv-viewer cv-viewer-full" role="dialog" aria-label="Media preview">
       <div className="cv-viewer-stage">
         {pending && !isVideo && edit
-          ? <PhotoEditor src={media.src} tool={edit.tool} texts={edit.texts} emojis={edit.emojis} editorRef={editorRef} />
+          ? <PhotoEditor src={media.src} tool={edit.tool} texts={edit.texts} emojis={edit.emojis} editorRef={editorRef} onMove={moveItem} />
           : isVideo
             ? <video src={media.src} controls={!pending} muted={pending} autoPlay playsInline />
             : <img src={media.src} alt="" />}
