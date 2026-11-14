@@ -235,3 +235,14 @@
 .sn-page .sn-item .sn-sub, .sn-page .sn-item.unread .sn-sub,
 .sn-page .sn-item .sn-sub .sn-txt, .sn-page .sn-item.unread .sn-sub .sn-txt { font-weight: 400 !important; }
 .sn-page .sn-item .sn-sub .sn-txt { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Chat search screen: matches the New message reference (pill search, larger rows) */
+.sn-page .sn-chat-search-top { padding: 22px 20px 14px; gap: 12px; }
+.sn-page .sn-chat-search-top input,
+.sn-page .sn-chat-search .sn-chat-search-top input { height: 48px !important; border-radius: 999px !important; padding: 0 18px !important; font-size: 17px !important; background: #f0f2f5 !important; }
+.sn-page .sn-chat-search-list { padding: 0 20px; }
+.sn-page .sn-chat-search-row { padding: 10px 0; gap: 14px; }
+.sn-page .sn-chat-search-row strong { font-size: 17px !important; font-weight: 500 !important; color: #000; }
+.sn-page .sn-chat-search-row small { font-size: 16px !important; color: #8e8e8e; }
+.sn-page .sn-chat-search-row .sn-group-avatar,
+.sn-page .sn-chat-search-row .avatar { width: 56px !important; height: 56px !important; }

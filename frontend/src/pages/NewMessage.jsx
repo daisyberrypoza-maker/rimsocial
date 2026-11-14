@@ -6,19 +6,26 @@ import Avatar from '../components/Avatar.jsx';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
+import './NewMessage.css';
 
-// New chat, laid out like the reference: a white sheet over the dimmed chat with New Chat / New Call tabs,
-// a To: search, New Group, Recents with selectable rows and a Chat button. Tap the dimmed area to close.
+const icon = (path) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
+);
+
+// New message / New group chat, laid out like the reference screens.
 export default function NewMessage() {
   const navigate = useNavigate();
   const me = useAppStore((st) => st.user);
+  const [mode, setMode] = useState('direct'); // 'direct' | 'group'
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState([]);
   const [loadingPeople, setLoadingPeople] = useState(true);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [hidden, setHidden] = useState(() => new Set());
   const [groupName, setGroupName] = useState('');
   const [creating, setCreating] = useState(false);
+  const groupMode = mode === 'group';
 
   useEffect(() => {
     let alive = true;
@@ -67,91 +74,137 @@ export default function NewMessage() {
     return () => { alive = false; clearTimeout(timer); };
   }, [query, me?.id]);
 
-  const list = results ?? recents.filter((person) => person.id !== me?.id);
+  const base = results ?? recents;
+  const list = base.filter((person) => !hidden.has(String(person.id)));
   const isSelected = (person) => selected.some((s) => s.id === person.id);
   const toggle = (person) => setSelected((cur) => (
     cur.some((s) => s.id === person.id) ? cur.filter((s) => s.id !== person.id) : [...cur, person]
   ));
+  const hide = (person) => setHidden((cur) => new Set(cur).add(String(person.id)));
 
-  async function startChat() {
-    if (!selected.length || creating) return;
-    if (selected.length > 1) {
-      setCreating(true);
-      try {
-        const data = await api('/v1/messages/groups', { method: 'POST', body: { memberIds: selected.map((person) => person.id), name: groupName.trim() } });
-        navigate(chatPath('group', data.group.id), { replace: true });
-      } catch (e) { toast(e.message || 'Could not create group'); }
-      finally { setCreating(false); }
-      return;
-    }
-    navigate(chatPath('direct', selected[0].id));
+  function onRow(person) {
+    if (groupMode) toggle(person);
+    else navigate(chatPath('direct', person.id));
   }
 
-  const removeSelected = (personId) => {
-    setSelected((cur) => cur.filter((person) => person.id !== personId));
-  };
+  async function createGroup() {
+    if (selected.length < 2 || creating) return;
+    setCreating(true);
+    try {
+      const data = await api('/v1/messages/groups', { method: 'POST', body: { memberIds: selected.map((person) => person.id), name: groupName.trim() } });
+      navigate(chatPath('group', data.group.id), { replace: true });
+    } catch (e) { toast(e.message || 'Could not create group'); }
+    finally { setCreating(false); }
+  }
+
+  function back() {
+    if (groupMode) { setMode('direct'); setSelected([]); setGroupName(''); setQuery(''); }
+    else navigate('/chat');
+  }
+
+  const title = groupMode ? 'New group chat' : 'New message';
+  const heading = results ? 'Results' : 'Suggested';
 
   return (
-    <div className="nc-backdrop" onClick={() => navigate('/chat')}>
-      <section className="nc-sheet" role="dialog" aria-modal="true" aria-label="New chat" onClick={(e) => e.stopPropagation()}>
-        <span className="nc-grip" aria-hidden="true" />
-        <div className="nc-tabs" role="tablist">
-          <button type="button" role="tab" aria-selected="true" className="nc-tab on">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-            New Chat
-          </button>
-          <button type="button" role="tab" aria-selected="false" className="nc-tab" disabled>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" /></svg>
-            New Call
-          </button>
-        </div>
-
-        <div className={selected.length > 1 ? 'nc-to nc-to-group' : 'nc-to'} role="group" aria-label="Message recipients">
-          <span className="nc-to-label">To:</span>
-          {selected.map((person) => (
-            <span className="nc-recipient" key={person.id}>
-              <span>{person.displayName || person.username}</span>
-              <button type="button" aria-label={`Remove ${person.displayName || person.username}`} onClick={() => removeSelected(person.id)}>×</button>
-            </span>
-          ))}
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={selected.length ? 'Add people' : 'Search people'} aria-label="Search people" autoFocus />
-          {selected.length > 1 && <span className="nc-group-count">Group · {selected.length}</span>}
-        </div>
-
-        <button type="button" className="nc-group" onClick={() => { setSelected([]); setGroupName(''); document.querySelector('.nc-to input')?.focus(); }}>
-          <span className="nc-group-icon" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><path d="M19 8v6M16 11h6" /></svg>
-          </span>
-          <span className="nc-group-text">
-            <strong>New Group</strong>
-            <small>Chat with up to 200 friends</small>
-          </span>
-          <svg className="nc-chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+    <div className="nm-page" role="dialog" aria-modal="true" aria-label={title}>
+      <header className="nm-head">
+        <button type="button" className="nm-back" aria-label="Back" onClick={back}>
+          {icon(<path d="M19 12H5M12 19l-7-7 7-7" />)}
         </button>
+        <h1 className="nm-title">{title}</h1>
+      </header>
 
-        {selected.length > 1 && <input className="nc-group-name-input" value={groupName} onChange={(e) => setGroupName(e.target.value)} maxLength={80} placeholder="Group name (optional)" aria-label="Group name" />}
-        <h2 className="nc-section">{results ? 'Results' : 'People'}</h2>
+      <div className="nm-body">
+        {!groupMode && (
+          <label className="nm-to">
+            <span className="nm-to-label">To:</span>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people" autoFocus />
+          </label>
+        )}
+
+        {!groupMode && (
+          <div className="nm-actions">
+            <button type="button" className="nm-action" onClick={() => { setMode('group'); setQuery(''); }}>
+              <span className="nm-action-icon">{icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M16.5 14.6c3 .3 5 2.3 5 5.2" /></>)}</span>
+              Group chat
+            </button>
+            <button type="button" className="nm-action" disabled>
+              <span className="nm-action-icon">{icon(<><circle cx="12" cy="12" r="2" /><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7" /><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8" /></>)}</span>
+              Create a channel
+            </button>
+            <button type="button" className="nm-action" disabled>
+              <span className="nm-action-icon">{icon(<><rect x="4" y="7" width="16" height="12" rx="4" /><path d="M12 3v4M9 13h.01M15 13h.01" /></>)}</span>
+              AI chats
+            </button>
+          </div>
+        )}
+
+        {groupMode && (
+          <>
+            <input
+              className="nm-name-input"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              maxLength={80}
+              placeholder="Group name (optional)"
+              aria-label="Group name"
+            />
+            <label className="nm-search">
+              {icon(<><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></>)}
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people" />
+            </label>
+            {selected.length > 0 && (
+              <div className="nm-chips">
+                {selected.map((person) => (
+                  <button type="button" className="nm-chip" key={person.id} onClick={() => toggle(person)} aria-label={`Remove ${person.displayName || person.username}`}>
+                    <span className="nm-chip-avatar">
+                      <Avatar user={person} size={84} />
+                      <span className="nm-chip-badge" aria-hidden="true">{icon(<path d="M6 6l12 12M18 6L6 18" />)}</span>
+                    </span>
+                    <span className="nm-chip-name">{person.displayName || person.username}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        <h2 className="nm-section">{heading}</h2>
         {list.length ? (
-          <ul className="nc-list">
+          <ul className="nm-list">
             {list.map((person) => {
               const on = isSelected(person);
               return (
-                <li key={person.id}>
-                  <button type="button" className="nc-row" onClick={() => toggle(person)} aria-pressed={on}>
-                    <Avatar user={person} size={48} />
-                    <span className="nc-name">{person.displayName || person.username}</span>
-                    <span className={on ? 'nc-radio on' : 'nc-radio'} aria-hidden="true">
-                      {on && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>}
+                <li key={person.id} className="nm-item">
+                  <button type="button" className="nm-row" onClick={() => onRow(person)} aria-pressed={groupMode ? on : undefined}>
+                    <Avatar user={person} size={56} />
+                    <span className="nm-row-text">
+                      <span className="nm-row-name">{person.displayName || person.username}</span>
+                      {person.displayName && person.username && <span className="nm-row-handle">{person.username}</span>}
                     </span>
+                    {groupMode ? (
+                      <span className={on ? 'nm-check on' : 'nm-check'} aria-hidden="true">
+                        {on && icon(<path d="M5 12l5 5L20 7" />)}
+                      </span>
+                    ) : null}
                   </button>
+                  {!groupMode && (
+                    <button type="button" className="nm-x" aria-label={`Hide ${person.displayName || person.username}`} onClick={() => hide(person)}>
+                      {icon(<path d="M6 6l12 12M18 6L6 18" />)}
+                    </button>
+                  )}
                 </li>
               );
             })}
           </ul>
-        ) : <p className="nc-empty">{results ? 'No one found.' : loadingPeople ? 'Loading people…' : 'No people available yet.'}</p>}
+        ) : <p className="nm-empty">{results ? 'No one found.' : loadingPeople ? 'Loading people…' : 'No people available yet.'}</p>}
+      </div>
 
-        <button type="button" className={selected.length ? 'nc-chat on' : 'nc-chat'} disabled={!selected.length || creating} onClick={startChat}>{creating ? 'Creating…' : selected.length > 1 ? 'Create group' : 'Chat'}</button>
-      </section>
+      {groupMode && (
+        <button type="button" className={selected.length >= 2 ? 'nm-create on' : 'nm-create'} disabled={selected.length < 2 || creating} onClick={createGroup}>
+          {creating ? 'Creating…' : 'Create group'}
+        </button>
+      )}
     </div>
   );
 }
