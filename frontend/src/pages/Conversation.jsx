@@ -202,7 +202,7 @@ const VIEW_OPTIONS = [
 ];
 
 // Full-screen media: before sending (pending) it shows the editing tools and Send; after sending it shows the chat viewer
-function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name, edit, setEdit, editorRef }) {
+export function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name, edit, setEdit, editorRef, viewLimits = true }) {
   const isVideo = media.kind === 'video';
   const [draft, setDraft] = useState('');
   const [viewSheet, setViewSheet] = useState(false);
@@ -251,9 +251,9 @@ function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, o
           <button type="button" className={edit.tool === 'draw' ? 'on' : ''} onClick={() => toggleTool('draw')} aria-label="Draw">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /></svg>
           </button>
-          <button type="button" onClick={() => setViewSheet(true)} aria-label="Who can view" className={edit.viewLimit ? 'on' : ''}>
+          {viewLimits && <button type="button" onClick={() => setViewSheet(true)} aria-label="Who can view" className={edit.viewLimit ? 'on' : ''}>
             <span className="cv-view-badge">{edit.viewLimit === 1 ? '1' : edit.viewLimit === 2 ? '2' : '∞'}</span>
-          </button>
+          </button>}
         </div>
       )}
       {pending && edit && edit.tool === 'text' && (

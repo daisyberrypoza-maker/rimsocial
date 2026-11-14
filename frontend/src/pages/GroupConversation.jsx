@@ -7,7 +7,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
-import { MessageRow, attachmentLabel } from './Conversation.jsx';
+import { MessageRow, MediaViewer, attachmentLabel } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
 
@@ -45,6 +45,11 @@ export default function GroupConversationPage() {
   const endRef = useRef(null);
   const [replyTo, setReplyTo] = useState(null);
   const replyRef = useRef(null);
+  // Photo or video picked from the phone, shown with editing tools before it is sent
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [edit, setEdit] = useState({ tool: null, texts: [], emojis: [], viewLimit: 0 });
+  const editorRef = useRef(null);
   const [viewer, setViewer] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
@@ -127,9 +132,43 @@ export default function GroupConversationPage() {
     const picked = event.target.files?.[0];
     event.target.value = '';
     if (!picked) return;
+    if (/^image\//.test(picked.type) || /^video\//.test(picked.type)) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setEdit({ tool: null, texts: [], emojis: [], viewLimit: 0 });
+      setPreviewUrl(URL.createObjectURL(picked));
+      setFile(picked);
+      return;
+    }
     const caption = text.trim();
     setText('');
     sendMediaFile(picked, caption);
+  }
+
+  function closePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl('');
+    setFile(null);
+    setEdit({ tool: null, texts: [], emojis: [], viewLimit: 0 });
+  }
+
+  // Send the previewed photo with its edits flattened in, or the video as picked
+  async function sendPending() {
+    if (!file || sending) return;
+    let toSend = file;
+    if (/^image\//.test(file.type) && editorRef.current) {
+      try {
+        const blob = await editorRef.current.compose();
+        toSend = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      } catch (e) {
+        logError(e);
+        toast('Photo not ready');
+        return;
+      }
+    }
+    const caption = text.trim();
+    setText('');
+    closePreview();
+    sendMediaFile(toSend, caption);
   }
 
   // Hold the mic to record, release to send, slide left to cancel
@@ -333,6 +372,24 @@ export default function GroupConversationPage() {
           </button>
           <img src={viewer.src} alt="" onClick={(e) => e.stopPropagation()} />
         </div>
+      )}
+      {file && previewUrl && (
+        <MediaViewer
+          media={{ src: previewUrl, kind: /^image\//.test(file.type) ? 'photo' : 'video' }}
+          partner={null}
+          name={group?.name || 'Group'}
+          pending
+          text={text}
+          onText={setText}
+          onSend={sendPending}
+          onQuick={() => {}}
+          sending={sending}
+          edit={edit}
+          setEdit={setEdit}
+          editorRef={editorRef}
+          viewLimits={false}
+          onClose={closePreview}
+        />
       )}
       {messageMenu && (
         <ChatMenu
