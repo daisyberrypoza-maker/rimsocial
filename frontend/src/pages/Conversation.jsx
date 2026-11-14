@@ -495,12 +495,12 @@ function TimeLine({ message, mine }) {
   );
 }
 
-const URL_PATTERN = /https?:\/\/[^\s<>"']+/i;
+const FIRST_LINK_PATTERN = /https?:\/\/[^\s<>"']+/i;
 const previewCache = new Map();
 
 // The first link in a message shows a small card; tapping it opens the page in an in-app browser
 export function LinkPreview({ text }) {
-  const match = URL_PATTERN.exec(text || '');
+  const match = FIRST_LINK_PATTERN.exec(text || '');
   const url = match ? match[0].replace(/[.,;:!?)]+$/, '') : '';
   const [preview, setPreview] = useState(() => (url && previewCache.has(url) ? previewCache.get(url) : null));
   const [open, setOpen] = useState(false);
