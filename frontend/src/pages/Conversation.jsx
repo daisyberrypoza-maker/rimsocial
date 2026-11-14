@@ -472,7 +472,7 @@ export default function Conversation() {
           anchor={menuAnchor}
           onClose={() => setMenuFor(null)}
           items={[
-            { key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => startReply(menuFor) },
+            ...(String(menuFor.senderId) !== String(me?.id) ? [{ key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => startReply(menuFor) }] : []),
             ...(menuFor.body && !menuFor.deletedForEveryone ? [{ key: 'copy', label: 'Copy', icon: 'copy', onSelect: () => navigator.clipboard?.writeText(menuFor.body).catch(() => {}) }] : []),
             ...(!menuFor.deletedForEveryone ? [{ key: 'forward', label: 'Forward', icon: 'share-2', onSelect: () => openForward(menuFor) }] : []),
             ...(canEdit(menuFor) ? [{ key: 'edit', label: 'Edit', icon: 'pencil', onSelect: () => startEdit(menuFor) }] : []),
