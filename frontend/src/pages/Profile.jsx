@@ -508,12 +508,12 @@ export default function Profile() {
   return (
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
-        <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+        <button className="sc-compact-back" style={{ color: '#fff' }} aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
         <div className="sc-compact-actions">
-          <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
+          <button type="button" className="sc-compact-round" style={{ color: '#fff' }} aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
           {profile.isMe
-            ? <button type="button" className="sc-compact-round" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)} tabIndex={compactHeader ? 0 : -1}><Icon name="settings" size={19} /></button>
+            ? <button type="button" className="sc-compact-round" style={{ color: '#fff' }} aria-label="Open profile settings" onClick={() => setDrawerOpen(true)} tabIndex={compactHeader ? 0 : -1}><Icon name="settings" size={19} /></button>
             : <button type="button" className="sc-compact-round" aria-label="More options" onClick={() => setOptionsOpen(true)} tabIndex={compactHeader ? 0 : -1}><span aria-hidden="true">•••</span></button>}
         </div>
       </div>
@@ -521,12 +521,12 @@ export default function Profile() {
         <div className="pf-cover" aria-hidden="true" style={coverPreview ? { backgroundImage: `url(${coverPreview})` } : profile.coverUrl ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` } : { background: defaultCover(profile.username).css }} />
         <span className="pf-shade" aria-hidden="true" />
         <div className="pf-top">
-          <button type="button" className="pf-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
+          <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
           <div className="pf-top-right">
-            {!profile.isMe && profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
-            <button type="button" className="pf-round" aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
+            {!profile.isMe && profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} style={{ color: '#fff' }} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
+            <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
             {profile.isMe
-              ? <button type="button" className="pf-round" aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
+              ? <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Open profile settings" onClick={() => setDrawerOpen(true)}><Icon name="settings" size={21} /></button>
               : <button type="button" className="pf-round" aria-label="More options" onClick={() => setOptionsOpen(true)}><span aria-hidden="true">•••</span></button>}
           </div>
         </div>
@@ -708,7 +708,7 @@ export default function Profile() {
         </section>
       </div>, document.body)}
 
-      <nav className="pf-tabs" role="tablist" aria-label="Profile content">
+      <nav className="pf-tabs" role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(2, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', alignItems: 'stretch' }}>
         <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
