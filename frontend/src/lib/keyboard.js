@@ -20,6 +20,8 @@ export function startKeyboardAvoidance() {
     root.style.setProperty('--app-vh', heightValue);
     root.style.setProperty('--app-viewport-height', heightValue);
     root.style.setProperty('--keyboard-inset', `${Math.round(keyboardInset)}px`);
+    // Where the visible area starts, so fixed screens (chat header) stay on screen when the browser pans up for the keyboard
+    root.style.setProperty('--app-viewport-top', `${Math.round(offsetTop)}px`);
     root.classList.toggle('keyboard-open', keyboardInset > KEYBOARD_THRESHOLD);
   }
 
@@ -52,5 +54,6 @@ export function startKeyboardAvoidance() {
     root.style.removeProperty('--app-vh');
     root.style.removeProperty('--app-viewport-height');
     root.style.removeProperty('--keyboard-inset');
+    root.style.removeProperty('--app-viewport-top');
   };
 }

@@ -338,3 +338,10 @@
 .cv-order-desc::placeholder { color: #8e8e8e; }
 .cv-order-submit { height: 52px; border-radius: 999px; background: #0095f6 !important; color: #fff !important; font-size: 16px !important; font-weight: 600 !important; }
 .cv-order-submit:disabled { background: #e4e6ea !important; color: #8e8e8e !important; opacity: 1; }
+
+/* Chat screen stays pinned to the visible area, so the header does not move up when the keyboard opens */
+.dm-convo.cv-convo {
+  top: var(--app-viewport-top, 0px) !important;
+  bottom: auto !important;
+  height: var(--app-viewport-height, 100dvh) !important;
+}
