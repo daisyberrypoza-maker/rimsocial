@@ -197,3 +197,12 @@
 .sn-chat-search-row small { display: block; font-size: 12px; color: #65676b; }
 .sn-chat-search-row .sn-group-avatar { width: 44px; height: 44px; border-radius: 50%; background: #f0f2f5; display: inline-flex; align-items: center; justify-content: center; }
 .sn-chat-search-explore { margin: 12px 16px 24px; height: 44px; border: 0; border-radius: 4px; background: #e7f0ff; color: #0064e0; font-size: 14px; font-weight: 500; }
+
+/* Chat page: tabs 8px corners and 4px less padding; chat text thinner */
+.sn-page .sn-chip,
+.sn-page .sn-chip:hover,
+.sn-page .sn-chip:focus,
+.sn-page .sn-chip:active { border-radius: 8px !important; padding: 0 12px !important; }
+.sn-page .sn-name { font-weight: 500 !important; }
+.sn-page .sn-sub,
+.sn-page .sn-txt { font-weight: 400 !important; }

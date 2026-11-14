@@ -134,10 +134,10 @@ export default function Messages() {
   const all = items || [];
   // Search on this page finds chats and groups only
   const chatQuery = query.trim().toLowerCase();
-  const chatSearchResults = chatQuery ? [
-    ...all.filter((item) => `${item.user.displayName || ''} ${item.user.username || ''}`.toLowerCase().includes(chatQuery)).map((item) => ({ kind: 'chat', key: 'c' + item.user.id, user: item.user })),
-    ...groups.filter((group) => String(group.name || '').toLowerCase().includes(chatQuery)).map((group) => ({ kind: 'group', key: 'g' + group.id, group })),
-  ] : [];
+  const chatSearchResults = [
+    ...all.filter((item) => !chatQuery || `${item.user.displayName || ''} ${item.user.username || ''}`.toLowerCase().includes(chatQuery)).map((item) => ({ kind: 'chat', key: 'c' + item.user.id, user: item.user })),
+    ...groups.filter((group) => !chatQuery || String(group.name || '').toLowerCase().includes(chatQuery)).map((group) => ({ kind: 'group', key: 'g' + group.id, group })),
+  ];
   // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
   const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
   const shown = filter === 'all' ? all : all.filter((item) => inGroup(item, filter));
