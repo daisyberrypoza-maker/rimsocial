@@ -167,7 +167,7 @@ export default function Conversation() {
             const isSeller = String(order.sellerId) === String(me?.id);
             const title = order.status === 'paid' ? 'Order paid' : order.status === 'cancelled' ? 'Order cancelled' : 'Order created';
             return (
-              <View style={[styles.orderCard, mine ? styles.orderMine : styles.orderTheirs]}>
+              <Pressable onPress={() => navigation.navigate('OrderDetails', { orderId: order.id })} accessibilityLabel="View order" style={[styles.orderCard, mine ? styles.orderMine : styles.orderTheirs]}>
                 <Text style={styles.orderTitle}>{title}</Text>
                 <Text style={styles.orderSub}>Order number {String(order.id).slice(0, 8).toUpperCase()}</Text>
                 <Text style={styles.orderAmount}>${(Number(order.amountCents || 0) / 100).toFixed(2)} {order.currency || 'USD'}</Text>
@@ -178,7 +178,7 @@ export default function Conversation() {
                     <Pressable style={styles.orderGhost} onPress={() => orderAction(order, 'cancel')} accessibilityLabel="Cancel order"><Text style={styles.orderGhostText}>Cancel</Text></Pressable>
                   </View>
                 )}
-              </View>
+              </Pressable>
             );
           }
           return (

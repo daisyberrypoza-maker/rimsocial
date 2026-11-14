@@ -12,6 +12,7 @@ import Profile from '../screens/Profile';
 import ProfileList from '../screens/ProfileList';
 import EditProfile from '../screens/EditProfile';
 import Conversation from '../screens/Conversation';
+import OrderDetails from '../screens/OrderDetails';
 import GroupConversation from '../screens/GroupConversation';
 import NewMessage from '../screens/NewMessage';
 import Explore from '../screens/Explore';
@@ -50,6 +51,7 @@ export default function RootNavigator({ signedIn }) {
       <Stack.Screen name="ProfileList" component={ProfileList} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="Conversation" component={Conversation} />
+      <Stack.Screen name="OrderDetails" component={OrderDetails} />
       <Stack.Screen name="GroupConversation" component={GroupConversation} />
       <Stack.Screen name="NewMessage" component={NewMessage} />
       <Stack.Screen name="Explore" component={withTabBar(Explore, 'Explore')} />
