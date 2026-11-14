@@ -6750,7 +6750,7 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
 .pv-sheet .pv-person-text { align-items: flex-start !important; text-align: left !important; min-width: 0 !important; gap: 2px !important; }
 .pv-sheet .pv-person-text strong { font-size: 16px !important; font-weight: 400 !important; color: #000 !important; }
 .pv-sheet .pv-person-text small { font-size: 15px !important; font-weight: 400 !important; color: #8e8e8e !important; }
-.pv-sheet .pv-follow { width: auto !important; min-width: 112px !important; max-width: none !important; height: 36px !important; padding: 0 16px !important; border: 0 !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer; }
+.pv-sheet .pv-follow { width: auto !important; min-width: 82px !important; max-width: none !important; height: 32px !important; padding: 0 12px !important; border: 0 !important; border-radius: 8px !important; font-size: 13px !important; font-weight: 650 !important; line-height: 1 !important; white-space: nowrap !important; cursor: pointer; }
 .pv-sheet .pv-follow.primary { background: #0095f6 !important; color: #fff !important; }
 .pv-sheet .pv-follow.added { background: #efefef !important; color: #000 !important; }
 .pv-sheet .pv-follow:disabled { opacity: .6; }
