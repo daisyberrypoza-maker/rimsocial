@@ -15,7 +15,6 @@ const PUBLIC_USER = ['id', 'username', 'displayName', 'avatarUrl'];
 const POST_LINK = /\/p\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EDIT_WINDOW_MS = 15 * 60 * 1000;            // edit your own message for 15 minutes
-const DELETE_EVERYONE_WINDOW_MS = 48 * 60 * 60 * 1000; // delete for everyone for 48 hours
 const TYPING_TTL_SECONDS = 6;
 
 // ---- helpers -------------------------------------------------------------
@@ -621,14 +620,13 @@ router.patch('/message/:id', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-// Delete a message. scope=me hides it only for me. scope=everyone removes it for both people (my own messages, within 48 hours).
+// Delete a message. scope=me hides it only for me. scope=everyone removes it for both people (my own messages, instantly).
 router.delete('/message/:id', async (req, res, next) => {
   try {
     const me = req.user.id;
     const row = await findVisibleMessage(me, req.params.id);
     if (req.query.scope === 'everyone') {
       if (String(row.senderId) !== me) throw httpError(403, 'You can only delete your own messages for everyone');
-      if (Date.now() - new Date(row.createdAt).getTime() > DELETE_EVERYONE_WINDOW_MS) throw httpError(400, 'You can only delete for everyone within 48 hours');
       await row.update({ deletedForEveryone: true, body: '', mediaUrl: null, mediaKind: null, mediaName: null, postId: null });
     } else {
       await row.update({ hiddenFor: JSON.stringify([...new Set([...hiddenIds(row), String(me)])]) });

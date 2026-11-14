@@ -19,7 +19,6 @@ import './Conversation.css';
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
 const POST_PATTERN = /\/p\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
-const DELETE_EVERYONE_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 export function attachmentLabel(kind) {
   if (kind === 'photo') return 'Photo';
@@ -762,7 +761,7 @@ export default function Conversation() {
     return m && String(m.senderId) === String(me?.id) && !m.deletedForEveryone && !m.mediaUrl && Date.now() - new Date(m.createdAt).getTime() <= EDIT_WINDOW_MS;
   }
   function canDeleteEveryone(m) {
-    return m && String(m.senderId) === String(me?.id) && !m.deletedForEveryone && Date.now() - new Date(m.createdAt).getTime() <= DELETE_EVERYONE_WINDOW_MS;
+    return m && String(m.senderId) === String(me?.id) && !m.deletedForEveryone;
   }
 
   async function deleteMessage(m, scope) {
@@ -970,7 +969,7 @@ export default function Conversation() {
           anchor={menuAnchor}
           onClose={() => setMenuFor(null)}
           items={[
-            ...(String(menuFor.senderId) !== String(me?.id) ? [{ key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => startReply(menuFor) }] : []),
+            { key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => startReply(menuFor) },
             ...(menuFor.body && !menuFor.deletedForEveryone ? [{ key: 'copy', label: 'Copy', icon: 'copy', onSelect: () => navigator.clipboard?.writeText(menuFor.body).catch(() => {}) }] : []),
             ...(!menuFor.deletedForEveryone ? [{ key: 'forward', label: 'Forward', icon: 'share-2', onSelect: () => openForward(menuFor) }] : []),
             ...(canEdit(menuFor) ? [{ key: 'edit', label: 'Edit', icon: 'pencil', onSelect: () => startEdit(menuFor) }] : []),
