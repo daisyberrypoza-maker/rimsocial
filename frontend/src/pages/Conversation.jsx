@@ -118,7 +118,7 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
         const dx = t.clientX - start.current.x;
         const dy = t.clientY - start.current.y;
         if (Math.abs(dy) > 12 || Math.abs(dx) > 12) clearTimer();
-        if (!mine && dx > 0 && Math.abs(dy) < 20) {
+        if (dx > 0 && Math.abs(dy) < 20) {
           setOffset(Math.min(dx, 80));
           if (dx > 60) start.current.swiped = true;
         }
@@ -137,6 +137,12 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
   );
 }
 
+const EMOJIS = ['😀', '😂', '😍', '🥰', '😊', '😎', '🙏', '👍', '🔥', '🎉', '❤️', '😢', '😮', '😡', '🤔', '👏', '😋', '🥳', '💯', '✨', '😘', '🤣', '😅', '🙌', '👀', '💕', '😇', '🤗', '😴', '🤩'];
+function formatClock(total) {
+  const m = Math.floor(total / 60);
+  const sec = String(total % 60).padStart(2, '0');
+  return `${m}:${sec}`;
+}
 const ICON = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
 function stampOf(value) {
   const d = new Date(value);
@@ -205,6 +211,14 @@ export default function Conversation() {
   const [error, setError] = useState('');
   const endRef = useRef(null);
   const fileRef = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const holdRef = useRef({ active: false, startX: 0 });
+  const cancelRecordRef = useRef(false);
+  const recordTimerRef = useRef(null);
   const lastTypingSent = useRef(0);
 
   useEffect(() => {
@@ -271,6 +285,92 @@ export default function Conversation() {
     setEditing(null);
     setText('');
     setFile(null);
+  }
+
+  // Voice notes: hold the mic to record, release to send, slide left to cancel
+  async function sendVoice(blob) {
+    const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+    const voice = new File([blob], `voice-note-${Date.now()}.${ext}`, { type: blob.type || 'audio/webm' });
+    setSending(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('media', voice);
+      if (replyTo) form.append('replyToId', replyTo.id);
+      const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
+      const sent = { ...data.message, replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
+      setMessages((current) => {
+        const list = current || [];
+        return list.some((m) => m.id === sent.id) ? list : [...list, sent];
+      });
+      setReplyTo(null);
+    } catch (e) {
+      logError(e);
+      toast(`Voice note not sent${e.status ? ` (error ${e.status})` : ''}`);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function startVoice() {
+    if (recorderRef.current || sending || editing) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast('Voice notes are not supported in this browser');
+      return;
+    }
+    // Listen on the window: the composer hides while recording, so the release must not depend on the button
+    const onMove = (ev) => { if (ev.clientX - holdRef.current.startX < -80) cancelRecordRef.current = true; };
+    const onRelease = (ev) => {
+      holdRef.current.active = false;
+      window.removeEventListener('pointerup', onRelease);
+      window.removeEventListener('pointercancel', onRelease);
+      window.removeEventListener('pointermove', onMove);
+      if (ev.type === 'pointercancel') cancelRecordRef.current = true;
+      stopVoice(false);
+    };
+    window.addEventListener('pointerup', onRelease);
+    window.addEventListener('pointercancel', onRelease);
+    window.addEventListener('pointermove', onMove);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported?.(t)) || '';
+      const recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+      chunksRef.current = [];
+      cancelRecordRef.current = false;
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        window.removeEventListener('pointerup', onRelease);
+        window.removeEventListener('pointercancel', onRelease);
+        window.removeEventListener('pointermove', onMove);
+        stream.getTracks().forEach((track) => track.stop());
+        clearInterval(recordTimerRef.current);
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const cancelled = cancelRecordRef.current;
+        chunksRef.current = [];
+        recorderRef.current = null;
+        setRecording(false);
+        if (!cancelled && blob.size > 0) sendVoice(blob);
+      };
+      recorderRef.current = recorder;
+      setRecordSeconds(0);
+      setRecording(true);
+      recorder.start();
+      recordTimerRef.current = setInterval(() => setRecordSeconds((n) => n + 1), 1000);
+      // The finger may have lifted while the microphone was starting
+      if (!holdRef.current.active) recorder.stop();
+    } catch (e) {
+      window.removeEventListener('pointerup', onRelease);
+      window.removeEventListener('pointercancel', onRelease);
+      window.removeEventListener('pointermove', onMove);
+      logError(e);
+      toast('Allow microphone access to record a voice note');
+    }
+  }
+
+  function stopVoice(cancel) {
+    if (cancel) cancelRecordRef.current = true;
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
   }
 
   async function send(event) {
@@ -472,6 +572,21 @@ export default function Conversation() {
         </div>
       )}
 
+      {recording && (
+        <div className="cv-recording" role="status" aria-live="polite">
+          <span className="cv-rec-dot" aria-hidden="true" />
+          <span className="cv-rec-time">{formatClock(recordSeconds)}</span>
+          <span className="cv-rec-hint">Slide left to cancel</span>
+        </div>
+      )}
+      {emojiOpen && !recording && (
+        <div className="cv-emoji-panel" aria-label="Emoji">
+          {EMOJIS.map((emoji) => (
+            <button key={emoji} type="button" onClick={() => onTextChange(text + emoji)} aria-label={`Insert ${emoji}`}>{emoji}</button>
+          ))}
+        </div>
+      )}
+      {!recording && (
       <form className="dm-input cv-form cv-ig-form" onSubmit={send}>
         {!editing && (
           <button type="button" className="cv-camera" onClick={() => fileRef.current?.click()} aria-label="Attach photo or video" disabled={sending}>
@@ -484,21 +599,29 @@ export default function Conversation() {
           <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>{editing ? 'Save' : 'Send'}</button>
         ) : (
           <span className="cv-tools">
-            <button type="button" className="cv-tool" onClick={() => toast('Voice messages are not available yet')} aria-label="Voice message">
+            <button
+              type="button"
+              className="cv-tool"
+              aria-label="Hold to record a voice note"
+              disabled={sending}
+              onContextMenu={(e) => e.preventDefault()}
+              onPointerDown={(e) => { holdRef.current = { active: true, startX: e.clientX }; startVoice(); }}
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4" /></svg>
             </button>
             <button type="button" className="cv-tool" onClick={() => fileRef.current?.click()} aria-label="Photos and videos" disabled={sending}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
             </button>
-            <button type="button" className="cv-tool" onClick={() => toast('Stickers are not available yet')} aria-label="Stickers">
+            <button type="button" className="cv-tool" onClick={() => setEmojiOpen((open) => !open)} aria-label="Emoji" aria-expanded={emojiOpen}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" /></svg>
             </button>
-            <button type="button" className="cv-tool" onClick={() => fileRef.current?.click()} aria-label="More" disabled={sending}>
+            <button type="button" className="cv-tool" onClick={() => toast('Creating orders in chat is not set up yet')} aria-label="Create order">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
             </button>
           </span>
         )}
       </form>
+      )}
 
       {menuFor && (
         <ChatMenu

@@ -122,3 +122,22 @@
   background: transparent !important; color: #0095f6 !important; font-size: 16px; font-weight: 600; box-shadow: none !important;
 }
 .dm-convo.cv-convo .cv-ig-form button.cv-send-text:disabled { opacity: .4; }
+
+/* Voice note recording bar (replaces the composer while holding the mic) */
+.dm-convo.cv-convo .cv-recording {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; box-sizing: border-box;
+  margin: 6px 12px calc(env(safe-area-inset-bottom, 0px) + 6px); padding: 0 18px; border-radius: 999px; background: #f0f0f0;
+}
+.dm-convo.cv-convo .cv-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #ed4956; animation: cv-rec-blink 1s ease-in-out infinite; }
+@keyframes cv-rec-blink { 50% { opacity: .25; } }
+.dm-convo.cv-convo .cv-rec-time { font-size: 16px; font-weight: 600; color: #000; font-variant-numeric: tabular-nums; }
+.dm-convo.cv-convo .cv-rec-hint { margin-left: auto; font-size: 14px; color: #737373; }
+
+/* Emoji panel above the composer */
+.dm-convo.cv-convo .cv-emoji-panel {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; max-height: 160px; overflow-y: auto;
+  margin: 0 12px; padding: 8px; box-sizing: border-box; background: #fff; border-top: 1px solid #efefef;
+}
+.dm-convo.cv-convo .cv-emoji-panel button {
+  height: 40px; border: 0; background: transparent; font-size: 24px; line-height: 1; padding: 0; cursor: pointer;
+}
