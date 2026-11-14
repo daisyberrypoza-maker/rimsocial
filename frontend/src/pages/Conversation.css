@@ -287,3 +287,8 @@
 .cv-bubble .cv-audio { display: block; width: 240px; max-width: 70vw; height: 40px; margin: 2px 0; }
 .cv-bubble .cv-file { display: inline-flex; align-items: center; max-width: 260px; padding: 4px 2px; color: inherit; font-weight: 600; text-decoration: underline; word-break: break-word; }
 .cv-bubble .cv-file-name { overflow-wrap: anywhere; }
+
+/* Reply quote with a photo thumbnail */
+.cv-bubble .cv-quote.with-thumb { flex-direction: row; align-items: center; gap: 8px; }
+.cv-bubble .cv-quote-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.cv-bubble .cv-quote-thumb { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 6px; object-fit: cover; }

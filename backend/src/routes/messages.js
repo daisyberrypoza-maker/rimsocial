@@ -112,6 +112,8 @@ async function withReplyPreviews(rows) {
       body: clean.body,
       mediaKind: clean.mediaKind || null,
       deletedForEveryone: Boolean(row.deletedForEveryone),
+      // Photos quote with a thumbnail; view-once photos never show theirs
+      mediaUrl: clean.mediaKind === 'photo' && !row.viewLimit ? clean.mediaUrl || null : null,
     }];
   }));
   return rows.map((row) => (row.replyToId ? { ...row, replyTo: byId.get(String(row.replyToId)) || null } : row));

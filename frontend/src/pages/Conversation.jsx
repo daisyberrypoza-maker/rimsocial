@@ -75,8 +75,9 @@ function PostCard({ post }) {
 }
 
 // Photos and videos open in the chat's own preview; a story sent from a story opens that story instead
-function openMedia(src, kind, createdAt) {
-  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt } }));
+// `from` is the message on show, so a comment from the viewer can quote it
+function openMedia(src, kind, createdAt, from = null) {
+  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt, from } }));
 }
 
 // Editable photo before sending: the image plus draw, text and sticker layers, flattened on send
@@ -309,7 +310,7 @@ async function openViewOnce(message) {
   try {
     const data = await api(`/v1/messages/message/${message.id}/view`, { method: 'POST', body: {} });
     window.dispatchEvent(new CustomEvent('cv-viewed', { detail: { id: message.id, viewCount: data.viewCount } }));
-    openMedia(mediaUrl(message.mediaUrl), 'photo', message.createdAt);
+    openMedia(mediaUrl(message.mediaUrl), 'photo', message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.viewLimit ? null : message.mediaUrl });
   } catch (e) {
     logError(e);
     toast(e.message || 'This photo can no longer be viewed');
@@ -327,7 +328,7 @@ function Attachment({ message, storyAuthorId, mine }) {
       ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
       : <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
     if (storyAuthorId) return <Link to="/stories" state={{ openUserId: storyAuthorId }} className="cv-media-link" aria-label="Open story">{media}</Link>;
-    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind, message.createdAt)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
+    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind, message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.mediaKind === 'photo' ? message.mediaUrl : null })} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
   }
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   const name = message.mediaName || 'File';
@@ -435,9 +436,12 @@ function Bubble({ message, mine }) {
   return (
     <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
       {reply && (
-        <div className="cv-quote">
-          <strong>{reply.deletedForEveryone ? 'Deleted message' : reply.senderId === message.senderId ? 'You' : 'Reply'}</strong>
-          <span>{reply.deletedForEveryone ? 'This message was deleted' : reply.body || attachmentLabel(reply.mediaKind)}</span>
+        <div className={reply.mediaKind === 'photo' && reply.mediaUrl && !reply.deletedForEveryone ? 'cv-quote with-thumb' : 'cv-quote'}>
+          <div className="cv-quote-text">
+            <strong>{reply.deletedForEveryone ? 'Deleted message' : reply.senderId === message.senderId ? 'You' : 'Reply'}</strong>
+            <span>{reply.deletedForEveryone ? 'This message was deleted' : reply.body || attachmentLabel(reply.mediaKind)}</span>
+          </div>
+          {!reply.deletedForEveryone && reply.mediaKind === 'photo' && reply.mediaUrl && <img className="cv-quote-thumb" src={mediaUrl(reply.mediaUrl)} alt="" />}
         </div>
       )}
       {message.replyToId && !reply && <div className="cv-quote"><span>Original message is no longer available</span></div>}
@@ -585,10 +589,14 @@ export default function Conversation() {
     if (!clean) return;
     setViewerText('');
     try {
-      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: clean } });
+      // A comment or reaction on a photo or video is a reply to that message
+      const from = viewerMedia?.from || null;
+      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: clean, replyToId: from?.id || undefined } });
+      const quoted = from ? { id: from.id, senderId: from.senderId, body: '', mediaKind: viewerMedia.kind || 'photo', mediaUrl: from.mediaUrl || null, deletedForEveryone: false } : null;
+      const sent = { ...data.message, replyTo: quoted };
       setMessages((current) => {
         const list = current || [];
-        return list.some((m) => m.id === data.message.id) ? list : [...list, data.message];
+        return list.some((m) => m.id === sent.id) ? list : [...list, sent];
       });
       setViewerMedia(null);
     } catch (e) {
