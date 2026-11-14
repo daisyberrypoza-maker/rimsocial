@@ -1,0 +1,7 @@
+.app-browser { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; background: #fff; color: #000; }
+.app-browser-top { flex: none; display: flex; align-items: center; gap: 12px; height: 56px; padding: calc(env(safe-area-inset-top, 0px)) 14px 0; box-sizing: content-box; border-bottom: 1px solid #efefef; }
+.app-browser-top strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; }
+.app-browser-top a { flex: none; font-size: 14px; font-weight: 600; color: #0064e0; text-decoration: none; }
+.app-browser-close { flex: none; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: #fff !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
+.app-browser iframe { flex: 1 1 auto; width: 100%; min-height: 0; border: 0; background: #fff; }
+.app-browser-note { flex: none; margin: 0; padding: 8px 14px calc(env(safe-area-inset-bottom, 0px) + 8px); font-size: 13px; color: #737373; text-align: center; }

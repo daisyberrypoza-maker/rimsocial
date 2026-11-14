@@ -1,3 +1,4 @@
+import AppLink from '../components/AppLink.jsx';
 import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
@@ -556,7 +557,7 @@ export default function Profile() {
         {(profile.city || profile.country || profile.website) && (
           <div className="pf-chips">
             {(profile.city || profile.country) && <span className="pf-chip"><Icon name="map-pin" size={15} />{[profile.city, profile.country].filter(Boolean).join(', ')}</span>}
-            {profile.website && <a className="pf-chip" href={profile.website} target="_blank" rel="noopener noreferrer"><Icon name="link" size={15} />{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>}
+            {profile.website && <AppLink className="pf-chip" href={profile.website}><Icon name="link" size={15} />{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</AppLink>}
           </div>
         )}
       </div>
@@ -596,7 +597,7 @@ export default function Profile() {
               <SettingsItem icon="video" title="LIVE broadcasts" onClick={() => { setDrawerOpen(false); navigate('/live'); }} />
             </SettingsSection>
             <div className="settings-foot">
-              <button type="button" className="settings-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="arrow-right" size={20} />Log out</button>
+              <button type="button" className="settings-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="log-out" size={20} />Log out</button>
               <p className="settings-build" data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
             </div>
           </div>

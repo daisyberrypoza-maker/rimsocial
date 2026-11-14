@@ -1,3 +1,4 @@
+import AppLink from './AppLink.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -402,7 +403,7 @@ export default function PostCard({ post, active }) {
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored && <>
         <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
-        {post.sponsorUrl && <a className="sponsor-cta" href={post.sponsorUrl} target="_blank" rel="noopener noreferrer">{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></a>}
+        {post.sponsorUrl && <AppLink className="sponsor-cta" href={post.sponsorUrl}>{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></AppLink>}
       </>}
     </div>
     {showMenu && <PostOptionsSheet

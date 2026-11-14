@@ -6726,3 +6726,18 @@ select { border: 0 !important; border-bottom: 0 !important; box-shadow: none !im
 
 /* Bottom tab bar icons: final size (4px smaller than the previous 31px) */
 .bottomnav a svg, .bottomnav svg { width: 27px !important; height: 27px !important; }
+
+/* Icon buttons: white background with black icon (back, close) */
+button[aria-label="Back"], button[aria-label^="Back "], button[aria-label="Close"], button[aria-label^="Close "],
+.sc-round, .sc-compact-back, .rim-search-back, .rec-back, .pv-icon-btn, .profile-image-viewer-close, .pf-round,
+.ig-auth-back, .icon-button, .ep-back, .cv-viewer-close, .cam-close, .sv-viewers-close, .sn-circle {
+  background: #fff !important; color: #000 !important; border: 0 !important; box-shadow: none !important;
+}
+button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-label="Close"] svg, button[aria-label^="Close "] svg,
+.sc-round svg, .sc-compact-back svg, .rim-search-back svg, .rec-back svg, .pv-icon-btn svg, .profile-image-viewer-close svg,
+.pf-round svg, .ig-auth-back svg, .icon-button svg, .ep-back svg, .cv-viewer-close svg, .cam-close svg, .sv-viewers-close svg, .sn-circle svg {
+  color: #000 !important; stroke: #000 !important;
+}
+/* Logout: red text and icon, centred at the bottom of settings */
+.profile-drawer-backdrop .settings-logout, .settings-logout { color: #e0243c !important; background: transparent !important; }
+.profile-drawer-backdrop .settings-logout svg, .settings-logout svg { color: #e0243c !important; stroke: #e0243c !important; }

@@ -1,3 +1,4 @@
+import AppLink from '../components/AppLink.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -53,7 +54,7 @@ function MessageText({ text, mine }) {
     if (index % 2 === 0) return part;
     const post = part.match(POST_PATTERN);
     if (post) return <Link key={index} to={`/p/${post[1]}`} className={mine ? 'cv-link mine' : 'cv-link'}>{part}</Link>;
-    return <a key={index} href={part} target="_blank" rel="noopener noreferrer" className={mine ? 'cv-link mine' : 'cv-link'}>{part}</a>;
+    return <AppLink key={index} href={part} className={mine ? 'cv-link mine' : 'cv-link'}>{part}</AppLink>;
   });
 }
 

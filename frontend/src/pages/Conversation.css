@@ -318,3 +318,10 @@
 .cv-browser-top a { color: #0064e0; font-size: 14px; text-decoration: none; }
 .cv-browser iframe { flex: 1; width: 100%; border: 0; }
 .cv-browser-note { margin: 0; padding: 8px 12px; font-size: 12px; color: #65676b; text-align: center; }
+
+/* Create order: plain amount field, no blue focus box */
+.cv-order-amount-box input, .cv-order-amount-box input:focus, .cv-order-amount-box input:focus-visible {
+  border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important;
+}
+.cv-order-amount-box > label { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.cv-order-amount-box > label > input { width: 200px; text-align: left; }
