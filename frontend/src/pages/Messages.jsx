@@ -233,7 +233,7 @@ export default function Messages() {
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
-                        {mine ? <span className="sn-txt">{`Sent ${timeAgo(last.createdAt)} ago`}</span> : <><span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span></>}
+                        <><span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span></>
                       </span>
                     </span>
                   </Link>
