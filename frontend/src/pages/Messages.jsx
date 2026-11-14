@@ -47,6 +47,8 @@ export default function Messages() {
   const [newFriends, setNewFriends] = useState(0);
   const [view, setView] = useState(location.state?.view === 'activity' ? 'activity' : 'messages');
   const [rowMenu, setRowMenu] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
   const longPressTimer = useRef(null);
@@ -130,6 +132,12 @@ export default function Messages() {
 
   const headerName = me?.displayName || me?.username || 'Messages';
   const all = items || [];
+  // Search on this page finds chats and groups only
+  const chatQuery = query.trim().toLowerCase();
+  const chatSearchResults = chatQuery ? [
+    ...all.filter((item) => `${item.user.displayName || ''} ${item.user.username || ''}`.toLowerCase().includes(chatQuery)).map((item) => ({ kind: 'chat', key: 'c' + item.user.id, user: item.user })),
+    ...groups.filter((group) => String(group.name || '').toLowerCase().includes(chatQuery)).map((group) => ({ kind: 'group', key: 'g' + group.id, group })),
+  ] : [];
   // General conversations now sit under Primary, so no conversation disappears when the tab changed to Stories.
   const inGroup = (item, group) => item.group === group || (group === 'primary' && item.group === 'general');
   const shown = filter === 'all' ? all : all.filter((item) => inGroup(item, filter));
@@ -150,6 +158,33 @@ export default function Messages() {
 
   return (
     <main className="sn-page">
+      {searchOpen && (
+        <div className="sn-chat-search" role="dialog" aria-label="Search chats">
+          <div className="sn-chat-search-top">
+            <button type="button" className="sn-circle" onClick={() => { setSearchOpen(false); setQuery(''); }} aria-label="Close search"><Icon name="arrow-left" size={22} strokeWidth={2.2} /></button>
+            <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search chats" aria-label="Search chats" />
+          </div>
+          <ul className="sn-chat-search-list">
+            {chatSearchResults.map((result) => (result.kind === 'chat' ? (
+              <li key={result.key}>
+                <Link to={`/chat/${result.user.id}`} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
+                  <Avatar user={result.user} size={44} />
+                  <span><strong>{result.user.displayName || result.user.username}</strong><small>@{result.user.username}</small></span>
+                </Link>
+              </li>
+            ) : (
+              <li key={result.key}>
+                <Link to={`/chat/group/${result.group.id}`} className="sn-chat-search-row" onClick={() => { setSearchOpen(false); setQuery(''); }}>
+                  <span className="sn-group-avatar"><Icon name="users" size={22} /></span>
+                  <span><strong>{result.group.name}</strong><small>Group</small></span>
+                </Link>
+              </li>
+            )))}
+          </ul>
+          {chatQuery && chatSearchResults.length === 0 && <p className="sn-empty">No chats match “{query.trim()}”.</p>}
+          <button type="button" className="sn-chat-search-explore" onClick={() => navigate('/search')}>Search people and posts</button>
+        </div>
+      )}
       <header className="sn-head">
         <div className="sn-head-left">
           <button type="button" className="sn-circle sn-avatar-btn" onClick={() => navigate(me?.username ? `/u/${me.username}` : '/')} aria-label="Profile">
@@ -163,7 +198,7 @@ export default function Messages() {
           </button>
         </div>
       </header>
-      <button type="button" className="sn-search-pill" onClick={() => navigate('/search')} aria-label="Search people">
+      <button type="button" className="sn-search-pill" onClick={() => setSearchOpen(true)} aria-label="Search chats">
         <Icon name="search" size={18} strokeWidth={2.2} />
         <span>Search</span>
       </button>

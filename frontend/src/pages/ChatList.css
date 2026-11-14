@@ -179,3 +179,21 @@
 .sn-page .sn-row .sn-text { position: relative; margin-left: 0; padding-left: 0; }
 .sn-page .sn-row .sn-name-row,
 .sn-page .sn-row .sn-sub { position: relative; }
+
+/* Chat page: header name, tab buttons (4px corners, medium weight, 2px smaller) */
+.sn-page h1.sn-title { font-size: 18px !important; font-weight: 500 !important; }
+.sn-page .sn-chip,
+.sn-page .sn-chip:hover,
+.sn-page .sn-chip:focus,
+.sn-page .sn-chip:active { border-radius: 4px !important; font-size: 13px !important; font-weight: 500 !important; }
+
+/* Search on the chat page: chats and groups only */
+.sn-page .sn-chat-search { position: fixed; inset: 0; z-index: 60; background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.sn-chat-search-top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.sn-chat-search-top input { flex: 1; min-width: 0; height: 40px; border: 0; border-radius: 4px; background: #f0f2f5; padding: 0 12px; font-size: 16px; color: #111; outline: none; }
+.sn-chat-search-list { list-style: none; margin: 0; padding: 0 8px; }
+.sn-chat-search-row { display: flex; align-items: center; gap: 12px; padding: 10px 8px; color: #111; text-decoration: none; }
+.sn-chat-search-row strong { display: block; font-size: 15px; font-weight: 500; }
+.sn-chat-search-row small { display: block; font-size: 12px; color: #65676b; }
+.sn-chat-search-row .sn-group-avatar { width: 44px; height: 44px; border-radius: 50%; background: #f0f2f5; display: inline-flex; align-items: center; justify-content: center; }
+.sn-chat-search-explore { margin: 12px 16px 24px; height: 44px; border: 0; border-radius: 4px; background: #e7f0ff; color: #0064e0; font-size: 14px; font-weight: 500; }
