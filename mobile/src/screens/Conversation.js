@@ -20,7 +20,7 @@ const BUBBLE_THEIRS = '#efefef';
 function MessageAttachment({ message, onOpenImage }) {
   const uri = mediaUrl(message.mediaUrl);
   if (!uri) return null;
-  if (message.mediaKind === 'video') return <Video source={{ uri }} style={styles.messageVideo} controls resizeMode="contain" paused={false} />;
+  if (message.mediaKind === 'video') return <Video source={{ uri }} style={styles.messageVideo} controls resizeMode="contain" paused={false} onError={() => Alert.alert('Video unavailable', 'This video could not be played.')} />;
   if (message.mediaKind === 'photo') return <Pressable onPress={() => onOpenImage(uri)}><Image source={{ uri }} style={styles.messageImage} resizeMode="cover" /></Pressable>;
   if (message.mediaKind === 'audio') return <Text style={styles.attachmentLabel}>Audio attachment: {message.mediaName || 'Audio'}</Text>;
   return <Text style={styles.attachmentLabel}>{message.mediaName || 'File attachment'}</Text>;
@@ -77,6 +77,7 @@ export default function Conversation() {
     } catch (e) {
       setBody(text);
       logError(e);
+      Alert.alert('Message not sent', e.message || 'Check your connection and try again.');
     } finally {
       setSending(false);
     }
@@ -167,7 +168,7 @@ export default function Conversation() {
               <ScrollView contentContainerStyle={styles.sharedList}>
                 {sharedItems.map((item) => {
                   const media = item.thumbUrl || item.mediaUrl || item.post?.thumbUrl || item.post?.mediaUrl;
-                  return <View key={String(item.id)} style={styles.sharedRow}>{!!media && <Image source={{ uri: mediaUrl(media) }} style={styles.sharedMedia} resizeMode="cover" />} {!!(item.body || item.post?.caption) && <Text style={styles.sharedText}>{item.body || item.post?.caption}</Text>} <Text style={styles.sharedTime}>{new Date(item.createdAt).toLocaleString()}</Text></View>;
+                  return <View key={String(item.id)} style={styles.sharedRow}>{!!media && (item.mediaKind === 'video' || item.post?.kind === 'video' ? <Video source={{ uri: mediaUrl(media) }} style={styles.sharedMedia} controls resizeMode="contain" paused={false} /> : <Image source={{ uri: mediaUrl(media) }} style={styles.sharedMedia} resizeMode="cover" />)} {!!(item.body || item.post?.caption) && <Text style={styles.sharedText}>{item.body || item.post?.caption}</Text>} <Text style={styles.sharedTime}>{new Date(item.createdAt).toLocaleString()}</Text></View>;
                 })}
               </ScrollView>
             )}
