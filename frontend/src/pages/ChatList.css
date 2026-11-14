@@ -218,3 +218,14 @@
 .sn-page .sn-filters .sn-chip.active,
 .sn-page .sn-filters .sn-chip[aria-selected="true"] { background: #e7f0ff !important; color: #0064e0 !important; font-weight: 400 !important; }
 .sn-page .sn-chat-search-row strong, .sn-page .sn-name { font-weight: 400 !important; }
+
+/* Chat search screen: round input with no line, border or outline; no line under the bar */
+.sn-page .sn-chat-search,
+.sn-page .sn-chat-search .sn-chat-search-top { border: 0 !important; border-bottom: 0 !important; box-shadow: none !important; }
+.sn-page .sn-chat-search .sn-chat-search-top input,
+.sn-page .sn-chat-search .sn-chat-search-top input:focus,
+.sn-page .sn-chat-search .sn-chat-search-top input:focus-visible,
+.sn-page .sn-chat-search .sn-chat-search-top input:active {
+  border: 0 !important; border-bottom: 0 !important; box-shadow: none !important; outline: none !important;
+  border-radius: 999px !important; height: 40px !important; background: #f0f2f5 !important;
+}
