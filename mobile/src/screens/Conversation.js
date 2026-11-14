@@ -10,11 +10,21 @@ import { logError } from '../lib/toast';
 import { colors } from '../theme';
 import { mediaUrl } from '../config';
 import { MoreHorizontal } from 'lucide-react-native';
+import Video from 'react-native-video';
 
 // Same look as the web conversation page (.dm-convo / .dm-bubble rules in styles.css)
 const BLUE = '#3797f0';
 const GREY = '#8e8e93';
 const BUBBLE_THEIRS = '#efefef';
+
+function MessageAttachment({ message, onOpenImage }) {
+  const uri = mediaUrl(message.mediaUrl);
+  if (!uri) return null;
+  if (message.mediaKind === 'video') return <Video source={{ uri }} style={styles.messageVideo} controls resizeMode="contain" paused={false} />;
+  if (message.mediaKind === 'photo') return <Pressable onPress={() => onOpenImage(uri)}><Image source={{ uri }} style={styles.messageImage} resizeMode="cover" /></Pressable>;
+  if (message.mediaKind === 'audio') return <Text style={styles.attachmentLabel}>Audio attachment: {message.mediaName || 'Audio'}</Text>;
+  return <Text style={styles.attachmentLabel}>{message.mediaName || 'File attachment'}</Text>;
+}
 
 // One chat. Messages refresh every few seconds, oldest at the top and newest at the bottom.
 export default function Conversation() {
@@ -96,7 +106,7 @@ export default function Conversation() {
   const canSend = Boolean(body.trim()) && !sending;
 
   return (
-    <KeyboardAvoidingView style={[styles.page, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.page, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}>
       <View style={styles.head}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Back"><Icon name="arrow-left" size={26} /></Pressable>
         {partner && <Avatar user={partner} size={38} />}
@@ -136,7 +146,7 @@ export default function Conversation() {
           <Icon name="send" size={22} color="#fff" filled />
         </Pressable>
       </View>
-      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
+      <Modal visible={Boolean(imagePreview)} transparent animationType="fade" onRequestClose={() => setImagePreview(null)}>\n        <Pressable style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>\n          {!!imagePreview && <Image source={{ uri: imagePreview }} style={styles.imagePreview} resizeMode="contain" />}\n        </Pressable>\n      </Modal>\n      <Modal visible={chatMenuOpen} transparent animationType="fade" onRequestClose={() => setChatMenuOpen(false)}>
         <View style={styles.menuBackdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setChatMenuOpen(false)} />
           <View style={styles.menuCard}>
@@ -191,7 +201,7 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.text },
   thread: { flex: 1 },
   threadContent: { paddingHorizontal: 12, paddingVertical: 14, gap: 8 },
-  bubble: { maxWidth: '75%', paddingHorizontal: 13, paddingVertical: 9, borderRadius: 20 },
+  messageRow: { width: '100%', flexDirection: 'row' },\n  messageRowMine: { justifyContent: 'flex-end' },\n  messageRowTheirs: { justifyContent: 'flex-start' },\n  bubble: { maxWidth: '82%', minWidth: 48, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 20, gap: 5 },\n  messageImage: { width: 220, height: 220, maxWidth: '100%', borderRadius: 12, backgroundColor: '#ddd' },\n  messageVideo: { width: 240, height: 210, maxWidth: '100%', borderRadius: 12, backgroundColor: '#111' },\n  messageTime: { alignSelf: 'flex-end', color: '#777', fontSize: 10, marginTop: 3 },\n  attachmentLabel: { color: colors.text, fontSize: 13, paddingVertical: 8 },\n  imagePreviewBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,.96)', justifyContent: 'center', alignItems: 'center' },\n  imagePreview: { width: '100%', height: '85%' },
   mine: { alignSelf: 'flex-end', backgroundColor: BLUE, borderBottomRightRadius: 6 },
   theirs: { alignSelf: 'flex-start', backgroundColor: BUBBLE_THEIRS, borderBottomLeftRadius: 6 },
   mineText: { color: '#fff', fontSize: 15, lineHeight: 20 },
