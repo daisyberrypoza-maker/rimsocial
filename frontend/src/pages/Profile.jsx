@@ -674,7 +674,7 @@ export default function Profile() {
               <span>Sorted by <strong>{peopleSort === 'default' ? 'Default' : peopleSort === 'newest' ? 'Date followed: Latest' : 'Date followed: Earliest'}</strong></span>
               {profile.isMe && <button type="button" className="pv-sort-trigger" aria-label="Change sort order" onClick={() => setSortOpen((open) => !open)}><Icon name="arrow-down-up" size={22} /></button>}
               {sortOpen && <div className="pv-sort-menu">
-                {[['default', 'Default'], ['newest', 'Date followed: Latest'], ['oldest', 'Date followed: Earliest']].map(([value, label]) => <button type="button" key={value} className={peopleSort === value ? 'on' : ''} onClick={() => { setPeopleSort(value); setSortOpen(false); }}>{label}</button>)}
+                {[['default', 'Default', 'sliders'], ['newest', 'Date followed: Latest', 'calendar'], ['oldest', 'Date followed: Earliest', 'calendar']].map(([value, label, icon]) => <button type="button" key={value} className={peopleSort === value ? 'on' : ''} onClick={() => { setPeopleSort(value); setSortOpen(false); }}><Icon name={icon} size={18} /><span>{label}</span>{peopleSort === value && <Icon name="check" size={17} className="pv-sort-check" />}</button>)}
               </div>}
             </div>}
             <ul className="pv-list">
