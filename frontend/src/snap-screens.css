@@ -1089,6 +1089,6 @@
 .nc-tabs { position: sticky !important; top: 0 !important; z-index: 6 !important; }
 .nc-to { position: sticky !important; top: 58px !important; z-index: 5 !important; border-radius: 22px !important; background: #eef0f3 !important; }
 .nc-list { flex: none !important; overflow: visible !important; padding-bottom: 120px !important; }
-.nc-chat { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; bottom: calc(var(--keyboard-inset, 0px) + env(safe-area-inset-bottom, 0px) + 24px) !important; z-index: 310 !important; }
+.nc-chat { position: sticky !important; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important; left: auto !important; right: auto !important; top: auto !important; transform: none !important; display: block !important; margin: 16px auto 0 !important; z-index: 310 !important; }
 .nc-name { font-weight: 400 !important; }
 .nc-radio { border-width: 1px !important; }
