@@ -118,7 +118,7 @@ function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
         const dx = t.clientX - start.current.x;
         const dy = t.clientY - start.current.y;
         if (Math.abs(dy) > 12 || Math.abs(dx) > 12) clearTimer();
-        if (dx > 0 && Math.abs(dy) < 20) {
+        if (!mine && dx > 0 && Math.abs(dy) < 20) {
           setOffset(Math.min(dx, 80));
           if (dx > 60) start.current.swiped = true;
         }
