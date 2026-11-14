@@ -26,6 +26,18 @@ function MessageAttachment({ message, onOpenImage }) {
   return <Text style={styles.attachmentLabel}>{message.mediaName || 'File attachment'}</Text>;
 }
 
+function labelOf(kind) {
+  if (kind === 'photo') return 'Photo';
+  if (kind === 'video') return 'Video';
+  if (kind === 'audio') return 'Audio';
+  return 'File';
+}
+
+// The small copy of a message a reply quotes
+function quoteOf(m) {
+  return m ? { id: m.id, senderId: m.senderId, body: m.body || '', mediaKind: m.mediaKind || null, mediaUrl: m.mediaUrl || null, deletedForEveryone: false } : null;
+}
+
 // One chat. Messages refresh every few seconds, oldest at the top and newest at the bottom.
 export default function Conversation() {
   const insets = useSafeAreaInsets();
@@ -46,6 +58,8 @@ export default function Conversation() {
   const [orderAmount, setOrderAmount] = useState('');
   const [orderDescription, setOrderDescription] = useState('');
   const [orderSaving, setOrderSaving] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+  const [menuFor, setMenuFor] = useState(null);
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -71,16 +85,20 @@ export default function Conversation() {
   async function send() {
     const text = body.trim();
     if (!text || sending) return;
+    const quoted = replyTo;
     setSending(true);
     setBody('');
+    setReplyTo(null);
     try {
-      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: text } });
+      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: text, replyToId: quoted?.id || undefined } });
+      const sent = { ...data.message, replyTo: quoteOf(quoted) };
       setMessages((current) => {
         const list = current || [];
-        return list.some((m) => m.id === data.message.id) ? list : [...list, data.message];
+        return list.some((m) => m.id === sent.id) ? list : [...list, sent];
       });
     } catch (e) {
       setBody(text);
+      setReplyTo(quoted);
       logError(e);
       Alert.alert('Message not sent', e.message || 'Check your connection and try again.');
     } finally {
@@ -118,6 +136,34 @@ export default function Conversation() {
     } catch (e) {
       logError(e);
       Alert.alert('Order', e.message || 'Could not update the order.');
+    }
+  }
+
+  // Opening a view-limited photo counts this view, then shows it
+  async function openViewOnce(item) {
+    try {
+      const data = await api(`/v1/messages/message/${item.id}/view`, { method: 'POST', body: {} });
+      setMessages((current) => (current || []).map((m) => (m.id === item.id ? { ...m, viewCount: data.viewCount } : m)));
+      setImagePreview(mediaUrl(item.mediaUrl));
+    } catch (e) {
+      logError(e);
+      Alert.alert('Photo', e.message || 'Could not open this photo.');
+    }
+  }
+
+  // Delete for me, or for everyone (own messages only)
+  async function deleteMessage(m, scope) {
+    setMenuFor(null);
+    try {
+      await api(`/v1/messages/message/${m.id}?scope=${scope}`, { method: 'DELETE' });
+      setMessages((current) => (current || []).flatMap((x) => {
+        if (x.id !== m.id) return [x];
+        if (scope === 'everyone') return [{ ...x, deletedForEveryone: true, body: '', mediaUrl: null, mediaKind: null, mediaName: null, post: undefined }];
+        return [];
+      }));
+    } catch (e) {
+      logError(e);
+      Alert.alert('Message', e.message || 'Could not delete this message.');
     }
   }
 
@@ -182,13 +228,42 @@ export default function Conversation() {
             );
           }
           return (
-            <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-              {!!item.mediaUrl && <MessageAttachment message={item} onOpenImage={setImagePreview} />}
-              {!!item.body && <Text style={mine ? styles.mineText : styles.theirsText}>{item.body}</Text>}
-            </View>
+          const deleted = Boolean(item.deletedForEveryone);
+          const limited = !mine && item.mediaKind === 'photo' && item.viewLimit > 0;
+          const openedAll = limited && (item.viewCount || 0) >= item.viewLimit;
+          const storyTap = Boolean(item.storyAuthorId) && !!item.mediaUrl && !deleted;
+          return (
+            <Pressable onLongPress={() => setMenuFor(item)} delayLongPress={350} style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
+              {!!item.replyTo && (
+                <View style={styles.quote}>
+                  <Text style={styles.quoteName}>{String(item.replyTo.senderId) === String(me?.id) ? 'You' : (partner?.displayName || partner?.username || 'Them')}</Text>
+                  <Text style={styles.quoteBody} numberOfLines={1}>{item.replyTo.body || labelOf(item.replyTo.mediaKind)}</Text>
+                </View>
+              )}
+              {deleted && <Text style={styles.deleted}>This message was deleted</Text>}
+              {!deleted && limited && (openedAll
+                ? <Text style={styles.once}>Opened</Text>
+                : <Pressable onPress={() => openViewOnce(item)} style={styles.onceButton} accessibilityLabel="Tap to view"><Text style={styles.onceText}>Tap to view</Text></Pressable>)}
+              {!deleted && !limited && storyTap && (
+                <Pressable onPress={() => navigation.navigate('StoryViewer', { startUserId: item.storyAuthorId })} accessibilityLabel="Open story">
+                  <MessageAttachment message={item} onOpenImage={setImagePreview} />
+                </Pressable>
+              )}
+              {!deleted && !limited && !storyTap && !!item.mediaUrl && <MessageAttachment message={item} onOpenImage={setImagePreview} />}
+              {!deleted && !!item.body && <Text style={mine ? styles.mineText : styles.theirsText}>{item.body}</Text>}
+            </Pressable>
           );
         }}
       />
+      {!!replyTo && (
+        <View style={styles.replyBar}>
+          <View style={styles.replyText}>
+            <Text style={styles.quoteName}>{String(replyTo.senderId) === String(me?.id) ? 'Replying to yourself' : `Replying to ${partner?.displayName || partner?.username || 'message'}`}</Text>
+            <Text style={styles.quoteBody} numberOfLines={1}>{replyTo.body || labelOf(replyTo.mediaKind)}</Text>
+          </View>
+          <Pressable onPress={() => setReplyTo(null)} accessibilityLabel="Cancel reply"><Text style={styles.replyCancel}>×</Text></Pressable>
+        </View>
+      )}
       <View style={styles.composer}>
         <Pressable onPress={() => setOrderOpen(true)} accessibilityLabel="Create order" hitSlop={8}><Plus size={24} color={colors.text} /></Pressable>
         <TextInput
@@ -210,6 +285,22 @@ export default function Conversation() {
         <Pressable style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
           {!!imagePreview && <Image source={{ uri: imagePreview }} style={styles.imagePreview} resizeMode="contain" />}
         </Pressable>
+      </Modal>
+      <Modal visible={Boolean(menuFor)} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuFor(null)} />
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Message options</Text>
+            <Pressable style={styles.menuOption} onPress={() => { const m = menuFor; setMenuFor(null); setReplyTo(m); }}><Text style={styles.menuText}>Reply</Text></Pressable>
+            {!!menuFor && String(menuFor.senderId) === String(me?.id) && !menuFor.deletedForEveryone && (
+              <Pressable style={styles.menuOption} onPress={() => deleteMessage(menuFor, 'everyone')}><Text style={styles.menuDanger}>Delete for everyone</Text></Pressable>
+            )}
+            {!!menuFor && (
+              <Pressable style={styles.menuOption} onPress={() => deleteMessage(menuFor, 'me')}><Text style={styles.menuDanger}>Delete for me</Text></Pressable>
+            )}
+            <Pressable style={styles.menuCancel} onPress={() => setMenuFor(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
+          </View>
+        </View>
       </Modal>
       <Modal visible={orderOpen} transparent animationType="slide" onRequestClose={() => setOrderOpen(false)}>
         <View style={styles.modalBackdrop}>
@@ -266,6 +357,16 @@ export default function Conversation() {
 }
 
 const styles = StyleSheet.create({
+  quote: { borderLeftWidth: 3, borderLeftColor: '#25a244', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, marginBottom: 6 },
+  quoteName: { fontSize: 12, fontWeight: '700', color: '#262626' },
+  quoteBody: { fontSize: 13, color: '#262626', opacity: 0.85 },
+  replyBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#dbdbdb', backgroundColor: '#fafafa' },
+  replyText: { flex: 1, minWidth: 0 },
+  replyCancel: { fontSize: 22, color: GREY, paddingHorizontal: 8 },
+  once: { fontSize: 14, color: GREY, fontStyle: 'italic' },
+  onceButton: { alignSelf: 'flex-start', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 18, backgroundColor: '#6a4cff' },
+  onceText: { color: '#fff', fontWeight: '600' },
+  deleted: { fontStyle: 'italic', color: GREY },
   page: { flex: 1, backgroundColor: colors.bg, paddingTop: 0, paddingBottom: 6 },
   menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   menuCard: { width: '100%', maxWidth: 320, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, elevation: 12 },
