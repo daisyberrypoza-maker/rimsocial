@@ -75,8 +75,9 @@ export default function NewMessage() {
   }, [query, me?.id]);
 
   const base = results ?? recents;
-  const list = base.filter((person) => !hidden.has(String(person.id)));
   const isSelected = (person) => selected.some((s) => s.id === person.id);
+  // Selected people appear as chips in group mode, so they are not repeated in the list
+  const list = base.filter((person) => !hidden.has(String(person.id)) && !(groupMode && isSelected(person)));
   const toggle = (person) => setSelected((cur) => (
     cur.some((s) => s.id === person.id) ? cur.filter((s) => s.id !== person.id) : [...cur, person]
   ));
@@ -173,26 +174,18 @@ export default function NewMessage() {
         {list.length ? (
           <ul className="nm-list">
             {list.map((person) => {
-              const on = isSelected(person);
               return (
                 <li key={person.id} className="nm-item">
-                  <button type="button" className="nm-row" onClick={() => onRow(person)} aria-pressed={groupMode ? on : undefined}>
+                  <button type="button" className="nm-row" onClick={() => onRow(person)} >
                     <Avatar user={person} size={56} />
                     <span className="nm-row-text">
                       <span className="nm-row-name">{person.displayName || person.username}</span>
                       {person.displayName && person.username && <span className="nm-row-handle">{person.username}</span>}
                     </span>
-                    {groupMode ? (
-                      <span className={on ? 'nm-check on' : 'nm-check'} aria-hidden="true">
-                        {on && icon(<path d="M5 12l5 5L20 7" />)}
-                      </span>
-                    ) : null}
                   </button>
-                  {!groupMode && (
-                    <button type="button" className="nm-x" aria-label={`Hide ${person.displayName || person.username}`} onClick={() => hide(person)}>
-                      {icon(<path d="M6 6l12 12M18 6L6 18" />)}
-                    </button>
-                  )}
+                  <button type="button" className="nm-x" aria-label={`Hide ${person.displayName || person.username}`} onClick={() => hide(person)}>
+                    {icon(<path d="M6 6l12 12M18 6L6 18" />)}
+                  </button>
                 </li>
               );
             })}
