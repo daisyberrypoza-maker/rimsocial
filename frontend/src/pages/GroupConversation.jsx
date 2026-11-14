@@ -82,7 +82,9 @@ export default function GroupConversationPage({ groupId }) {
       .catch((e) => { if (alive) setError(e.message || 'Could not load group'); });
     load();
     const timer = setInterval(load, 3000);
-    return () => { alive = false; clearInterval(timer); };
+    const onChat = (e) => { if (e.detail && e.detail.kind === 'group' && String(e.detail.groupId) === String(groupId)) load(); };
+    window.addEventListener('rs-chat', onChat);
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, [groupId]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages?.length]);

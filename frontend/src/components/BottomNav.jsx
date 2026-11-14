@@ -25,7 +25,9 @@ export default function BottomNav() {
       .catch(() => {});
     load();
     const timer = setInterval(load, 6000);
-    return () => { alive = false; clearInterval(timer); };
+    const onChat = (e) => { if (e.detail && e.detail.kind) load(); };
+    window.addEventListener('rs-chat', onChat);
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, []);
 
   // Dark on Rimlight and Following; white on LIVE

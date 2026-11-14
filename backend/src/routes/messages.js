@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
+const liveChat = require('../services/liveChat');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
 const { blockedUserIds } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
@@ -62,7 +63,9 @@ async function validReplyTarget(me, other, replyToId) {
 
 async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, viewLimit = 0 }) {
   const postId = await linkedPostId(body);
-  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit });
+  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit });
+  liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
+  return message;
 }
 
 // ---- orders -----------------------------------------------------------------
@@ -302,6 +305,7 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
     const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
     const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId });
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
+    publishToGroup(req.params.groupId);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });
@@ -328,6 +332,7 @@ router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req,
       mediaName: fileName,
     });
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
+    publishToGroup(req.params.groupId);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });
@@ -762,6 +767,21 @@ router.get('/link-preview', async (req, res, next) => {
     linkCache.set(raw, { at: Date.now(), preview });
     res.json({ preview });
   } catch (error) { next(error); }
+});
+
+// Tells every member of a group that the group changed (new message, edit or delete)
+async function publishToGroup(groupId) {
+  const members = await GroupMember.findAll({ where: { groupId }, attributes: ['userId'], raw: true }).catch(() => []);
+  liveChat.publish(members.map((m) => m.userId), { type: 'changed', kind: 'group', groupId: String(groupId) }).catch(() => {});
+}
+
+// Live updates: one long-lived stream per signed-in user. Sent with the auth header, never in the URL.
+router.get('/stream', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+  res.write('retry: 3000\n\n');
+  const stop = liveChat.listen(req.user.id, res);
+  const heartbeat = setInterval(() => res.write(': ping\n\n'), 25000);
+  req.on('close', () => { clearInterval(heartbeat); stop(); });
 });
 
 // Mark everything another person sent to you as read (seen).

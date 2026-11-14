@@ -65,7 +65,9 @@ export default function Messages() {
       .catch((e) => { if (alive) setError(e.message || 'Could not load messages'); });
     load();
     const timer = setInterval(load, 4000);
-    return () => { alive = false; clearInterval(timer); };
+    const onChat = (e) => { if (e.detail && e.detail.kind) load(); };
+    window.addEventListener('rs-chat', onChat);
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, []);
 
   // Badge on Add friends: people who follow you and you have not followed back yet

@@ -12,6 +12,7 @@ import Conversation from './pages/Conversation.jsx';
 import OrderDetails from './pages/OrderDetails.jsx';
 import GroupConversationPage from './pages/GroupConversation.jsx';
 import { DirectChatRoute, GroupChatRoute } from './pages/ChatRoutes.jsx';
+import LiveChat from './components/LiveChat.jsx';
 import NewMessage from './pages/NewMessage.jsx';
 import Toast from './components/Toast.jsx';
 import Login from './pages/Login.jsx';
@@ -183,6 +184,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && <BottomNav />}
+      <LiveChat />
       <Toast />
     </div>
   );

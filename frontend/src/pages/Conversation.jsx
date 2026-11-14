@@ -644,7 +644,9 @@ export default function Conversation({ userId }) {
       .catch((e) => { if (alive) setError(e.message || 'Could not load messages'); });
     load();
     const timer = setInterval(load, 3000);
-    return () => { alive = false; clearInterval(timer); };
+    const onChat = (e) => { if (e.detail && e.detail.kind === 'direct' && String(e.detail.with) === String(userId)) load(); };
+    window.addEventListener('rs-chat', onChat);
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, [userId]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages?.length, typing]);
