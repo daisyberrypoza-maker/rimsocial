@@ -282,3 +282,8 @@
 .dm-convo.cv-convo .cv-viewer-progress span,
 .cv-viewer-progress span { width: 0; animation: cv-progress 6s linear forwards; }
 @keyframes cv-progress { from { width: 0; } to { width: 100%; } }
+
+/* Group chat audio and file messages */
+.cv-bubble .cv-audio { display: block; width: 240px; max-width: 70vw; height: 40px; margin: 2px 0; }
+.cv-bubble .cv-file { display: inline-flex; align-items: center; max-width: 260px; padding: 4px 2px; color: inherit; font-weight: 600; text-decoration: underline; word-break: break-word; }
+.cv-bubble .cv-file-name { overflow-wrap: anywhere; }
