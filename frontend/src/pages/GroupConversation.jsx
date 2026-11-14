@@ -4,7 +4,6 @@ import { api } from '../api.js';
 import Icon from '../components/Icon.jsx';
 import ChatMenu from '../components/ChatMenu.jsx';
 import { useAppStore } from '../store.js';
-import { goBack } from '../lib/goBack.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
 import { MessageRow, MediaViewer, LinkPreview, attachmentLabel, groupRows, isLastOfRun } from './Conversation.jsx';
@@ -335,7 +334,7 @@ export default function GroupConversationPage({ groupId }) {
   return (
     <main className="dm-convo cv-convo">
       <header className="dm-chead">
-        <button type="button" className="dm-icon" onClick={() => goBack(navigate, '/chat')} aria-label="Back">
+        <button type="button" className="dm-icon" onClick={() => navigate('/chat', { replace: true })} aria-label="Back">
           <Icon name="arrow-left" size={24} />
         </button>
         <span className="sn-group-avatar cv-group-head"><Icon name="users" size={22} /></span>

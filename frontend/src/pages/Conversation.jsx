@@ -6,7 +6,6 @@ import Avatar from '../components/Avatar.jsx';
 import ChatMenu from '../components/ChatMenu.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAppStore } from '../store.js';
-import { goBack } from '../lib/goBack.js';
 import { mediaUrl } from '../lib/config.js';
 import { toast, logError } from '../toast.js';
 import { formatMoney } from '../lib/money.js';
@@ -987,7 +986,7 @@ export default function Conversation({ userId }) {
   return (
     <main className="dm-convo cv-convo">
       <header className="dm-chead">
-        <button type="button" className="dm-icon" onClick={() => goBack(navigate, '/chat')} aria-label="Back">
+        <button type="button" className="dm-icon" onClick={() => navigate('/chat', { replace: true })} aria-label="Back">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         </button>
         {partner && <Avatar user={partner} size={36} />}

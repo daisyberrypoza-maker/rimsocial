@@ -85,7 +85,7 @@ export default function NewMessage() {
 
   function onRow(person) {
     if (groupMode) toggle(person);
-    else navigate(chatPath('direct', person.id));
+    else navigate(chatPath('direct', person.id), { replace: true });
   }
 
   async function createGroup() {
@@ -128,14 +128,6 @@ export default function NewMessage() {
             <button type="button" className="nm-action" onClick={() => { setMode('group'); setQuery(''); }}>
               <span className="nm-action-icon">{icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M16.5 14.6c3 .3 5 2.3 5 5.2" /></>)}</span>
               Group chat
-            </button>
-            <button type="button" className="nm-action" disabled>
-              <span className="nm-action-icon">{icon(<><circle cx="12" cy="12" r="2" /><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7" /><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8" /></>)}</span>
-              Create a channel
-            </button>
-            <button type="button" className="nm-action" disabled>
-              <span className="nm-action-icon">{icon(<><rect x="4" y="7" width="16" height="12" rx="4" /><path d="M12 3v4M9 13h.01M15 13h.01" /></>)}</span>
-              AI chats
             </button>
           </div>
         )}
