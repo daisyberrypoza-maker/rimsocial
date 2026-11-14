@@ -7,7 +7,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
-import { MessageRow, MediaViewer, LinkPreview, attachmentLabel } from './Conversation.jsx';
+import { MessageRow, MediaViewer, LinkPreview, attachmentLabel, groupRows, isLastOfRun } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
 
@@ -27,6 +27,11 @@ function GroupMedia({ message, mine, onOpenPhoto, onView }) {
   if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={message.mediaName || 'File'}><span className="cv-file-name">{message.mediaName || 'File'}</span></a>;
+}
+
+// Time shown once under the last message of a run from the same person
+function GroupTime({ message, mine }) {
+  return <div className={mine ? 'cv-time mine' : 'cv-time'}><span>{clock(message.createdAt)}</span></div>;
 }
 
 function clock(value) {
@@ -133,20 +138,50 @@ export default function GroupConversationPage({ groupId }) {
     }
   }
 
+  // Several photos or videos picked at once are sent as they are and show together as a gallery
+  async function sendFilesInGroup(files) {
+    for (const item of files) {
+      await sendMediaFile(item, '');
+    }
+  }
+
   function pickFile(event) {
-    const picked = event.target.files?.[0];
+    const picked = Array.from(event.target.files || []);
     event.target.value = '';
-    if (!picked) return;
-    if (/^image\//.test(picked.type) || /^video\//.test(picked.type)) {
+    if (!picked.length) return;
+    if (picked.length > 1) { sendFilesInGroup(picked); return; }
+    const single = picked[0];
+    if (/^image\//.test(single.type) || /^video\//.test(single.type)) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setEdit({ tool: null, texts: [], emojis: [], viewLimit: 0 });
-      setPreviewUrl(URL.createObjectURL(picked));
-      setFile(picked);
+      setPreviewUrl(URL.createObjectURL(single));
+      setFile(single);
       return;
     }
     const caption = text.trim();
     setText('');
-    sendMediaFile(picked, caption);
+    sendMediaFile(single, caption);
+  }
+
+  // A run of photos or videos from one person is one gallery row
+  function renderGalleryRow(row, mine) {
+    const first = row.items[0];
+    const last = row.items[row.items.length - 1];
+    return (
+      <MessageRow key={'gallery-' + first.m.id} message={first.m} mine={mine} onReply={setReply} onOpenMenu={openMessageMenu}>
+        <div className="cv-line">
+          {!mine && <span className="cv-group-sender">{senderName(row.senderId)}</span>}
+          <div className={mine ? 'cv-gallery mine' : 'cv-gallery'} style={{ gridTemplateColumns: row.items.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
+            {row.items.map(({ m }) => (
+              <div key={m.id} className="cv-gallery-cell">
+                <GroupMedia message={m} mine={mine} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} onView={viewGroupPhoto} />
+              </div>
+            ))}
+          </div>
+          {isLastOfRun(messages, last.idx) && <GroupTime message={last.m} mine={mine} />}
+        </div>
+      </MessageRow>
+    );
   }
 
   // Opening a view-limited photo counts this member's view, then shows it
@@ -312,8 +347,11 @@ export default function GroupConversationPage({ groupId }) {
       <div className="dm-thread">
         {messages === null ? <p className="dm-empty">Loading group…</p>
           : messages.length === 0 ? <p className="dm-empty">This group is ready. Send the first message.</p>
-          : messages.map((message) => {
-            const mine = String(message.senderId) === String(me?.id);
+          : groupRows(messages).map((row) => {
+            const mine = String(row.senderId) === String(me?.id);
+            if (row.items.length > 1) return renderGalleryRow(row, mine);
+            const message = row.items[0].m;
+            const messageIndex = row.items[0].idx;
             return (
               <MessageRow key={message.id} message={message} mine={mine} onReply={setReply} onOpenMenu={openMessageMenu}>
               <div className="cv-line">
@@ -336,9 +374,9 @@ export default function GroupConversationPage({ groupId }) {
                   {message.mediaUrl && <GroupMedia message={message} mine={mine} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} onView={viewGroupPhoto} />}
                   {!!message.body && <span className="cv-text">{message.body}</span>}
                   {!!message.body && <LinkPreview text={message.body} />}
-                  <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
                 </div>
+                {isLastOfRun(messages, messageIndex) && <GroupTime message={message} mine={mine} />}
               </div>
               </MessageRow>
             );
@@ -368,7 +406,7 @@ export default function GroupConversationPage({ groupId }) {
         <button type="button" className="cv-camera" onClick={() => fileRef.current?.click()} aria-label="Attach photo, video or file" disabled={sending}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
         </button>
-        <input ref={fileRef} type="file" hidden onChange={pickFile} />
+        <input ref={fileRef} type="file" multiple hidden onChange={pickFile} />
         <input enterKeyHint="send" autoComplete="off" value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="Message the group" aria-label="Message the group" />
         {text.trim() ? (
           <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={sending} aria-label="Send message">Send</button>

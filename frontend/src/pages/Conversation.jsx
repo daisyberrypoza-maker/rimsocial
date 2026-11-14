@@ -461,7 +461,7 @@ function isGalleryItem(m) {
 }
 
 // Consecutive gallery items from the same person within two minutes share one row
-function groupRows(list) {
+export function groupRows(list) {
   const rows = [];
   list.forEach((m, idx) => {
     const prev = rows[rows.length - 1];
@@ -476,7 +476,7 @@ function groupRows(list) {
 }
 
 // The time is shown once, under the last message of a run from the same person
-function isLastOfRun(list, i) {
+export function isLastOfRun(list, i) {
   const next = list[i + 1];
   if (!next) return true;
   if (String(next.senderId) !== String(list[i].senderId)) return true;
