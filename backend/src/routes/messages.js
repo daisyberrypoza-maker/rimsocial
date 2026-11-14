@@ -61,9 +61,9 @@ async function validReplyTarget(me, other, replyToId) {
   return row.id;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null }) {
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, viewLimit = 0 }) {
   const postId = await linkedPostId(body);
-  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId });
+  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit });
 }
 
 // ---- orders -----------------------------------------------------------------
@@ -525,6 +525,18 @@ router.post('/orders/:id/cancel', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// The recipient opens a view-limited photo: each open counts once, and the limit stops further views
+router.post('/message/:id/view', async (req, res, next) => {
+  try {
+    if (!UUID.test(String(req.params.id))) throw httpError(404, 'Photo not found');
+    const row = await DirectMessage.findByPk(req.params.id);
+    if (!row || String(row.recipientId) !== String(req.user.id) || row.deletedForEveryone || row.viewLimit <= 0) throw httpError(404, 'Photo not found');
+    if (row.viewCount >= row.viewLimit) throw httpError(403, 'This photo can no longer be viewed');
+    await row.update({ viewCount: row.viewCount + 1 });
+    res.json({ viewCount: row.viewCount, viewLimit: row.viewLimit });
+  } catch (error) { next(error); }
+});
+
 router.post('/with/:userId/typing', async (req, res, next) => {
   try {
     await redis.set(`typing:${req.user.id}:${req.params.userId}`, '1', 'EX', TYPING_TTL_SECONDS).catch(() => {});
@@ -569,7 +581,8 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages', { resourceType: 'auto' });
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
-    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId });
+    const viewLimit = [1, 2].includes(Number(req.body?.viewLimit)) && chatKindFor(req.file.mimetype) === 'photo' ? Number(req.body.viewLimit) : 0;
+    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit });
     await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }

@@ -396,6 +396,9 @@ const DirectMessage = sequelize.define('DirectMessage', {
   orderId: { type: DataTypes.UUID, allowNull: true },
   // Author of the story this message was sent from (tapping it opens that story)
   storyAuthorId: { type: DataTypes.UUID, allowNull: true },
+  // Photo view limit set by the sender: 0 = unlimited, 1 = view once, 2 = view twice; viewCount counts the recipient's views
+  viewLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  viewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
 // Order created inside a direct chat by the seller, for the other person (buyer)

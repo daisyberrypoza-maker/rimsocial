@@ -179,6 +179,8 @@ async function start() {
     ['forwarded', { type: DataTypesDM.BOOLEAN, allowNull: false, defaultValue: false }],
     ['orderId', { type: DataTypesDM.UUID, allowNull: true }],
     ['storyAuthorId', { type: DataTypesDM.UUID, allowNull: true }],
+    ['viewLimit', { type: DataTypesDM.INTEGER, allowNull: false, defaultValue: 0 }],
+    ['viewCount', { type: DataTypesDM.INTEGER, allowNull: false, defaultValue: 0 }],
   ];
   for (const [column, definition] of directMessageAdditions) {
     if (!directMessageColumns[column]) {
