@@ -1,7 +1,7 @@
-import { Component, useCallback, useEffect, useState } from 'react';
+import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import './UploadStatus.css';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
 import Icon from '../components/Icon.jsx';
@@ -44,6 +44,9 @@ function previewSrc(group) {
 
 export default function Stories() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const openUserId = location.state?.openUserId ? String(location.state.openUserId) : null;
+  const openedFromChatRef = useRef(null);
   const me = useAppStore((s) => s.user);
   // Everything shows from saved data at once; the server is asked again only when that data is old
   const storedRail = useAppStore((s) => s.storyRail);
@@ -132,6 +135,14 @@ export default function Stories() {
     const i = rail.findIndex((item) => item.user?.id === group.user?.id);
     if (i >= 0) setOpenAt(i);
   }
+
+  // Opened from a story message in a chat: open that person's story directly (once per visit)
+  useEffect(() => {
+    if (!openUserId || !loaded || openedFromChatRef.current === openUserId) return;
+    const i = rail.findIndex((item) => String(item.user?.id) === openUserId);
+    openedFromChatRef.current = openUserId;
+    if (i >= 0) setOpenAt(i);
+  }, [openUserId, loaded, rail]);
 
   const myGroup = rail.find((group) => group.user?.id === me?.id);
 

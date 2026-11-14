@@ -75,10 +75,20 @@ function PostCard({ post }) {
   );
 }
 
-function Attachment({ message }) {
+// Photos and videos open in the chat's own preview; a story sent from a story opens that story instead
+function openMedia(src, kind) {
+  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind } }));
+}
+
+function Attachment({ message, storyAuthorId }) {
   const src = mediaUrl(message.mediaUrl);
-  if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
-  if (message.mediaKind === 'photo') return <a href={src} target="_blank" rel="noopener noreferrer" className="cv-media-link" aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" /></a>;
+  if (message.mediaKind === 'video' || message.mediaKind === 'photo') {
+    const media = message.mediaKind === 'video'
+      ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
+      : <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
+    if (storyAuthorId) return <Link to="/stories" state={{ openUserId: storyAuthorId }} className="cv-media-link" aria-label="Open story">{media}</Link>;
+    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
+  }
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   const name = message.mediaName || 'File';
   return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={name}>
@@ -180,7 +190,7 @@ function Bubble({ message, mine }) {
   const reply = message.replyTo;
   // A photo, video or story sent on its own shows without a bubble, like the reference
   if (!deleted && message.mediaUrl && !hasText && !reply && !message.replyToId && !message.post) {
-    return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} /></div>;
+    return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} storyAuthorId={message.storyAuthorId || null} /></div>;
   }
   return (
     <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
@@ -235,6 +245,12 @@ export default function Conversation() {
   const endRef = useRef(null);
   const fileRef = useRef(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [viewerMedia, setViewerMedia] = useState(null);
+  useEffect(() => {
+    const onOpen = (event) => setViewerMedia(event.detail);
+    window.addEventListener('cv-open-media', onOpen);
+    return () => window.removeEventListener('cv-open-media', onOpen);
+  }, []);
   const [orderAmount, setOrderAmount] = useState('');
   const [orderDescription, setOrderDescription] = useState('');
   const [orderSaving, setOrderSaving] = useState(false);
@@ -689,6 +705,16 @@ export default function Conversation() {
         />
       )}
 
+      {viewerMedia && (
+        <div className="cv-viewer" role="dialog" aria-label="Media preview" onClick={() => setViewerMedia(null)}>
+          <button type="button" className="cv-viewer-close" onClick={() => setViewerMedia(null)} aria-label="Close preview">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+          {viewerMedia.kind === 'video'
+            ? <video src={viewerMedia.src} controls autoPlay playsInline onClick={(e) => e.stopPropagation()} />
+            : <img src={viewerMedia.src} alt="" onClick={(e) => e.stopPropagation()} />}
+        </div>
+      )}
       {orderOpen && (
         <div className="cv-order-backdrop" onClick={() => !orderSaving && setOrderOpen(false)}>
           <form className="cv-order-sheet" role="dialog" aria-label="Create order" onClick={(e) => e.stopPropagation()} onSubmit={createOrder}>
