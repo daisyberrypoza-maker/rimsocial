@@ -336,5 +336,5 @@
 .cv-order-amount-box small { font-size: 15px; }
 .cv-order-desc { border: 0 !important; border-radius: 14px; background: #f0f2f5 !important; padding: 14px 16px !important; font-size: 16px !important; }
 .cv-order-desc::placeholder { color: #8e8e8e; }
-.cv-order-submit { height: 52px; border-radius: 999px; background: #000 !important; color: #fff !important; font-size: 16px !important; font-weight: 600 !important; }
+.cv-order-submit { height: 52px; border-radius: 999px; background: #0095f6 !important; color: #fff !important; font-size: 16px !important; font-weight: 600 !important; }
 .cv-order-submit:disabled { background: #e4e6ea !important; color: #8e8e8e !important; opacity: 1; }

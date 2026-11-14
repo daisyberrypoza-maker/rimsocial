@@ -34,7 +34,7 @@
 .nm-chip { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0; border: 0 !important; background: transparent !important; color: #000; cursor: pointer; }
 .nm-chip-avatar { position: relative; display: block; width: 84px; height: 84px; }
 .nm-chip-avatar > .avatar { width: 84px !important; height: 84px !important; }
-.nm-chip-badge { position: absolute; top: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: #000; color: #fff; border: 2px solid #fff; display: grid; place-items: center; }
+.nm-chip-badge { position: absolute; top: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: #fff; color: #000; border: 1px solid #dbdbdb; box-shadow: 0 1px 3px rgba(0,0,0,.15); display: grid; place-items: center; }
 .nm-chip-name { width: 100%; font-size: 15px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .nm-section { margin: 22px 0 6px; font-size: 20px; font-weight: 700; color: #000; }
@@ -47,9 +47,9 @@
 .nm-row-handle { font-size: 16px; font-weight: 400; color: #8e8e8e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nm-x { flex: none; width: 40px; height: 40px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #8e8e8e; display: grid; place-items: center; cursor: pointer; }
 .nm-check { flex: none; width: 28px; height: 28px; margin-right: 4px; box-sizing: border-box; border: 2px solid #c7c7c7; border-radius: 50%; display: grid; place-items: center; color: #fff; }
-.nm-check.on { background: #000; border-color: #000; }
+.nm-check.on { background: #0095f6; border-color: #0095f6; }
 .nm-empty { margin: 24px 0; text-align: center; color: #8e8e8e; font-size: 16px; }
 
 .nm-create { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); width: min(86%, 420px); height: 52px; margin: 0; border: 0 !important; border-radius: 999px; background: #e4e6ea !important; color: #8e8e8e !important; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); }
-.nm-create.on { background: #000 !important; color: #fff !important; }
+.nm-create.on { background: #0095f6 !important; color: #fff !important; }
 .nm-create:disabled { cursor: default; }
