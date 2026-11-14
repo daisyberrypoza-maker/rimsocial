@@ -1190,7 +1190,7 @@ button svg, a svg { display:block; flex-shrink:0; }
   min-width:0; min-height:44px; width:100%; padding:3px 0; gap:3px;
   justify-content:center; font-size:clamp(8px,2.6vw,11px); line-height:1.1;
 }
-.bottomnav a svg { width:clamp(18px,5.5vw,23px); height:clamp(18px,5.5vw,23px); }
+.bottomnav a svg { width:clamp(16px,5.5vw,21px); height:clamp(16px,5.5vw,21px); }
 .bottomnav .create span.plus { width:clamp(34px,10vw,44px); height:32px; display:grid; place-items:center; }
 .bottomnav a span:not(.plus) { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .bottomnav a.active { font-weight:750; }
