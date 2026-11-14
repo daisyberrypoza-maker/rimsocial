@@ -295,6 +295,8 @@ export default function Conversation() {
       setReplyTo(null);
     } catch (e) {
       setError(e.message || 'Could not send');
+      logError(e);
+      toast(`Message not sent${e.status ? ` (error ${e.status})` : ' (no connection)'}. Tap Send to try again.`);
     } finally {
       setSending(false);
     }
