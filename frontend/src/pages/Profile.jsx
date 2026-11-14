@@ -708,7 +708,7 @@ export default function Profile() {
         </section>
       </div>, document.body)}
 
-      <nav className="pf-tabs" role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(2, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', alignItems: 'stretch' }}>
+      <nav className="pf-tabs" role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(4, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', minWidth: 0, alignItems: 'stretch', flexWrap: 'nowrap' }}>
         <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
