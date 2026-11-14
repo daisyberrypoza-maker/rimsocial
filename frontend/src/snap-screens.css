@@ -1082,3 +1082,13 @@
 .sn-name, .sn-item.unread .sn-name { font-size: 15px !important; font-weight: 500 !important; }
 .sn-time { font-size: 12px !important; margin-left: 5px; }
 .sn-sub { gap: 5px; }
+
+/* New chat: the header stays put and the list scrolls; Chat stays above the keyboard; round To field; thin names and radio circles */
+.nc-backdrop { height: var(--app-viewport-height, 100dvh) !important; }
+.nc-sheet { height: var(--app-viewport-height, 100dvh) !important; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.nc-tabs { position: sticky !important; top: 0 !important; z-index: 6 !important; }
+.nc-to { position: sticky !important; top: 58px !important; z-index: 5 !important; border-radius: 22px !important; background: #eef0f3 !important; }
+.nc-list { flex: none !important; overflow: visible !important; padding-bottom: 120px !important; }
+.nc-chat { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; bottom: calc(var(--keyboard-inset, 0px) + env(safe-area-inset-bottom, 0px) + 24px) !important; z-index: 310 !important; }
+.nc-name { font-weight: 400 !important; }
+.nc-radio { border-width: 1px !important; }
