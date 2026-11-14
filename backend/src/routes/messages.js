@@ -245,9 +245,33 @@ router.get('/groups/:groupId', async (req, res, next) => {
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
     const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
-    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: items.reverse() });
+    res.json({ group: { id: group.id, name: group.name, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(items.reverse()) });
   } catch (error) { next(error); }
 });
+
+// A group reply must quote a message from the same group
+async function groupReplyTarget(groupId, replyToId) {
+  if (!replyToId) return null;
+  if (!UUID.test(String(replyToId))) throw httpError(400, 'That message is no longer available');
+  const row = await GroupMessage.findOne({ where: { id: replyToId, groupId }, attributes: ['id'], raw: true });
+  if (!row) throw httpError(400, 'That message is no longer available');
+  return row.id;
+}
+
+// Attach a small quote for each group reply (null when the original was deleted)
+async function withGroupReplyPreviews(rows) {
+  const ids = [...new Set(rows.map((row) => row.replyToId).filter(Boolean).map(String))];
+  if (!ids.length) return rows;
+  const originals = await GroupMessage.findAll({ where: { id: ids }, raw: true });
+  const byId = new Map(originals.map((row) => [String(row.id), {
+    id: row.id,
+    senderId: row.senderId,
+    body: row.body || '',
+    mediaKind: row.mediaKind || null,
+    mediaUrl: row.mediaKind === 'photo' ? row.mediaUrl || null : null,
+  }]));
+  return rows.map((row) => (row.replyToId ? { ...row, replyTo: byId.get(String(row.replyToId)) || null } : row));
+}
 
 // Send a group text message to every current member.
 router.post('/groups/:groupId/messages', async (req, res, next) => {
@@ -256,7 +280,8 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
     if (!membership) throw httpError(404, 'Group not found');
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     if (!body) throw httpError(400, 'Type a message first');
-    const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body });
+    const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
+    const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId });
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
@@ -271,10 +296,12 @@ router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req,
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages', { resourceType: 'auto' });
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
+    const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
     const message = await GroupMessage.create({
       groupId: req.params.groupId,
       senderId: req.user.id,
       body,
+      replyToId,
       mediaUrl: asset.url,
       mediaKind: chatKindFor(req.file.mimetype),
       mediaName: fileName,

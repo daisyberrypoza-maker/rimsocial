@@ -162,6 +162,7 @@ async function start() {
       ['mediaUrl', { type: DataTypesGroup.STRING(512), allowNull: true }],
       ['mediaKind', { type: DataTypesGroup.STRING(12), allowNull: true }],
       ['mediaName', { type: DataTypesGroup.STRING(255), allowNull: true }],
+      ['replyToId', { type: DataTypesGroup.UUID, allowNull: true }],
     ]) {
       if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
     }

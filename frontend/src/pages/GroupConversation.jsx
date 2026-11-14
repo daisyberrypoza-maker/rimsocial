@@ -7,6 +7,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
+import { MessageRow, attachmentLabel } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
 
@@ -42,6 +43,8 @@ export default function GroupConversationPage() {
   const [optionsAnchor, setOptionsAnchor] = useState(null);
   const [messageAnchor, setMessageAnchor] = useState(null);
   const endRef = useRef(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const replyRef = useRef(null);
   const [viewer, setViewer] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
@@ -103,11 +106,14 @@ export default function GroupConversationPage() {
     setSending(true);
     setError('');
     try {
+      const quoted = replyRef.current;
       const form = new FormData();
       form.append('media', file);
       if (caption) form.append('body', caption);
+      if (quoted) form.append('replyToId', quoted.id);
       const data = await api('/v1/messages/groups/' + groupId + '/media', { method: 'POST', body: form });
-      setMessages((current) => [...(current || []), data.message]);
+      setMessages((current) => [...(current || []), { ...data.message, replyTo: quoteOf(quoted) }]);
+      setReply(null);
     } catch (e) {
       logError(e);
       setError(e.message || 'Could not send');
@@ -182,16 +188,33 @@ export default function GroupConversationPage() {
     }
   }
 
+  // Swipe right, or Reply in the menu, quotes a message in the next send
+  function setReply(message) {
+    replyRef.current = message;
+    setReplyTo(message);
+  }
+
+  function openMessageMenu(message, rect) {
+    setMessageAnchor(rect);
+    setMessageMenu(message);
+  }
+
+  function quoteOf(message) {
+    return message ? { id: message.id, senderId: message.senderId, body: message.body || '', mediaKind: message.mediaKind || null, mediaUrl: message.mediaUrl || null, deletedForEveryone: false } : null;
+  }
+
   async function send(event) {
     event.preventDefault();
     const body = text.trim();
     if (!body || sending) return;
+    const quoted = replyRef.current;
     setSending(true);
     setError('');
     try {
-      const data = await api('/v1/messages/groups/' + groupId + '/messages', { method: 'POST', body: { body } });
-      setMessages((current) => [...(current || []), data.message]);
+      const data = await api('/v1/messages/groups/' + groupId + '/messages', { method: 'POST', body: { body, replyToId: quoted?.id || undefined } });
+      setMessages((current) => [...(current || []), { ...data.message, replyTo: quoteOf(quoted) }]);
       setText('');
+      setReply(null);
     } catch (e) {
       setError(e.message || 'Could not send message');
       toast(e.message || 'Could not send message');
@@ -235,21 +258,46 @@ export default function GroupConversationPage() {
           : messages.map((message) => {
             const mine = String(message.senderId) === String(me?.id);
             return (
-              <div key={message.id} className="cv-line">
+              <MessageRow key={message.id} message={message} mine={mine} onReply={setReply} onOpenMenu={openMessageMenu}>
+              <div className="cv-line">
                 {!mine && <span className="cv-group-sender">{senderName(message.senderId)}</span>}
-                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'} onContextMenu={(event) => { if (mine) { event.preventDefault(); setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); } }}>
+                <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
+                  {message.replyTo && (() => {
+                    const reply = message.replyTo;
+                    const thumb = reply.mediaKind === 'photo' && reply.mediaUrl;
+                    return (
+                      <div className={thumb ? 'cv-quote with-thumb' : 'cv-quote'}>
+                        <div className="cv-quote-text">
+                          <strong>{String(reply.senderId) === String(me?.id) ? 'You' : senderName(reply.senderId)}</strong>
+                          <span>{reply.body || attachmentLabel(reply.mediaKind)}</span>
+                        </div>
+                        {thumb && <img className="cv-quote-thumb" src={mediaUrl(reply.mediaUrl)} alt="" />}
+                      </div>
+                    );
+                  })()}
+                  {message.replyToId && !message.replyTo && <div className="cv-quote"><span>Original message is no longer available</span></div>}
                   {message.mediaUrl && <GroupMedia message={message} onOpenPhoto={(src) => setViewer({ src, kind: 'photo' })} />}
                   {!!message.body && <span className="cv-text">{message.body}</span>}
                   <span className="cv-meta"><span>{clock(message.createdAt)}</span></span>
                   {mine && <button type="button" className="cv-group-message-options" onClick={(event) => { setMessageAnchor(event.currentTarget.getBoundingClientRect()); setMessageMenu(message); }} aria-label="Message options"><Icon name="more-vertical" size={15} /></button>}
                 </div>
               </div>
+              </MessageRow>
             );
           })}
         <div ref={endRef} />
       </div>
 
       {error && <p className="dm-error" role="alert">{error}</p>}
+      {replyTo && (
+        <div className="cv-composer-bar">
+          <div className="cv-composer-text">
+            <strong>{String(replyTo.senderId) === String(me?.id) ? 'Reply to yourself' : `Reply to ${senderName(replyTo.senderId)}`}</strong>
+            <span>{replyTo.body || attachmentLabel(replyTo.mediaKind)}</span>
+          </div>
+          <button type="button" onClick={() => setReply(null)} aria-label="Cancel reply">×</button>
+        </div>
+      )}
       {recording && (
         <div className="cv-recording" role="status" aria-live="polite">
           <span className="cv-rec-dot" aria-hidden="true" />
@@ -292,7 +340,8 @@ export default function GroupConversationPage() {
           anchor={messageAnchor}
           onClose={() => setMessageMenu(null)}
           items={[
-            { key: 'delete', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteGroupMessage(messageMenu) },
+            { key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => { setMessageMenu(null); setReply(messageMenu); } },
+            ...(String(messageMenu.senderId) === String(me?.id) ? [{ key: 'delete', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteGroupMessage(messageMenu) }] : []),
           ]}
         />
       )}

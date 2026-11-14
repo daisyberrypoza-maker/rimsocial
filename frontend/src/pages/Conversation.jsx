@@ -346,7 +346,7 @@ function Ticks({ message }) {
 }
 
 // One message row. Swipe right to reply; long press or right-click opens the actions.
-function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
+export function MessageRow({ message, mine, onReply, onOpenMenu, children }) {
   const start = useRef(null);
   const timer = useRef(null);
   const [offset, setOffset] = useState(0);

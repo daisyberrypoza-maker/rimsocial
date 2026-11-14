@@ -353,6 +353,8 @@ const GroupMessage = sequelize.define('GroupMessage', {
   mediaUrl: { type: DataTypes.STRING(512), allowNull: true },
   mediaKind: { type: DataTypes.STRING(12), allowNull: true },
   mediaName: { type: DataTypes.STRING(255), allowNull: true },
+  // Message this one replies to (within the same group)
+  replyToId: { type: DataTypes.UUID, allowNull: true },
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
 
