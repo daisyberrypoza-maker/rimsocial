@@ -145,6 +145,11 @@ async function setPreference(userId, fields, patch) {
   if (row) await row.update(patch);
   return row;
 }
+// A new message brings a deleted chat back into the inbox for both people (the list hides chats marked hidden)
+async function unhideChat(me, other) {
+  await setPreference(me, { peerId: other }, { hidden: false }).catch(() => {});
+  await setPreference(other, { peerId: me }, { hidden: false }).catch(() => {});
+}
 
 // ---- group conversations --------------------------------------------------
 
@@ -482,6 +487,7 @@ router.post('/with/:userId', async (req, res, next) => {
       media = { mediaUrl: story.mediaUrl, mediaKind: story.kind === 'video' ? 'video' : 'photo' };
     }
     const message = await createMessage({ me, other, body, replyToId, ...media });
+    await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });
@@ -498,6 +504,7 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
     const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId });
+    await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });
@@ -559,6 +566,7 @@ router.post('/message/:id/forward', async (req, res, next) => {
     if (row.deletedForEveryone) throw httpError(400, 'This message was deleted');
     const toUserId = String(req.body?.toUserId || '');
     await assertCanMessage(me, toUserId);
+    await unhideChat(me, toUserId);
     const message = await createMessage({
       me,
       other: toUserId,
