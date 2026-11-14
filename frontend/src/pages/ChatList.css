@@ -246,3 +246,9 @@
 .sn-page .sn-chat-search-row small { font-size: 16px !important; color: #8e8e8e; }
 .sn-page .sn-chat-search-row .sn-group-avatar,
 .sn-page .sn-chat-search-row .avatar { width: 56px !important; height: 56px !important; }
+
+/* Groups sit directly under the direct chats: no gap, same avatar size, icon centred */
+.sn-page .sn-list:not(.sn-group-list) { padding-bottom: 0 !important; }
+.sn-page .sn-group-list { padding: 0 0 96px !important; }
+.sn-page .sn-group-avatar { width: 56px !important; height: 56px !important; min-width: 56px; flex: none; box-sizing: border-box; margin: 0; place-items: center; }
+.sn-page .sn-group-avatar svg { display: block; margin: 0; }
