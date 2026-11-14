@@ -404,7 +404,7 @@ router.get('/conversations', async (req, res, next) => {
             readAt: entry.last.readAt,
             deliveredAt: entry.last.deliveredAt,
           },
-          unread: entry.unread,
+          unread: entry.unread || (prefByPeer.get(partner)?.markedUnread ? 1 : 0),
           muted: Boolean(prefByPeer.get(partner)?.muted),
         };
       });
@@ -788,6 +788,7 @@ router.get('/stream', (req, res) => {
 router.post('/with/:userId/read', async (req, res, next) => {
   try {
     await DirectMessage.update({ readAt: new Date(), deliveredAt: new Date() }, { where: { senderId: req.params.userId, recipientId: req.user.id, readAt: null } });
+    await setPreference(req.user.id, { peerId: req.params.userId }, { markedUnread: false });
     res.json({ ok: true });
   } catch (error) { next(error); }
 });
@@ -795,7 +796,10 @@ router.post('/with/:userId/read', async (req, res, next) => {
 // Mark all incoming messages unread from this conversation in the inbox.
 router.post('/with/:userId/unread', async (req, res, next) => {
   try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    // Stays unread even when the last message was mine: the flag is kept per chat
     await DirectMessage.update({ readAt: null }, { where: { senderId: req.params.userId, recipientId: req.user.id } });
+    await setPreference(req.user.id, { peerId: req.params.userId }, { markedUnread: true });
     res.json({ ok: true });
   } catch (error) { next(error); }
 });

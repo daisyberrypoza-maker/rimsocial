@@ -382,6 +382,7 @@ const ChatPreference = sequelize.define('ChatPreference', {
   groupId: { type: DataTypes.UUID, allowNull: true },
   muted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  markedUnread: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
 }, { tableName: 'chat_preferences', indexes: [
   { unique: true, fields: ['userId', 'peerId'] },
   { unique: true, fields: ['userId', 'groupId'] },

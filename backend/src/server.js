@@ -172,6 +172,12 @@ async function start() {
   }
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
+  // Add the mark-as-unread flag to existing chat_preferences tables (additive, idempotent)
+  {
+    const qiPref = sequelize.getQueryInterface();
+    const prefColumns = await qiPref.describeTable('chat_preferences').catch(() => ({}));
+    if (!prefColumns.markedUnread) await qiPref.addColumn('chat_preferences', 'markedUnread', { type: require('sequelize').DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
+  }
   await UserMute.sync();
   // Story likes are stored separately from post likes. Create the table when absent;
   // sync() without alter/force is additive and preserves existing rows.
