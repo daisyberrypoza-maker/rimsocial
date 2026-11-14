@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference, UserMute } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -159,6 +159,8 @@ async function start() {
   // Story likes are stored separately from post likes. Create the table when absent;
   // sync() without alter/force is additive and preserves existing rows.
   await StoryLike.sync();
+  // Orders created in direct chats (additive table)
+  await Order.sync();
   // Idempotent production upgrade for direct-message features (migrations 030–032).
   // Add only missing columns so existing messages and other user data remain untouched.
   const qiDM = sequelize.getQueryInterface();
@@ -175,6 +177,7 @@ async function start() {
     ['hiddenFor', { type: DataTypesDM.TEXT, allowNull: true }],
     ['replyToId', { type: DataTypesDM.UUID, allowNull: true }],
     ['forwarded', { type: DataTypesDM.BOOLEAN, allowNull: false, defaultValue: false }],
+    ['orderId', { type: DataTypesDM.UUID, allowNull: true }],
   ];
   for (const [column, definition] of directMessageAdditions) {
     if (!directMessageColumns[column]) {

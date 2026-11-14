@@ -9,6 +9,7 @@ import MyFriends from './pages/MyFriends.jsx';
 import Algorithm from './pages/Algorithm.jsx';
 import Messages from './pages/Messages.jsx';
 import Conversation from './pages/Conversation.jsx';
+import OrderDetails from './pages/OrderDetails.jsx';
 import GroupConversationPage from './pages/GroupConversation.jsx';
 import NewMessage from './pages/NewMessage.jsx';
 import Toast from './components/Toast.jsx';
@@ -156,6 +157,7 @@ export default function App() {
         <Route path="/chat/new" element={<RequireAuth><NewMessage /></RequireAuth>} />
         <Route path="/chat/group/:groupId" element={<RequireAuth><GroupConversationPage /></RequireAuth>} />
         <Route path="/chat/:userId" element={<RequireAuth><Conversation /></RequireAuth>} />
+        <Route path="/orders/:orderId" element={<RequireAuth><OrderDetails /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/story/text" element={<RequireAuth><StoryComposer /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />

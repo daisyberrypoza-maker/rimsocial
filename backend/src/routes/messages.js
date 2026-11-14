@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Follow, Post, GroupConversation, GroupMember, GroupMessage, ChatPreference, sequelize } = require('../db');
+const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const { anyFileUpload, chatKindFor } = require('../middleware/upload');
@@ -61,9 +61,32 @@ async function validReplyTarget(me, other, replyToId) {
   return row.id;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false }) {
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null }) {
   const postId = await linkedPostId(body);
-  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded });
+  return DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId });
+}
+
+// ---- orders -----------------------------------------------------------------
+function serializeOrder(o) {
+  return {
+    id: o.id, sellerId: o.sellerId, buyerId: o.buyerId, amountCents: o.amountCents, currency: o.currency,
+    description: o.description, status: o.status, paidAt: o.paidAt || null, cancelledAt: o.cancelledAt || null, createdAt: o.createdAt,
+  };
+}
+// Attach the order summary to each order message so the chat can show its card
+async function withOrders(rows) {
+  const ids = [...new Set(rows.map((row) => row.orderId).filter(Boolean).map(String))];
+  if (!ids.length) return rows;
+  const orders = await Order.findAll({ where: { id: ids }, raw: true });
+  const byId = new Map(orders.map((o) => [String(o.id), serializeOrder(o)]));
+  return rows.map((row) => (row.orderId ? { ...row, order: byId.get(String(row.orderId)) || null } : row));
+}
+// Only the seller and the buyer can see an order
+async function loadOrderFor(me, id) {
+  if (!UUID.test(String(id))) throw httpError(404, 'Order not found');
+  const order = await Order.findByPk(id);
+  if (!order || (String(order.sellerId) !== String(me) && String(order.buyerId) !== String(me))) throw httpError(404, 'Order not found');
+  return order;
 }
 
 // Hide the content of messages deleted for everyone, so nothing of them is sent to the app
@@ -439,7 +462,7 @@ router.get('/with/:userId', async (req, res, next) => {
     });
     const visible = rows.filter((row) => !isHiddenFor(row, me)).reverse().map(sanitize);
     const withReplies = await withReplyPreviews(visible);
-    const items = await withPostPreviews(withReplies, me);
+    const items = await withOrders(await withPostPreviews(withReplies, me));
     const typing = await redis.get(`typing:${other}:${me}`).then(Boolean).catch(() => false);
     res.json({ items, typing });
   } catch (error) { next(error); }
@@ -459,6 +482,49 @@ router.get('/with/:userId/info', async (req, res, next) => {
 });
 
 // I am typing to this person. Lasts a few seconds unless I keep typing.
+// The seller creates an order in the chat with the buyer (amount in USD, with a description)
+router.post('/with/:userId/order', async (req, res, next) => {
+  try {
+    const me = req.user.id;
+    const other = req.params.userId;
+    const amount = Number(req.body?.amount);
+    const description = String(req.body?.description || '').trim().slice(0, 500);
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 1000000) throw httpError(400, 'Enter an amount greater than 0');
+    await assertCanMessage(me, other);
+    const order = await Order.create({ sellerId: me, buyerId: other, amountCents: Math.round(amount * 100), currency: 'USD', description, status: 'created' });
+    const message = await createMessage({ me, other, body: '', orderId: order.id });
+    await unhideChat(me, other);
+    res.status(201).json({ message: message.toJSON(), order: serializeOrder(order.get({ plain: true })) });
+  } catch (error) { next(error); }
+});
+
+router.get('/orders/:id', async (req, res, next) => {
+  try {
+    const order = await loadOrderFor(req.user.id, req.params.id);
+    res.json({ order: serializeOrder(order.get({ plain: true })) });
+  } catch (error) { next(error); }
+});
+
+router.post('/orders/:id/paid', async (req, res, next) => {
+  try {
+    const order = await loadOrderFor(req.user.id, req.params.id);
+    if (String(order.sellerId) !== String(req.user.id)) throw httpError(403, 'Only the seller can mark this order as paid');
+    if (order.status !== 'created') throw httpError(400, 'This order can no longer be marked as paid');
+    await order.update({ status: 'paid', paidAt: new Date() });
+    res.json({ order: serializeOrder(order.get({ plain: true })) });
+  } catch (error) { next(error); }
+});
+
+router.post('/orders/:id/cancel', async (req, res, next) => {
+  try {
+    const order = await loadOrderFor(req.user.id, req.params.id);
+    if (String(order.sellerId) !== String(req.user.id)) throw httpError(403, 'Only the seller can cancel this order');
+    if (order.status !== 'created') throw httpError(400, 'This order can no longer be cancelled');
+    await order.update({ status: 'cancelled', cancelledAt: new Date() });
+    res.json({ order: serializeOrder(order.get({ plain: true })) });
+  } catch (error) { next(error); }
+});
+
 router.post('/with/:userId/typing', async (req, res, next) => {
   try {
     await redis.set(`typing:${req.user.id}:${req.params.userId}`, '1', 'EX', TYPING_TTL_SECONDS).catch(() => {});

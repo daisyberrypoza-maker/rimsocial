@@ -392,9 +392,25 @@ const DirectMessage = sequelize.define('DirectMessage', {
   hiddenFor: DataTypes.TEXT,
   replyToId: DataTypes.UUID,
   forwarded: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  // Order card shown in the chat (see Order)
+  orderId: { type: DataTypes.UUID, allowNull: true },
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
+// Order created inside a direct chat by the seller, for the other person (buyer)
+const Order = sequelize.define('Order', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  sellerId: { type: DataTypes.UUID, allowNull: false },
+  buyerId: { type: DataTypes.UUID, allowNull: false },
+  amountCents: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  currency: { type: DataTypes.STRING(3), allowNull: false, defaultValue: 'USD' },
+  description: { type: DataTypes.STRING(500), allowNull: false, defaultValue: '' },
+  status: { type: DataTypes.ENUM('created', 'paid', 'cancelled'), allowNull: false, defaultValue: 'created' },
+  paidAt: DataTypes.DATE,
+  cancelledAt: DataTypes.DATE,
+}, { tableName: 'orders', indexes: [{ fields: ['sellerId', 'createdAt'] }, { fields: ['buyerId', 'createdAt'] }] });
+
 module.exports = {
+  Order,
   AudioTrack,
   DirectMessage, GroupConversation, GroupMember, GroupMessage, ChatPreference,
   MediaCleanupJob,

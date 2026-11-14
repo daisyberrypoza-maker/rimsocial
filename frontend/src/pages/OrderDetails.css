@@ -1,0 +1,24 @@
+/* Order details screen */
+.od-page { min-height: 100dvh; box-sizing: border-box; background: #fff; color: #000; padding: calc(env(safe-area-inset-top, 0px) + 8px) 20px 40px; }
+.od-top { display: flex; align-items: center; gap: 14px; min-height: 48px; }
+.od-top h1 { margin: 0; font-size: 20px; font-weight: 700; }
+.od-back { width: 40px; height: 40px; border: 0; background: transparent; color: #000; display: grid; place-items: center; padding: 0; margin-left: -8px; }
+.od-error { color: #ed4956; }
+.od-person { display: flex; align-items: center; gap: 16px; padding: 24px 0; border-bottom: 1px solid #efefef; }
+.od-person strong { display: block; font-size: 18px; font-weight: 600; }
+.od-person span { color: #737373; font-size: 15px; }
+.od-block { padding: 20px 0; border-bottom: 1px solid #efefef; }
+.od-block h2 { margin: 0 0 10px; font-size: 18px; font-weight: 700; }
+.od-block p { margin: 4px 0; color: #737373; font-size: 16px; word-break: break-all; }
+.od-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; position: relative; }
+.od-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 14px; position: relative; }
+.od-steps li:not(:last-child)::after { content: ''; position: absolute; left: 13px; top: 30px; bottom: -22px; width: 2px; background: #dbdbdb; }
+.od-steps li.done:not(:last-child)::after { background: #31a24c; }
+.od-steps strong { display: block; font-size: 17px; font-weight: 500; }
+.od-steps small { display: block; color: #737373; font-size: 15px; margin-top: 2px; line-height: 1.35; }
+.od-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #c7c7c7; display: grid; place-items: center; font-size: 15px; font-weight: 700; color: #fff; }
+.od-steps li.done .od-dot { background: #31a24c; border-color: #31a24c; }
+.od-steps li.cancelled .od-dot { background: #ed4956; border-color: #ed4956; }
+.od-primary { display: block; width: 100%; height: 48px; margin: 12px 0 8px; border: 0; border-radius: 10px; background: #4f5bff; color: #fff; font-size: 17px; font-weight: 600; }
+.od-primary:disabled { opacity: .5; }
+.od-cancel { display: block; width: 100%; margin-top: 28px; padding: 14px 0; border: 0; background: transparent; color: #ed4956; font-size: 17px; text-align: left; }

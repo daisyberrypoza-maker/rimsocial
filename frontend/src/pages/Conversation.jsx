@@ -8,6 +8,7 @@ import { useAppStore } from '../store.js';
 import { goBack } from '../lib/goBack.js';
 import { mediaUrl } from '../lib/config.js';
 import { toast, logError } from '../toast.js';
+import { formatMoney } from '../lib/money.js';
 import '../snap-screens.css';
 import './Conversation.css';
 
@@ -155,7 +156,25 @@ function needsStamp(list, i) {
   return gap > 30 * 60 * 1000;
 }
 
+function OrderCard({ order, mine }) {
+  const title = order.status === 'paid' ? 'Order paid' : order.status === 'cancelled' ? 'Order cancelled' : 'Order created';
+  return (
+    <Link to={`/orders/${order.id}`} className={mine ? 'cv-order mine' : 'cv-order theirs'}>
+      <span className="cv-order-icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z" /><path d="M9 7h6M9 11h6M9 15h4" /></svg>
+      </span>
+      <span className="cv-order-body">
+        <strong>{title}</strong>
+        <small>Order number {String(order.id).slice(0, 8).toUpperCase()}</small>
+        <span className="cv-order-amount">{formatMoney(order.amountCents, order.currency)}</span>
+      </span>
+      <span className="cv-order-view">View order</span>
+    </Link>
+  );
+}
+
 function Bubble({ message, mine }) {
+  if (message.order) return <OrderCard order={message.order} mine={mine} />;
   const deleted = Boolean(message.deletedForEveryone);
   const hasText = Boolean(message.body) && !deleted;
   const reply = message.replyTo;
@@ -211,6 +230,10 @@ export default function Conversation() {
   const [error, setError] = useState('');
   const endRef = useRef(null);
   const fileRef = useRef(null);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [orderAmount, setOrderAmount] = useState('');
+  const [orderDescription, setOrderDescription] = useState('');
+  const [orderSaving, setOrderSaving] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -285,6 +308,29 @@ export default function Conversation() {
     setEditing(null);
     setText('');
     setFile(null);
+  }
+
+  async function createOrder(event) {
+    event.preventDefault();
+    const amount = Number(orderAmount);
+    if (!(amount > 0) || orderSaving) return;
+    setOrderSaving(true);
+    try {
+      const data = await api(`/v1/messages/with/${userId}/order`, { method: 'POST', body: { amount, description: orderDescription.trim() } });
+      setMessages((current) => {
+        const list = current || [];
+        const sent = { ...data.message, order: data.order };
+        return list.some((m) => m.id === sent.id) ? list : [...list, sent];
+      });
+      setOrderOpen(false);
+      setOrderAmount('');
+      setOrderDescription('');
+    } catch (e) {
+      logError(e);
+      toast(e.message || 'Could not create the order');
+    } finally {
+      setOrderSaving(false);
+    }
   }
 
   // Voice notes: hold the mic to record, release to send, slide left to cancel
@@ -615,7 +661,7 @@ export default function Conversation() {
             <button type="button" className="cv-tool" onClick={() => setEmojiOpen((open) => !open)} aria-label="Emoji" aria-expanded={emojiOpen}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" /></svg>
             </button>
-            <button type="button" className="cv-tool" onClick={() => toast('Creating orders in chat is not set up yet')} aria-label="Create order">
+            <button type="button" className="cv-tool" onClick={() => setOrderOpen(true)} aria-label="Create order">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
             </button>
           </span>
@@ -639,6 +685,29 @@ export default function Conversation() {
         />
       )}
 
+      {orderOpen && (
+        <div className="cv-order-backdrop" onClick={() => !orderSaving && setOrderOpen(false)}>
+          <form className="cv-order-sheet" role="dialog" aria-label="Create order" onClick={(e) => e.stopPropagation()} onSubmit={createOrder}>
+            <div className="cv-order-top">
+              <button type="button" className="cv-order-close" onClick={() => setOrderOpen(false)} aria-label="Close" disabled={orderSaving}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+              <div className="cv-order-title"><strong>Create order</strong><small>@{partner?.username || name}</small></div>
+              <span className="cv-order-spacer" aria-hidden="true" />
+            </div>
+            <p className="cv-order-lead"><strong>Create an order in chat</strong><span>This helps you track orders easily and share updates with customers directly in chat.</span></p>
+            <div className="cv-order-amount-box">
+              <label htmlFor="cv-order-amount">
+                <span className="cv-order-currency">$</span>
+                <input id="cv-order-amount" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0" value={orderAmount} onChange={(e) => setOrderAmount(e.target.value)} aria-label="Total price in USD" />
+              </label>
+              <small>Total Price (USD)</small>
+            </div>
+            <input className="cv-order-desc" value={orderDescription} onChange={(e) => setOrderDescription(e.target.value)} maxLength={500} placeholder="Write a description..." aria-label="Description" />
+            <button type="submit" className="cv-order-submit" disabled={!(Number(orderAmount) > 0) || orderSaving}>{orderSaving ? 'Creating…' : 'Create order'}</button>
+          </form>
+        </div>
+      )}
       {forwarding && (
         <div className="cv-sheet-backdrop" onClick={() => setForwarding(null)}>
           <section className="cv-sheet cv-forward" role="dialog" aria-label="Forward to" onClick={(e) => e.stopPropagation()}>
