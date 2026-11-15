@@ -7221,3 +7221,9 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 /* Discover ad tile (Master feed merge) */
 .st-page a.st-card-ad { text-decoration:none; color:inherit; }
 .st-page .st-ad-label { flex:none; font-size:10px; font-weight:600; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,.9); color:#111; }
+
+/* Story tile transition: dimmed backdrop, chrome fades with the open/close and drag gesture */
+.sv-backdrop { position:fixed; inset:0; z-index:399; background:#000; opacity:0; pointer-events:none; }
+.sv-root > *:not(.sv-stage) { opacity:var(--hud,1); transition:opacity .2s ease; }
+.sv-root[data-drag] > *:not(.sv-stage) { transition:none; }
+.sv-root .sv-stage { touch-action:none; }

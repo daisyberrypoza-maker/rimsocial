@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
+import { applyBox, boxOf, dragState, fullBox, visualBox, EASE, OPEN_MS, SNAP_EASE, SNAP_MS } from '../lib/viewerMotion.js';
 import '../pages/StoryComposer.css';
 import './StoryOwnerSheet.css';
 import { createPortal } from 'react-dom';
@@ -20,7 +21,6 @@ import { sealFor } from '../lib/e2ee.js';
 
 const PHOTO_MS = 5000;
 const SWIPE_PX = 60;
-const CLOSE_PX = 120;
 const DOUBLE_TAP_MS = 260;
 const QUICK_REACTIONS = ['❤️', '😂', '😮', '🔥', '👏', '😢'];
 const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual content', 'Violence or dangerous content', 'Something else'];
@@ -41,7 +41,7 @@ function timeAgo(iso) {
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
 // Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
 // Videos play with sound; photos advance after PHOTO_MS.
-export default function StoryViewer({ groups, startIndex, startStory = 0, onClose }) {
+export default function StoryViewer({ groups, startIndex, startStory = 0, onClose, origin = null }) {
   const [gi, setGi] = useState(startIndex);
   // Which story of the group opens first (used once, on the first load of that group)
   const firstStoryRef = useRef(startStory);
@@ -78,6 +78,10 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   const tapRef = useRef({ time: 0, middle: false });
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const rootRef = useRef(null);
+  const backdropRef = useRef(null);
+  const dragRef = useRef(null);     // set while a finger drags the story
+  const closingRef = useRef(false);
   // Closing the viewer stops its video at once (a removed video can otherwise keep playing sound)
   useLayoutEffect(() => () => { videoRef.current?.pause(); voiceRef.current?.pause(); musicRef.current?.pause(); }, []);
 
@@ -144,7 +148,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     if (!stories) return;
     if (si < stories.length - 1) return setSi(si + 1);
     if (gi < groups.length - 1) return setGi(gi + 1);
-    closeRef.current();
+    requestClose();
   }, [stories, si, gi, groups.length]);
 
   const prev = useCallback(() => {
@@ -329,7 +333,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }
 
   function onPointerDown(event) {
-    swipeRef.current = { x: event.clientX, y: event.clientY, startedLow: event.clientY > window.innerHeight / 2 };
+    swipeRef.current = { x: event.clientX, y: event.clientY, t: performance.now(), startedLow: event.clientY > window.innerHeight / 2 };
     // A press held for a moment pauses the story until the finger lifts
     suppressTapRef.current = false;
     clearTimeout(holdRef.current.timer);
@@ -346,15 +350,102 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     setHolding(false);
   }
 
+  // Tile transition: the viewer grows out of the tapped tile, then the controls fade in
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    const bd = backdropRef.current;
+    if (!el || !origin) return undefined;
+    applyBox(el, origin, false);
+    el.style.setProperty('--hud', '0');
+    if (bd) { bd.style.transition = 'none'; bd.style.opacity = '0'; }
+    void el.offsetWidth;   // commit the tile position before animating
+    applyBox(el, fullBox(), true);
+    if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0.85'; }
+    const hudTimer = setTimeout(() => el.style.setProperty('--hud', '1'), Math.round(OPEN_MS * 0.5));
+    return () => clearTimeout(hudTimer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Closes back into the tile; liveBox continues from where a drag left the viewer
+  function requestClose(liveBox = null) {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    const el = rootRef.current;
+    const bd = backdropRef.current;
+    if (!el || !origin) { closeRef.current(); return; }
+    if (liveBox) applyBox(el, liveBox, false);
+    void el.offsetWidth;
+    delete el.dataset.drag;
+    applyBox(el, origin, true);
+    el.style.setProperty('--hud', '0');
+    if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0'; }
+    setTimeout(() => closeRef.current(), OPEN_MS + 20);
+  }
+
+  // A drag that did not pass the threshold springs back to fullscreen
+  function snapBack() {
+    const el = rootRef.current;
+    const bd = backdropRef.current;
+    if (!el) return;
+    delete el.dataset.drag;
+    el.style.transition = `transform ${SNAP_MS}ms ${SNAP_EASE}, border-radius ${SNAP_MS}ms ${SNAP_EASE}`;
+    el.style.transform = '';
+    el.style.borderRadius = '0px';
+    el.style.setProperty('--hud', '1');
+    if (bd) { bd.style.transition = `opacity ${SNAP_MS}ms ease`; bd.style.opacity = '0.85'; }
+  }
+
+  function clearSwipedLater() {
+    setTimeout(() => { swipedRef.current = false; }, 300);
+  }
+
   function onPointerCancel() {
     releaseHold();
     swipeRef.current = null;
+    if (dragRef.current) { dragRef.current = null; snapBack(); }
+  }
+
+  function onPointerMove(event) {
+    const start = swipeRef.current;
+    if (!start || closingRef.current) return;
+    if (typing || menuOpen || shareOpen || viewersOpen || reportOpen) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (!dragRef.current) {
+      const down = dy > 8 && dy > Math.abs(dx) * 0.5;
+      const sideways = Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5;
+      if (!down && !sideways) return;
+      dragRef.current = { t: start.t };
+      clearTimeout(holdRef.current.timer);
+      holdRef.current = { timer: null, held: false };
+      setHolding(false);
+    }
+    const el = rootRef.current;
+    const bd = backdropRef.current;
+    if (!el) return;
+    const ds = dragState(dx, dy);
+    el.dataset.drag = '1';
+    el.style.transition = 'none';
+    el.style.transform = `translate(${ds.tx}px, ${ds.ty}px) scale(${ds.scale})`;
+    el.style.borderRadius = `${ds.radius}px`;
+    el.style.setProperty('--hud', String(ds.hud));
+    if (bd) { bd.style.transition = 'none'; bd.style.opacity = String(ds.backdrop); }
   }
 
   function onPointerUp(event) {
     releaseHold();
     const start = swipeRef.current;
     swipeRef.current = null;
+    if (dragRef.current) {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      swipedRef.current = true;
+      clearSwipedLater();
+      const ds = dragState(event.clientX - start.x, event.clientY - start.y);
+      const seconds = Math.max((performance.now() - drag.t) / 1000, 0.016);
+      if (ds.raw > 0.35 || ds.dist / seconds > 800) requestClose(visualBox(ds));
+      else snapBack();
+      return;
+    }
     if (!start) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
@@ -362,9 +453,6 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     if (start.startedLow && dy < -SWIPE_PX) {
       swipedRef.current = true;
       openOptions();
-    } else if (dy > CLOSE_PX) {
-      swipedRef.current = true;
-      closeRef.current();
     }
   }
 
@@ -437,7 +525,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     try {
       await api(`/v1/users/${group.user.id}/block`, { method: 'POST' });
       toast(`@${group.user.username} blocked`);
-      closeRef.current();
+      requestClose();
     } catch (e) { logError(e); }
   }
 
@@ -488,7 +576,9 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }
 
   return createPortal((
-    <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
+    <>
+    <div ref={backdropRef} className="sv-backdrop" aria-hidden="true" />
+    <div ref={rootRef} className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
           i === si ? (
@@ -679,5 +769,6 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
         </div>
       )}
     </div>
+    </>
   ), document.body);
 }

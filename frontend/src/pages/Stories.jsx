@@ -1,4 +1,5 @@
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { boxOf } from '../lib/viewerMotion.js';
 import './UploadStatus.css';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -95,6 +96,8 @@ export default function Stories() {
     navigate('/friends');
   }
   const [openAt, setOpenAt] = useState(null);
+  const [openOrigin, setOpenOrigin] = useState(null);   // tapped tile box: the viewer grows out of it
+  const [popOrigin, setPopOrigin] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
@@ -178,9 +181,9 @@ export default function Stories() {
   }, [loadRail]);
 
   // Every story opens in the shared StoryViewer, so photos, videos and controls behave the same everywhere.
-  function openStories(group) {
+  function openStories(group, tile = null) {
     const i = rail.findIndex((item) => item.user?.id === group.user?.id);
-    if (i >= 0) setOpenAt(i);
+    if (i >= 0) { setOpenOrigin(tile ? boxOf(tile) : null); setOpenAt(i); }
   }
 
   // Opened from a story message in a chat: open that person's story directly (once per visit)
@@ -188,7 +191,7 @@ export default function Stories() {
     if (!openUserId || !loaded || openedFromChatRef.current === openUserId) return;
     const i = rail.findIndex((item) => String(item.user?.id) === openUserId);
     openedFromChatRef.current = openUserId;
-    if (i >= 0) setOpenAt(i);
+    if (i >= 0) { setOpenOrigin(null); setOpenAt(i); }
   }, [openUserId, loaded, rail]);
 
   const myGroup = rail.find((group) => group.user?.id === me?.id);
@@ -196,7 +199,7 @@ export default function Stories() {
   // A suggested person with stories opens the viewer; otherwise their profile opens
   function openSuggested(person) {
     const i = rail.findIndex((item) => item.user?.id === person.id);
-    if (i >= 0) setOpenAt(i);
+    if (i >= 0) { setOpenOrigin(null); setOpenAt(i); }
     else navigate('/u/' + person.username);
   }
   const others = rail.filter((group) => group.user?.id !== me?.id);
@@ -230,7 +233,7 @@ export default function Stories() {
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
-          <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
+          <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={(event) => (myGroup ? openStories(myGroup, event.currentTarget) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
                 <StoryFace group={myGroup} user={me || {}} />
@@ -242,7 +245,7 @@ export default function Stories() {
           </button>
           
           {!loading && orderedOthers.map((group) => (
-            <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
+            <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={(event) => openStories(group, event.currentTarget)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
                 <span className="st-face"><StoryFace group={group} user={group.user} /></span>
               </span>
@@ -276,7 +279,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className="st-card" key={item.key} onClick={() => setPopOpen(story.author)} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className="st-card" key={item.key} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
@@ -293,7 +296,7 @@ export default function Stories() {
 
       {popOpen && (
         <ViewerBoundary onClose={() => setPopOpen(null)}>
-          <StoryViewer groups={[{ user: popOpen }]} startIndex={0} onClose={() => setPopOpen(null)} />
+          <StoryViewer groups={[{ user: popOpen }]} startIndex={0} origin={popOrigin} onClose={() => setPopOpen(null)} />
         </ViewerBoundary>
       )}
 
@@ -302,6 +305,7 @@ export default function Stories() {
           <StoryViewer
             groups={rail.filter((group) => group.user).map((group) => ({ user: group.user }))}
             startIndex={openAt}
+            origin={openOrigin}
             onClose={() => { setOpenAt(null); loadRail(); }}
           />
         </ViewerBoundary>

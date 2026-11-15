@@ -1,4 +1,5 @@
 import AppLink from '../components/AppLink.jsx';
+import { boxOf } from '../lib/viewerMotion.js';
 import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
@@ -69,6 +70,7 @@ export default function Profile() {
   const [savedLoading, setSavedLoading] = useState(false);
   const [stories, setStories] = useState([]);
   const [viewing, setViewing] = useState(false);
+  const [viewOrigin, setViewOrigin] = useState(null);   // tapped tile box for the open animation
   const [busy, setBusy] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -746,7 +748,7 @@ export default function Profile() {
         <>
           <div className="sc-grid">
             {stories.map((s, i) => (
-              <button key={s.id} className="sc-tile" onClick={() => setViewing(i)}>
+              <button key={s.id} className="sc-tile" onClick={(event) => { setViewOrigin(boxOf(event.currentTarget)); setViewing(i); }}>
                 {s.kind === 'video'
                   ? <video src={mediaUrl(s.mediaUrl)} muted playsInline preload="metadata" />
                   : s.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(s.storyBackground) }}>{s.storyText}</span> : <img src={mediaUrl(s.mediaUrl)} alt="" loading="lazy" />}
@@ -757,7 +759,7 @@ export default function Profile() {
           </div>
           {!stories.length && <div className="sc-empty-grid" role="status"><strong>No stories yet</strong></div>}
           {viewing !== false && stories.length > 0 && (
-            <StoryViewer groups={[{ user: profile }]} startIndex={0} startStory={viewing} onClose={() => setViewing(false)} />
+            <StoryViewer groups={[{ user: profile }]} startIndex={0} startStory={viewing} origin={viewOrigin} onClose={() => setViewing(false)} />
           )}
         </>
       ) : tab === 'saved' ? (
