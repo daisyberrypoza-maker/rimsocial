@@ -41,8 +41,9 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     if (metadata.purpose === 'post_boost') {
       const { Post } = require('../db');
       const days = Number(metadata.days);
-      const expected = days * config.boostMinorPerDay;
-      if (![1, 3, 7].includes(days) || currency !== 'NGN' || Number(amount) !== expected || Number(metadata.amountMinor) !== expected) return res.status(200).end();
+      const expected = Number(metadata.amountMinor);
+      if (!Number.isInteger(days) || days < 1 || days > 14 || currency !== 'NGN' || Number(amount) !== expected ||
+          expected < days * 50000 || expected > days * 5000000) return res.status(200).end();
       const post = await Post.findOne({ where: { id: metadata.postId, authorId: metadata.userId, status: 'live', isStory: false } });
       if (!post) return res.status(200).end();
       try {

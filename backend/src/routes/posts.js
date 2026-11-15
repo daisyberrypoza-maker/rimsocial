@@ -250,14 +250,18 @@ router.delete('/:id/save', requireAuth, async (req, res, next) => {
 });
 
 // Promote: pay with Paystack to show a post as an ad for 1, 3 or 7 days. Activated by the payment webhook.
-const BOOST_DAYS = [1, 3, 7];
+// Budget is chosen by the owner: NGN 500 to NGN 50,000 a day, for 1 to 14 days
+const BOOST_MIN_DAILY_MINOR = 50000;
+const BOOST_MAX_DAILY_MINOR = 5000000;
 router.post('/:id/boost', requireAuth, async (req, res, next) => {
   try {
     if (!config.paystackSecret) throw httpError(503, 'Promotion payments are not set up yet');
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, authorId: req.user.id } });
     if (!post) throw httpError(404, 'Post not found');
-    const days = Number(req.body?.days);
-    if (!BOOST_DAYS.includes(days)) throw httpError(400, 'Choose 1, 3 or 7 days');
+    const days = Math.round(Number(req.body?.days));
+    if (!Number.isInteger(days) || days < 1 || days > 14) throw httpError(400, 'Choose between 1 and 14 days');
+    const dailyMinor = Math.round(Number(req.body?.dailyNaira) * 100);
+    if (!Number.isFinite(dailyMinor) || dailyMinor < BOOST_MIN_DAILY_MINOR || dailyMinor > BOOST_MAX_DAILY_MINOR) throw httpError(400, 'Choose a daily budget between NGN 500 and NGN 50,000');
     const sponsorName = String(req.body?.sponsorName || '').trim().slice(0, 100);
     const sponsorDescription = String(req.body?.sponsorDescription || '').trim().slice(0, 200);
     const sponsorCta = String(req.body?.sponsorCta || 'Shop Now').trim().slice(0, 30);
@@ -267,7 +271,7 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
     const user = await User.findByPk(req.user.id, { attributes: ['id', 'email'] });
     const email = String(user?.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Add a valid email to your account first');
-    const amountMinor = days * config.boostMinorPerDay;
+    const amountMinor = dailyMinor * days;
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },

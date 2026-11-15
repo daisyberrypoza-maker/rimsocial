@@ -1,17 +1,36 @@
-/* Promote sheet: white, black text, Instagram blue for the action */
-.bs-backdrop { position: fixed; inset: 0; z-index: 430; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.45); }
-.bs-sheet { width: 100%; max-width: 520px; max-height: 92dvh; overflow-y: auto; box-sizing: border-box; padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 18px); background: #fff; color: #000; border-radius: 18px 18px 0 0; display: flex; flex-direction: column; gap: 14px; }
-.bs-top { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; height: 56px; margin: 0 -18px; padding: 0 12px; background: #fff; border-bottom: 1px solid #efefef; }
-.bs-top strong { text-align: center; font-size: 17px; font-weight: 600; }
-.bs-close { width: 36px; height: 36px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
-.bs-lead { margin: 4px 0 0; font-size: 15px; font-weight: 400; color: #555; }
-.bs-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 400; color: #555; }
-.bs-field input, .bs-field select { height: 46px; padding: 0 14px; box-sizing: border-box; border: 1px solid #dbdbdb !important; border-radius: 12px; font-size: 16px; color: #000; background: #fff; outline: 0 !important; box-shadow: none !important; }
+/* Promote flow, following the Snapchat promotion screens: white pages, yellow main button, blue progress */
+.bs-page { position: fixed; inset: 0; z-index: 430; display: flex; flex-direction: column; background: #fff; color: #000; height: var(--app-viewport-height, 100dvh); padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; overflow: hidden; }
+.bs-head { flex: none; height: 56px; display: flex; align-items: center; padding: 0 14px; }
+.bs-back { width: 40px; height: 40px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
+.bs-progress { flex: none; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 4px 24px 0; }
+.bs-progress span { height: 4px; border-radius: 4px; background: #d6d6d6; }
+.bs-progress span.on { background: #0095f6; }
+.bs-step { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 24px 24px 16px; box-sizing: border-box; }
+.bs-step h1 { margin: 0 0 22px; font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
+.bs-goals { display: flex; flex-direction: column; gap: 12px; }
+.bs-goal { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; box-sizing: border-box; border: 1.5px solid #dadada !important; border-radius: 16px; background: #fff !important; color: #000 !important; text-align: left; cursor: pointer; }
+.bs-goal.on { border-color: #1c1c1e !important; }
+.bs-goal-icon { flex: none; width: 52px; height: 52px; border-radius: 12px; background: #f0f0f0; display: grid; place-items: center; color: #000; }
+.bs-goal.on .bs-goal-icon { background: #fffc00; }
+.bs-goal-label { flex: 1; font-size: 18px; font-weight: 500; }
+.bs-radio { flex: none; width: 26px; height: 26px; box-sizing: border-box; border: 2px solid #b7b7b7; border-radius: 50%; display: grid; place-items: center; }
+.bs-radio.on, .bs-goal.on .bs-radio { border-color: #000; }
+.bs-goal.on .bs-radio::after, .bs-radio.on::after { content: ''; width: 14px; height: 14px; border-radius: 50%; background: #000; }
+.bs-block { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; border-bottom: 1px solid #ececec; }
+.bs-block > strong { font-size: 20px; font-weight: 600; }
+.bs-block > small { font-size: 16px; color: #6b6b6b; }
+.bs-audience { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 16px; border: 1.5px solid #1c1c1e; border-radius: 14px; font-size: 17px; font-weight: 500; }
+.bs-note { margin: 4px 0 0; font-size: 14px; color: #6b6b6b; }
+.bs-slider-label { margin-top: 12px; font-size: 15px; color: #6b6b6b; }
+.bs-value { font-size: 20px; font-weight: 600; }
+.bs-block input[type=range] { width: 100%; accent-color: #1c1c1e; margin: 6px 0 4px; }
+.bs-field { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 14px; color: #6b6b6b; }
+.bs-field input, .bs-field select { height: 48px; padding: 0 14px; box-sizing: border-box; border: 1px solid #dadada !important; border-radius: 12px; font-size: 16px; color: #000; background: #fff; outline: 0 !important; box-shadow: none !important; }
 .bs-field input:focus, .bs-field select:focus { border-color: #0095f6 !important; }
-.bs-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.bs-days button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px; border: 1px solid #dbdbdb !important; border-radius: 12px; background: #fff !important; color: #000 !important; cursor: pointer; }
-.bs-days button.on { border-color: #0095f6 !important; box-shadow: inset 0 0 0 1px #0095f6; }
-.bs-days strong { font-size: 15px; font-weight: 600; }
-.bs-days small { font-size: 13px; font-weight: 400; color: #555; }
-.bs-pay { height: 52px; margin-top: 4px; border: 0 !important; border-radius: 12px; background: #0095f6 !important; color: #fff !important; font-size: 16px; font-weight: 600; cursor: pointer; }
-.bs-pay:disabled { background: #e4e6ea !important; color: #8e8e8e !important; cursor: default; }
+.bs-summary { gap: 12px; }
+.bs-summary > div { display: flex; justify-content: space-between; font-size: 16px; }
+.bs-summary span { color: #6b6b6b; }
+.bs-summary .bs-total { padding-top: 10px; border-top: 1px solid #ececec; }
+.bs-foot { flex: none; padding: 12px 24px calc(env(safe-area-inset-bottom, 0px) + 16px); }
+.bs-cta { width: 100%; height: 56px; border: 0 !important; border-radius: 999px; background: #fffc00 !important; color: #000 !important; font-size: 17px; font-weight: 600; cursor: pointer; }
+.bs-cta:disabled { background: #efefef !important; color: #9a9a9a !important; cursor: default; }

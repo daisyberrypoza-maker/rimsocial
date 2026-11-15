@@ -15,8 +15,7 @@ module.exports = {
   },
   redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
   paystackSecret: process.env.PAYSTACK_SECRET || '',
-  // Promote (paid boost): price per day in kobo (100000 = NGN 1,000) and the app address Paystack returns to
-  boostMinorPerDay: num(process.env.BOOST_MINOR_PER_DAY, 100000),
+  // Promote (paid boost): the app address Paystack returns to
   appUrl: (process.env.APP_URL || '').replace(/\/$/, ''),
   // TURN relay; TURN_SECRET enables short-lived coturn REST credentials.
   turnUrls: (process.env.TURN_URLS || '').split(',').map((url) => url.trim()).filter(Boolean),
