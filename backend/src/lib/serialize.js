@@ -21,7 +21,8 @@ function toPostDTO(post) {
     visibility: p.visibility || 'public',
     allowRemix: Boolean(p.allowRemix),
     sourcePostId: p.sourcePostId || null,
-    isSponsored: Boolean(p.isSponsored),
+    // A boosted post stops showing as an ad when its paid days run out
+    isSponsored: Boolean(p.isSponsored) && (!p.promotedUntil || new Date(p.promotedUntil) > new Date()),
     sponsorName: p.sponsorName || null,
     sponsorDescription: p.sponsorDescription || null,
     sponsorCta: p.sponsorCta || null,

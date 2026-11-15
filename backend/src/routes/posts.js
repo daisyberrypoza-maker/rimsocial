@@ -1,3 +1,4 @@
+const config = require('../config');
 const router = require('express').Router();
 
 async function assertPostAuthorNotBlocked(viewerId, authorId) {
@@ -245,6 +246,42 @@ router.delete('/:id/save', requireAuth, async (req, res, next) => {
   try {
     await SavedPost.destroy({ where: { postId: req.params.id, userId: req.user.id } });
     res.json({ saved: false });
+  } catch (e) { next(e); }
+});
+
+// Promote: pay with Paystack to show a post as an ad for 1, 3 or 7 days. Activated by the payment webhook.
+const BOOST_DAYS = [1, 3, 7];
+router.post('/:id/boost', requireAuth, async (req, res, next) => {
+  try {
+    if (!config.paystackSecret) throw httpError(503, 'Promotion payments are not set up yet');
+    const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, authorId: req.user.id } });
+    if (!post) throw httpError(404, 'Post not found');
+    const days = Number(req.body?.days);
+    if (!BOOST_DAYS.includes(days)) throw httpError(400, 'Choose 1, 3 or 7 days');
+    const sponsorName = String(req.body?.sponsorName || '').trim().slice(0, 100);
+    const sponsorDescription = String(req.body?.sponsorDescription || '').trim().slice(0, 200);
+    const sponsorCta = String(req.body?.sponsorCta || 'Shop Now').trim().slice(0, 30);
+    const sponsorUrl = String(req.body?.sponsorUrl || '').trim().slice(0, 1024);
+    if (!sponsorName) throw httpError(400, 'Enter the name to show on the ad');
+    if (!/^https?:\/\//i.test(sponsorUrl)) throw httpError(400, 'Enter a valid link starting with https://');
+    const user = await User.findByPk(req.user.id, { attributes: ['id', 'email'] });
+    const email = String(user?.email || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Add a valid email to your account first');
+    const amountMinor = days * config.boostMinorPerDay;
+    const response = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        amount: amountMinor,
+        currency: 'NGN',
+        ...(config.appUrl ? { callback_url: `${config.appUrl}/#/p/${post.id}` } : {}),
+        metadata: { userId: req.user.id, purpose: 'post_boost', postId: post.id, days, amountMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl },
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.status || !data.data?.authorization_url || !data.data?.reference) throw httpError(502, 'Payment provider could not start checkout');
+    res.json({ authorizationUrl: data.data.authorization_url, reference: data.data.reference, amountMinor, days });
   } catch (e) { next(e); }
 });
 

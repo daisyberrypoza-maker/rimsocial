@@ -1,0 +1,17 @@
+/* Promote sheet: white, black text, Instagram blue for the action */
+.bs-backdrop { position: fixed; inset: 0; z-index: 430; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.45); }
+.bs-sheet { width: 100%; max-width: 520px; max-height: 92dvh; overflow-y: auto; box-sizing: border-box; padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 18px); background: #fff; color: #000; border-radius: 18px 18px 0 0; display: flex; flex-direction: column; gap: 14px; }
+.bs-top { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; height: 56px; margin: 0 -18px; padding: 0 12px; background: #fff; border-bottom: 1px solid #efefef; }
+.bs-top strong { text-align: center; font-size: 17px; font-weight: 600; }
+.bs-close { width: 36px; height: 36px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; color: #000 !important; display: grid; place-items: center; cursor: pointer; }
+.bs-lead { margin: 4px 0 0; font-size: 15px; font-weight: 400; color: #555; }
+.bs-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 400; color: #555; }
+.bs-field input, .bs-field select { height: 46px; padding: 0 14px; box-sizing: border-box; border: 1px solid #dbdbdb !important; border-radius: 12px; font-size: 16px; color: #000; background: #fff; outline: 0 !important; box-shadow: none !important; }
+.bs-field input:focus, .bs-field select:focus { border-color: #0095f6 !important; }
+.bs-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.bs-days button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px; border: 1px solid #dbdbdb !important; border-radius: 12px; background: #fff !important; color: #000 !important; cursor: pointer; }
+.bs-days button.on { border-color: #0095f6 !important; box-shadow: inset 0 0 0 1px #0095f6; }
+.bs-days strong { font-size: 15px; font-weight: 600; }
+.bs-days small { font-size: 13px; font-weight: 400; color: #555; }
+.bs-pay { height: 52px; margin-top: 4px; border: 0 !important; border-radius: 12px; background: #0095f6 !important; color: #fff !important; font-size: 16px; font-weight: 600; cursor: pointer; }
+.bs-pay:disabled { background: #e4e6ea !important; color: #8e8e8e !important; cursor: default; }

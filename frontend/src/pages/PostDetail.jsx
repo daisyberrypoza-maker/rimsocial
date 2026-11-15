@@ -7,6 +7,7 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import ShareOptions from '../components/ShareOptions.jsx';
+import BoostSheet from '../components/BoostSheet.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
 import ActionSheet from '../components/ActionSheet.jsx';
@@ -25,6 +26,7 @@ export default function PostDetail() {
   const [reposted, setReposted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showBoost, setShowBoost] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const me = useAppStore((st) => st.user);
@@ -106,7 +108,7 @@ export default function PostDetail() {
     <header className="rv-top">
       <button className="rv-icon" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button>
       {isOwner && <div className="rv-promote-wrap">
-        <button type="button" className="rv-promote" onClick={() => setShowShare(true)}>Promote</button>
+        <button type="button" className="rv-promote" onClick={() => setShowBoost(true)}>Promote</button>
         <div className="rv-promote-tip">Get more followers and views!</div>
       </div>}
     </header>
@@ -169,6 +171,7 @@ export default function PostDetail() {
       onClose={() => setMenuOpen(false)}
     />}
 
+    {showBoost && <BoostSheet postId={post.id} defaultName={post.author?.displayName || username} onClose={() => setShowBoost(false)} />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
   </main>;
 }

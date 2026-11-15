@@ -37,6 +37,35 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     const { User } = require('../db');
     if (!(await User.findByPk(metadata.userId, { attributes: ['id'] }))) return res.status(200).end();
 
+    // Promote payment: the post is boosted only for the exact amount, once per payment reference
+    if (metadata.purpose === 'post_boost') {
+      const { Post } = require('../db');
+      const days = Number(metadata.days);
+      const expected = days * config.boostMinorPerDay;
+      if (![1, 3, 7].includes(days) || currency !== 'NGN' || Number(amount) !== expected || Number(metadata.amountMinor) !== expected) return res.status(200).end();
+      const post = await Post.findOne({ where: { id: metadata.postId, authorId: metadata.userId, status: 'live', isStory: false } });
+      if (!post) return res.status(200).end();
+      try {
+        await sequelize.transaction(async (t) => {
+          await LedgerEntry.create({ userId: metadata.userId, kind: 'post_boost', deltaMinor: Number(amount), refId: reference }, { transaction: t });
+          const now = new Date();
+          // Extra days stack on top of a boost that is still running
+          const start = post.promotedUntil && new Date(post.promotedUntil) > now ? new Date(post.promotedUntil) : now;
+          await post.update({
+            isSponsored: true,
+            promotedUntil: new Date(start.getTime() + days * 86400000),
+            sponsorName: String(metadata.sponsorName || '').slice(0, 100),
+            sponsorDescription: String(metadata.sponsorDescription || '').slice(0, 200),
+            sponsorCta: String(metadata.sponsorCta || 'Shop Now').slice(0, 30),
+            sponsorUrl: String(metadata.sponsorUrl || '').slice(0, 1024),
+          }, { transaction: t });
+        });
+      } catch (e) {
+        if (e.name !== 'SequelizeUniqueConstraintError') throw e;
+      }
+      return res.status(200).end();
+    }
+
     let coins;
     if (metadata.coinPackId) {
     // Never trust client-supplied coin counts or amounts. Resolve the pack from
