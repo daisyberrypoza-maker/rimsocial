@@ -415,3 +415,7 @@
 .cv-viewer-backdrop { position: fixed; inset: 0; z-index: 199; background: #000; opacity: 0; pointer-events: none; }
 .cv-viewer-full > *:not(.cv-viewer-stage) { opacity: var(--hud, 1); transition: opacity .2s ease; }
 .cv-viewer-full[data-drag] > *:not(.cv-viewer-stage) { transition: none; }
+
+/* Disappearing message timer on the composer */
+.cv-ephemeral { flex: none; height: 30px; padding: 0 10px; border: 0; border-radius: 999px; background: #f0f2f5; color: #111; font-size: 12px; font-weight: 600; }
+.cv-ephemeral.on { background: #0095f6; color: #fff; }

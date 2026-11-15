@@ -646,6 +646,8 @@ export default function Conversation({ userId }) {
   const [messages, setMessages] = useState(null);
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
+  // Disappearing message for the next send: null, 'AFTER_VIEWING' or '24_HOURS'
+  const [ephemeral, setEphemeral] = useState(null);
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [replyTo, setReplyTo] = useState(null);
@@ -661,6 +663,8 @@ export default function Conversation({ userId }) {
   const [sharedLoading, setSharedLoading] = useState(false);
   const [chats, setChats] = useState([]);
   const [sending, setSending] = useState(false);
+  // Leaving the chat removes "after viewing" messages that were read
+  useEffect(() => () => { api(`/v1/messages/with/${userId}/exit`, { method: 'POST', body: {} }).catch(() => {}); }, [userId]);
   const [error, setError] = useState('');
   const endRef = useRef(null);
   const composerRef = useRef(null);
@@ -980,11 +984,12 @@ export default function Conversation({ userId }) {
         if (photo && edit.viewLimit) form.append('viewLimit', String(edit.viewLimit));
         if (body) form.append('body', body);
         if (replyTo) form.append('replyToId', replyTo.id);
+        if (ephemeral) form.append('ephemeral', ephemeral);
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       } else {
         const sealed = await sealFor(userId, body);
         const clientId = (globalThis.crypto?.randomUUID?.() || `c${Date.now()}${Math.random().toString(36).slice(2)}`).replace(/-/g, '').slice(0, 64);
-        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id, clientId } });
+        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id, clientId, ephemeral } });
       }
       if (!file) rememberPlain(data.message.id, body);
       const sent = { ...data.message, ...(file ? {} : { body }), replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
@@ -1195,6 +1200,12 @@ export default function Conversation({ userId }) {
       )}
       {!recording && (
       <form className="dm-input cv-form cv-ig-form" onSubmit={send}>
+        {!editing && (
+          <button type="button" className={ephemeral ? 'cv-ephemeral on' : 'cv-ephemeral'} onClick={() => setEphemeral((mode) => (mode === null ? 'AFTER_VIEWING' : mode === 'AFTER_VIEWING' ? '24_HOURS' : null))}
+            aria-label={ephemeral ? `Disappearing messages: ${ephemeral === '24_HOURS' ? '24 hours' : 'after viewing'}` : 'Disappearing messages: off'}>
+            {ephemeral === '24_HOURS' ? '24h' : ephemeral === 'AFTER_VIEWING' ? 'Viewed' : 'Timer'}
+          </button>
+        )}
         {!editing && (
           <button type="button" className="cv-camera" onClick={() => fileRef.current?.click()} aria-label="Attach photo or video" disabled={sending}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>

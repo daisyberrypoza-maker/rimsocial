@@ -260,6 +260,9 @@ async function start() {
   }
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
+  // Disappearing messages (direct_messages.ephemeral), added only when the table exists and the column is missing
+  const dmColumns = await qi.describeTable('direct_messages').catch(() => ({}));
+  if (dmColumns.senderId && !dmColumns.ephemeral) await qi.addColumn('direct_messages', 'ephemeral', { type: DataTypes.STRING(20), allowNull: true });
   const DataTypes = require('sequelize').DataTypes;
   // Carousel media is optional for legacy single-media posts. Add the nullable JSON
   // column only when missing; never rewrite or remove existing post content.

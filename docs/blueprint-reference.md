@@ -25,6 +25,8 @@ Partly applied (signals not tracked yet count as 0):
 Not applied (the feature does not exist in RimSocial):
 - Camera pager, camera shutter and zoom gestures, gallery grid.
 - Spotlight (feed, cold-start queue, promotion), music engine, live calls and WebRTC streaming.
-- Ephemeral direct messages, push notifications, Redis story tray fan-out.
+- Push notifications, Redis story tray fan-out (not yet built).
 - Video bitrate targets and 1 MB chunked uploads (uploads are single requests).
 - Header state machine for a camera-first app.
+
+Built since: disappearing messages (Delete_Message_Now): "after viewing" messages are removed when read and the chat is left; "24 hours" messages are removed a day after sending. Composer timer in each chat; column added automatically on startup.

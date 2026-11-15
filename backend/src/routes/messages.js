@@ -61,9 +61,15 @@ async function validReplyTarget(me, other, replyToId) {
   return row.id;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0 }) {
+// Disappearing message modes the composer can send
+const EPHEMERAL_MODES = ['AFTER_VIEWING', '24_HOURS'];
+function normalizeEphemeral(value) {
+  return EPHEMERAL_MODES.includes(value) ? value : null;
+}
+
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0, ephemeral = null }) {
   const postId = storyPostId || await linkedPostId(body);
-  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit });
+  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral });
   liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
   return message;
 }
@@ -812,7 +818,7 @@ router.post('/with/:userId', async (req, res, next) => {
     }
     let message;
     try {
-      message = await createMessage({ me, other, body, replyToId, ...media });
+      message = await createMessage({ me, other, body, replyToId, ephemeral: normalizeEphemeral(req.body?.ephemeral), ...media });
     } catch (error) {
       if (claimKey) await redis.del(claimKey).catch(() => {});
       throw error;
@@ -835,7 +841,7 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
     const viewLimit = [1, 2].includes(Number(req.body?.viewLimit)) && chatKindFor(req.file.mimetype) === 'photo' ? Number(req.body.viewLimit) : 0;
-    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit });
+    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit, ephemeral: normalizeEphemeral(req.body?.ephemeral) });
     await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
@@ -990,6 +996,30 @@ router.get('/stream', (req, res) => {
 });
 
 // Mark everything another person sent to you as read (seen).
+// Leaving a chat removes the messages you have read that were sent to you as "after viewing"
+router.post('/with/:userId/exit', async (req, res, next) => {
+  try {
+    const me = req.user.id;
+    const other = req.params.userId;
+    const removed = await DirectMessage.destroy({
+      where: { senderId: other, recipientId: me, ephemeral: 'AFTER_VIEWING', readAt: { [Op.ne]: null } },
+    });
+    if (removed) {
+      liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
+      liveChat.publish([me], { type: 'changed', kind: 'direct', with: String(other) }).catch(() => {});
+    }
+    res.json({ removed });
+  } catch (error) { next(error); }
+});
+
+// 24_HOURS messages are removed a day after they were sent (checked every ten minutes)
+async function purgeExpiredEphemeral() {
+  try {
+    await DirectMessage.destroy({ where: { ephemeral: '24_HOURS', createdAt: { [Op.lt]: new Date(Date.now() - SHARE_DAY_MS) } } });
+  } catch { /* retried on the next pass */ }
+}
+setInterval(purgeExpiredEphemeral, 10 * 60 * 1000).unref?.();
+
 router.post('/with/:userId/read', async (req, res, next) => {
   try {
     await DirectMessage.update({ readAt: new Date(), deliveredAt: new Date() }, { where: { senderId: req.params.userId, recipientId: req.user.id, readAt: null } });
