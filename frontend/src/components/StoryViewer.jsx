@@ -269,6 +269,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       const r = await api(`/v1/stories/${id}/like`, { method: 'POST' });
       updateCurrent(id, { liked: r.liked, likeCount: r.likeCount });
       toast(r.liked ? 'Liked' : 'Like removed');
+      // Liking also sends a heart to the creator's chat, on this story
+      if (r.liked) sendReply('❤️');
     } catch (e) {
       updateCurrent(id, { liked, likeCount });
       logError(e);

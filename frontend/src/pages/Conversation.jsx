@@ -348,6 +348,17 @@ async function openViewOnce(message) {
   }
 }
 
+// The story a reply or reaction was sent on, shown above it so the person can see what they reacted to
+function StoryCard({ story, authorId }) {
+  const thumb = story.kind === 'photo' ? (story.mediaUrl || story.thumbUrl) : story.kind === 'video' ? story.thumbUrl : null;
+  return (
+    <Link to="/stories" state={{ openUserId: authorId }} className="cv-story-card" aria-label="Open story">
+      {thumb ? <img src={mediaUrl(thumb)} alt="" loading="lazy" /> : <span className="cv-story-card-text">{story.caption || 'Story'}</span>}
+      <span className="cv-story-card-label">Story</span>
+    </Link>
+  );
+}
+
 function Attachment({ message, storyAuthorId, mine }) {
   const src = mediaUrl(message.mediaUrl);
   if (message.mediaKind === 'photo' && message.viewLimit > 0 && !mine) {
@@ -565,7 +576,8 @@ function Bubble({ message, mine }) {
       {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} />}
       {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
       {hasText && <LinkPreview text={message.body} />}
-      {!deleted && message.post && <PostCard post={message.post} />}
+      {!deleted && message.post && message.storyAuthorId && <StoryCard story={message.post} authorId={message.storyAuthorId} />}
+      {!deleted && message.post && !message.storyAuthorId && <PostCard post={message.post} />}
       {!deleted && message.post === null && <span className="cv-unavailable">This post is no longer available.</span>}
     </div>
   );

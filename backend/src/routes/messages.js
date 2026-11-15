@@ -61,8 +61,8 @@ async function validReplyTarget(me, other, replyToId) {
   return row.id;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, viewLimit = 0 }) {
-  const postId = await linkedPostId(body);
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0 }) {
+  const postId = storyPostId || await linkedPostId(body);
   const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit });
   liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
   return message;
@@ -636,13 +636,11 @@ router.post('/with/:userId', async (req, res, next) => {
     if (storyId) {
       const story = await Post.findOne({
         where: { id: storyId, isStory: true, authorId: other, status: 'live', expiresAt: { [Op.gt]: new Date() } },
-        attributes: ['mediaUrl', 'kind'],
+        attributes: ['id'],
       });
       if (!story) throw httpError(404, 'This story has expired');
-      // Text stories have no media: the reply is a plain message that still points back to the story
-      media = story.mediaUrl
-        ? { mediaUrl: story.mediaUrl, mediaKind: story.kind === 'video' ? 'video' : 'photo', storyAuthorId: other }
-        : { storyAuthorId: other };
+      // The chat shows a card for the story (its thumbnail), with the reply or reaction under it
+      media = { storyAuthorId: other, storyPostId: story.id };
     }
     const message = await createMessage({ me, other, body, replyToId, ...media });
     await unhideChat(me, other);
