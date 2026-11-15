@@ -7,6 +7,21 @@ const crypto = require('crypto');
 const config = require('../config');
 const httpError = require('../utils/httpError');
 const { ALLOWED } = require('../middleware/upload');
+const redis = require('../redis');
+
+// Each person can start this many chunked uploads in a day. This bounds the disk a single account can fill.
+const MAX_STARTS_PER_DAY = 60;
+
+// Per-session lock, so two completes for the same upload cannot assemble the file at the same time
+const locks = new Map();
+function withLock(id, task) {
+  const previous = locks.get(id) || Promise.resolve();
+  const run = previous.catch(() => {}).then(task);
+  const settled = run.catch(() => {});
+  locks.set(id, settled);
+  settled.then(() => { if (locks.get(id) === settled) locks.delete(id); });
+  return run;
+}
 
 const CHUNK_BYTES = 1024 * 1024;
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -40,6 +55,13 @@ async function receivedParts(id) {
 }
 
 async function startSession(userId, { size, mimetype, originalname }) {
+  // If Redis is slow or down, do not block uploads: the daily cap simply does not apply for that request
+  const key = `uploads:starts:${userId}`;
+  const starts = await Promise.race([
+    redis.incr(key).then(async (count) => { if (count === 1) await redis.expire(key, 24 * 3600).catch(() => {}); return count; }).catch(() => 0),
+    new Promise((resolve) => setTimeout(() => resolve(0), 500).unref()),
+  ]);
+  if (starts > MAX_STARTS_PER_DAY) throw httpError(429, 'You are uploading too many files. Please try again later.');
   if (typeof mimetype !== 'string' || !Object.prototype.hasOwnProperty.call(ALLOWED, mimetype)) {
     throw httpError(400, 'Upload an mp4, webm, jpg, png, webp or gif file');
   }
@@ -78,6 +100,10 @@ async function storePart(id, userId, index, buffer) {
 }
 
 async function completeSession(id, userId) {
+  return withLock(id, () => assemble(id, userId));
+}
+
+async function assemble(id, userId) {
   const meta = await readMeta(id, userId);
   if (meta.status === 'ready') return { uploadId: id, size: meta.size };
   if (meta.status !== 'uploading') throw httpError(409, 'This upload was already used');
@@ -123,7 +149,7 @@ async function consumeSession(id, userId) {
 
 async function releaseSession(id) {
   if (!ID_PATTERN.test(String(id))) return;
-  await fs.promises.rm(dirFor(id), { recursive: true, force: true }).catch(() => {});
+  await withLock(id, () => fs.promises.rm(dirFor(id), { recursive: true, force: true })).catch(() => {});
 }
 
 // Removes sessions older than a day, along with any assembled file that was never used.
