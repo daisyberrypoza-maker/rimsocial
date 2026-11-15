@@ -12,7 +12,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -163,7 +163,28 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
       }) : [],
     ]);
     const seen = new Set(friendOfFriends.map((person) => person.id));
-    const suggested = [...friendOfFriends, ...popular.filter((person) => !seen.has(person.id))].slice(0, 24);
+    const candidates = [...friendOfFriends, ...popular.filter((person) => !seen.has(person.id))];
+    // Quick Add score: mutual friends, shared group chats, same country.
+    // Phone contacts, profile searches and dismissals are not tracked yet, so they count as 0.
+    const myGroupRows = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId'], raw: true });
+    const myGroups = myGroupRows.map((row) => row.groupId);
+    const sharedGroupRows = candidates.length && myGroups.length ? await GroupMember.findAll({
+      where: { groupId: { [Op.in]: myGroups }, userId: { [Op.in]: candidates.map((person) => person.id) } },
+      attributes: ['userId'], raw: true,
+    }) : [];
+    const sharedGroups = new Map();
+    for (const row of sharedGroupRows) sharedGroups.set(String(row.userId), (sharedGroups.get(String(row.userId)) || 0) + 1);
+    const me = await User.findByPk(req.user.id, { attributes: ['country'], raw: true });
+    const quickAddScore = (person) => {
+      const mutual = mutualCounts.get(person.id) || 0;
+      const sameCountry = me?.country && person.country === me.country ? 1 : 0;
+      return mutual * 10 + (sharedGroups.get(String(person.id)) || 0) * 15 + sameCountry * 5;
+    };
+    const suggested = candidates
+      .map((person, index) => ({ person, index, score: quickAddScore(person) }))
+      .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+      .map(({ person }) => person)
+      .slice(0, 24);
     res.json({
       suggested: await withFollowState(suggested, req.user.id),
       followBack: await withFollowState(followBackRows, req.user.id),

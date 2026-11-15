@@ -157,16 +157,18 @@ async function getDiscoverStories(viewerId, limit) {
   const seenIds = new Set(seen.map((row) => String(row.storyId)));
   const followedIds = new Set(follows.map((row) => String(row.followeeId)));
   const now = Date.now();
+  const maxViews = Math.max(1, ...candidates.map((story) => Number(story.viewCount) || 0));
   const scored = candidates.map((story) => {
     const ageHours = (now - new Date(story.createdAt).getTime()) / 3600000;
-    const author = story.author || {};
-    const score =
-      Math.log10(1 + (Number(story.viewCount) || 0)) * 2 +   // popularity
-      Math.max(0, 1 - ageHours / 24) * 3 +                   // recency, fades over a day
-      (followedIds.has(String(story.authorId)) ? 3 : 0) +    // people you follow
-      (author.isCreator ? 1.5 : 0) -                          // creators
-      (seenIds.has(String(story.id)) ? 4 : 0);                // already watched
-    return { story, score };
+    // Discover_Score = (P_Watch*10 + P_Subscribe*15) * Interest_Match * Freshness, using the signals we track:
+    // P_Watch is the story's share of total views (a stand-in until completion is tracked),
+    // P_Subscribe is 1 when the viewer follows the creator. Share, rewatch, skip and swipe are not tracked (0).
+    const pWatch = maxViews > 0 ? (Number(story.viewCount) || 0) / maxViews : 0;
+    const pSubscribe = followedIds.has(String(story.authorId)) ? 1 : 0;
+    const freshness = 1 / (1 + 0.05 * ageHours);
+    const interest = 1;   // topic match needs story topics; 1.0 until stories carry them
+    let score = (pWatch * 10 + pSubscribe * 15) * interest * freshness;
+    if (seenIds.has(String(story.id))) score *= 0.5;   // watched stories drop down the list
   });
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map(({ story }) => toPostDTO(story));

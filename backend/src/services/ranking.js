@@ -21,19 +21,31 @@ async function friendScores(viewerId, creatorIds) {
   const [messages, views, latest] = await Promise.all([
     run(`SELECT CASE WHEN senderId = :me THEN recipientId ELSE senderId END AS other, COUNT(*) AS n
          FROM direct_messages WHERE createdAt > :since AND (senderId = :me OR recipientId = :me) GROUP BY other`,
-      { me: viewerId, since }),
+      { me: viewerId, since: new Date(Date.now() - 7 * DAY) }),
     run(`SELECT p.authorId AS other, COUNT(*) AS n FROM story_views sv JOIN posts p ON p.id = sv.storyId
          WHERE sv.viewerId = :me AND sv.createdAt > :since GROUP BY p.authorId`, { me: viewerId, since }),
     run(`SELECT authorId AS other, MAX(createdAt) AS latest FROM posts
          WHERE isStory = 1 AND status = 'live' AND expiresAt > NOW() AND authorId IN (:ids) GROUP BY authorId`,
       { ids: creatorIds }),
   ]);
-  for (const row of messages) if (row.other in scores) scores[row.other] += Number(row.n) * 3;
-  for (const row of views) if (row.other in scores) scores[row.other] += Number(row.n) * 2;
-  for (const row of latest) {
-    if (!(row.other in scores)) continue;
-    const hours = (Date.now() - new Date(row.latest).getTime()) / 3600000;
-    scores[row.other] += Math.max(0, 24 - hours);
+  // Friend_Story_Score = (Direct_Snaps_Sent*3 + Chat_Messages_7d*2 + Snap_Streak_Days*0.5 + Story_Completion_Rate*5)
+  //                      * Time_Decay_Factor, with Time_Decay_Factor = 1 / (1 + 0.15 * hours since their latest story)
+  // Not tracked yet, so 0: streaks and story completion. Story views stand in for completion.
+  const since7 = new Date(Date.now() - 7 * DAY);
+  const sentRows = await run(`SELECT recipientId AS other, COUNT(*) AS n FROM direct_messages
+         WHERE createdAt > :since AND senderId = :me GROUP BY recipientId`, { me: viewerId, since: since7 });
+  const messagesByPeer = new Map(messages.map((row) => [String(row.other), Number(row.n)]));
+  const sentByPeer = new Map(sentRows.map((row) => [String(row.other), Number(row.n)]));
+  const viewsByPeer = new Map(views.map((row) => [String(row.other), Number(row.n)]));
+  const latestByPeer = new Map(latest.map((row) => [String(row.other), row.latest]));
+  for (const id of creatorIds) {
+    const key = String(id);
+    const chat7d = messagesByPeer.get(key) || 0;
+    const sent = sentByPeer.get(key) || 0;
+    const completion = viewsByPeer.get(key) || 0;
+    const raw = sent * 3 + chat7d * 2 + completion * 5;
+    const hours = latestByPeer.has(key) ? (Date.now() - new Date(latestByPeer.get(key)).getTime()) / 3600000 : 0;
+    scores[id] = raw / (1 + 0.15 * hours);
   }
   return scores;
 }
