@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
 import './BoostSheet.css';
@@ -26,6 +26,19 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
   const [sponsorUrl, setSponsorUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const total = daily * days;
+  // Real numbers only: the average views of your most recent posts
+  const [avgViews, setAvgViews] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    api('/v1/users/me/posts')
+      .then((data) => {
+        const items = (data.items || []).slice(0, 10);
+        if (!alive) return;
+        setAvgViews(items.length ? Math.round(items.reduce((sum, p) => sum + (Number(p.viewCount) || 0), 0) / items.length) : 0);
+      })
+      .catch(() => { if (alive) setAvgViews(null); });
+    return () => { alive = false; };
+  }, []);
 
   function chooseGoal(id) {
     setGoal(id);
@@ -92,6 +105,7 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
           <div className="bs-slider-label">Budget (NGN)</div>
           <div className="bs-value">{naira(daily)} per day</div>
           <input type="range" min={MIN_DAILY} max={MAX_DAILY} step={500} value={daily} onChange={(e) => setDaily(Number(e.target.value))} aria-label="Daily budget" />
+          <p className="bs-note">{avgViews === null ? '' : avgViews > 0 ? `Your last posts average ${avgViews.toLocaleString()} views each.` : 'Post more to see how many views your ads can get.'}</p>
           <div className="bs-slider-label">Duration</div>
           <div className="bs-value">{days} {days === 1 ? 'day' : 'days'}</div>
           <input type="range" min={1} max={MAX_DAYS} step={1} value={days} onChange={(e) => setDays(Number(e.target.value))} aria-label="Duration in days" />
