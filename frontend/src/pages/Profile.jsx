@@ -507,11 +507,11 @@ export default function Profile() {
 
   return (
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
-      <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, transform: 'none', transition: 'none', pointerEvents: compactHeader ? 'auto' : 'none' }}>
-        <button className="sc-compact-back" style={{ color: '#fff' }} aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+      <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, pointerEvents: compactHeader ? 'auto' : 'none' }}>
+        <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
         <div className="sc-compact-actions">
-          <button type="button" className="sc-compact-round" style={{ color: '#fff' }} aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
+          <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
           {profile.isMe
             ? <button type="button" className="sc-compact-round" style={{ color: '#fff' }} aria-label="Open profile settings" onClick={() => setDrawerOpen(true)} tabIndex={compactHeader ? 0 : -1}><Icon name="settings" size={19} /></button>
             : <button type="button" className="sc-compact-round" aria-label="More options" onClick={() => setOptionsOpen(true)} tabIndex={compactHeader ? 0 : -1}><span aria-hidden="true">•••</span></button>}
