@@ -548,6 +548,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       {current && (
         <div className="sv-footer">
           <span className="sv-sound"><span className="sv-sound-art"><Avatar user={group.user} size={22} /></span>Original sound</span>
+          {!isOwner && <div className="sv-reaction-row" role="group" aria-label="Quick reactions">
+            {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" className="sv-reaction-btn" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>)}
+          </div>}
           <div className="sv-reply-row">
             {!isOwner && (
               <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
@@ -569,12 +572,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
                 onKeyDown={(e) => { if (e.key === 'Enter' && reply.trim()) submitReply(); }}
                 maxLength={2000}
               />
-              {!reply.trim() && QUICK_REACTIONS.slice(0, 2).map((emoji) => (
-                <button key={emoji} type="button" className="sv-react" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>
-              ))}
             </div>
             )}
-            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="image" size={24} /></button>}
+            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="smile" size={24} /></button>}
             <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>

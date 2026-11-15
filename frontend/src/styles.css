@@ -7184,3 +7184,7 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post-carousel-dots { position:absolute; left:0; right:0; bottom:calc(178px + env(safe-area-inset-bottom,0px)); display:flex; justify-content:center; gap:5px; pointer-events:none; z-index:2; }
 .post-carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.5); box-shadow:0 0 2px rgba(0,0,0,.4); }
 .post-carousel-dots span.on { background:#fff; }
+
+/* Story reactions: a row of six, above the reply bar (as in the reference) */
+.sv-reaction-row { display:flex; justify-content:space-between; align-items:center; padding:0 10px 12px; }
+.sv-reaction-btn { width:60px; height:60px; border:0; padding:0; background:none; font-size:42px; line-height:1; cursor:pointer; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
