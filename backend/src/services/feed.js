@@ -3,6 +3,7 @@ const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
+const { spotlightScore } = require('./formulas');
 
 const authorInclude = (extra = {}) => ({
   model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'], ...extra,
@@ -119,20 +120,19 @@ async function getExplorePage({ userId, cursor, limit }) {
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
-    const preferenceScores = await redis.hgetall(`feed:preferences:${userId}`).catch(() => ({}));
     const now = Date.now();
     const scored = candidates
       .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .map((p) => {
-        const views = Number(p.viewCount) || 0;
-        const interactions = (Number(p.likeCount) || 0) * 2 + (Number(p.repostCount) || 0) * 3 + Math.log1p(Number(p.giftCoins) || 0) * 2;
-        // Engagement rate, smoothed so a post with few views is not over-rewarded.
-        const rate = interactions / (views + 20);
+        // Spotlight_Score: like rate and share rate are measured (reposts stand in for shares);
+        // watch percentage, loops, trending sound and skips are not tracked yet (0); Creator_Score is 1.
+        const views = Math.max(1, Number(p.viewCount) || 0);
         const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
-        const score = rate * 40
-          + Math.log1p(views) * 0.8
-          + 4 * Math.exp(-ageHours / 168)
-          + (Number(preferenceScores[p.id]) || 0);
+        const score = spotlightScore({
+          likeRate: Math.min(1, (Number(p.likeCount) || 0) / views),
+          shareRate: Math.min(1, (Number(p.repostCount) || 0) / views),
+          hoursPosted: ageHours,
+        });
         return { id: p.id, authorId: p.authorId, score, createdAt: new Date(p.createdAt).getTime() };
       })
       .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);

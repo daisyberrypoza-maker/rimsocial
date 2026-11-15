@@ -6,6 +6,7 @@ import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
 import '../pages/UploadStatus.css';
 import { logError } from '../toast.js';
+import { clamp, snapTarget } from '../lib/snapPaging.js';
 
 const STALE_AFTER_MS = 60 * 1000;
 const WINDOW = 1; // render the current post and one on each side
@@ -33,6 +34,7 @@ export default function Feed({ tab }) {
   const saveTimer = useRef(null);
   const scrollHideTimer = useRef(null);
   const touchStartY = useRef(0);
+  const touchStartT = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [popular, setPopular] = useState([]);
@@ -72,6 +74,21 @@ export default function Feed({ tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  // Snap_Next_Page: the native snap is paused for the gesture, then the feed moves one video on
+  // when the swipe passes 25% of the screen or is faster than 600px/s
+  function pageAfterSwipe(e) {
+    const el = containerRef.current;
+    if (!el || refreshing) return;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dy) < 8) { el.style.scrollSnapType = ''; return; }
+    const seconds = Math.max((Date.now() - touchStartT.current) / 1000, 0.016);
+    const H = el.clientHeight;
+    const current = Math.round(el.scrollTop / H);
+    const target = clamp(snapTarget(current, dy, dy / seconds, H), 0, Math.max(0, shown.length - 1));
+    el.scrollTo({ top: target * H, behavior: 'smooth' });
+    setTimeout(() => { el.style.scrollSnapType = ''; }, 450);
+  }
+
   async function pullToRefresh(e) {
     const delta = e.changedTouches[0].clientY - touchStartY.current;
     if (delta < 85 || containerRef.current?.scrollTop > 0 || refreshing) return;
@@ -99,7 +116,7 @@ export default function Feed({ tab }) {
       {pending?.kind === 'post' && <span className="feed-uploading" aria-hidden="true">
         {pending.mediaKind === 'video' ? <video src={pending.thumb} muted playsInline preload="metadata" /> : <img src={pending.thumb} alt="" />}
       </span>}
-      <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }} onTouchEnd={pullToRefresh}>
+      <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; touchStartT.current = Date.now(); if (containerRef.current) containerRef.current.style.scrollSnapType = 'none'; }} onTouchEnd={(e) => { pullToRefresh(e); pageAfterSwipe(e); }}>
         {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
         {shown.map((p, i) =>
           Math.abs(i - active) <= WINDOW

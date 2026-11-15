@@ -49,4 +49,16 @@ function chatListScore({ unreadSnap = 0, unreadChat = 0, pinned = 0, streak = 0,
   return unreadSnap * 10000 + unreadChat * 5000 + pinned * 2000 + streak * 2 + msgs7d * 10 - minutesSince * 1.5;
 }
 
-module.exports = { DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore };
+// Spotlight_Score = ((Avg_Watch_Pct*25 + Loop_Rate*15 + Share_Rate*20 + Like_Rate*10 + Trending_Sound_Boost*8) - Skip_Under_2s*30) * Creator_Score * Time_Decay(hours, 1.05)
+function spotlightScore({ avgWatchPct = 0, loopRate = 0, shareRate = 0, likeRate = 0, trendingSound = 0, skipUnder2s = 0, creatorScore = 1, hoursPosted = 0 }) {
+  return ((avgWatchPct * 25) + (loopRate * 15) + (shareRate * 20) + (likeRate * 10) + (trendingSound * 8) - (skipUnder2s * 30)) * creatorScore * timeDecay(hoursPosted, 1.05);
+}
+
+// Snap_Next_Page: a swipe past 25% of the screen height, or faster than 600px/s, moves one video on.
+// Target_Video_Index = Snap_Next_Page ? Current + SIGN(-Delta_Y) : Current
+function snapTarget(current, deltaY, velocityY, screenHeight) {
+  const next = Math.abs(deltaY) > screenHeight * 0.25 || Math.abs(velocityY) > 600;
+  return next ? current + Math.sign(-deltaY) : current;
+}
+
+module.exports = { DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget };
