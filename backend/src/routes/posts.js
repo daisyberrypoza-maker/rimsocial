@@ -149,6 +149,12 @@ router.post('/:id/view', requireAuth, async (req, res, next) => {
     if (!post) throw httpError(404, 'Post not found');
     await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     await redis.incr(`views:${req.params.id}`);
+    // Unique viewers: each person counts once per post (the author's own views do not count)
+    if (String(post.authorId) !== String(req.user.id)) {
+      await sequelize.query('INSERT IGNORE INTO post_viewers (postId, userId, createdAt) VALUES (:postId, :userId, NOW())', {
+        replacements: { postId: post.id, userId: req.user.id },
+      }).catch((err) => console.warn('post viewer not recorded:', err.message));
+    }
     res.status(204).end();
   } catch (e) { next(e); }
 });

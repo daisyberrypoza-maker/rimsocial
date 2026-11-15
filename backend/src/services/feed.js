@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow, UserBlock, UserMute } = require('../db');
+const { Op, Post, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
 const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
@@ -34,10 +34,24 @@ async function pagePosts({ where, include = [authorInclude()], cursor, limit }) 
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit);
   const last = page[page.length - 1];
+  const items = page.map(toPostDTO);
+  await attachUniqueViewers(items);
   return {
-    items: page.map(toPostDTO),
+    items,
     nextCursor: hasMore && last ? encodeCursor(new Date(last.createdAt).getTime(), last.id) : null,
   };
+}
+
+// Number of distinct people who viewed each post (post_viewers), shown on profile tiles
+async function attachUniqueViewers(items) {
+  if (!items.length) return items;
+  const ids = items.map((item) => String(item.id));
+  const [rows] = await sequelize.query('SELECT postId, COUNT(*) AS n FROM post_viewers WHERE postId IN (:ids) GROUP BY postId', {
+    replacements: { ids },
+  }).catch(() => [[]]);
+  const byId = new Map(rows.map((row) => [String(row.postId), Number(row.n)]));
+  items.forEach((item) => { item.uniqueViewers = byId.get(String(item.id)) || 0; });
+  return items;
 }
 
 // Discover: newest public posts in the viewer's country. First page is cached briefly.

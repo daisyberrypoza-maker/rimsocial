@@ -728,7 +728,7 @@ export default function Profile() {
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
-                <span className="sc-tile-count"><Icon name="play" size={11} />{formatCount(p.viewCount)}</span>
+                <span className="sc-tile-count" aria-label={`${formatCount(p.uniqueViewers ?? 0)} viewers`}><Icon name="eye" size={12} />{formatCount(p.uniqueViewers ?? 0)}</span>
                 {profile.isMe && <button className="sc-tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
               </div>
             ))}
