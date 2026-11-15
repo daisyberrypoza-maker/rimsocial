@@ -14,6 +14,7 @@ import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { sealFor, openMessages, rememberPlain } from '../lib/e2ee.js';
+import { fitImage } from '../lib/imageFit.js';
 import { boxOf, closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
@@ -973,7 +974,7 @@ export default function Conversation({ userId }) {
         const photo = kindOfFile(file) === 'photo';
         if (photo && editorRef.current) {
           const blob = await editorRef.current.compose();
-          toSend = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          toSend = await fitImage(new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' }), 0.82);
         }
         form.append('media', toSend);
         if (photo && edit.viewLimit) form.append('viewLimit', String(edit.viewLimit));

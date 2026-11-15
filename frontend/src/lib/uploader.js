@@ -1,3 +1,4 @@
+import { fitImage } from './imageFit.js';
 import { api } from '../api.js';
 import { refreshMyThumb } from './myThumb.js';
 import { useAppStore } from '../store.js';
@@ -31,11 +32,11 @@ export function startUpload(job) {
       fd.append('sponsorUrl', sponsor.url);
     }
     if (toStory) {
-      fd.append('media', storyFile || file);
+      fd.append('media', await fitImage(storyFile || file, 0.9));
       if (storyAudio?.musicId) fd.append('musicId', storyAudio.musicId);
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
     }
-    else (files?.length ? files : [file]).forEach((item) => fd.append('media', item));
+    else for (const item of (files?.length ? files : [file])) fd.append('media', await fitImage(item, 0.9));
     if (toStory && storyFiles?.length > 1) {
       // Several stories: each photo or video is its own story, in the order chosen
       for (const media of storyFiles) {
