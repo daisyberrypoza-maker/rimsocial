@@ -109,7 +109,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .sn-circle.sn-yellow, .sn-fab { background: var(--snap-yellow); color: #000; }
 .sn-name, .dm-cname { color: var(--snap-text-light); }
 .dm-chead { background: var(--snap-glass-light); border-bottom: 1px solid var(--snap-border-light); }
-.dm-form, .cv-composer-bar { background: var(--snap-surface-light); border-radius: var(--snap-radius-pill); }
+.cv-form, .cv-composer-bar { background: var(--snap-surface-light); border-radius: var(--snap-radius-pill); }
 .cv-text { overflow-wrap: anywhere; }
 
 /* Profile */
