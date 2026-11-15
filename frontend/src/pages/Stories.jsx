@@ -93,16 +93,15 @@ export default function Stories() {
   // The saved rail changes when a story finishes uploading
   useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
 
-  // Discover: popular public stories from creators first, then by views
+  // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
   useEffect(() => {
     let current = true;
-    api('/v1/stories/popular')
+    api('/v1/stories/popular?discover=1')
       .then((data) => {
         if (!current) return;
-        const items = (data.items || []).slice().sort((a, b) => (Number(Boolean(b.author?.isCreator)) - Number(Boolean(a.author?.isCreator))) || ((b.viewCount || 0) - (a.viewCount || 0)));
-        setPopular(items);
+        setPopular(data.items || []);   // already ranked by the server for this viewer
       })
       .catch(logError);
     return () => { current = false; };

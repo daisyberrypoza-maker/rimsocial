@@ -313,7 +313,7 @@ router.get('/ranking', requireAuth, async (req, res, next) => {
 
 // GET /v1/stories/popular  -> popular public stories shown in Rimlight
 router.get('/popular', requireAuth, async (req, res, next) => {
-  try { res.json({ items: await stories.getPopularStories(req.user.id, 24) }); } catch (e) { next(e); }
+  try { res.json({ items: await stories.getPopularStories(req.user.id, 24, { personalized: req.query.discover === '1' }) }); } catch (e) { next(e); }
 });
 
 module.exports = router;

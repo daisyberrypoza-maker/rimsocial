@@ -133,7 +133,47 @@ async function invalidateRailsFor(authorId) {
 }
 
 // Popular public stories for Rimlight: the most viewed active stories from other people, not blocked.
-async function getPopularStories(viewerId, limit = 4) {
+// Discover ranking for one viewer (a Snapchat-style feed, not Snapchat's own model): stories the viewer has not seen
+// come first, then people they follow and creators, then popular and recent stories. Stories they already watched
+// drop down the list.
+async function getDiscoverStories(viewerId, limit) {
+  const blocked = await blockedUserIds(viewerId);
+  const candidates = await Post.findAll({
+    where: {
+      isStory: true, status: 'live', visibility: 'public', expiresAt: { [Op.gt]: new Date() },
+      authorId: { [Op.notIn]: [viewerId, ...blocked] },
+    },
+    include: [{ model: User, as: 'author', attributes: authorAttrs }],
+    order: [['createdAt', 'DESC']],
+    limit: 200,
+  });
+  if (!candidates.length) return [];
+  const ids = candidates.map((story) => story.id);
+  const authorIds = [...new Set(candidates.map((story) => String(story.authorId)))];
+  const [seen, follows] = await Promise.all([
+    StoryView.findAll({ where: { viewerId, storyId: ids }, attributes: ['storyId'], raw: true }),
+    Follow.findAll({ where: { followerId: viewerId, followeeId: authorIds }, attributes: ['followeeId'], raw: true }),
+  ]);
+  const seenIds = new Set(seen.map((row) => String(row.storyId)));
+  const followedIds = new Set(follows.map((row) => String(row.followeeId)));
+  const now = Date.now();
+  const scored = candidates.map((story) => {
+    const ageHours = (now - new Date(story.createdAt).getTime()) / 3600000;
+    const author = story.author || {};
+    const score =
+      Math.log10(1 + (Number(story.viewCount) || 0)) * 2 +   // popularity
+      Math.max(0, 1 - ageHours / 24) * 3 +                   // recency, fades over a day
+      (followedIds.has(String(story.authorId)) ? 3 : 0) +    // people you follow
+      (author.isCreator ? 1.5 : 0) -                          // creators
+      (seenIds.has(String(story.id)) ? 4 : 0);                // already watched
+    return { story, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit).map(({ story }) => toPostDTO(story));
+}
+
+async function getPopularStories(viewerId, limit = 4, { personalized = false } = {}) {
+  if (personalized) return getDiscoverStories(viewerId, limit);
   const blocked = await blockedUserIds(viewerId);
   const rows = await Post.findAll({
     where: {
