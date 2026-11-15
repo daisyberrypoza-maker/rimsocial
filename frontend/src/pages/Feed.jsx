@@ -19,8 +19,9 @@ function mixPopular(items, popular) {
   const extra = popular.filter((p) => !listed.has(p.id));
   if (!extra.length) return items;
   const out = [...items];
-  extra.slice(0, 1).forEach((p) => out.splice(Math.min(2, out.length), 0, p));
-  extra.slice(1, 2).forEach((p) => out.splice(Math.min(9, out.length), 0, p));
+  const tag = (p) => ({ ...p, popularStory: true });
+  extra.slice(0, 1).forEach((p) => out.splice(Math.min(2, out.length), 0, tag(p)));
+  extra.slice(1, 2).forEach((p) => out.splice(Math.min(9, out.length), 0, tag(p)));
   return out;
 }
 

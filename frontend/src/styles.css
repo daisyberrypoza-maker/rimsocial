@@ -7177,3 +7177,4 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post-carousel-dots { position:absolute; left:0; right:0; bottom:12px; display:flex; justify-content:center; gap:5px; pointer-events:none; z-index:2; }
 .post-carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.5); box-shadow:0 0 2px rgba(0,0,0,.4); }
 .post-carousel-dots span.on { background:#fff; }
+.post-story-badge { position:absolute; top:14px; left:14px; z-index:4; padding:5px 11px; border-radius:999px; background:rgba(0,0,0,.5); color:#fff; font-size:13px; font-weight:700; pointer-events:none; }
