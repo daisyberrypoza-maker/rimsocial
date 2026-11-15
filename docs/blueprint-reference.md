@@ -25,10 +25,9 @@ Partly applied (signals not tracked yet count as 0):
 Not applied (the feature does not exist in RimSocial):
 - Camera pager, camera shutter and zoom gestures, gallery grid.
 - Spotlight cold-start queue and promotion, music engine, live calls and WebRTC streaming.
-- Push notifications, Redis story tray fan-out (not yet built).
-- Video bitrate targets and 1 MB chunked uploads (uploads are single requests).
+- Video bitrate targets (no client-side transcoding yet).
 - Header state machine for a camera-first app.
 
-Built since: disappearing messages (Delete_Message_Now): "after viewing" messages are removed when read and the chat is left; "24 hours" messages are removed a day after sending. Composer timer in each chat; column added automatically on startup.
+Built since: chunked uploads (1 MB parts on `/v1/uploads`, used for posts and stories over 8 MB; a retry in the same tab resumes the parts the server already has; unfinished sessions are swept after 24 hours). Redis story tray (`stories:tray:<viewer>`): each new story is written into the author's and followers' trays, a follow copies the followee's live stories in, and the rail reads the tray with a database fallback that rebuilds it. Disappearing messages (Delete_Message_Now): "after viewing" messages are removed when read and the chat is left; "24 hours" messages are removed a day after sending. Composer timer in each chat; column added automatically on startup.
 
 Spotlight (RimSocial calls it Rimlight): Spotlight_Score ranks Explore (like and share rates measured; watch, loops, trending sound, skips 0). Snap_Next_Page sets the Rimlight swipe paging. Rimlight itself stays newest-first, as set in services/feed.js.

@@ -7,6 +7,7 @@ const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const stories = require('../services/stories');
+const uploads = require('../services/uploadSessions');
 const ranking = require('../services/ranking');
 const { User: UserModel } = require('../db');
 const { assertNotBlocked } = require('../lib/blocks');
@@ -56,7 +57,8 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
   const uploadedAssets = [];
   let storyPersisted = false;
   try {
-    const media = req.files?.media?.[0] || null;
+    const chunked = req.body.uploadId ? await uploads.consumeSession(String(req.body.uploadId), req.user.id) : null;
+    const media = chunked || req.files?.media?.[0] || null;
     const voice = req.files?.voice?.[0] || null;
     if (!media || !kindFor(media.mimetype)) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
@@ -81,6 +83,8 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     storyPersisted = true;
+    if (req.body.uploadId) await uploads.releaseSession(String(req.body.uploadId));
+    await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) {
@@ -124,6 +128,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
     storyPersisted = true;
+    await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) {

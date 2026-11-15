@@ -23,12 +23,26 @@ const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
+const uploads = require('../services/uploadSessions');
+
+// Chunked uploads arrive as a JSON list of upload ids, in carousel order (at most 10)
+function parseUploadIds(raw) {
+  let list = raw;
+  if (typeof raw === 'string') {
+    try { list = JSON.parse(raw); } catch { throw httpError(400, 'Invalid upload list'); }
+  }
+  if (list == null) return [];
+  if (!Array.isArray(list) || list.length > 10) throw httpError(400, 'Choose up to 10 files');
+  return list.map(String);
+}
 
 router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) => {
   const uploadedAssets = [];
   let postPersisted = false;
   try {
-    const files = Array.isArray(req.files) ? req.files : [];
+    const files = Array.isArray(req.files) ? [...req.files] : [];
+    const uploadIds = parseUploadIds(req.body.uploadIds);
+    for (const id of uploadIds) files.push(await uploads.consumeSession(id, req.user.id));
     if (!files.length) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     const visibility = req.body.visibility === 'private' ? 'private' : 'public';
     const isSponsored = req.body.isSponsored === 'true';
@@ -67,6 +81,7 @@ router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) 
       sponsorUrl: isSponsored ? sponsorUrl : null,
     });
     postPersisted = true;
+    for (const id of uploadIds) await uploads.releaseSession(id);
     if (visibility === 'public') {
       const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
       await feed.fanOutPost(post, followers.map((f) => f.followerId));

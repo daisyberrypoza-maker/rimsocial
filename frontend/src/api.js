@@ -39,7 +39,8 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
   const { token, logout } = useAppStore.getState();
   const h = { ...headers };
   if (token) h.Authorization = `Bearer ${token}`;
-  if (body && !(body instanceof FormData)) {
+  // Raw bodies (FormData and Blob chunks) go out as they are; other bodies are sent as JSON
+  if (body && !(body instanceof FormData) && !(body instanceof Blob)) {
     h['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }

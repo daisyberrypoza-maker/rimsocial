@@ -52,4 +52,4 @@ function chatKindFor(mimetype = '') {
   return 'file';
 }
 
-module.exports = { upload, kindFor, mediaPath, anyFileUpload, storyUpload, chatKindFor };
+module.exports = { upload, kindFor, mediaPath, anyFileUpload, storyUpload, chatKindFor, ALLOWED };

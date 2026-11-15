@@ -17,6 +17,61 @@ async function viewedSet(viewerId, storyIds) {
   return new Set(rows.map((r) => r.storyId));
 }
 
+// Story tray: each viewer has a Redis sorted set of the story ids they can see (their own and the people they follow),
+// written when a story is posted. The rail reads that short list instead of scanning every followed creator's stories.
+const TRAY_LIMIT = 500;
+const TRAY_TTL_SECONDS = 25 * 3600;
+const trayKey = (viewerId) => `stories:tray:${viewerId}`;
+
+function trayWrite(pipe, viewerId, storyId, score) {
+  pipe.zadd(trayKey(viewerId), score, String(storyId));
+  pipe.zremrangebyrank(trayKey(viewerId), 0, -(TRAY_LIMIT + 1));
+  pipe.expire(trayKey(viewerId), TRAY_TTL_SECONDS);
+}
+
+// Called when a story is posted: writes it into the author's tray and each follower's tray
+async function fanOutStory(story) {
+  const followers = await Follow.findAll({ where: { followeeId: story.authorId }, attributes: ['followerId'], raw: true });
+  const viewers = [story.authorId, ...followers.map((f) => f.followerId)];
+  const score = new Date(story.createdAt || Date.now()).getTime();
+  for (let i = 0; i < viewers.length; i += 500) {
+    const pipe = redis.pipeline();
+    for (const viewerId of viewers.slice(i, i + 500)) trayWrite(pipe, viewerId, story.id, score);
+    await pipe.exec();
+  }
+}
+
+// Called when someone starts following a creator: their live stories join the follower's tray at once
+async function addFolloweeToTray(followerId, followeeId) {
+  const stories = await Post.findAll({
+    where: { isStory: true, status: 'live', authorId: followeeId, expiresAt: { [Op.gt]: new Date() } },
+    attributes: ['id', 'createdAt'], raw: true, limit: TRAY_LIMIT,
+  });
+  if (!stories.length) return;
+  const pipe = redis.pipeline();
+  for (const story of stories) trayWrite(pipe, followerId, story.id, new Date(story.createdAt).getTime());
+  await pipe.exec();
+}
+
+// Stories listed in the viewer's tray, newest first, re-checked against the database (expired, removed or unfollowed
+// stories drop out). Returns null when the tray is empty, so the caller can rebuild it from the database.
+async function trayStories(viewerId, authorIds) {
+  const ids = await redis.zrevrange(trayKey(viewerId), 0, TRAY_LIMIT - 1);
+  if (!ids.length) return null;
+  return Post.findAll({
+    where: { id: ids, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() }, authorId: authorIds },
+    include: [{ model: User, as: 'author', attributes: authorAttrs }],
+    order: [['createdAt', 'DESC']],
+  });
+}
+
+async function rebuildTray(viewerId, stories) {
+  if (!stories.length) return;
+  const pipe = redis.pipeline();
+  for (const story of stories) trayWrite(pipe, viewerId, story.id, new Date(story.createdAt).getTime());
+  await pipe.exec().catch(() => {});
+}
+
 // The rail groups active stories by creator: the viewer and the people they follow.
 // Result is cached in Redis for a short time, so refreshes do not hit MySQL each time.
 async function getStoryRail(viewerId) {
@@ -37,12 +92,16 @@ async function getStoryRail(viewerId) {
   });
   const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)))];
 
-  const stories = await Post.findAll({
-    where: { isStory: true, status: 'live', authorId: authorIds, expiresAt: { [Op.gt]: new Date() } },
-    include: [{ model: User, as: 'author', attributes: authorAttrs }],
-    order: [['createdAt', 'DESC']],
-    limit: 500,
-  });
+  let stories = await trayStories(viewerId, authorIds).catch(() => null);
+  if (!stories) {
+    stories = await Post.findAll({
+      where: { isStory: true, status: 'live', authorId: authorIds, expiresAt: { [Op.gt]: new Date() } },
+      include: [{ model: User, as: 'author', attributes: authorAttrs }],
+      order: [['createdAt', 'DESC']],
+      limit: 500,
+    });
+    await rebuildTray(viewerId, stories);
+  }
   const viewed = await viewedSet(viewerId, stories.map((s) => s.id));
 
   const groups = new Map();
@@ -194,4 +253,4 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
   return rows.map((s) => toPostDTO(s));
 }
 
-module.exports = { getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor };
+module.exports = { getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor, fanOutStory, addFolloweeToTray };

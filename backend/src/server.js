@@ -101,6 +101,7 @@ app.use('/v1/users', require('./routes/users'));
 app.use('/v1/activity', require('./routes/activity'));
 app.use('/v1/messages', require('./routes/messages'));
 app.use('/v1/push', require('./routes/push'));
+app.use('/v1/uploads', require('./routes/uploads'));
 app.use('/v1/search', require('./routes/search'));
 app.use('/v1/audio', require('./routes/audio'));
 app.use('/v1', require('./routes/gifts'));

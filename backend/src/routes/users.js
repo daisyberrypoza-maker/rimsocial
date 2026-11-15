@@ -264,7 +264,7 @@ router.put('/me/profile', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-const { storyRingsFor } = require('../services/stories');
+const { storyRingsFor, addFolloweeToTray } = require('../services/stories');
 // The signed-in user is addressed as "me"
 async function ownUsername(req) {
   const row = await User.findByPk(req.user.id, { attributes: ['username'], raw: true });
@@ -476,6 +476,7 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
       });
       if (created) await User.increment('followerCount', { by: 1, where: { id: followeeId }, transaction: t });
     });
+    await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     res.json({ isFollowing: true, followerCount: fresh.followerCount });
