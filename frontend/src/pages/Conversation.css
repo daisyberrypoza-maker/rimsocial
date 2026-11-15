@@ -407,3 +407,6 @@
   box-shadow: none !important; color: inherit !important; width: auto; min-width: 0; min-height: 44px; height: 44px;
   padding: 0 !important; font-size: 28px !important; line-height: 1 !important; display: grid; place-items: center;
 }
+
+/* Shared post or profile: plain card, no bubble background */
+.dm-convo.cv-convo .cv-bubble.cv-bubble-plain { background: transparent !important; padding: 0 !important; box-shadow: none !important; border: 0 !important; max-width: 78%; }

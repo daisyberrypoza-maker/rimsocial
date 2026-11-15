@@ -560,13 +560,15 @@ function Bubble({ message, mine }) {
   if (message.order) return <OrderCard order={message.order} mine={mine} />;
   const deleted = Boolean(message.deletedForEveryone);
   const hasText = Boolean(message.body) && !deleted;
+  // A post or profile shared from RimSocial is shown as a plain card, without the link text or a bubble
+  const sharedLink = hasText && /^https?:\/\/\S+\/(p\/[0-9a-f-]{20,}|u\/[A-Za-z0-9_.-]+)\/?$/i.test(message.body.trim());
   const reply = message.replyTo;
   // A photo, video or story sent on its own shows without a bubble, like the reference
   if (!deleted && message.mediaUrl && !hasText && !reply && !message.replyToId && !message.post) {
     return <div className={mine ? 'cv-media-only mine' : 'cv-media-only theirs'}><Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} /></div>;
   }
   return (
-    <div className={mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}>
+    <div className={`${mine ? 'dm-bubble mine cv-bubble' : 'dm-bubble theirs cv-bubble'}${sharedLink ? ' cv-bubble-plain' : ''}`}>
       {reply && (
         <div className={reply.mediaKind === 'photo' && reply.mediaUrl && !reply.deletedForEveryone ? 'cv-quote with-thumb' : 'cv-quote'}>
           <div className="cv-quote-text">
@@ -579,7 +581,7 @@ function Bubble({ message, mine }) {
       {message.replyToId && !reply && <div className="cv-quote"><span>Original message is no longer available</span></div>}
       {deleted && <span className="cv-deleted">This message was deleted</span>}
       {!deleted && message.mediaUrl && <Attachment message={message} storyAuthorId={message.storyAuthorId || null} mine={mine} />}
-      {hasText && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
+      {hasText && !sharedLink && <span className="cv-text"><MessageText text={message.body} mine={mine} /></span>}
       {hasText && <LinkPreview text={message.body} />}
       {!deleted && message.post && message.storyAuthorId && <StoryCard story={message.post} authorId={message.storyAuthorId} />}
       {!deleted && message.post && !message.storyAuthorId && <PostCard post={message.post} />}
