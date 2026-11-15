@@ -314,42 +314,36 @@ export default function Upload() {
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
     const shownRecents = recents.filter((item) => !asReel || String(item.file.type).startsWith('video/'));
-    const preview = onRecents ? shownRecents[0] : null;
-    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/upload?reel=1' }, { key: 'live', label: 'LIVE', path: '/live/create' }];
+    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/upload?reel=1' }];
+    const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
-        <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={26} /></button>
-        <h1>{asStory ? 'New story' : asReel ? 'New reel' : 'New post'}</h1>
-        <button type="button" className="ig-create-cam" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={26} /></button>
+        <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
+        <nav className="ig-create-modes" aria-label="Create type">
+          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+        </nav>
+        <button type="button" className="ig-create-gear" onClick={() => toast('Not available yet')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
-      <div className="ig-create-preview">
-        {preview
-          ? (String(preview.file.type).startsWith('video/') ? <video src={preview.url} muted playsInline /> : <img src={preview.url} alt="" />)
-          : <Icon name="image" size={48} />}
-      </div>
       <div className="ig-create-sub">
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
-          {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
+          {onRecents ? 'Gallery' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
-        {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="sc-aa">Aa</span> Text story</button>}
-        {onRecents && <button type="button" className="ig-create-pick" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={18} /> Choose</button>}
+        {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="ig-create-aa">Aa</span> Text story</button>}
         {onRecents && !asStory && !asReel && <button type="button" className={selectMode ? 'ig-create-select on' : 'ig-create-select'} onClick={() => { setSelectMode((on) => !on); setSelection([]); }} aria-pressed={selectMode}>{selectMode ? 'Cancel' : 'Select'}</button>}
       </div>
-      {onRecents ? <div className="up-grid ig-create-grid">
-        {shownRecents.length === 0 && <button type="button" className="ig-create-empty" onClick={() => document.getElementById('up-file')?.click()}><Icon name="image" size={34} /><span>Choose photos and videos from your phone</span></button>}
-        {shownRecents.map((item) => <button type="button" key={item.url} className="up-tile" onClick={() => onTileTap(item.file)} aria-label="Select this media">
+      {onRecents ? <div className="ig-grid">
+        <button type="button" className="ig-tile ig-tile-camera" onClick={() => setView('camera')} aria-label="Open camera"><Icon name="camera" size={34} /><span>Camera</span></button>
+        <button type="button" className="ig-tile ig-tile-choose" onClick={() => document.getElementById('up-file')?.click()} aria-label="Choose from your phone"><Icon name="image" size={30} /><span>Choose</span></button>
+        {shownRecents.map((item) => <button type="button" key={item.url} className="ig-tile" onClick={() => onTileTap(item.file)} aria-label="Select this media">
           {String(item.file.type).startsWith('video/') ? <GalleryVideo url={item.url} /> : <img src={item.url} alt="" />}
           {selectMode && <span className={selection.includes(item.file) ? 'up-tile-num' : 'up-tile-ring'}>{selection.includes(item.file) ? selection.indexOf(item.file) + 1 : ''}</span>}
         </button>)}
-      </div> : <div className="up-grid ig-create-grid">
-        {memories.map((item) => <button type="button" key={item.id} className="up-tile" onClick={() => navigate(`/p/${item.id}`)} aria-label="Open this post">
+      </div> : <div className="ig-grid">
+        {memories.map((item) => <button type="button" key={item.id} className="ig-tile" onClick={() => navigate(`/p/${item.id}`)} aria-label="Open this post">
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
-      <nav className="ig-create-modes" aria-label="Create type">
-        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === (asStory ? 'story' : asReel ? 'reel' : 'post') ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
-      </nav>
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel && !asStory} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
     </main>;

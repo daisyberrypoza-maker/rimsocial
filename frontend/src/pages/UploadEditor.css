@@ -145,3 +145,50 @@
   font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;
 }
 .up-page.up-details .up-post-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------- Gallery (New post / New story / New reel): black screen, top tabs, 3-column grid ---------- */
+.up-page.up-gallery.ig-create {
+  position: fixed; inset: 0; z-index: 60; background: #000; color: #fff;
+  display: flex; flex-direction: column; overflow-y: auto; box-sizing: border-box;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+}
+.up-page.up-gallery .ig-create-top {
+  flex: none; display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; height: 56px; padding: 0 8px; box-sizing: border-box;
+}
+.up-page.up-gallery .ig-create-x,
+.up-page.up-gallery .ig-create-gear { width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: #fff; display: grid; place-items: center; cursor: pointer; }
+.up-page.up-gallery .ig-create-modes { display: flex; justify-content: center; gap: 22px; }
+.up-page.up-gallery .ig-create-modes button {
+  padding: 6px 0; border: 0; background: transparent; color: #8e8e8e; font: inherit; font-size: 17px; font-weight: 500; letter-spacing: 0.4px; cursor: pointer;
+}
+.up-page.up-gallery .ig-create-modes button.on { color: #fff; font-weight: 600; }
+
+.up-page.up-gallery .ig-create-sub {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 16px 14px; box-sizing: border-box;
+}
+.up-page.up-gallery .ig-create-source {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: #fff; font: inherit; font-size: 20px; font-weight: 700; cursor: pointer;
+}
+.up-page.up-gallery .ig-create-pick {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #262626; color: #ff3d8b; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.up-page.up-gallery .ig-create-aa { color: #fff; font-size: 17px; font-weight: 700; }
+.up-page.up-gallery .ig-create-select {
+  height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: #262626; color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.up-page.up-gallery .ig-create-select.on { background: #0095f6; }
+
+.up-page.up-gallery .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding-bottom: 24px; }
+.up-page.up-gallery .ig-tile {
+  position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: hidden; background: #2c3137; color: #fff; cursor: pointer;
+}
+.up-page.up-gallery .ig-tile img,
+.up-page.up-gallery .ig-tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.up-page.up-gallery .ig-tile .up-tile-dur {
+  position: absolute; right: 6px; bottom: 6px; z-index: 1; color: #fff; font-size: 14px; font-weight: 600; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.up-page.up-gallery .ig-tile-camera,
+.up-page.up-gallery .ig-tile-choose { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.up-page.up-gallery .ig-tile-camera span,
+.up-page.up-gallery .ig-tile-choose span { font-size: 15px; font-weight: 500; }
+.up-page.up-gallery .up-select-next { position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); height: 46px; padding: 0 22px; border: 0; border-radius: 999px; background: #0095f6; color: #fff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
