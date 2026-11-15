@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useRef, useState } from 'react';
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './UploadStatus.css';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -72,8 +72,16 @@ export default function Stories() {
   // Badge on the add-friend icon: people who followed you since you last opened it
   const [newFollows, setNewFollows] = useState(0);
   const feedItems = useAppStore((s) => s.feeds.discover?.items || []);
-  // Sponsored posts shown first in the Discover grid, like the reference
-  const sponsored = feedItems.filter((p) => p.isSponsored).slice(0, 2);
+  // Sponsored posts for the Discover merge (ads come from the discover feed)
+  const [adPool, setAdPool] = useState(() => feedItems.filter((p) => p.isSponsored));
+  useEffect(() => {
+    if (adPool.length) return undefined;
+    let current = true;
+    api('/v1/feed/discover')
+      .then((d) => { if (current) setAdPool((d.items || []).filter((p) => p.isSponsored)); })
+      .catch(() => {});
+    return () => { current = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     let seen = 0;
     try { seen = Number(localStorage.getItem('rimsocial-follow-seen-at') || 0); } catch { /* storage unavailable */ }
@@ -96,6 +104,21 @@ export default function Stories() {
   // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
+  // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
+  const AD_START_OFFSET = 3;
+  const AD_FREQUENCY_INTERVAL = 6;
+  const discoverItems = useMemo(() => {
+    const out = [];
+    let adIndex = 0;
+    popular.forEach((story, i) => {
+      if (adPool.length && i >= AD_START_OFFSET && (i - AD_START_OFFSET) % AD_FREQUENCY_INTERVAL === 0) {
+        out.push({ type: 'ad', ad: adPool[adIndex % adPool.length], key: `ad-${i}` });
+        adIndex += 1;
+      }
+      out.push({ type: 'story', story, key: story.id });
+    });
+    return out;
+  }, [popular, adPool]);
   useEffect(() => {
     let current = true;
     api('/v1/stories/popular?discover=1')
@@ -237,12 +260,23 @@ export default function Stories() {
         )}
       </section>
 
-      {popular.length > 0 && (
+      {discoverItems.length > 0 && (
         <section className="st-section" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
           <div className="st-cards">
-            {popular.map((story) => (
-              <button className="st-card" key={story.id} onClick={() => setPopOpen(story.author)} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+            {discoverItems.map((item) => item.type === 'ad' ? (
+              <a className="st-card st-card-ad" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
+                {item.ad.thumbUrl || item.ad.mediaUrl
+                  ? <img className="st-card-img" src={mediaUrl(item.ad.thumbUrl || item.ad.mediaUrl)} alt="" />
+                  : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
+                <span className="st-card-shade" />
+                <span className="st-card-foot">
+                  <span className="st-card-name">{item.ad.sponsorName || 'Sponsored'}</span>
+                  <span className="st-ad-label">Sponsored</span>
+                </span>
+              </a>
+            ) : (() => { const story = item.story; return (
+              <button className="st-card" key={item.key} onClick={() => setPopOpen(story.author)} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
@@ -252,7 +286,7 @@ export default function Stories() {
                   <span className="st-card-name">{nameOf(story.author || {})}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
                 </span>
               </button>
-            ))}
+            ); })())}
           </div>
         </section>
       )}
