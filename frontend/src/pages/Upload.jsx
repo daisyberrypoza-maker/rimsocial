@@ -299,7 +299,8 @@ export default function Upload() {
       setStoryVoice(null);
       setSourcePost(null);
       setDetailsOpen(false);
-      navigate(toStory ? '/stories' : '/');
+      // A story (alone or shared with a post) lands on Stories; a post alone lands on Rimlight
+      navigate(toStory || shareToStory ? '/stories' : '/');
     } catch (error) {
       toast(error?.message || 'This video could not be prepared for your Story');
       logError(error);

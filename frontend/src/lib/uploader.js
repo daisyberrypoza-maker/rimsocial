@@ -43,7 +43,12 @@ export function startUpload(job) {
       if (storyAudio?.musicId) storyFd.append('musicId', storyAudio.musicId);
       if (storyAudio?.voice) storyFd.append('voice', storyAudio.voice);
       storyFd.append('caption', (caption || '').slice(0, 200));
-      try { await api('/v1/stories', { method: 'POST', body: storyFd }); }
+      try {
+        await api('/v1/stories', { method: 'POST', body: storyFd });
+        // Refresh the Stories rail so the shared story shows at once
+        const storyRail = await api('/v1/stories/rail');
+        useAppStore.getState().setStoryRail(storyRail.items || []);
+      }
       catch (storyError) { toast('Post published, but Story sharing failed: ' + storyError.message); }
     }
 
