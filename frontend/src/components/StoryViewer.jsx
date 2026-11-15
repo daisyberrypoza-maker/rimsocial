@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
-import { CLOSE_AFTER_MS, closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
+import { closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 import '../pages/StoryComposer.css';
 import './StoryOwnerSheet.css';
 import { createPortal } from 'react-dom';
@@ -354,12 +354,11 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   useLayoutEffect(() => openMotion(rootRef.current, backdropRef.current, origin), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Closes back into the tile; liveBox continues from where a drag left the viewer
-  function requestClose(liveBox = null) {
+  function requestClose(liveBox = null, velocity = {}) {
     if (closingRef.current) return;
     closingRef.current = true;
     if (!rootRef.current || !origin) { closeRef.current(); return; }
-    closeMotion(rootRef.current, backdropRef.current, origin, liveBox);
-    setTimeout(() => closeRef.current(), CLOSE_AFTER_MS);
+    closeMotion(rootRef.current, backdropRef.current, origin, liveBox, velocity, () => closeRef.current());
   }
 
   function snapBack() {
@@ -404,7 +403,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       clearSwipedLater();
       const ds = dragState(event.clientX - start.x, event.clientY - start.y);
       const seconds = (performance.now() - drag.t) / 1000;
-      if (shouldClose(ds, seconds)) requestClose(visualBox(ds));
+      if (shouldClose(ds, seconds)) requestClose(visualBox(ds), { left: (event.clientX - start.x) / seconds, top: (event.clientY - start.y) / seconds });
       else snapBack();
       return;
     }

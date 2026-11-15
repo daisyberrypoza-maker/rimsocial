@@ -1,10 +1,10 @@
 import { flushSync } from 'react-dom';
-// Tile <-> fullscreen story motion. Geometry helpers used by StoryViewer.
+// Tile <-> fullscreen story and media motion. Geometry follows the blueprint; the box and
+// the drag snap run on Spring_Damping, not CSS easing.
 
-export const OPEN_MS = 320;
-export const EASE = 'cubic-bezier(0.2, 0, 0, 1)';            // fast-out, slow-in
-export const SNAP_MS = 380;
-export const SNAP_EASE = 'cubic-bezier(0.3, 1.25, 0.4, 1)';  // spring-like settle
+export const OPEN_MS = 320;                 // hud fade timing reference
+export const SPRING_OPEN = { stiffness: 300, damping: 28 };   // open and close
+export const SPRING_SNAP = { stiffness: 350, damping: 30 };   // drag released below threshold
 const DRAG_THRESHOLD_PX = 250;
 const DEFAULT_TILE_RADIUS = 16;
 
@@ -53,11 +53,50 @@ export function visualBox(ds) {
   return { left: cx - w / 2, top: cy - h / 2, width: w, height: h, radius: ds.radius };
 }
 
-// Sets the viewer's box; animate=false snaps, animate=true eases over OPEN_MS
-export function applyBox(el, box, animate) {
-  el.style.transition = animate
-    ? `left ${OPEN_MS}ms ${EASE}, top ${OPEN_MS}ms ${EASE}, width ${OPEN_MS}ms ${EASE}, height ${OPEN_MS}ms ${EASE}, border-radius ${OPEN_MS}ms ${EASE}`
-    : 'none';
+// Spring_Damping(pos, target, vel, stiffness, damping, dt): vel += (-k*(pos-target) - c*vel)*dt; pos += vel*dt
+const runs = new WeakMap();
+
+function stopRun(el) {
+  const run = runs.get(el);
+  if (run) { cancelAnimationFrame(run.raf); runs.delete(el); }
+}
+
+// Runs a spring for every key in `to`; apply() receives each frame's values, done() runs at rest
+function springRun(el, from, to, spring, apply, done = null, velocity = {}) {
+  stopRun(el);
+  const state = {};
+  for (const key of Object.keys(to)) state[key] = { pos: from[key], vel: velocity[key] || 0 };
+  const run = { raf: 0 };
+  runs.set(el, run);
+  let last = null;
+  const frame = (now) => {
+    const dt = last === null ? 1 / 60 : Math.min(1 / 30, (now - last) / 1000);
+    last = now;
+    const current = {};
+    let settled = true;
+    for (const key of Object.keys(to)) {
+      const s = state[key];
+      s.vel += (-spring.stiffness * (s.pos - to[key]) - spring.damping * s.vel) * dt;
+      s.pos += s.vel * dt;
+      const tolerance = key === 'scale' ? 0.001 : 0.5;
+      if (Math.abs(s.pos - to[key]) > tolerance || Math.abs(s.vel) > tolerance) settled = false;
+      current[key] = s.pos;
+    }
+    if (settled) {
+      runs.delete(el);
+      apply(to);
+      if (done) done();
+      return;
+    }
+    apply(current);
+    run.raf = requestAnimationFrame(frame);
+  };
+  run.raf = requestAnimationFrame(frame);
+}
+
+// Sets the viewer box at once (no motion); used before a spring run and for the final frame
+export function applyBox(el, box) {
+  el.style.transition = 'none';
   el.style.left = `${box.left}px`;
   el.style.top = `${box.top}px`;
   el.style.width = `${box.width}px`;
@@ -68,51 +107,68 @@ export function applyBox(el, box, animate) {
   el.style.borderRadius = `${box.radius}px`;
 }
 
-export const CLOSE_AFTER_MS = OPEN_MS + 20;
+function setBoxFrame(el, box) {
+  el.style.left = `${box.left}px`;
+  el.style.top = `${box.top}px`;
+  el.style.width = `${box.width}px`;
+  el.style.height = `${box.height}px`;
+  el.style.borderRadius = `${box.radius}px`;
+}
 
-// Opening: the viewer starts at the tile box and eases to fullscreen. Returns a cleanup.
+function setDragFrame(el, d) {
+  el.style.transform = `translate(${d.tx}px, ${d.ty}px) scale(${d.scale})`;
+  el.style.borderRadius = `${d.radius}px`;
+}
+
+// Opening: the viewer starts at the tile box and springs to fullscreen; the chrome fades in halfway.
 export function openMotion(el, bd, origin) {
   if (!el || !origin) return () => {};
-  applyBox(el, origin, false);
+  applyBox(el, origin);
   el.style.setProperty('--hud', '0');
   if (bd) { bd.style.transition = 'none'; bd.style.opacity = '0'; }
   void el.offsetWidth;   // commit the tile position before animating
-  applyBox(el, fullBox(), true);
-  if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0.85'; }
+  springRun(el, origin, fullBox(), SPRING_OPEN, (box) => setBoxFrame(el, box));
+  if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ease`; bd.style.opacity = '0.85'; }
   const hud = setTimeout(() => el.style.setProperty('--hud', '1'), Math.round(OPEN_MS * 0.5));
-  return () => clearTimeout(hud);
+  return () => { clearTimeout(hud); stopRun(el); };
 }
 
-// Closing: eases back into the tile. liveBox continues from where a drag left the viewer.
-export function closeMotion(el, bd, origin, liveBox = null) {
-  if (liveBox) applyBox(el, liveBox, false);
-  void el.offsetWidth;
+// Closing: springs back into the tile. liveBox continues from where a drag left the viewer,
+// velocity is the release velocity in px/s, done runs once the viewer is back in the tile.
+export function closeMotion(el, bd, origin, liveBox = null, velocity = {}, done = null) {
   delete el.dataset.drag;
-  applyBox(el, origin, true);
+  const from = liveBox || boxOf(el);
+  applyBox(el, from);
+  void el.offsetWidth;
   el.style.setProperty('--hud', '0');
-  if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0'; }
+  if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ease`; bd.style.opacity = '0'; }
+  springRun(el, from, origin, SPRING_OPEN, (box) => setBoxFrame(el, box), done, velocity);
 }
 
 // Live drag: moves the viewer with the finger. Returns the drag state.
 export function dragMotion(el, bd, dx, dy) {
+  stopRun(el);
   const ds = dragState(dx, dy);
   el.dataset.drag = '1';
   el.style.transition = 'none';
-  el.style.transform = `translate(${ds.tx}px, ${ds.ty}px) scale(${ds.scale})`;
-  el.style.borderRadius = `${ds.radius}px`;
+  setDragFrame(el, ds);
+  el._drag = ds;
   el.style.setProperty('--hud', String(ds.hud));
   if (bd) { bd.style.transition = 'none'; bd.style.opacity = String(ds.backdrop); }
   return ds;
 }
 
-// A drag that did not pass the threshold springs back to fullscreen
+// A drag released below the threshold springs back to fullscreen from where the finger left it
 export function snapMotion(el, bd) {
   delete el.dataset.drag;
-  el.style.transition = `transform ${SNAP_MS}ms ${SNAP_EASE}, border-radius ${SNAP_MS}ms ${SNAP_EASE}`;
-  el.style.transform = '';
-  el.style.borderRadius = '0px';
+  const from = el._drag || { tx: 0, ty: 0, scale: 1, radius: 0 };
+  setDragFrame(el, from);
+  el._drag = null;
+  springRun(el, { tx: from.tx, ty: from.ty, scale: from.scale, radius: from.radius },
+    { tx: 0, ty: 0, scale: 1, radius: 0 }, SPRING_SNAP,
+    (d) => setDragFrame(el, d), () => { el.style.transform = ''; el.style.borderRadius = '0px'; });
   el.style.setProperty('--hud', '1');
-  if (bd) { bd.style.transition = `opacity ${SNAP_MS}ms ease`; bd.style.opacity = '0.85'; }
+  if (bd) { bd.style.transition = 'opacity 380ms ease'; bd.style.opacity = '0.85'; }
 }
 
 // Release decision: past 35% of the threshold, or a flick above 800px/s, closes

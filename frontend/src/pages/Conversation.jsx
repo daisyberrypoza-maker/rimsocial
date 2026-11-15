@@ -14,7 +14,7 @@ import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { sealFor, openMessages, rememberPlain } from '../lib/e2ee.js';
-import { boxOf, closeMotion, CLOSE_AFTER_MS, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
+import { boxOf, closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -238,12 +238,11 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
   const closingRef = useRef(false);
   const origin = media.origin || null;
   useLayoutEffect(() => openMotion(rootRef.current, backdropRef.current, origin), []); // eslint-disable-line react-hooks/exhaustive-deps
-  function requestClose(liveBox = null) {
+  function requestClose(liveBox = null, velocity = {}) {
     if (closingRef.current) return;
     closingRef.current = true;
     if (!rootRef.current || !origin) { onClose(); return; }
-    closeMotion(rootRef.current, backdropRef.current, origin, liveBox);
-    setTimeout(() => onClose(), CLOSE_AFTER_MS);
+    closeMotion(rootRef.current, backdropRef.current, origin, liveBox, velocity, () => onClose());
   }
   function onViewerPointerDown(event) {
     if (pending || event.target.closest?.('form, button, input, textarea')) { dragRef.current = null; return; }
@@ -265,7 +264,8 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
     dragRef.current = null;
     if (!start?.active || !rootRef.current) return;
     const ds = dragState(event.clientX - start.x, event.clientY - start.y);
-    if (shouldClose(ds, (performance.now() - start.t) / 1000)) requestClose(visualBox(ds));
+    const seconds = Math.max((performance.now() - start.t) / 1000, 0.016);
+    if (shouldClose(ds, seconds)) requestClose(visualBox(ds), { left: (event.clientX - start.x) / seconds, top: (event.clientY - start.y) / seconds });
     else snapMotion(rootRef.current, backdropRef.current);
   }
   function onViewerPointerCancel() {
