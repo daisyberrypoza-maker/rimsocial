@@ -1,0 +1,83 @@
+/* RimSocial Snapchat design-system integration.
+   Tokens are namespaced to avoid breaking the existing page and theme variables. */
+:root {
+  --snap-yellow: #fffc00;
+  --snap-yellow-hover: #e6e300;
+  --snap-blue: #0fadff;
+  --snap-purple: #9b51e0;
+  --snap-red: #f23c57;
+  --snap-purple-unread: #8a2be2;
+  --snap-green: #25d366;
+  --snap-orange: #ff6600;
+  --snap-bg-dark: #000;
+  --snap-surface-dark: #121214;
+  --snap-glass-dark: rgba(18,18,20,.75);
+  --snap-bg-light: #fff;
+  --snap-surface-light: #f4f5f7;
+  --snap-input-light: #efeff1;
+  --snap-glass-light: rgba(255,255,255,.92);
+  --snap-text-light: #111114;
+  --snap-muted-light: #65676b;
+  --snap-text-dark: #fff;
+  --snap-border-light: rgba(0,0,0,.08);
+  --snap-border-dark: rgba(255,255,255,.14);
+  --snap-font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --snap-font-display: "Plus Jakarta Sans", Inter, sans-serif;
+  --snap-radius-sm: 8px;
+  --snap-radius-md: 14px;
+  --snap-radius-lg: 24px;
+  --snap-radius-pill: 9999px;
+  --snap-blur-glass: blur(24px);
+  --snap-blur-header: blur(20px);
+  --snap-shadow-card: 0 4px 20px rgba(0,0,0,.06);
+  --snap-shadow-floating: 0 12px 32px rgba(0,0,0,.25);
+}
+
+/* Shared typography and touch behavior; existing page dimensions and scrolling stay intact. */
+html, body, #root {
+  font-family: var(--snap-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+/* Light application chrome; immersive Rimlight and LIVE headers keep their own themes. */
+.topbar:not(.overlay) {
+  background: var(--snap-glass-light);
+  -webkit-backdrop-filter: var(--snap-blur-header);
+  backdrop-filter: var(--snap-blur-header);
+  border-bottom-color: var(--snap-border-light);
+}
+.bottomnav:not(.bottomnav-dark) {
+  background: var(--snap-glass-light);
+  -webkit-backdrop-filter: var(--snap-blur-glass);
+  backdrop-filter: var(--snap-blur-glass);
+  border-top-color: var(--snap-border-light);
+}
+
+/* Snapchat-style primary action treatment, without changing secondary or destructive controls. */
+.btn-primary {
+  background: var(--snap-yellow);
+  color: var(--snap-text-light);
+  box-shadow: var(--snap-shadow-card);
+  font-weight: 800;
+}
+.btn-primary:active { background: var(--snap-yellow-hover); transform: scale(.97); }
+.bottomnav a.active { color: var(--snap-text-light); }
+.bottomnav-dark a.active { color: var(--snap-yellow); }
+
+/* Reuse the system's compact, rounded controls in the existing Snapchat-inspired screens. */
+.snap-circle, .snap-square, .sc-round {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: transform .12s ease, background-color .15s ease;
+}
+.snap-circle:active, .snap-square:active, .sc-round:active { transform: scale(.94); }
+.sc-pill {
+  border-radius: var(--snap-radius-pill);
+  box-shadow: var(--snap-shadow-card);
+}
+.sc-viewer, .sv-root { background: var(--snap-bg-dark); color: var(--snap-text-dark); }
+
+/* Keep ordinary destinations light and the full-screen video experience dark. */
+.page, .activity-page, .sc-stories { background-color: var(--snap-bg-light); }
