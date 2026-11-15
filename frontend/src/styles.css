@@ -7137,3 +7137,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .rv-more-btn { border: 0 !important; background: transparent !important; color: #fff !important; padding: 4px 6px; cursor: pointer; }
 .rv-more-dots { font-size: 22px; letter-spacing: 2px; color: #fff; }
 .rv-bottom .rv-views, .rv-bottom .rv-share { display: none !important; }
+
+/* Saved post bookmark: Snapchat yellow when saved */
+.rail-btn.save-btn.saved, .rail-btn.save-btn.saved svg { color: #fffc00 !important; stroke: #fffc00 !important; fill: #fffc00 !important; }
