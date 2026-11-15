@@ -616,6 +616,7 @@ export default function Conversation({ userId }) {
   const [orderAmount, setOrderAmount] = useState('');
   const [orderDescription, setOrderDescription] = useState('');
   const [orderSaving, setOrderSaving] = useState(false);
+  const [orderError, setOrderError] = useState('');
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -738,7 +739,9 @@ export default function Conversation({ userId }) {
   async function createOrder(event) {
     event.preventDefault();
     const amount = Number(orderAmount);
-    if (!(amount > 0) || orderSaving) return;
+    if (orderSaving) return;
+    if (!Number.isFinite(amount) || amount <= 0) { setOrderError('Enter an amount greater than zero.'); return; }
+    setOrderError('');
     setOrderSaving(true);
     try {
       const data = await api(`/v1/messages/with/${userId}/order`, { method: 'POST', body: { amount, description: orderDescription.trim() } });
@@ -752,7 +755,7 @@ export default function Conversation({ userId }) {
       setOrderDescription('');
     } catch (e) {
       logError(e);
-      toast(e.message || 'Could not create the order');
+      setOrderError(e.message || 'Could not create the order. Please try again.');
     } finally {
       setOrderSaving(false);
     }
@@ -1166,7 +1169,7 @@ export default function Conversation({ userId }) {
       )}
       {orderOpen && (
         <div className="cv-order-backdrop" onClick={() => !orderSaving && setOrderOpen(false)}>
-          <form className="cv-order-sheet" role="dialog" aria-label="Create order" onClick={(e) => e.stopPropagation()} onSubmit={createOrder}>
+          <form className="cv-order-sheet" role="dialog" aria-modal="true" aria-label="Create order" onClick={(e) => e.stopPropagation()} onSubmit={createOrder}>
             <div className="cv-order-top">
               <button type="button" className="cv-order-close" onClick={() => setOrderOpen(false)} aria-label="Close" disabled={orderSaving}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -1178,10 +1181,11 @@ export default function Conversation({ userId }) {
             <div className="cv-order-amount-box">
               <label htmlFor="cv-order-amount">
                 <span className="cv-order-currency">$</span>
-                <input id="cv-order-amount" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0" value={orderAmount} onChange={(e) => setOrderAmount(e.target.value)} aria-label="Total price in USD" />
+                <input id="cv-order-amount" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0" value={orderAmount} onChange={(e) => { setOrderAmount(e.target.value); setOrderError(''); }} aria-label="Total price in USD" />
               </label>
               <small>Total Price (USD)</small>
             </div>
+            {orderError && <div className="cv-order-error" role="alert">{orderError}</div>}
             <input className="cv-order-desc" value={orderDescription} onChange={(e) => setOrderDescription(e.target.value)} maxLength={500} placeholder="Write a description..." aria-label="Description" />
             <button type="submit" className="cv-order-submit" disabled={!(Number(orderAmount) > 0) || orderSaving}>{orderSaving ? 'Creating…' : 'Create order'}</button>
           </form>
