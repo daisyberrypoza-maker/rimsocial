@@ -7213,3 +7213,7 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sr-count { position:absolute; left:6px; bottom:5px; color:#fff; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:3px; text-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
 .xp-card { position: relative; }
 .xp-count { position:absolute; left:8px; bottom:8px; color:#fff; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:3px; text-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }
+
+/* Profile: back arrow is black on white (no black circle); story tiles show the viewer count */
+.sc-compact-back { background: transparent !important; color: #111 !important; box-shadow: none !important; border: 0 !important; }
+.sc-tile-views { position:absolute; right:6px; top:6px; color:#fff; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:3px; text-shadow:0 1px 4px rgba(0,0,0,.7); pointer-events:none; }

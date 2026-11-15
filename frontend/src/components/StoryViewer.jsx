@@ -41,8 +41,10 @@ function timeAgo(iso) {
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
 // Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
 // Videos play with sound; photos advance after PHOTO_MS.
-export default function StoryViewer({ groups, startIndex, onClose }) {
+export default function StoryViewer({ groups, startIndex, startStory = 0, onClose }) {
   const [gi, setGi] = useState(startIndex);
+  // Which story of the group opens first (used once, on the first load of that group)
+  const firstStoryRef = useRef(startStory);
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
   const [paused, setPaused] = useState(false);
@@ -93,7 +95,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   useEffect(() => {
     let alive = true;
     const saved = useAppStore.getState().storyCache?.[group.user.id];
-    setSi(0);
+    setSi(firstStoryRef.current);
+    firstStoryRef.current = 0;
     if (saved) {
       setStories(saved.items);
       setSubscribed(Boolean(saved.isSubscribed));

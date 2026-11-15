@@ -751,12 +751,13 @@ export default function Profile() {
                   ? <video src={mediaUrl(s.mediaUrl)} muted playsInline preload="metadata" />
                   : s.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(s.storyBackground) }}>{s.storyText}</span> : <img src={mediaUrl(s.mediaUrl)} alt="" loading="lazy" />}
                 <span className="sc-tile-count">{hoursLeft(s)}h left</span>
+                <span className="sc-tile-views" aria-label={`${formatCount(s.viewCount || 0)} viewers`}><Icon name="eye" size={12} />{formatCount(s.viewCount || 0)}</span>
               </button>
             ))}
           </div>
           {!stories.length && <div className="sc-empty-grid" role="status"><strong>No stories yet</strong></div>}
           {viewing !== false && stories.length > 0 && (
-            <StoryViewer groups={[{ user: profile }]} startIndex={viewing} onClose={() => setViewing(false)} />
+            <StoryViewer groups={[{ user: profile }]} startIndex={0} startStory={viewing} onClose={() => setViewing(false)} />
           )}
         </>
       ) : tab === 'saved' ? (
