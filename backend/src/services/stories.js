@@ -1,6 +1,7 @@
 const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
+const { discoverScore } = require('./formulas');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
@@ -150,27 +151,23 @@ async function getDiscoverStories(viewerId, limit) {
   if (!candidates.length) return [];
   const ids = candidates.map((story) => story.id);
   const authorIds = [...new Set(candidates.map((story) => String(story.authorId)))];
-  const [seen, follows] = await Promise.all([
-    StoryView.findAll({ where: { viewerId, storyId: ids }, attributes: ['storyId'], raw: true }),
+  const [follows] = await Promise.all([
     Follow.findAll({ where: { followerId: viewerId, followeeId: authorIds }, attributes: ['followeeId'], raw: true }),
   ]);
-  const seenIds = new Set(seen.map((row) => String(row.storyId)));
   const followedIds = new Set(follows.map((row) => String(row.followeeId)));
   const now = Date.now();
-  const maxViews = Math.max(1, ...candidates.map((story) => Number(story.viewCount) || 0));
   const scored = candidates.map((story) => {
-    const ageHours = (now - new Date(story.createdAt).getTime()) / 3600000;
-    // Discover_Score = (P_Watch*10 + P_Subscribe*15) * Interest_Match * Freshness, using the signals we track:
-    // P_Watch is the story's share of total views (a stand-in until completion is tracked),
-    // P_Subscribe is 1 when the viewer follows the creator. Share, rewatch, skip and swipe are not tracked (0).
-    const pWatch = maxViews > 0 ? (Number(story.viewCount) || 0) / maxViews : 0;
-    const pSubscribe = followedIds.has(String(story.authorId)) ? 1 : 0;
-    const freshness = 1 / (1 + 0.05 * ageHours);
-    const interest = 1;   // topic match needs story topics; 1.0 until stories carry them
-    let score = (pWatch * 10 + pSubscribe * 15) * interest * freshness;
-    if (seenIds.has(String(story.id))) score *= 0.5;   // watched stories drop down the list
+    const hoursPosted = (now - new Date(story.createdAt).getTime()) / 3600000;
+    // Discover_Score from the signals RimSocial measures: subscribe (following the creator).
+    // Full watch, share, rewatch, skip and exit are not tracked yet, so they are 0.
+    const score = discoverScore({
+      subscribe: followedIds.has(String(story.authorId)) ? 1 : 0,
+      interestBoost: 1,   // story topics are not tracked yet
+      hoursPosted,
+    });
+    return { story, score };
   });
-  scored.sort((a, b) => b.score - a.score);
+  scored.sort((a, b) => b.score - a.score || new Date(b.story.createdAt) - new Date(a.story.createdAt));
   return scored.slice(0, limit).map(({ story }) => toPostDTO(story));
 }
 

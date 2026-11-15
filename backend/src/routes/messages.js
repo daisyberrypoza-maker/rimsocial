@@ -410,9 +410,10 @@ router.get('/conversations', async (req, res, next) => {
       const partner = String(row.senderId === me ? row.recipientId : row.senderId);
       if (prefByPeer.get(partner)?.hidden) continue;
       if (blocked.has(partner)) continue;
-      if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0, unreadMedia: 0, msgs7d: 0 });
+      if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0, unreadMedia: 0, msgs7d: 0, days: new Set() });
       const entry = byPartner.get(partner);
       if (Date.now() - new Date(row.createdAt).getTime() <= 7 * SHARE_DAY_MS) entry.msgs7d += 1;
+      entry.days.add(new Date(row.createdAt).toISOString().slice(0, 10));
       if (String(row.recipientId) === me && !row.readAt) {
         entry.unread += 1;
         if (row.mediaKind) entry.unreadMedia += 1;
@@ -449,7 +450,7 @@ router.get('/conversations', async (req, res, next) => {
           },
           unread: entry.unread || (prefByPeer.get(partner)?.markedUnread ? 1 : 0),
           muted: Boolean(prefByPeer.get(partner)?.muted),
-          chatScore: chatListScore(entry, prefByPeer.get(partner)),
+          chatScore: chatScoreFor(entry, prefByPeer.get(partner)),
         };
       })
       .sort((a, b) => b.chatScore - a.chatScore);
@@ -667,14 +668,19 @@ router.post('/with/:userId/typing', async (req, res, next) => {
 
 // Send a text message to one person. Optional replyToId quotes another message in this chat.
 const SHARE_DAY_MS = 86400000;
+const { bestFriendScore, shareTargetScore, chatListScore, streakDays } = require('../services/formulas');
 
-// Chat_List_Score: unread snaps first, then unread chats, pinned (not tracked yet), streak (not tracked yet),
-// messages in 7 days, minus minutes since the last message
-function chatListScore(entry, pref) {
+// Chat_List_Score from services/formulas.js: unread snaps, unread chats, pinned (not tracked, 0), streak, messages in 7 days, recency
+function chatScoreFor(entry, pref) {
+  const unreadSnap = entry.unreadMedia > 0 ? 1 : 0;
   const unreadChat = entry.unread - entry.unreadMedia > 0 ? 1 : 0;
-  const pinned = pref?.pinned ? 1 : 0;
-  const minutesSince = (Date.now() - new Date(entry.last.createdAt).getTime()) / 60000;
-  return (entry.unreadMedia > 0 ? 10000 : 0) + (unreadChat * 5000) + (pinned * 2000) + (entry.msgs7d * 10) - (minutesSince * 1.5);
+  return chatListScore({
+    unreadSnap, unreadChat,
+    pinned: pref?.pinned ? 1 : 0,
+    streak: streakDays(entry.days),
+    msgs7d: entry.msgs7d,
+    minutesSince: (Date.now() - new Date(entry.last.createdAt).getTime()) / 60000,
+  });
 }
 const MAX_SHARE_RECIPIENTS = 15;
 
@@ -687,7 +693,7 @@ router.get('/share-targets', async (req, res, next) => {
     const now = Date.now();
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me }, { recipientId: me }], createdAt: { [Op.gt]: new Date(now - 30 * SHARE_DAY_MS) } },
-      attributes: ['senderId', 'recipientId', 'postId', 'createdAt'],
+      attributes: ['senderId', 'recipientId', 'postId', 'mediaKind', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: 2000,
       raw: true,
@@ -696,30 +702,38 @@ router.get('/share-targets', async (req, res, next) => {
     for (const row of rows) {
       const peer = String(row.senderId === me ? row.recipientId : row.senderId);
       if (blocked.has(peer)) continue;
-      if (!stats.has(peer)) stats.set(peer, { shares14d: 0, chat7d: 0, last: 0 });
+      if (!stats.has(peer)) stats.set(peer, { shares14d: 0, chat7d: 0, chats30d: 0, snapsSent30d: 0, snapsRecv30d: 0, days: new Set(), last: 0 });
       const s = stats.get(peer);
       const t = new Date(row.createdAt).getTime();
       if (t > s.last) s.last = t;
+      const sentByMe = String(row.senderId) === me;
+      s.chats30d += 1;
+      s.days.add(new Date(t).toISOString().slice(0, 10));
+      if (sentByMe && row.mediaKind) s.snapsSent30d += 1;
+      if (!sentByMe && row.mediaKind) s.snapsRecv30d += 1;
       if (now - t <= 7 * SHARE_DAY_MS) s.chat7d += 1;
-      if (now - t <= 14 * SHARE_DAY_MS && String(row.senderId) === me && row.postId) s.shares14d += 1;
+      if (now - t <= 14 * SHARE_DAY_MS && sentByMe && row.postId) s.shares14d += 1;
     }
     const peers = [...stats.keys()];
     if (!peers.length) return res.json({ items: [] });
-    const [following, followedBy, users] = await Promise.all([
-      Follow.findAll({ where: { followerId: me, followeeId: peers }, attributes: ['followeeId'], raw: true }),
-      Follow.findAll({ where: { followeeId: me, followerId: peers }, attributes: ['followerId'], raw: true }),
-      User.findAll({ where: { id: peers }, attributes: PUBLIC_USER, raw: true }),
-    ]);
-    const iFollow = new Set(following.map((r) => String(r.followeeId)));
-    const followsMe = new Set(followedBy.map((r) => String(r.followerId)));
+    const users = await User.findAll({ where: { id: peers }, attributes: PUBLIC_USER, raw: true });
     const userById = new Map(users.map((u) => [String(u.id), u]));
+    const bestFriendOf = new Map(peers.map((id) => {
+      const s = stats.get(id);
+      return [id, bestFriendScore({ snapsSent30d: s.snapsSent30d, snapsRecv30d: s.snapsRecv30d, chats30d: s.chats30d, streak: streakDays(s.days, now) })];
+    }));
+    // Is_Best_Friend = the three highest Best_Friend_Score values with a score above zero
+    const bestFriends = new Set([...bestFriendOf.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id));
     const items = peers
       .filter((id) => userById.has(id))
       .map((id) => {
         const s = stats.get(id);
-        const mutual = iFollow.has(id) && followsMe.has(id) ? 1 : 0;
-        const hoursSince = (now - s.last) / 3600000;
-        const score = (s.shares14d * 8) + (s.chat7d * 5) + (mutual * 25) - (hoursSince * 0.25);
+        const score = shareTargetScore({
+          shares14d: s.shares14d,
+          recentChat: s.chat7d,
+          isBestFriend: bestFriends.has(id) ? 1 : 0,
+          hoursSince: (now - s.last) / 3600000,
+        });
         return { user: userById.get(id), score: Math.round(score * 100) / 100 };
       })
       .sort((a, b) => b.score - a.score)

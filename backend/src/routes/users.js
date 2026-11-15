@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { DAY, followRankScore } = require('../services/formulas');
 const redis = require('../redis');
 
 // Post-notification bell state, read with SQL so the app works before migration 025 adds the column
@@ -12,7 +13,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -350,6 +351,36 @@ router.get('/:username/saved', requireAuth, async (req, res, next) => {
 });
 
 // GET complete follower/following lists in relationship order.
+// Follow_Rank_Score for the followers list: mutual follow, story replies sent to you (30d),
+// verified creators, minus 0.2 per day since they followed. Profile visits are not tracked (0).
+async function rankFollowers(rows, userId) {
+  if (!rows.length) return rows;
+  const ids = rows.map((row) => String(row.followerId));
+  const since = new Date(Date.now() - 30 * DAY);
+  const [followsBack, replies, creators] = await Promise.all([
+    Follow.findAll({ where: { followerId: userId, followeeId: ids }, attributes: ['followeeId'], raw: true }),
+    DirectMessage.findAll({ where: { senderId: ids, recipientId: userId, storyAuthorId: userId, createdAt: { [Op.gt]: since } }, attributes: ['senderId'], raw: true }),
+    User.findAll({ where: { id: ids }, attributes: ['id', 'isCreator'], raw: true }),
+  ]);
+  const mutual = new Set(followsBack.map((row) => String(row.followeeId)));
+  const replied = new Map();
+  for (const row of replies) replied.set(String(row.senderId), (replied.get(String(row.senderId)) || 0) + 1);
+  const verified = new Set(creators.filter((u) => u.isCreator).map((u) => String(u.id)));
+  return rows
+    .map((row) => {
+      const id = String(row.followerId);
+      const rank = followRankScore({
+        mutual: mutual.has(id) ? 1 : 0,
+        storyReplies: replied.get(id) || 0,
+        verified: verified.has(id) ? 1 : 0,
+        daysFollowed: (Date.now() - new Date(row.createdAt).getTime()) / DAY,
+      });
+      return { row, rank };
+    })
+    .sort((a, b) => b.rank - a.rank || new Date(b.row.createdAt) - new Date(a.row.createdAt))
+    .map(({ row }) => row);
+}
+
 async function peopleInRelationshipOrder(rows, idField, viewerId) {
   const ids = rows.map((row) => String(row[idField]));
   if (!ids.length) return [];
@@ -367,7 +398,7 @@ router.get('/:username/followers', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
     const rows = await Follow.findAll({ where: { followeeId: user.id }, attributes: ['followerId', 'createdAt'], order: [['createdAt', 'DESC'], ['followerId', 'ASC']], raw: true });
-    res.json({ items: await peopleInRelationshipOrder(rows, 'followerId', req.user.id) });
+    res.json({ items: await peopleInRelationshipOrder(await rankFollowers(rows, req.user.id), 'followerId', req.user.id) });
   } catch (e) { next(e); }
 });
 

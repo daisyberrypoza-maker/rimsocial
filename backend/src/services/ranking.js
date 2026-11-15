@@ -2,8 +2,8 @@
 // country, engagement and variety. Each signal is read on its own, so one missing table never
 // breaks the whole ranking.
 const { sequelize } = require('../db');
+const { DAY, friendStoryScore, streakDays } = require('./formulas');
 
-const DAY = 86400000;
 const TAG = /#[\p{L}\p{N}_]+/gu;
 
 async function run(sql, replacements) {
@@ -13,39 +13,51 @@ async function run(sql, replacements) {
   } catch { return []; }
 }
 
-// Friends: messages and story views in the last 30 days, plus how recent their newest story is.
+// Friends: Friend_Story_Score from the blueprint, using messages, snaps, streaks and story views.
 async function friendScores(viewerId, creatorIds) {
   const scores = Object.fromEntries(creatorIds.map((id) => [id, 0]));
   if (!creatorIds.length) return scores;
-  const since = new Date(Date.now() - 30 * DAY);
-  const [messages, views, latest] = await Promise.all([
+  const now = Date.now();
+  const since = new Date(now - 30 * DAY);
+  const since7 = new Date(now - 7 * DAY);
+  const [messages, sentSnaps, dayRows, views, stories, latest] = await Promise.all([
     run(`SELECT CASE WHEN senderId = :me THEN recipientId ELSE senderId END AS other, COUNT(*) AS n
          FROM direct_messages WHERE createdAt > :since AND (senderId = :me OR recipientId = :me) GROUP BY other`,
-      { me: viewerId, since: new Date(Date.now() - 7 * DAY) }),
+      { me: viewerId, since: since7 }),
+    run(`SELECT recipientId AS other, COUNT(*) AS n FROM direct_messages
+         WHERE createdAt > :since AND senderId = :me AND mediaKind IS NOT NULL GROUP BY recipientId`, { me: viewerId, since: since7 }),
+    run(`SELECT DISTINCT CASE WHEN senderId = :me THEN recipientId ELSE senderId END AS other,
+           DATE_FORMAT(createdAt, '%Y-%m-%d') AS d
+         FROM direct_messages WHERE createdAt > :since AND (senderId = :me OR recipientId = :me)`, { me: viewerId, since }),
     run(`SELECT p.authorId AS other, COUNT(*) AS n FROM story_views sv JOIN posts p ON p.id = sv.storyId
          WHERE sv.viewerId = :me AND sv.createdAt > :since GROUP BY p.authorId`, { me: viewerId, since }),
+    run(`SELECT authorId AS other, COUNT(*) AS n FROM posts
+         WHERE isStory = 1 AND createdAt > :since AND authorId IN (:ids) GROUP BY authorId`, { ids: creatorIds, since }),
     run(`SELECT authorId AS other, MAX(createdAt) AS latest FROM posts
          WHERE isStory = 1 AND status = 'live' AND expiresAt > NOW() AND authorId IN (:ids) GROUP BY authorId`,
       { ids: creatorIds }),
   ]);
-  // Friend_Story_Score = (Direct_Snaps_Sent*3 + Chat_Messages_7d*2 + Snap_Streak_Days*0.5 + Story_Completion_Rate*5)
-  //                      * Time_Decay_Factor, with Time_Decay_Factor = 1 / (1 + 0.15 * hours since their latest story)
-  // Not tracked yet, so 0: streaks and story completion. Story views stand in for completion.
-  const since7 = new Date(Date.now() - 7 * DAY);
-  const sentRows = await run(`SELECT recipientId AS other, COUNT(*) AS n FROM direct_messages
-         WHERE createdAt > :since AND senderId = :me GROUP BY recipientId`, { me: viewerId, since: since7 });
   const messagesByPeer = new Map(messages.map((row) => [String(row.other), Number(row.n)]));
-  const sentByPeer = new Map(sentRows.map((row) => [String(row.other), Number(row.n)]));
+  const sentByPeer = new Map(sentSnaps.map((row) => [String(row.other), Number(row.n)]));
+  const daysByPeer = new Map();
+  for (const row of dayRows) {
+    const key = String(row.other);
+    if (!daysByPeer.has(key)) daysByPeer.set(key, new Set());
+    daysByPeer.get(key).add(row.d);
+  }
   const viewsByPeer = new Map(views.map((row) => [String(row.other), Number(row.n)]));
+  const storiesByPeer = new Map(stories.map((row) => [String(row.other), Number(row.n)]));
   const latestByPeer = new Map(latest.map((row) => [String(row.other), row.latest]));
   for (const id of creatorIds) {
     const key = String(id);
-    const chat7d = messagesByPeer.get(key) || 0;
-    const sent = sentByPeer.get(key) || 0;
-    const completion = viewsByPeer.get(key) || 0;
-    const raw = sent * 3 + chat7d * 2 + completion * 5;
-    const hours = latestByPeer.has(key) ? (Date.now() - new Date(latestByPeer.get(key)).getTime()) / 3600000 : 0;
-    scores[id] = raw / (1 + 0.15 * hours);
+    const storyCount = storiesByPeer.get(key) || 0;
+    scores[id] = friendStoryScore({
+      snapsSent7d: sentByPeer.get(key) || 0,
+      chats7d: messagesByPeer.get(key) || 0,
+      streak: streakDays(daysByPeer.get(key) || new Set(), now),
+      completionRate: storyCount ? Math.min(1, (viewsByPeer.get(key) || 0) / storyCount) : 0,
+      hoursPosted: latestByPeer.has(key) ? (now - new Date(latestByPeer.get(key)).getTime()) / 3600000 : 0,
+    });
   }
   return scores;
 }
