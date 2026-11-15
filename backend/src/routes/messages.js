@@ -639,7 +639,10 @@ router.post('/with/:userId', async (req, res, next) => {
         attributes: ['mediaUrl', 'kind'],
       });
       if (!story) throw httpError(404, 'This story has expired');
-      media = { mediaUrl: story.mediaUrl, mediaKind: story.kind === 'video' ? 'video' : 'photo', storyAuthorId: other };
+      // Text stories have no media: the reply is a plain message that still points back to the story
+      media = story.mediaUrl
+        ? { mediaUrl: story.mediaUrl, mediaKind: story.kind === 'video' ? 'video' : 'photo', storyAuthorId: other }
+        : { storyAuthorId: other };
     }
     const message = await createMessage({ me, other, body, replyToId, ...media });
     await unhideChat(me, other);
