@@ -174,10 +174,10 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (!stories || stories.length === 0 || !stories.every((s) => s.viewed)) return;
     const store = useAppStore.getState();
     const rail = store.storyRail;
-    store.setStoryRail({
-      ...rail,
-      items: (rail.items || []).map((g) => (g.user.id === group.user.id ? { ...g, unseen: false } : g)),
-    });
+    // The rail is a list of creators: update it in place. Passing an object here emptied the rail,
+    // which closed the viewer while it was open.
+    if (!Array.isArray(rail)) return;
+    store.setStoryRail(rail.map((g) => (g.user?.id === group.user.id ? { ...g, unseen: false } : g)));
   }, [stories, group.user.id]);
 
   // Video: one effect decides play or pause from the viewer state. Browsers only allow sound after a tap,
