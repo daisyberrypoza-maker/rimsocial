@@ -97,3 +97,12 @@
 }
 .sc-page button.sc-owner:disabled { opacity: .45; }
 .sc-page button.sc-share { width: 56px; height: 56px; }
+
+/* Composer header sits on the colour background, not the white Stories header (global .sc-top is white). */
+.sc-page .sc-top { background: transparent !important; }
+/* Back arrow: black on transparent */
+.sc-page button.sc-round { background: transparent !important; }
+.sc-page button.sc-round svg, .sc-page .sc-round svg { color: #000 !important; stroke: #000 !important; }
+/* Tool circles: light translucent with black icons (the recording state keeps its red pill) */
+.sc-page button.sa-round { background: rgba(255, 255, 255, 0.6) !important; }
+.sc-page button.sa-round svg { color: #000 !important; stroke: #000 !important; }
