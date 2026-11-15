@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store.js';
 import { refreshMyThumb } from './lib/myThumb.js';
+import { ensureIdentity } from './lib/e2ee.js';
 import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
@@ -71,6 +72,8 @@ export default function App() {
   const meId = useAppStore((s) => s.user?.id);
   // Your avatar shows your latest story or post everywhere except the profile page
   useEffect(() => { if (meId) refreshMyThumb(); }, [meId]);
+  // Publish this device's encryption key on sign-in, so others can message this person
+  useEffect(() => { if (meId) ensureIdentity().catch(() => {}); }, [meId]);
 
   // On a fresh load at "/", return to the last screen the user was on
   // Status bar: white on Stories and Chat, dark everywhere else
