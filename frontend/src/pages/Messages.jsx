@@ -12,6 +12,7 @@ import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 import './ChatList.css';
 import { confirmDialog } from '../lib/confirm.js';
+import { isEncrypted } from '../lib/e2ee.js';
 
 // Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
@@ -29,6 +30,7 @@ function timeAgo(iso) {
 
 function previewOf(last) {
   if (last.deleted) return 'This message was deleted';
+  if (isEncrypted(last.body)) return 'Encrypted message';
   return last.body || MEDIA_LABEL[last.mediaKind] || '';
 }
 

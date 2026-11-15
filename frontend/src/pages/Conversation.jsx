@@ -13,6 +13,7 @@ import '../snap-screens.css';
 import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
+import { sealFor, openMessages } from '../lib/e2ee.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -651,9 +652,10 @@ export default function Conversation({ userId }) {
     api(`/v1/messages/with/${userId}/info`).then((data) => { if (alive) { setPartner(data.user); setOnline(Boolean(data.online)); } }).catch((e) => { if (alive) setError(e.message); });
     api(`/v1/messages/direct/${userId}/preferences`).then((data) => { if (alive) setMuted(Boolean(data.muted)); }).catch(() => {});
     const load = () => api(`/v1/messages/with/${userId}`)
-      .then((data) => {
+      .then(async (data) => {
+        const items = await openMessages(data.items || [], me?.id);
         if (!alive) return;
-        setMessages(data.items || []);
+        setMessages(items);
         setTyping(Boolean(data.typing));
         if ((data.items || []).some((m) => m.senderId === userId && !m.readAt)) {
           api(`/v1/messages/with/${userId}/read`, { method: 'POST', body: {} }).catch(() => {});
@@ -739,9 +741,10 @@ export default function Conversation({ userId }) {
     try {
       // A comment or reaction on a photo or video is a reply to that message
       const from = viewerMedia?.from || null;
-      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: clean, replyToId: from?.id || undefined } });
+      const sealed = await sealFor(userId, clean);
+      const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: from?.id || undefined } });
       const quoted = from ? { id: from.id, senderId: from.senderId, body: '', mediaKind: viewerMedia.kind || 'photo', mediaUrl: from.mediaUrl || null, deletedForEveryone: false } : null;
-      const sent = { ...data.message, replyTo: quoted };
+      const sent = { ...data.message, body: clean, replyTo: quoted };
       setMessages((current) => {
         const list = current || [];
         return list.some((m) => m.id === sent.id) ? list : [...list, sent];
@@ -872,8 +875,9 @@ export default function Conversation({ userId }) {
     setError('');
     try {
       if (editing) {
-        const data = await api(`/v1/messages/message/${editing.id}`, { method: 'PATCH', body: { body } });
-        setMessages((current) => (current || []).map((m) => (m.id === editing.id ? { ...m, ...data.message } : m)));
+        const sealed = await sealFor(userId, body);
+        const data = await api(`/v1/messages/message/${editing.id}`, { method: 'PATCH', body: { body: sealed } });
+        setMessages((current) => (current || []).map((m) => (m.id === editing.id ? { ...m, ...data.message, body } : m)));
         setEditing(null);
         setText('');
         return;
@@ -893,9 +897,10 @@ export default function Conversation({ userId }) {
         if (replyTo) form.append('replyToId', replyTo.id);
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       } else {
-        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body, replyToId: replyTo?.id } });
+        const sealed = await sealFor(userId, body);
+        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id } });
       }
-      const sent = { ...data.message, replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
+      const sent = { ...data.message, ...(file ? {} : { body }), replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
       setMessages((current) => {
         const list = current || [];
         return list.some((m) => m.id === sent.id) ? list : [...list, sent];

@@ -16,6 +16,7 @@ import StoryViewersSheet from './StoryViewersSheet.jsx';
 import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
 import { logError } from '../toast.js';
 import { confirmDialog } from '../lib/confirm.js';
+import { sealFor } from '../lib/e2ee.js';
 
 const PHOTO_MS = 5000;
 const SWIPE_PX = 60;
@@ -298,7 +299,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     const body = String(text || '').trim();
     if (!body || isOwner) return;
     try {
-      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body, storyId: current.id } });
+      const sealed = await sealFor(group.user.id, body);
+      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body: sealed, storyId: current.id } });
       toast('Sent');
       setSentNote('Sent');
       clearTimeout(sentTimerRef.current);

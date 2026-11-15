@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import Avatar from './Avatar.jsx';
 import { toast } from '../toast.js';
+import { sealFor } from '../lib/e2ee.js';
 
 // Share sheet: send a post or Rimlight link to people you chat with (or search for), copy the link, or use other apps.
 export default function ShareSheet({ url, caption, onClose, onCopy, onMore }) {
@@ -25,7 +26,8 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore }) {
     if (busy[user.id] || sent[user.id]) return;
     setBusy((current) => ({ ...current, [user.id]: true }));
     try {
-      await api(`/v1/messages/with/${user.id}`, { method: 'POST', body: { body: caption ? `${caption}\n${url}` : url } });
+      const sealed = await sealFor(user.id, caption ? `${caption}\n${url}` : url);
+      await api(`/v1/messages/with/${user.id}`, { method: 'POST', body: { body: sealed } });
       setSent((current) => ({ ...current, [user.id]: true }));
     } catch (e) {
       toast(e.message || 'Could not send');

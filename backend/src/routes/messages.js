@@ -356,6 +356,40 @@ router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => 
 // ---- chat list ------------------------------------------------------------
 
 // Chat list: one row per person, newest conversation first, with unread counts.
+// Text messages are end-to-end encrypted on the sender's device; the server only ever stores the ciphertext
+const E2E_PREFIX = 'e2e:v1:';
+function encryptedTextBody(raw) {
+  const body = String(raw || '').trim();
+  if (!body) return '';
+  if (!body.startsWith(E2E_PREFIX) || body.length > 8000) throw httpError(400, 'Messages must be end-to-end encrypted. Update the app and try again.');
+  return body;
+}
+
+// Public encryption keys (the private key never leaves the device that made it)
+router.put('/keys', async (req, res, next) => {
+  try {
+    const raw = String(req.body?.publicKey || '');
+    let jwk = null;
+    try { jwk = JSON.parse(raw); } catch { jwk = null; }
+    if (!jwk || jwk.kty !== 'EC' || jwk.crv !== 'P-256' || typeof jwk.x !== 'string' || typeof jwk.y !== 'string' || raw.length > 1000) {
+      throw httpError(400, 'Invalid encryption key');
+    }
+    await sequelize.query(
+      'INSERT INTO user_keys (userId, publicKey, updatedAt) VALUES (:userId, :publicKey, NOW()) ON DUPLICATE KEY UPDATE publicKey = VALUES(publicKey), updatedAt = NOW()',
+      { replacements: { userId: req.user.id, publicKey: raw } },
+    );
+    res.status(204).end();
+  } catch (error) { next(error); }
+});
+
+router.get('/keys/:userId', async (req, res, next) => {
+  try {
+    await assertCanMessage(req.user.id, req.params.userId);
+    const [rows] = await sequelize.query('SELECT publicKey FROM user_keys WHERE userId = :userId', { replacements: { userId: req.params.userId } });
+    res.json({ publicKey: rows[0]?.publicKey || null });
+  } catch (error) { next(error); }
+});
+
 router.get('/conversations', async (req, res, next) => {
   try {
     const me = req.user.id;
@@ -628,7 +662,7 @@ router.post('/with/:userId', async (req, res, next) => {
   try {
     const me = req.user.id;
     const other = req.params.userId;
-    const body = String(req.body?.body || '').trim().slice(0, 2000);
+    const body = encryptedTextBody(req.body?.body);
     const storyId = req.body?.storyId ? String(req.body.storyId) : null;
     if (!body && !storyId) return res.status(400).json({ error: 'Type a message first' });
     await assertCanMessage(me, other);
@@ -846,7 +880,7 @@ router.patch('/message/:id', async (req, res, next) => {
     if (String(row.senderId) !== me) throw httpError(403, 'You can only edit your own messages');
     if (row.deletedForEveryone) throw httpError(400, 'This message was deleted');
     if (Date.now() - new Date(row.createdAt).getTime() > EDIT_WINDOW_MS) throw httpError(400, 'You can only edit a message within 15 minutes');
-    const body = String(req.body?.body || '').trim().slice(0, 2000);
+    const body = encryptedTextBody(req.body?.body);
     if (!body) throw httpError(400, 'Type a message first');
     await row.update({ body, editedAt: new Date(), postId: await linkedPostId(body) });
     res.json({ message: row.toJSON() });
@@ -874,6 +908,7 @@ router.post('/message/:id/forward', async (req, res, next) => {
     const me = req.user.id;
     const row = await findVisibleMessage(me, req.params.id);
     if (row.deletedForEveryone) throw httpError(400, 'This message was deleted');
+    if (String(row.body || '').startsWith(E2E_PREFIX)) throw httpError(400, "Encrypted messages can't be forwarded yet");
     const toUserId = String(req.body?.toUserId || '');
     await assertCanMessage(me, toUserId);
     await unhideChat(me, toUserId);
