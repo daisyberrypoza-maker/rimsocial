@@ -615,6 +615,7 @@ export default function Conversation({ userId }) {
   const [error, setError] = useState('');
   const endRef = useRef(null);
   const composerRef = useRef(null);
+  const threadRef = useRef(null);
   const fileRef = useRef(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [viewerMedia, setViewerMedia] = useState(null);
@@ -669,6 +670,19 @@ export default function Conversation({ userId }) {
     window.addEventListener('rs-chat', onChat);
     return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, [userId]);
+
+  // Stay on the latest message whenever the thread changes size (keyboard opening, the box growing or shrinking)
+  // unless the person has scrolled up to read older messages
+  useEffect(() => {
+    const thread = threadRef.current;
+    if (!thread || typeof ResizeObserver === 'undefined') return undefined;
+    let atEnd = true;
+    const onScroll = () => { atEnd = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 80; };
+    const observer = new ResizeObserver(() => { if (atEnd) thread.scrollTop = thread.scrollHeight; });
+    thread.addEventListener('scroll', onScroll, { passive: true });
+    observer.observe(thread);
+    return () => { thread.removeEventListener('scroll', onScroll); observer.disconnect(); };
+  }, [userId, Boolean(messages)]);
 
   // While the message box has focus, keep the latest message in view as the keyboard opens or resizes
   useEffect(() => {
@@ -1050,7 +1064,7 @@ export default function Conversation({ userId }) {
         </button>
       </header>
 
-      <div className="dm-thread">
+      <div className="dm-thread" ref={threadRef}>
         {messages === null ? <p className="dm-empty"></p>
           : messages.length === 0 ? <p className="dm-empty">Say hello to start the conversation.</p>
           : groupRows(messages).map((row) => {
