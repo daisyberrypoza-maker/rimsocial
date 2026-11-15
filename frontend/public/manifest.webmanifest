@@ -1,13 +1,14 @@
 {
-  "id": "/rimsocial/",
+  "id": "./",
   "name": "RimSocial",
   "short_name": "RimSocial",
   "description": "Connect, create and discover on RimSocial.",
   "lang": "en",
-  "start_url": "/rimsocial/#/",
-  "scope": "/rimsocial/",
-  "display": "standalone",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "fullscreen",
   "display_override": [
+    "fullscreen",
     "standalone",
     "minimal-ui"
   ],
@@ -16,7 +17,7 @@
   "theme_color": "#171717",
   "icons": [
     {
-      "src": "/rimsocial/icons/rimsocial.svg",
+      "src": "icons/rimsocial.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
