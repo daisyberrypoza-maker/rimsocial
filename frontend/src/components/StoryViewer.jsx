@@ -235,12 +235,22 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (menuOpen || shareOpen || reportOpen || viewersOpen) setTyping(false);
   }, [menuOpen, shareOpen, reportOpen, viewersOpen]);
 
-  // Stop playback as soon as the app is minimised or closed; playback resumes only on a tap
+  // Stop playback as soon as the app is minimised or closed. Coming back resumes it, unless the
+  // person had paused it themselves before leaving.
+  const pausedByHideRef = useRef(false);
   useEffect(() => {
-    const onHide = () => { if (document.hidden) setPaused(true); };
-    document.addEventListener('visibilitychange', onHide);
-    return () => document.removeEventListener('visibilitychange', onHide);
-  }, []);
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (!pausedByHideRef.current) pausedByHideRef.current = !paused;
+        setPaused(true);
+      } else if (pausedByHideRef.current) {
+        pausedByHideRef.current = false;
+        setPaused(false);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [paused]);
 
   function updateCurrent(id, patch) {
     setStories((list) => (list ? list.map((s) => (s.id === id ? { ...s, ...patch } : s)) : list));
