@@ -101,7 +101,7 @@ function heroDragState(deltaX, deltaY, swipeVelocity = 0) {
   };
 }
 function musicTrackScore({ uses24h = 0, completion = 0, genreAffinity = 0, featured = 0, daysSinceRelease = 0 }) {
-  return (uses24h * 4 + completion * 20 + genreAffinity * 15 + featured * 25) * timeDecay(daysSinceRelease * 24, 0.8);
+  return (uses24h * 4 + completion * 20 + genreAffinity * 15 + featured * 25) * timeDecay(daysSinceRelease, 0.8);
 }
 function adaptiveBitrate({ throughputBps = 0, packetLossPct = 0 }) {
   const bandwidth = Math.max(0, throughputBps) * 0.8;
