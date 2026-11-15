@@ -396,3 +396,14 @@
 .cv-story-card img { width:48px; height:64px; object-fit:cover; border-radius:8px; flex:0 0 48px; }
 .cv-story-card-text { width:48px; height:64px; border-radius:8px; background:#f1f1f3; display:grid; place-items:center; font-size:10px; overflow:hidden; flex:0 0 48px; padding:4px; text-align:center; word-break:break-word; }
 .cv-story-card-label { font-size:13px; font-weight:600; }
+
+/* Chat emoji panel: white panel, plain emoji with no background, fully visible above the message box */
+.dm-convo.cv-convo .cv-emoji-panel {
+  background: #fff !important; max-height: 200px; overflow-y: auto; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 10px 8px; margin: 0 12px 8px;
+  box-shadow: 0 -1px 0 #efefef; border-radius: 14px; border: 1px solid #efefef;
+}
+.dm-convo.cv-convo .cv-emoji-panel button {
+  background: transparent !important; background-color: transparent !important; border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; color: inherit !important; width: auto; min-width: 0; min-height: 44px; height: 44px;
+  padding: 0 !important; font-size: 28px !important; line-height: 1 !important; display: grid; place-items: center;
+}
