@@ -364,4 +364,19 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// POST /v1/posts/text  (JSON: text, background, visibility) - a text-only post shown in Rimlight
+router.post('/text', requireAuth, async (req, res, next) => {
+  try {
+    const text = String(req.body?.text || '').trim().slice(0, 500);
+    if (!text) throw httpError(400, 'Write some text for your post');
+    const background = String(req.body?.background || 'sunset').slice(0, 40);
+    const visibility = req.body?.visibility === 'private' ? 'private' : 'public';
+    const post = await Post.create({
+      authorId: req.user.id, kind: 'text', mediaUrl: null, storyText: text, storyBackground: background,
+      caption: '', visibility, allowRemix: false, isStory: false,
+    });
+    res.status(201).json(toPostDTO(post));
+  } catch (e) { next(e); }
+});
+
 module.exports = router;

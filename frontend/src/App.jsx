@@ -174,6 +174,7 @@ export default function App() {
         <Route path="/orders/:orderId" element={<RequireAuth><OrderDetails /></RequireAuth>} />
         <Route path="/upload" element={<RequireAuth><Upload /></RequireAuth>} />
         <Route path="/story/text" element={<RequireAuth><StoryComposer /></RequireAuth>} />
+        <Route path="/post/text" element={<RequireAuth><StoryComposer /></RequireAuth>} />
         <Route path="/p/:postId" element={<RequireAuth><PostDetail /></RequireAuth>} />
         <Route path="/creator" element={<RequireAuth><CreatorStudio /></RequireAuth>} />
         <Route path="/creator/earnings" element={<RequireAuth><CreatorStudio /></RequireAuth>} />

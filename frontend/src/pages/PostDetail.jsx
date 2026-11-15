@@ -12,6 +12,7 @@ import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
 import ActionSheet from '../components/ActionSheet.jsx';
 import { goBack } from '../lib/goBack.js';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { logError } from '../toast.js';
 
 export default function PostDetail() {
@@ -116,7 +117,9 @@ export default function PostDetail() {
     <div className="rv-media">
       {post.kind === 'video'
         ? <VideoPlayer src={src} poster={mediaUrl(post.thumbUrl) || undefined} />
-        : <img src={src} alt={caption || 'Shared post'} />}
+        : post.kind === 'text'
+          ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}><p>{post.storyText || ''}</p></div>
+          : <img src={src} alt={caption || 'Shared post'} />}
     </div>
 
     {!showComments && <aside className="rv-rail" aria-label="Post actions">

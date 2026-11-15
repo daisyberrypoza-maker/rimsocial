@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast } from '../toast.js';
 import { mediaUrl, postShareUrl, videoStreamUrl } from '../lib/config.js';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { startWhenReady } from '../lib/playVideo.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
@@ -381,6 +382,7 @@ export default function PostCard({ post, active }) {
   return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
     {carouselItems ? <div className="post-carousel-wrap"><div className="post-carousel" onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}>{carouselItems.map((item, i) => <div className="post-carousel-slide" key={i}>{item.kind === 'video' ? <video src={active ? videoStreamUrl(mediaUrl(item.url)) : undefined} muted playsInline controls preload={active ? 'metadata' : 'none'} /> : <img src={mediaUrl(item.url)} alt="" loading="lazy" />}</div>)}</div><span className="post-carousel-count">{slide + 1}/{carouselItems.length}</span></div>
       : isVideoMedia ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
+      : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}><p>{post.storyText || ''}</p></div>
       : <img src={src} alt="" loading="lazy" />}
     {isVideoMedia && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
     {isVideoMedia && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}

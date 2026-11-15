@@ -329,6 +329,7 @@ export default function Upload() {
           {onRecents ? 'Gallery' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
         {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="ig-create-aa">Aa</span> Text story</button>}
+        {!asStory && !asReel && <button type="button" className="ig-create-pick" onClick={() => navigate('/post/text')} aria-label="Text post"><span className="ig-create-aa">Aa</span> Text post</button>}
         {onRecents && !asStory && !asReel && <button type="button" className={selectMode ? 'ig-create-select on' : 'ig-create-select'} onClick={() => { setSelectMode((on) => !on); setSelection([]); }} aria-pressed={selectMode}>{selectMode ? 'Cancel' : 'Select'}</button>}
       </div>
       {onRecents ? <div className="ig-grid">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
@@ -14,6 +14,8 @@ import './StoryComposer.css';
 // Text story: type on a background, add a music track and/or a voice note, then share.
 export default function StoryComposer() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isPost = pathname.startsWith('/post/text');
   const [text, setText] = useState('');
   const [bgKey, setBgKey] = useState(STORY_BACKGROUNDS[0].key);
   const [track, setTrack] = useState(null);
@@ -30,6 +32,19 @@ export default function StoryComposer() {
   async function share() {
     if (posting || (!text.trim() && !voice)) return;
     setPosting(true);
+    if (isPost) {
+      try {
+        await api('/v1/posts/text', { method: 'POST', body: { text: text.trim(), background: bgKey, visibility: 'public' } });
+        refreshMyThumb();
+        toast('Post published');
+        navigate('/', { replace: true });
+      } catch (error) {
+        logError(error);
+        toast(`Post not published: ${error?.message || 'try again'}`);
+        setPosting(false);
+      }
+      return;
+    }
     try {
       const form = new FormData();
       form.append('text', text.trim());
@@ -76,11 +91,11 @@ export default function StoryComposer() {
 
       <div className="sc-bottom">
         <div className="sc-row">
-          <button type="button" className="sc-owner" onClick={share} disabled={!canShare} aria-label="Share to your stories">
+          {!isPost && <button type="button" className="sc-owner" onClick={share} disabled={!canShare} aria-label="Share to your stories">
             <Avatar user={me || {}} size={36} />
             <span>Your stories</span>
-          </button>
-          <button type="button" className="sc-share" aria-label={posting ? 'Posting story' : 'Share story'} onClick={share} disabled={!canShare}>
+          </button>}
+          <button type="button" className="sc-share" aria-label={posting ? (isPost ? 'Publishing post' : 'Posting story') : (isPost ? 'Publish post' : 'Share story')} onClick={share} disabled={!canShare}>
             {posting ? <span className="sc-spin" role="status" aria-label="Posting story" /> : <Icon name="arrow-right" size={26} />}
           </button>
         </div>
