@@ -93,6 +93,21 @@ export default function Stories() {
   // The saved rail changes when a story finishes uploading
   useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
 
+  // Discover: popular public stories from creators first, then by views
+  const [popular, setPopular] = useState([]);
+  const [popOpen, setPopOpen] = useState(null);
+  useEffect(() => {
+    let current = true;
+    api('/v1/stories/popular')
+      .then((data) => {
+        if (!current) return;
+        const items = (data.items || []).slice().sort((a, b) => (Number(Boolean(b.author?.isCreator)) - Number(Boolean(a.author?.isCreator))) || ((b.viewCount || 0) - (a.viewCount || 0)));
+        setPopular(items);
+      })
+      .catch(logError);
+    return () => { current = false; };
+  }, []);
+
   // Discover and ordering: people you don't follow yet, ranked Snapchat-style by the server
   useEffect(() => {
     const saved = useAppStore.getState().storyDiscover;
@@ -223,44 +238,30 @@ export default function Stories() {
         )}
       </section>
 
-      {discoverList.length > 0 && (
+      {popular.length > 0 && (
         <section className="st-section" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
           <div className="st-cards">
-            {discoverList.map((person) => (
-              <button className="st-card" key={person.id} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
-                {person.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
+            {popular.map((story) => (
+              <button className="st-card" key={story.id} onClick={() => setPopOpen(story.author)} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
+                  ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
+                  : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
                 <span className="st-card-shade" />
                 <span className="st-card-foot">
-                  <span className="st-card-avatar">{person.avatarUrl ? <img src={mediaUrl(person.avatarUrl)} alt="" /> : nameOf(person).slice(0, 1).toUpperCase()}</span>
-                  <span className="st-card-name">{nameOf(person)}{person.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                  <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
+                  <span className="st-card-name">{nameOf(story.author || {})}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
                 </span>
               </button>
             ))}
           </div>
-          <div className="st-big-grid">
-            {sponsored.map((post) => (
-              <button className="st-big st-sponsor" key={`sp-${post.id}`} onClick={() => navigate('/p/' + post.id)} aria-label={`Sponsored: ${post.sponsorName || 'ad'}`}>
-                {post.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText}</span> : post.thumbUrl || post.kind === 'image' ? <img className="st-card-img" src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" /> : <span className="st-card-img st-card-fallback" />}
-                <span className="st-card-shade" />
-                <span className="st-sponsored-tag">Sponsored</span>
-                <span className="st-card-name">{post.sponsorName || post.author?.username}</span>
-                <span className="st-cta">{post.sponsorCta || 'Learn more'}</span>
-              </button>
-            ))}
-            {discoverList.map((person) => (
-              <button className="st-big" key={`big-${person.id}`} onClick={() => openSuggested(person)} aria-label={`Open ${nameOf(person)}`}>
-                {person.avatarUrl
-                  ? <img className="st-card-img" src={mediaUrl(person.avatarUrl)} alt="" />
-                  : <span className="st-card-img st-card-fallback">{nameOf(person).slice(0, 1).toUpperCase()}</span>}
-                <span className="st-card-shade" />
-                <span className="st-card-name">{nameOf(person)}</span>
-              </button>
-            ))}
-          </div>
         </section>
+      )}
+
+      {popOpen && (
+        <ViewerBoundary onClose={() => setPopOpen(null)}>
+          <StoryViewer groups={[{ user: popOpen }]} startIndex={0} onClose={() => setPopOpen(null)} />
+        </ViewerBoundary>
       )}
 
       {openAt !== null && (

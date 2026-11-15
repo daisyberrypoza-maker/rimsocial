@@ -5,7 +5,7 @@ const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
 
-const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl'];
+const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator'];
 
 async function viewedSet(viewerId, storyIds) {
   if (!storyIds.length) return new Set();
