@@ -160,6 +160,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   // Each story starts fresh and is recorded as viewed
   useEffect(() => {
     setPaused(false);
+    setHolding(false);
+    setTyping(false);
     setReply('');
     if (!current) return;
     // The owner's own watching is not counted
@@ -220,6 +222,18 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (gone) evictMedia([gone]);
     setStories((list) => (list ? list.filter((item) => item.id !== id) : list));
   }
+
+  useEffect(() => {
+    const end = () => releaseHold();
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => { window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); };
+  }, []);
+
+  // A sheet opening hides the reply box, so typing must end with it (no blur fires when it unmounts)
+  useEffect(() => {
+    if (menuOpen || shareOpen || reportOpen || viewersOpen) setTyping(false);
+  }, [menuOpen, shareOpen, reportOpen, viewersOpen]);
 
   // Stop playback as soon as the app is minimised or closed; playback resumes only on a tap
   useEffect(() => {
@@ -296,13 +310,23 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     holdRef.current = { timer: setTimeout(() => { holdRef.current.held = true; setHolding(true); }, 180), held: false };
   }
 
-  function onPointerUp(event) {
+  // Ends a hold however the finger lifts: on the viewer, outside it, or when the browser cancels the touch
+  function releaseHold() {
     clearTimeout(holdRef.current.timer);
     if (holdRef.current.held) {
       holdRef.current.held = false;
       suppressTapRef.current = true;   // the tap that follows a hold is not a tap
-      setHolding(false);
     }
+    setHolding(false);
+  }
+
+  function onPointerCancel() {
+    releaseHold();
+    swipeRef.current = null;
+  }
+
+  function onPointerUp(event) {
+    releaseHold();
     const start = swipeRef.current;
     swipeRef.current = null;
     if (!start) return;
@@ -436,7 +460,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   }
 
   return createPortal((
-    <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+    <div className="sv-root" role="dialog" aria-label={`Stories from ${group.user.username}`} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
           i === si ? (
