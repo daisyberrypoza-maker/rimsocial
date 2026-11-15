@@ -185,7 +185,7 @@ export default function Stories() {
             <Icon name="user-plus" size={21} />
             {newFollows > 0 && <span className="st-count">{newFollows > 99 ? '99+' : newFollows}</span>}
           </button>
-          <button className="st-round" aria-label="More" onClick={() => navigate('/chat', { state: { view: 'activity' } })}><Icon name="more-vertical" size={21} /></button>
+          <button className="st-round" aria-label="Following" onClick={() => navigate('/following-list')}><Icon name="users" size={21} /></button>
         </div>
       </header>
       {indicator}

@@ -355,7 +355,11 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
     const user = await resolveUser(req, req.params.username, ['id']);
     if (!user) throw httpError(404, 'User not found');
     const rows = await Follow.findAll({ where: { followerId: user.id }, attributes: ['followeeId', 'createdAt'], order: [['createdAt', 'DESC'], ['followeeId', 'ASC']], raw: true });
-    res.json({ items: await peopleInRelationshipOrder(rows, 'followeeId', req.user.id) });
+    const items = await peopleInRelationshipOrder(rows, 'followeeId', req.user.id);
+    if (user.id === req.user.id) {
+      await Promise.all(items.map(async (person) => { person.isNotifying = await readNotify(user.id, person.id); }));
+    }
+    res.json({ items });
   } catch (e) { next(e); }
 });
 

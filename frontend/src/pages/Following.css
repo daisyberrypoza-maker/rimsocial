@@ -1,0 +1,15 @@
+.fw-page { min-height:100dvh; background:#fff; color:#111; padding-bottom:env(safe-area-inset-bottom,0px); }
+.fw-head { display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:4px; padding:12px 12px 4px; }
+.fw-head h1 { margin:0; font-size:20px; font-weight:700; text-align:center; }
+.fw-iconbtn { width:44px; height:44px; border:0; border-radius:50%; background:transparent; color:#111; display:grid; place-items:center; padding:0; cursor:pointer; }
+.fw-edit { border:0; background:transparent; color:#111; font-size:16px; font-weight:600; padding:8px 4px; cursor:pointer; }
+.fw-sub { margin:0; padding:4px 16px 14px; color:#737373; font-size:14px; }
+.fw-list { padding:0 8px; }
+.fw-row { display:flex; align-items:center; gap:4px; padding:8px; }
+.fw-who { flex:1; min-width:0; display:flex; align-items:center; gap:12px; border:0; background:transparent; padding:0; color:#111; text-align:left; cursor:pointer; }
+.fw-name { font-size:15px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fw-bell { color:#111; }
+.fw-bell.on { color:#0095f6; }
+.fw-unfollow { border:1px solid #dbdbdb; background:#fff; color:#111; border-radius:8px; padding:7px 14px; font-size:14px; font-weight:600; cursor:pointer; }
+.fw-unfollow:disabled, .fw-bell:disabled { opacity:.5; }
+.fw-empty { padding:32px 16px; text-align:center; color:#737373; }

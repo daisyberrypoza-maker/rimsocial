@@ -7188,6 +7188,7 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 /* Story reactions: a row of six, above the reply bar (as in the reference) */
 .sv-reaction-row { display:flex; justify-content:space-between; align-items:center; padding:0 10px 12px; }
 .sv-reaction-btn { width:60px; height:60px; border:0; padding:0; background:none; font-size:42px; line-height:1; cursor:pointer; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+.sv-root .sv-reaction-row .sv-reaction-btn { width:68px !important; height:68px !important; min-width:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; background-color:transparent !important; box-shadow:none !important; font-size:52px !important; line-height:1 !important; cursor:pointer; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
 
 /* Smile button: icon only, no background circle */
 .sv-root .sv-sticker { background:transparent !important; box-shadow:none !important; border:0 !important; }
