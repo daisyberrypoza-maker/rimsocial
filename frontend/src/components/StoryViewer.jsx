@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
-import { applyBox, boxOf, dragState, fullBox, visualBox, EASE, OPEN_MS, SNAP_EASE, SNAP_MS } from '../lib/viewerMotion.js';
+import { CLOSE_AFTER_MS, closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 import '../pages/StoryComposer.css';
 import './StoryOwnerSheet.css';
 import { createPortal } from 'react-dom';
@@ -351,47 +351,19 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }
 
   // Tile transition: the viewer grows out of the tapped tile, then the controls fade in
-  useLayoutEffect(() => {
-    const el = rootRef.current;
-    const bd = backdropRef.current;
-    if (!el || !origin) return undefined;
-    applyBox(el, origin, false);
-    el.style.setProperty('--hud', '0');
-    if (bd) { bd.style.transition = 'none'; bd.style.opacity = '0'; }
-    void el.offsetWidth;   // commit the tile position before animating
-    applyBox(el, fullBox(), true);
-    if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0.85'; }
-    const hudTimer = setTimeout(() => el.style.setProperty('--hud', '1'), Math.round(OPEN_MS * 0.5));
-    return () => clearTimeout(hudTimer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => openMotion(rootRef.current, backdropRef.current, origin), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Closes back into the tile; liveBox continues from where a drag left the viewer
   function requestClose(liveBox = null) {
     if (closingRef.current) return;
     closingRef.current = true;
-    const el = rootRef.current;
-    const bd = backdropRef.current;
-    if (!el || !origin) { closeRef.current(); return; }
-    if (liveBox) applyBox(el, liveBox, false);
-    void el.offsetWidth;
-    delete el.dataset.drag;
-    applyBox(el, origin, true);
-    el.style.setProperty('--hud', '0');
-    if (bd) { bd.style.transition = `opacity ${OPEN_MS}ms ${EASE}`; bd.style.opacity = '0'; }
-    setTimeout(() => closeRef.current(), OPEN_MS + 20);
+    if (!rootRef.current || !origin) { closeRef.current(); return; }
+    closeMotion(rootRef.current, backdropRef.current, origin, liveBox);
+    setTimeout(() => closeRef.current(), CLOSE_AFTER_MS);
   }
 
-  // A drag that did not pass the threshold springs back to fullscreen
   function snapBack() {
-    const el = rootRef.current;
-    const bd = backdropRef.current;
-    if (!el) return;
-    delete el.dataset.drag;
-    el.style.transition = `transform ${SNAP_MS}ms ${SNAP_EASE}, border-radius ${SNAP_MS}ms ${SNAP_EASE}`;
-    el.style.transform = '';
-    el.style.borderRadius = '0px';
-    el.style.setProperty('--hud', '1');
-    if (bd) { bd.style.transition = `opacity ${SNAP_MS}ms ease`; bd.style.opacity = '0.85'; }
+    if (rootRef.current) snapMotion(rootRef.current, backdropRef.current);
   }
 
   function clearSwipedLater() {
@@ -411,24 +383,14 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
     if (!dragRef.current) {
-      const down = dy > 8 && dy > Math.abs(dx) * 0.5;
-      const sideways = Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5;
-      if (!down && !sideways) return;
+      if (!isDismissDrag(dx, dy)) return;
       dragRef.current = { t: start.t };
       clearTimeout(holdRef.current.timer);
       holdRef.current = { timer: null, held: false };
       setHolding(false);
     }
-    const el = rootRef.current;
-    const bd = backdropRef.current;
-    if (!el) return;
-    const ds = dragState(dx, dy);
-    el.dataset.drag = '1';
-    el.style.transition = 'none';
-    el.style.transform = `translate(${ds.tx}px, ${ds.ty}px) scale(${ds.scale})`;
-    el.style.borderRadius = `${ds.radius}px`;
-    el.style.setProperty('--hud', String(ds.hud));
-    if (bd) { bd.style.transition = 'none'; bd.style.opacity = String(ds.backdrop); }
+    if (!rootRef.current) return;
+    dragMotion(rootRef.current, backdropRef.current, dx, dy);
   }
 
   function onPointerUp(event) {
@@ -441,8 +403,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       swipedRef.current = true;
       clearSwipedLater();
       const ds = dragState(event.clientX - start.x, event.clientY - start.y);
-      const seconds = Math.max((performance.now() - drag.t) / 1000, 0.016);
-      if (ds.raw > 0.35 || ds.dist / seconds > 800) requestClose(visualBox(ds));
+      const seconds = (performance.now() - drag.t) / 1000;
+      if (shouldClose(ds, seconds)) requestClose(visualBox(ds));
       else snapBack();
       return;
     }

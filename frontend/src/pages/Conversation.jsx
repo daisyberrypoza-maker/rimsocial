@@ -1,5 +1,5 @@
 import AppLink from '../components/AppLink.jsx';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
@@ -14,6 +14,7 @@ import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { sealFor, openMessages, rememberPlain } from '../lib/e2ee.js';
+import { boxOf, closeMotion, CLOSE_AFTER_MS, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -79,8 +80,8 @@ function PostCard({ post }) {
 
 // Photos and videos open in the chat's own preview; a story sent from a story opens that story instead
 // `from` is the message on show, so a comment from the viewer can quote it
-function openMedia(src, kind, createdAt, from = null) {
-  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt, from } }));
+function openMedia(src, kind, createdAt, from = null, tile = null) {
+  window.dispatchEvent(new CustomEvent('cv-open-media', { detail: { src, kind, createdAt, from, origin: tile ? boxOf(tile) : null } }));
 }
 
 // Editable photo before sending: the image plus draw, text and sticker layers, flattened on send
@@ -230,6 +231,48 @@ const VIEW_OPTIONS = [
 // Full-screen media: before sending (pending) it shows the editing tools and Send; after sending it shows the chat viewer
 export function MediaViewer({ media, partner, pending, text, onText, onSend, onQuick, onClose, sending, name, edit, setEdit, editorRef, viewLimits = true }) {
   const isVideo = media.kind === 'video';
+  // Tile transition: grows out of the tapped photo or video, drag to dismiss
+  const rootRef = useRef(null);
+  const backdropRef = useRef(null);
+  const dragRef = useRef(null);
+  const closingRef = useRef(false);
+  const origin = media.origin || null;
+  useLayoutEffect(() => openMotion(rootRef.current, backdropRef.current, origin), []); // eslint-disable-line react-hooks/exhaustive-deps
+  function requestClose(liveBox = null) {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    if (!rootRef.current || !origin) { onClose(); return; }
+    closeMotion(rootRef.current, backdropRef.current, origin, liveBox);
+    setTimeout(() => onClose(), CLOSE_AFTER_MS);
+  }
+  function onViewerPointerDown(event) {
+    if (pending || event.target.closest?.('form, button, input, textarea')) { dragRef.current = null; return; }
+    dragRef.current = { x: event.clientX, y: event.clientY, t: performance.now(), active: false };
+  }
+  function onViewerPointerMove(event) {
+    const start = dragRef.current;
+    if (!start || closingRef.current) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (!start.active) {
+      if (!isDismissDrag(dx, dy)) return;
+      start.active = true;
+    }
+    if (rootRef.current) dragMotion(rootRef.current, backdropRef.current, dx, dy);
+  }
+  function onViewerPointerUp(event) {
+    const start = dragRef.current;
+    dragRef.current = null;
+    if (!start?.active || !rootRef.current) return;
+    const ds = dragState(event.clientX - start.x, event.clientY - start.y);
+    if (shouldClose(ds, (performance.now() - start.t) / 1000)) requestClose(visualBox(ds));
+    else snapMotion(rootRef.current, backdropRef.current);
+  }
+  function onViewerPointerCancel() {
+    const start = dragRef.current;
+    dragRef.current = null;
+    if (start?.active && rootRef.current) snapMotion(rootRef.current, backdropRef.current);
+  }
   // Keeps a dragged text or sticker where it was dropped
   function moveItem(kind, index, x, y) {
     setEdit((current) => {
@@ -256,7 +299,9 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
   }
 
   return (
-    <div className="cv-viewer cv-viewer-full" role="dialog" aria-label="Media preview">
+    <>
+    <div ref={backdropRef} className="cv-viewer-backdrop" aria-hidden="true" />
+    <div ref={rootRef} className="cv-viewer cv-viewer-full" role="dialog" aria-label="Media preview" onPointerDown={onViewerPointerDown} onPointerMove={onViewerPointerMove} onPointerUp={onViewerPointerUp} onPointerCancel={onViewerPointerCancel}>
       <div className="cv-viewer-stage">
         {pending && !isVideo && edit
           ? <PhotoEditor src={media.src} tool={edit.tool} texts={edit.texts} emojis={edit.emojis} editorRef={editorRef} onMove={moveItem} />
@@ -265,7 +310,7 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
             : <img src={media.src} alt="" />}
       </div>
       <div className="cv-viewer-top">
-        <button type="button" className="cv-viewer-close" onClick={onClose} aria-label="Close preview">
+        <button type="button" className="cv-viewer-close" onClick={() => requestClose()} aria-label="Close preview">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
         {!pending && (
@@ -335,15 +380,16 @@ export function MediaViewer({ media, partner, pending, text, onText, onSend, onQ
         </div>
       )}
     </div>
+    </>
   );
 }
 
 // Recipient opens a view-limited photo: the server counts the view, then the photo opens
-async function openViewOnce(message) {
+async function openViewOnce(message, tile = null) {
   try {
     const data = await api(`/v1/messages/message/${message.id}/view`, { method: 'POST', body: {} });
     window.dispatchEvent(new CustomEvent('cv-viewed', { detail: { id: message.id, viewCount: data.viewCount } }));
-    openMedia(mediaUrl(message.mediaUrl), 'photo', message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.viewLimit ? null : message.mediaUrl });
+    openMedia(mediaUrl(message.mediaUrl), 'photo', message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.viewLimit ? null : message.mediaUrl }, tile);
   } catch (e) {
     logError(e);
     toast(e.message || 'This photo can no longer be viewed');
@@ -368,14 +414,14 @@ function Attachment({ message, storyAuthorId, mine }) {
   const src = mediaUrl(message.mediaUrl);
   if (message.mediaKind === 'photo' && message.viewLimit > 0 && !mine) {
     if (message.viewCount >= message.viewLimit) return <span className="cv-once opened">Opened</span>;
-    return <button type="button" className="cv-once" onClick={() => openViewOnce(message)}>Tap to view</button>;
+    return <button type="button" className="cv-once" onClick={(e) => openViewOnce(message, e.currentTarget)}>Tap to view</button>;
   }
   if (message.mediaKind === 'video' || message.mediaKind === 'photo') {
     const media = message.mediaKind === 'video'
       ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
       : <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
     if (storyAuthorId) return <Link to="/stories" state={{ openUserId: storyAuthorId }} className="cv-media-link" aria-label="Open story">{media}</Link>;
-    return <button type="button" className="cv-media-link" onClick={() => openMedia(src, message.mediaKind, message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.mediaKind === 'photo' ? message.mediaUrl : null })} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
+    return <button type="button" className="cv-media-link" onClick={(e) => openMedia(src, message.mediaKind, message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.mediaKind === 'photo' ? message.mediaUrl : null }, e.currentTarget)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
   }
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   const name = message.mediaName || 'File';

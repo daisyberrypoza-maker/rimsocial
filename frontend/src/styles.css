@@ -7227,3 +7227,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root > *:not(.sv-stage) { opacity:var(--hud,1); transition:opacity .2s ease; }
 .sv-root[data-drag] > *:not(.sv-stage) { transition:none; }
 .sv-root .sv-stage { touch-action:none; }
+
+/* Tile to post page: the media morphs over the same 320ms ease as the story viewer */
+::view-transition-group(post-media) { animation-duration: 320ms; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }

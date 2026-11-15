@@ -115,7 +115,7 @@ export default function PostDetail() {
       </div>}
     </header>
 
-    <div className="rv-media">
+    <div className="rv-media" style={{ viewTransitionName: 'post-media' }}>
       {post.kind === 'video'
         ? <VideoPlayer src={src} poster={mediaUrl(post.thumbUrl) || undefined} />
         : post.kind === 'text'

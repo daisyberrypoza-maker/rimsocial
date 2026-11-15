@@ -1,3 +1,4 @@
+import { goToPost } from '../lib/viewerMotion.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -169,7 +170,7 @@ export default function Search() {
         posts.length ? (
           <div className="sr-grid">
             {posts.map((post) => (
-              <button key={post.id} type="button" className="sr-cell" onClick={() => navigate(`/p/${post.id}`)} aria-label="Open post">
+              <button key={post.id} type="button" className="sr-cell" onClick={(e) => goToPost(navigate, `/p/${post.id}`, e.currentTarget)} aria-label="Open post">
                 {post.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText}</span>
                   : post.kind === 'video'
                   ? <video src={mediaUrl(post.mediaUrl)} poster={post.thumbUrl ? mediaUrl(post.thumbUrl) : undefined} muted playsInline preload="metadata" />

@@ -410,3 +410,8 @@
 
 /* Shared post or profile: plain card, no bubble background */
 .dm-convo.cv-convo .cv-bubble.cv-bubble-plain { background: transparent !important; padding: 0 !important; box-shadow: none !important; border: 0 !important; max-width: 78%; }
+
+/* Chat media: tile transition backdrop, controls fade with the open/close and drag */
+.cv-viewer-backdrop { position: fixed; inset: 0; z-index: 199; background: #000; opacity: 0; pointer-events: none; }
+.cv-viewer-full > *:not(.cv-viewer-stage) { opacity: var(--hud, 1); transition: opacity .2s ease; }
+.cv-viewer-full[data-drag] > *:not(.cv-viewer-stage) { transition: none; }

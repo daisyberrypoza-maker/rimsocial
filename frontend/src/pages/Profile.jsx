@@ -1,5 +1,5 @@
 import AppLink from '../components/AppLink.jsx';
-import { boxOf } from '../lib/viewerMotion.js';
+import { boxOf, goToPost } from '../lib/viewerMotion.js';
 import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
@@ -726,7 +726,7 @@ export default function Profile() {
           {tagList.length > 0 && <div className="sc-tag-row">{tagList.map((tag) => <button key={tag} className="sc-hashtag-chip" onClick={() => navigate(`/explore?search=1&q=${encodeURIComponent(tag)}`)}><Icon name="hash" size={16} />{tag.slice(1)}</button>)}</div>}
           <div className="sc-grid">
             {posts.map((p) => (
-              <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
+              <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={(e) => goToPost(navigate, `/p/${p.id}`, e.currentTarget)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
@@ -764,12 +764,12 @@ export default function Profile() {
         </>
       ) : tab === 'saved' ? (
         <>
-          {savedLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{savedPosts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</div>)}</div>}
+          {savedLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{savedPosts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={(e) => goToPost(navigate, `/p/${p.id}`, e.currentTarget)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}</div>)}</div>}
           {!savedLoading && !savedPosts.length && <div className="sc-empty-grid" role="status"><strong>No saved posts yet</strong></div>}
         </>
       ) : tab === 'reposts' ? (
         <>
-          {repostsLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
+          {repostsLoading ? <p className="sc-empty-note"></p> : <div className="sc-grid">{reposts.map((p) => <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={(e) => goToPost(navigate, `/p/${p.id}`, e.currentTarget)} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/p/${p.id}`); }}>{p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="sc-tile-count"><Icon name="repeat-2" size={12} />{formatCount(p.repostCount || 0)}</span></div>)}</div>}
           {!repostsLoading && !reposts.length && <div className="sc-empty-grid" role="status"><strong>No reposts yet</strong></div>}
         </>
       ) : (
