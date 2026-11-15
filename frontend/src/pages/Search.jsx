@@ -5,12 +5,13 @@ import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
+import { formatCount } from '../lib/format.js';
 import { logError } from '../toast.js';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
-const TABS = [['foryou', 'For you'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
+const TABS = [['foryou', 'For you'], ['stories', 'Stories'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
 
 function tagsFrom(posts, term) {
   const needle = term.replace(/^#/, '').toLowerCase();
@@ -173,10 +174,28 @@ export default function Search() {
                   : post.kind === 'video'
                   ? <video src={mediaUrl(post.mediaUrl)} poster={post.thumbUrl ? mediaUrl(post.thumbUrl) : undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" loading="lazy" />}
+                <span className="sr-count"><Icon name="eye" size={12} />{formatCount(post.viewCount || 0)}</span>
               </button>
             ))}
           </div>
         ) : <p className="sr-empty">{term ? 'No posts found.' : 'Nothing to explore yet.'}</p>
+      )}
+
+      {activeTab === 'stories' && (
+        (search?.stories || []).length ? (
+          <div className="sr-grid">
+            {search.stories.map((story) => (
+              <button key={story.id} type="button" className="sr-cell" onClick={() => navigate('/stories', { state: { openUserId: story.author?.id } })} aria-label={`Story by ${story.author?.username || 'creator'}`}>
+                {story.kind === 'text' || !story.mediaUrl
+                  ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
+                  : story.kind === 'video'
+                  ? <video src={mediaUrl(story.mediaUrl)} poster={story.thumbUrl ? mediaUrl(story.thumbUrl) : undefined} muted playsInline preload="metadata" />
+                  : <img src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" loading="lazy" />}
+                <span className="sr-count"><Icon name="eye" size={12} />{formatCount(story.viewCount || 0)}</span>
+              </button>
+            ))}
+          </div>
+        ) : <p className="sr-empty">{term ? 'No stories found.' : 'Search to find stories.'}</p>
       )}
     </main>
   );

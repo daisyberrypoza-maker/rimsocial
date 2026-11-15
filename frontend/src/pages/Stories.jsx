@@ -176,7 +176,7 @@ export default function Stories() {
           <button className="st-round st-avatar" aria-label="Your profile" onClick={() => me?.username && navigate('/u/' + me.username)}>
             <Avatar user={me || {}} size={42} storyRing={myGroup ? 'mine' : null} />
           </button>
-          <button className="st-round" aria-label="Search" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={21} /></button>
+          <button className="st-round" aria-label="Search" onClick={() => navigate('/search')}><Icon name="search" size={21} /></button>
         </div>
         <h1 className="st-title">Stories</h1>
         <div className="st-right">

@@ -10,7 +10,7 @@ router.get('/', async (req, res, next) => {
   try {
     const raw = String(req.query.q || '').trim().slice(0, 80);
     const type = ['all', 'people', 'posts', 'hashtags', 'audio'].includes(req.query.type) ? req.query.type : 'all';
-    if (!raw) return res.json({ people: [], posts: [], audio: [] });
+    if (!raw) return res.json({ people: [], posts: [], stories: [], audio: [] });
     const audioPromise = type === 'all' || type === 'audio' ? AudioTrack.findAll({
       where: { [Op.or]: [{ title: { [Op.like]: `%${raw}%` } }, { artist: { [Op.like]: `%${raw}%` } }] },
       order: [['createdAt', 'DESC']], limit: 30,
@@ -37,7 +37,15 @@ router.get('/', async (req, res, next) => {
       include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }],
       order: [['createdAt', 'DESC']], limit: 40,
     });
-    const [people, posts, blockRows, audio] = await Promise.all([peoplePromise, postsPromise, blocksPromise, audioPromise]);
+    const storiesPromise = type === 'people' || type === 'hashtags' ? Promise.resolve([]) : Post.findAll({
+      where: {
+        status: 'live', isStory: true, visibility: 'public', expiresAt: { [Op.gt]: new Date() },
+        [Op.or]: [{ storyText: { [Op.like]: `%${raw}%` } }, { caption: { [Op.like]: `%${raw}%` } }],
+      },
+      include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }],
+      order: [['createdAt', 'DESC']], limit: 40,
+    });
+    const [people, posts, blockRows, audio, stories] = await Promise.all([peoplePromise, postsPromise, blocksPromise, audioPromise, storiesPromise]);
     const blockedIds = blockRows.map((row) => row.blockerId === req.user.id ? row.blockedUserId : row.blockerId);
     const visiblePeople = people.filter((person) => !blockedIds.includes(person.id));
     const visiblePosts = posts.filter((post) => !blockedIds.includes(post.authorId));
@@ -85,6 +93,13 @@ router.get('/', async (req, res, next) => {
     res.json({
       people: rankedPeople.map(({ person }) => ({ ...person.toJSON(), isFollowing: followingIds.has(person.id) })),
       posts: rankedPosts,
+      stories: stories
+        .filter((story) => !blockedIds.includes(story.authorId))
+        .map((story) => ({
+          id: story.id, kind: story.kind, mediaUrl: story.mediaUrl, thumbUrl: story.thumbUrl, storyText: story.storyText || '',
+          storyBackground: story.storyBackground || null, viewCount: Number(story.viewCount) || 0,
+          author: { id: story.author?.id, username: story.author?.username, displayName: story.author?.displayName },
+        })),
       audio: audio.map((track) => ({ id: track.id, title: track.title, artist: track.artist, mediaUrl: track.mediaUrl, createdAt: track.createdAt })),
     });
   } catch (e) { next(e); }

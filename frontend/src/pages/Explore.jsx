@@ -201,6 +201,7 @@ export default function Explore() {
           {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
             <span className="xp-media">{p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
             <span className="xp-author">@{p.author?.username || 'creator'}</span>
+            <span className="xp-count"><Icon name="eye" size={12} />{formatCount(p.viewCount || 0)}</span>
           </button>)}</div>}
           {!searchMode && <><div ref={sentinel} className="sentinel" />{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}</>}
           {searchMode && !query.trim() && <p className="rim-search-hint">Search for people, posts or hashtags</p>}
