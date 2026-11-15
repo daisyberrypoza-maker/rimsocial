@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
 const { inviteCutoff, isInviteExpired } = require('../lib/matchInvites');
+const { eligibilityFor } = require('../lib/creatorEligibility');
 
 router.use(requireAuth);
 
@@ -68,8 +69,15 @@ router.post('/payout-profile', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /v1/creator/eligibility: which creator earnings requirements are met
+router.get('/eligibility', async (req, res, next) => {
+  try { res.json(await eligibilityFor(req.user.id)); } catch (e) { next(e); }
+});
+
 router.post('/payouts', async (req, res, next) => {
   try {
+    const eligibility = await eligibilityFor(req.user.id);
+    if (!eligibility.eligible) throw httpError(403, 'Withdrawals open once you meet the creator requirements. See your eligibility checklist.');
     const amountMinor = Number(req.body.amountMinor);
     if (!Number.isSafeInteger(amountMinor) || amountMinor < config.minPayoutMinor) throw httpError(400, `Minimum withdrawal is ${config.minPayoutMinor} minor units`);
     const profile = await PayoutProfile.findByPk(req.user.id);
