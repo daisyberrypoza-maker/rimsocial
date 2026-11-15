@@ -18,7 +18,7 @@ Applied (backend `services/formulas.js` holds the formulas):
 Partly applied (signals not tracked yet count as 0):
 - Discover_Score: full watch, share, rewatch, skip and exit. Story topics (Interest_Boost) are 1.
 - Follow_Rank_Score: profile visits. Quick_Add: phone contacts, profile searches and dismissals.
-- Chat_List_Score: pinned chats (no pinning yet). Group chats are not in this order.
+- Chat_List_Score: pinned direct chats (up to 3, from the inbox menu). Group chats are not pinned and are not in this order.
 - Share_Target_Score: group chats (Is_Active_Group).
 - Group Sequence_ID is not stored on the message, so it is not used for ordering on reload.
 

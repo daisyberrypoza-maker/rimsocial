@@ -477,6 +477,7 @@ router.get('/conversations', async (req, res, next) => {
           },
           unread: entry.unread || (prefByPeer.get(partner)?.markedUnread ? 1 : 0),
           muted: Boolean(prefByPeer.get(partner)?.muted),
+          pinned: Boolean(prefByPeer.get(partner)?.pinned),
           chatScore: chatScoreFor(entry, prefByPeer.get(partner)),
         };
       })
@@ -512,6 +513,21 @@ router.put('/direct/:userId/mute', async (req, res, next) => {
     const enabled = Boolean(req.body?.enabled);
     await setPreference(req.user.id, { peerId: req.params.userId }, { muted: enabled });
     res.json({ muted: enabled });
+  } catch (error) { next(error); }
+});
+// Pinned chats rank higher in the inbox: Chat_List_Score adds a pinned weight (unread chats still rank above them)
+router.put('/direct/:userId/pin', async (req, res, next) => {
+  try {
+    if (String(req.params.userId) === String(req.user.id)) throw httpError(400, 'Invalid conversation');
+    const target = await User.findByPk(req.params.userId, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'Account not found');
+    const enabled = Boolean(req.body?.enabled);
+    if (enabled) {
+      const pinnedCount = await ChatPreference.count({ where: { userId: req.user.id, pinned: true } });
+      if (pinnedCount >= 3) throw httpError(409, 'You can pin up to 3 chats. Unpin one first.');
+    }
+    await setPreference(req.user.id, { peerId: req.params.userId }, { pinned: enabled });
+    res.json({ pinned: enabled });
   } catch (error) { next(error); }
 });
 router.delete('/direct/:userId', async (req, res, next) => {

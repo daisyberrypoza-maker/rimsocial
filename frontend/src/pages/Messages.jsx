@@ -93,6 +93,10 @@ export default function Messages() {
       if (!isGroup && action === 'read') { await api(`/v1/messages/with/${item.user.id}/read`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: 0 } : row)); toast('Marked as read');
       } else if (!isGroup && action === 'unread') { await api(`/v1/messages/with/${item.user.id}/unread`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: Math.max(1, row.unread || 0) } : row)); toast('Marked as unread');
       } else if (!isGroup && action === 'block') { if (!(await confirmDialog(`Block ${item.user.displayName || item.user.username}?`))) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
+      } else if (action === 'pin') {
+        const data = await api(`/v1/messages/direct/${item.user.id}/pin`, { method: 'PUT', body: { enabled: !item.pinned } });
+        setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, pinned: Boolean(data.pinned) } : row));
+        toast(data.pinned ? 'Chat pinned' : 'Chat unpinned');
       } else if (action === 'mute') {
         const endpoint = isGroup ? `/v1/messages/groups/${item.id}/mute` : `/v1/messages/direct/${item.user.id}/mute`;
         const data = await api(endpoint, { method: 'PUT', body: { enabled: !item.muted } });
@@ -290,6 +294,7 @@ export default function Messages() {
           items={[
             ...(!rowMenu.isGroup ? [
               { key: 'snap', label: 'Send a snap', icon: 'camera', onSelect: () => openCamera(rowMenu.item.user.id) },
+              { key: 'pin', label: rowMenu.item.pinned ? 'Unpin' : 'Pin', icon: rowMenu.item.pinned ? 'pin-off' : 'pin', onSelect: () => runRowAction(rowMenu.item, false, 'pin') },
               { key: 'unread', label: rowMenu.item.unread ? 'Mark as read' : 'Mark as unread', icon: rowMenu.item.unread ? 'check' : 'mail', onSelect: () => runRowAction(rowMenu.item, false, rowMenu.item.unread ? 'read' : 'unread') },
               { key: 'block', label: 'Block', icon: 'shield-ban', danger: true, onSelect: () => runRowAction(rowMenu.item, false, 'block') },
             ] : []),

@@ -190,6 +190,7 @@ async function start() {
     const qiPref = sequelize.getQueryInterface();
     const prefColumns = await qiPref.describeTable('chat_preferences').catch(() => ({}));
     if (!prefColumns.markedUnread) await qiPref.addColumn('chat_preferences', 'markedUnread', { type: require('sequelize').DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
+    if (!prefColumns.pinned) await qiPref.addColumn('chat_preferences', 'pinned', { type: require('sequelize').DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   }
   await UserMute.sync();
   await SavedPost.sync();
