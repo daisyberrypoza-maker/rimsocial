@@ -7012,3 +7012,55 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
 .avatar.ring { padding: 3px !important; }
 .avatar.ring .inner { width: 100% !important; height: 100% !important; box-sizing: border-box; border-radius: 50% !important; overflow: hidden; }
 .avatar img, .avatar.ring .inner img { width: 100% !important; height: 100% !important; max-width: none !important; object-fit: cover !important; display: block; border-radius: 50%; }
+
+
+/* Avatar media sizing: every uploaded photo fills its circular frame without stretching or overflow. */
+.avatar {
+  position: relative !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: var(--avatar-size, auto);
+  aspect-ratio: 1 / 1 !important;
+  flex: 0 0 auto !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+}
+.avatar > img,
+.avatar > .inner > img {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: inherit !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+.avatar.ring { box-sizing: border-box !important; }
+.avatar.ring > .inner {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+.avatar .avatar-initial {
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 50% !important;
+}
