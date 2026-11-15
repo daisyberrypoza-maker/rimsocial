@@ -441,10 +441,19 @@ const Order = sequelize.define('Order', {
   cancelledAt: DataTypes.DATE,
 }, { tableName: 'orders', indexes: [{ fields: ['sellerId', 'createdAt'] }, { fields: ['buyerId', 'createdAt'] }] });
 
+// Web push subscriptions: one row per browser or device endpoint
+const PushSubscription = sequelize.define('PushSubscription', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false },
+  endpoint: { type: DataTypes.STRING(1024), allowNull: false, unique: true },
+  p256dh: { type: DataTypes.STRING(255), allowNull: false },
+  auth: { type: DataTypes.STRING(255), allowNull: false },
+}, { tableName: 'push_subscriptions', indexes: [{ fields: ['userId'] }] });
+
 module.exports = {
   Order,
   AudioTrack,
-  DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost,
+  DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,

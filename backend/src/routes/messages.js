@@ -71,6 +71,9 @@ async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind 
   const postId = storyPostId || await linkedPostId(body);
   const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral });
   liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
+  // Push a generic alert unless the recipient muted this chat (no message text is sent)
+  const muted = await ChatPreference.findOne({ where: { userId: other, peerId: me, muted: true }, attributes: ['id'], raw: true }).catch(() => null);
+  if (!muted) notifyUsers([other], { title: 'RimSocial', body: 'New message', tag: `dm-${me}`, url: '/chat' }).catch(() => {});
   return message;
 }
 
@@ -305,6 +308,18 @@ router.post('/groups/:groupId/messages/:messageId/view', async (req, res, next) 
 });
 
 // Send a group text message to every current member.
+// Group push: every member except the sender who has not muted the group
+async function notifyGroupMembers(groupId, senderId) {
+  try {
+    const members = await GroupMember.findAll({ where: { groupId, userId: { [Op.ne]: senderId } }, attributes: ['userId'], raw: true });
+    const ids = members.map((row) => String(row.userId));
+    if (!ids.length) return;
+    const muted = await ChatPreference.findAll({ where: { groupId, userId: ids, muted: true }, attributes: ['userId'], raw: true });
+    const mutedIds = new Set(muted.map((row) => String(row.userId)));
+    await notifyUsers(ids.filter((id) => !mutedIds.has(id)), { title: 'RimSocial', body: 'New group message', tag: `group-${groupId}`, url: '/chat' });
+  } catch { /* push is best effort */ }
+}
+
 router.post('/groups/:groupId/messages', async (req, res, next) => {
   try {
     const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
@@ -316,6 +331,7 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
     if (!body) throw httpError(400, 'Type a message first');
     const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
     const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId });
+    notifyGroupMembers(req.params.groupId, req.user.id);
     // Sequence_ID = Redis_INCR("group_seq:" + Group_ID): strict ordering per group (returned with the message)
     const seq = await redis.incr('group_seq:' + req.params.groupId).catch(() => null);
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
@@ -680,6 +696,7 @@ router.post('/with/:userId/typing', async (req, res, next) => {
 // Send a text message to one person. Optional replyToId quotes another message in this chat.
 const SHARE_DAY_MS = 86400000;
 const { bestFriendScore, shareTargetScore, chatListScore, streakDays } = require('../services/formulas');
+const { notifyUsers } = require('../services/push');
 
 // Chat_List_Score from services/formulas.js: unread snaps, unread chats, pinned (not tracked, 0), streak, messages in 7 days, recency
 function chatScoreFor(entry, pref) {

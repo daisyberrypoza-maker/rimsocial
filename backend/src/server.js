@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost } = require('./db');
+const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -100,6 +100,7 @@ app.use('/v1/stories', require('./routes/stories'));
 app.use('/v1/users', require('./routes/users'));
 app.use('/v1/activity', require('./routes/activity'));
 app.use('/v1/messages', require('./routes/messages'));
+app.use('/v1/push', require('./routes/push'));
 app.use('/v1/search', require('./routes/search'));
 app.use('/v1/audio', require('./routes/audio'));
 app.use('/v1', require('./routes/gifts'));
@@ -163,6 +164,7 @@ async function start() {
   await GroupConversation.sync();
   await GroupMember.sync();
   await GroupMessage.sync();
+  await PushSubscription.sync();
   await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
