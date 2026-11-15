@@ -129,7 +129,7 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
           <small>{fmt(totalMinor)} over {days} {days === 1 ? 'day' : 'days'}</small>
           <div className="bs-slider-label">Budget ({currency})</div>
           <div className="bs-value">{fmt(dailyMinor || 0)} per day</div>
-          <input type="range" min={offer?.dailyMinMinor || 0} max={offer?.dailyMaxMinor || 0} step={offer?.dailyMinMinor || 1} value={dailyMinor || 0} onChange=\{(e) => setDailyMinor(Number(e.target.value))} disabled={!offer} aria-label="Daily budget" />
+          <input type="range" min={offer?.dailyMinMinor || 0} max={offer?.dailyMaxMinor || 0} step={offer?.dailyMinMinor || 1} value={dailyMinor || 0} onChange={(e) => setDailyMinor(Number(e.target.value))} disabled={!offer} aria-label="Daily budget" />
           {offer?.eligible && <p className="bs-offer"><strong>First boost offer:</strong> {fmt(offer.creditMinor)} free on your first promotion.</p>}
           <p className="bs-note">{avgViews === null ? '' : avgViews > 0 ? `Your last posts average ${avgViews.toLocaleString()} views each.` : 'Post more to see how many views your ads can get.'}</p>
           <div className="bs-slider-label">Duration</div>
