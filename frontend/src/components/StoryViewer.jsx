@@ -356,6 +356,8 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     if (swipedRef.current) { swipedRef.current = false; return; }
     if (suppressTapRef.current) { suppressTapRef.current = false; return; }
     if (typing) { setTyping(false); return; }
+    // An open emoji picker is dismissed by a tap on the story; the story keeps playing and does not change
+    if (reactionPickerOpen) { setReactionPickerOpen(false); return; }
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const now = Date.now();
