@@ -20,6 +20,14 @@ export default function CreatorStudio() {
   const [creators, setCreators] = useState([]);
   const [accountVerified, setAccountVerified] = useState(null);
   const [matches, setMatches] = useState([]);
+  const [eligibility, setEligibility] = useState(null);
+
+  // Monetization requirements (followers, posts, views); withdrawals open when all are met
+  useEffect(() => {
+    let alive = true;
+    api('/v1/creator/eligibility').then((d) => { if (alive) setEligibility(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
 
   async function load() {
@@ -82,6 +90,7 @@ export default function CreatorStudio() {
       <article><span>Posts</span><strong>{data.stats.posts}</strong><small>Published</small></article>
       <article><span>Gifts received</span><strong>{data.stats.gifts}</strong><small>Gift transactions</small></article>
     </section>}
+    {(screen === 'cashout' || screen === 'earnings') && eligibility && <EligibilityCard data={eligibility} />}
     {screen === 'cashout' && <section className="panel cashout-panel"><div className="cashout-heading"><div><span className="cashout-eyebrow">CREATOR PAYOUTS</span><h2>Cash out</h2><p className="muted">Withdraw your eligible earnings securely.</p></div><span className="cashout-icon">↗</span></div>
       <div className="cashout-balance"><span>Available to withdraw</span><strong>{money(data.wallet.availableMinor, currency)}</strong><div><span>Pending</span><b>{money(data.wallet.pendingMinor, currency)}</b></div></div>
       <div className="cashout-policy"><span><b>Minimum payout</b><strong>{money(data.wallet.minimumPayoutMinor, currency)}</strong></span><span><b>Destination</b><strong>{data.payoutProfile?.verified ? (data.payoutProfile.bankName || 'Verified bank') : 'Not set up'}</strong></span></div>
@@ -96,4 +105,21 @@ export default function CreatorStudio() {
     {screen === 'grow' && <section className="panel"><h2>Grow your audience</h2><p className="muted">Share your ClipVerse profile with your community.</p><div className="row"><button className="ghost" onClick={() => { const url = `${window.location.origin}/u/${data.creator.username}`; navigator.clipboard?.writeText(url).then(() => toast('Profile link copied')).catch(() => toast(url)); }}>Copy profile link</button><button onClick={() => { const url = `${window.location.origin}/u/${data.creator.username}`; const text = `Follow me on ClipVerse: ${url}`; if (navigator.share) navigator.share({ text, url }).catch(() => {}); else navigator.clipboard?.writeText(url).then(() => toast('Profile link copied')).catch(() => toast(url)); }}>Share profile</button></div></section>}
     {isHome && <p className="studio-footnote">Creator rewards are subject to eligibility, fraud checks, payment-provider verification and the published ClipVerse monetization terms. Views alone do not guarantee payment.</p>}
   </main>;
+}
+
+// Instagram-style monetization checklist: each requirement with a check, its progress and an overall bar
+function EligibilityCard({ data }) {
+  const met = data.checks.filter((c) => c.met).length;
+  const percent = Math.round((met / data.checks.length) * 100);
+  return <section className="ig-elig" aria-label="Monetization requirements">
+    <h2>Monetization</h2>
+    <p className="ig-elig-sub">{data.eligible ? 'You meet all requirements. Withdrawals are open.' : `${met} of ${data.checks.length} requirements met. Withdrawals open when all are met.`}</p>
+    <div className="ig-elig-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div>
+    <ul>
+      {data.checks.map((c) => <li key={c.key}>
+        <span className={c.met ? 'ig-elig-check on' : 'ig-elig-check'} aria-hidden="true">{c.met ? '✓' : ''}</span>
+        <div><strong>{c.label}</strong><small>{Number(c.current).toLocaleString()} of {Number(c.required).toLocaleString()}</small></div>
+      </li>)}
+    </ul>
+  </section>;
 }

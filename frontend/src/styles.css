@@ -7178,3 +7178,16 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post-carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.5); box-shadow:0 0 2px rgba(0,0,0,.4); }
 .post-carousel-dots span.on { background:#fff; }
 .post-story-badge { position:absolute; top:14px; left:14px; z-index:4; padding:5px 11px; border-radius:999px; background:rgba(0,0,0,.5); color:#fff; font-size:13px; font-weight:700; pointer-events:none; }
+
+/* Monetization checklist (Creator Studio): Instagram-style white card, blue progress and checks */
+.ig-elig { margin:14px; padding:16px; background:#fff; color:#262626; border:1px solid #dbdbdb; border-radius:12px; box-sizing:border-box; }
+.ig-elig h2 { margin:0; font-size:16px; font-weight:600; color:#262626; }
+.ig-elig-sub { margin:4px 0 12px; font-size:14px; color:#8e8e8e; line-height:1.35; }
+.ig-elig-bar { height:4px; border-radius:2px; background:#efefef; overflow:hidden; }
+.ig-elig-bar span { display:block; height:100%; background:#0095f6; border-radius:2px; transition:width .2s; }
+.ig-elig ul { list-style:none; margin:8px 0 0; padding:0; }
+.ig-elig li { display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid #efefef; }
+.ig-elig li strong { display:block; font-size:15px; font-weight:600; color:#262626; }
+.ig-elig li small { display:block; margin-top:2px; font-size:13px; color:#8e8e8e; }
+.ig-elig-check { flex:none; width:28px; height:28px; box-sizing:border-box; border:2px solid #c7c7c7; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:15px; font-weight:700; }
+.ig-elig-check.on { background:#0095f6; border-color:#0095f6; }
