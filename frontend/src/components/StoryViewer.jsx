@@ -548,7 +548,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
       {current && (
         <div className="sv-footer">
           <span className="sv-sound"><span className="sv-sound-art"><Avatar user={group.user} size={22} /></span>Original sound</span>
-          {!isOwner && <div className="sv-reaction-row" role="group" aria-label="Quick reactions">
+          {!isOwner && typing && <div className="sv-reaction-row" role="group" aria-label="Quick reactions">
             {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" className="sv-reaction-btn" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>)}
           </div>}
           <div className="sv-reply-row">
