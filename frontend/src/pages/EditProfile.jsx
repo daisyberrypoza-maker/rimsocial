@@ -83,7 +83,7 @@ export default function EditProfile() {
           <button type="button" className="ep-avatar" onClick={() => fileRef.current?.click()} aria-label="Change profile picture">
             {avatarUrl && brokenAvatar !== avatarUrl
               ? <img src={mediaUrl(avatarUrl)} alt="" onError={() => setBrokenAvatar(avatarUrl)} />
-              : <Avatar user={{ ...(me || {}), avatarUrl: '' }} size={96} />}
+              : <Avatar keepPhoto user={{ ...(me || {}), avatarUrl: '' }} size={96} />}
           </button>
           <button type="button" className="ep-avatar-link" onClick={() => fileRef.current?.click()}>Edit picture or avatar</button>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={pickAvatar} />

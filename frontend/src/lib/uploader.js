@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import { refreshMyThumb } from './myThumb.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from './paged.js';
 import { toast, logError } from '../toast.js';
@@ -63,6 +64,7 @@ export function startUpload(job) {
   })()
     .catch((error) => { logError(error); toast(`${toStory ? 'Story' : 'Post'} not posted: ${error?.message || 'try again'}`); })
     .finally(() => {
+      refreshMyThumb();
       URL.revokeObjectURL(thumb);
       useAppStore.getState().setPendingUpload(null);
     });

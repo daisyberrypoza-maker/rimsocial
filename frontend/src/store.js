@@ -40,6 +40,7 @@ export const useAppStore = create(
     (set) => ({
       token: null,
       user: null,
+      myThumb: null,
       gifts: [],
       coinBalance: 0,
       lastPath: '/',
@@ -75,6 +76,7 @@ export const useAppStore = create(
       },
       setProfile: (key, data) =>
         set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
+      setMyThumb: (myThumb) => set({ myThumb }),
       setStoryRail: (incoming) => set((s) => {
         // Always stored as a list of creators, whether the caller passes the list or the server's { items } object
         const storyRail = Array.isArray(incoming) ? incoming : (incoming?.items || []);

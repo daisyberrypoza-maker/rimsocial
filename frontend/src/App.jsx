@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store.js';
+import { refreshMyThumb } from './lib/myThumb.js';
 import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
@@ -65,6 +66,9 @@ export default function App() {
   const token = useAppStore((s) => s.token);
   const setSession = useAppStore((s) => s.setSession);
   const setLastPath = useAppStore((s) => s.setLastPath);
+  const meId = useAppStore((s) => s.user?.id);
+  // Your avatar shows your latest story or post everywhere except the profile page
+  useEffect(() => { if (meId) refreshMyThumb(); }, [meId]);
 
   // On a fresh load at "/", return to the last screen the user was on
   // Status bar: white on Stories and Chat, dark everywhere else

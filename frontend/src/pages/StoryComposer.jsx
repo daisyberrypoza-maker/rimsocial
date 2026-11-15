@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx';
 import StoryAudioControls from '../components/StoryAudioControls.jsx';
 import { goBack } from '../lib/goBack.js';
 import { STORY_BACKGROUNDS, backgroundCss } from '../lib/storyBackgrounds.js';
+import { refreshMyThumb } from '../lib/myThumb.js';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
 import './StoryComposer.css';
@@ -37,6 +38,7 @@ export default function StoryComposer() {
       if (voice) form.append('voice', voice.file);
       await api('/v1/stories/composed', { method: 'POST', body: form });
       api('/v1/stories/rail').then((rail) => useAppStore.getState().setStoryRail(rail.items || [])).catch(() => {});
+      refreshMyThumb();
       toast('Story posted. It disappears in 24 hours.');
       navigate('/stories', { replace: true });
     } catch (error) {
