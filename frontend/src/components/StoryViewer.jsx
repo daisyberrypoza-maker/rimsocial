@@ -270,6 +270,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     } catch (e) {
       updateCurrent(id, { liked, likeCount });
       logError(e);
+      toast(e?.message || 'Could not like this story');
     }
   }
 
@@ -293,7 +294,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body, storyId: current.id } });
       toast('Sent');
-    } catch (e) { logError(e); }
+    } catch (e) { logError(e); toast(e?.message || 'Could not send your reply'); }
   }
 
   function submitReply() {
