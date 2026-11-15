@@ -7140,3 +7140,19 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Saved post bookmark: Snapchat yellow when saved */
 .rail-btn.save-btn.saved, .rail-btn.save-btn.saved svg { color: #fffc00 !important; stroke: #fffc00 !important; fill: #fffc00 !important; }
+
+/* Rimlight viewer, per the reference: full-screen video, transparent top bar with a dark
+   back circle, plain "Promote" text with a white tooltip, white rail with counts, progress line at the bottom. */
+.rv-page .rv-top { height:auto !important; padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 0 !important; background:transparent !important; align-items:flex-start !important; }
+.rv-page .rv-top .rv-back-circle { width:44px !important; height:44px !important; background:rgba(0,0,0,.35) !important; }
+.rv-page .rv-promote { height:auto !important; padding:6px 2px !important; border-radius:0 !important; background:transparent !important; color:#fff !important; font-size:17px !important; font-weight:500 !important; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+.rv-page .rv-promote-tip { top:calc(100% + 12px); right:-6px; padding:14px 22px; border-radius:16px; background:#fff; color:#111; font-size:17px; font-weight:400; box-shadow:0 2px 10px rgba(0,0,0,.25); }
+.rv-page .rv-promote-tip::before { top:-6px; right:40px; width:14px; height:14px; border-radius:2px; }
+.rv-page .rv-media { bottom:0 !important; }
+.rv-page .rv-rail { right:12px; bottom:120px; gap:18px; }
+.rv-page .rv-rail button { font-size:14px; font-weight:500; }
+.rv-page .rv-rail-avatar .avatar, .rv-page .rv-rail-avatar .sc-avatar { border:2px solid #fff; }
+.rv-page .rv-info { left:14px; right:84px; bottom:34px; }
+.rv-page .rv-author { margin-bottom:10px; }
+.rv-page .rv-author strong { font-size:17px; font-weight:700; }
+.rv-page .rv-caption { font-size:15px; }
