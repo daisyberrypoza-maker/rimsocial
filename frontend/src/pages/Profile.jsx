@@ -562,13 +562,14 @@ export default function Profile() {
       </header>
       {pullIndicator}
       <div className="pf-body">
-        {profile.bio && <p className="pf-bio">{profile.bio}</p>}
-        {(profile.city || profile.country || profile.website) && (
+        {(profile.city || profile.country || profile.website || !profile.isMe) && (
           <div className="pf-chips">
             {(profile.city || profile.country) && <span className="pf-chip"><Icon name="map-pin" size={15} />{[profile.city, profile.country].filter(Boolean).join(', ')}</span>}
-            {profile.website && <AppLink className="pf-chip" href={profile.website}><Icon name="link" size={15} />{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</AppLink>}
+            {profile.website && <AppLink className="pf-chip pf-website" href={profile.website}><Icon name="link" size={15} />{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</AppLink>}
+            {!profile.isMe && <button type="button" className="pf-chip pf-contact" onClick={() => navigate(chatPath('direct', profile.id))}><Icon name="mail" size={15} />Contact</button>}
           </div>
         )}
+        {profile.bio && <p className="pf-bio">{profile.bio}</p>}
       </div>
       <section className="sc-profile-stats" aria-label="Profile statistics">
         <button type="button" onClick={() => openPeople('followers')} aria-label={`${compactConnectionCount(profile.followerCount)} followers`}>
@@ -708,7 +709,7 @@ export default function Profile() {
         </section>
       </div>, document.body)}
 
-      <nav className="pf-tabs" role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(4, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', minWidth: 0, alignItems: 'stretch', flexWrap: 'nowrap' }}>
+      <nav className={`pf-tabs${profile?.isMe ? ' is-owner' : ''}`} role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(4, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', minWidth: 0, alignItems: 'stretch', flexWrap: 'nowrap' }}>
         <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
         <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
