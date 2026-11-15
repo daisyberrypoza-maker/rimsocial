@@ -34,3 +34,4 @@
 .bs-foot { flex: none; padding: 12px 24px calc(env(safe-area-inset-bottom, 0px) + 16px); }
 .bs-cta { width: 100%; height: 56px; border: 0 !important; border-radius: 999px; background: #fffc00 !important; color: #000 !important; font-size: 17px; font-weight: 600; cursor: pointer; }
 .bs-cta:disabled { background: #efefef !important; color: #9a9a9a !important; cursor: default; }
+.bs-offer { margin: 6px 0 0; padding: 10px 12px; border-radius: 12px; background: #fffbd6; font-size: 14px; color: #000; }

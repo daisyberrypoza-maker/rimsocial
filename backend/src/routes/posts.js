@@ -13,7 +13,7 @@ async function assertPostAuthorNotBlocked(viewerId, authorId) {
   if (relation) throw httpError(404, 'Post not found');
 }
 const { Op } = require('sequelize');
-const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, SavedPost, sequelize } = require('../db');
+const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, SavedPost, LedgerEntry, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -80,6 +80,19 @@ router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) 
     }
     next(e);
   }
+});
+
+// First-boost offer: the credit this account can still use (once per account). Paystack needs at least NGN 50 per charge.
+const PAYSTACK_MIN_MINOR = 5000;
+async function firstBoostCreditFor(userId) {
+  const used = await LedgerEntry.findOne({ where: { kind: 'boost_credit', refId: String(userId) }, attributes: ['id'], raw: true });
+  return used ? 0 : config.boostFirstCreditMinor;
+}
+router.get('/boost-offer', requireAuth, async (req, res, next) => {
+  try {
+    const creditMinor = await firstBoostCreditFor(req.user.id);
+    res.json({ creditMinor, eligible: creditMinor > 0 });
+  } catch (e) { next(e); }
 });
 
 router.get('/:id', requireAuth, async (req, res, next) => {
@@ -272,20 +285,43 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
     const email = String(user?.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Add a valid email to your account first');
     const amountMinor = dailyMinor * days;
+    // First boost: the credit covers part or all of it. Paystack charges at least the minimum when anything is charged.
+    let creditMinor = Math.min(await firstBoostCreditFor(req.user.id), amountMinor);
+    let chargeMinor = amountMinor - creditMinor;
+    if (chargeMinor > 0 && chargeMinor < PAYSTACK_MIN_MINOR) { chargeMinor = PAYSTACK_MIN_MINOR; creditMinor = amountMinor - chargeMinor; }
+    if (chargeMinor === 0) {
+      // Fully covered by the first-boost credit: promote now, no payment
+      try {
+        await sequelize.transaction(async (t) => {
+          await LedgerEntry.create({ userId: req.user.id, kind: 'boost_credit', deltaMinor: creditMinor, refId: String(req.user.id) }, { transaction: t });
+          const now = new Date();
+          const start = post.promotedUntil && new Date(post.promotedUntil) > now ? new Date(post.promotedUntil) : now;
+          await post.update({
+            isSponsored: true,
+            promotedUntil: new Date(start.getTime() + days * 86400000),
+            sponsorName, sponsorDescription, sponsorCta, sponsorUrl,
+          }, { transaction: t });
+        });
+      } catch (e) {
+        if (e.name === 'SequelizeUniqueConstraintError') throw httpError(409, 'Your first-boost offer has already been used');
+        throw e;
+      }
+      return res.json({ free: true, boosted: true, days, amountMinor, creditMinor, chargeMinor: 0 });
+    }
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
-        amount: amountMinor,
+        amount: chargeMinor,
         currency: 'NGN',
         ...(config.appUrl ? { callback_url: `${config.appUrl}/#/p/${post.id}` } : {}),
-        metadata: { userId: req.user.id, purpose: 'post_boost', postId: post.id, days, amountMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl },
+        metadata: { userId: req.user.id, purpose: 'post_boost', postId: post.id, days, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl },
       }),
     });
     const data = await response.json();
     if (!response.ok || !data.status || !data.data?.authorization_url || !data.data?.reference) throw httpError(502, 'Payment provider could not start checkout');
-    res.json({ authorizationUrl: data.data.authorization_url, reference: data.data.reference, amountMinor, days });
+    res.json({ free: false, authorizationUrl: data.data.authorization_url, reference: data.data.reference, amountMinor, creditMinor, chargeMinor, days });
   } catch (e) { next(e); }
 });
 

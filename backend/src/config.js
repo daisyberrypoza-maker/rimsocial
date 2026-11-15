@@ -17,6 +17,8 @@ module.exports = {
   paystackSecret: process.env.PAYSTACK_SECRET || '',
   // Promote (paid boost): the app address Paystack returns to
   appUrl: (process.env.APP_URL || '').replace(/\/$/, ''),
+  // First-boost offer: credit (kobo) an account can use once on its first promotion
+  boostFirstCreditMinor: num(process.env.BOOST_FIRST_CREDIT_MINOR, 2500000),
   // TURN relay; TURN_SECRET enables short-lived coturn REST credentials.
   turnUrls: (process.env.TURN_URLS || '').split(',').map((url) => url.trim()).filter(Boolean),
   // LiveKit SFU for public creator broadcasts; secrets stay server-side.

@@ -41,14 +41,17 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     if (metadata.purpose === 'post_boost') {
       const { Post } = require('../db');
       const days = Number(metadata.days);
-      const expected = Number(metadata.amountMinor);
-      if (!Number.isInteger(days) || days < 1 || days > 14 || currency !== 'NGN' || Number(amount) !== expected ||
-          expected < days * 50000 || expected > days * 5000000) return res.status(200).end();
+      const total = Number(metadata.amountMinor);
+      const credit = Number(metadata.creditMinor) || 0;
+      if (!Number.isInteger(days) || days < 1 || days > 14 || currency !== 'NGN' || Number(amount) !== total - credit ||
+          credit < 0 || total < days * 50000 || total > days * 5000000) return res.status(200).end();
       const post = await Post.findOne({ where: { id: metadata.postId, authorId: metadata.userId, status: 'live', isStory: false } });
       if (!post) return res.status(200).end();
       try {
         await sequelize.transaction(async (t) => {
           await LedgerEntry.create({ userId: metadata.userId, kind: 'post_boost', deltaMinor: Number(amount), refId: reference }, { transaction: t });
+          // The first-boost credit is recorded with the boost, so it can only be used once
+          if (credit > 0) await LedgerEntry.create({ userId: metadata.userId, kind: 'boost_credit', deltaMinor: credit, refId: String(metadata.userId) }, { transaction: t });
           const now = new Date();
           // Extra days stack on top of a boost that is still running
           const start = post.promotedUntil && new Date(post.promotedUntil) > now ? new Date(post.promotedUntil) : now;
