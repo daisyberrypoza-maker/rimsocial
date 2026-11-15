@@ -614,6 +614,7 @@ export default function Conversation({ userId }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const endRef = useRef(null);
+  const composerRef = useRef(null);
   const fileRef = useRef(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [viewerMedia, setViewerMedia] = useState(null);
@@ -667,6 +668,14 @@ export default function Conversation({ userId }) {
     const onChat = (e) => { if (e.detail && e.detail.kind === 'direct' && String(e.detail.with) === String(userId)) load(); };
     window.addEventListener('rs-chat', onChat);
     return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
+  }, [userId]);
+
+  // While the message box has focus, keep the latest message in view as the keyboard opens or resizes
+  useEffect(() => {
+    const keepAtEnd = () => endRef.current?.scrollIntoView({ block: 'end' });
+    const onResize = () => { if (document.activeElement === composerRef.current) keepAtEnd(); };
+    window.visualViewport?.addEventListener('resize', onResize);
+    return () => window.visualViewport?.removeEventListener('resize', onResize);
   }, [userId]);
 
   // Always land on the latest message: after the list renders, and again as photos finish loading when the chat opens
@@ -1125,7 +1134,7 @@ export default function Conversation({ userId }) {
           </button>
         )}
         <input ref={fileRef} type="file" multiple hidden onChange={pickFile} />
-        <input enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} maxLength={2000} placeholder={editing ? 'Edit message' : 'Message...'} aria-label="Message" />
+        <input ref={composerRef} enterKeyHint="send" autoComplete="off" value={text} onChange={(e) => onTextChange(e.target.value)} onFocus={() => { [0, 150, 350, 600].forEach((ms) => setTimeout(() => endRef.current?.scrollIntoView({ block: 'end' }), ms)); }} maxLength={2000} placeholder={editing ? 'Edit message' : 'Message...'} aria-label="Message" />
         {(text.trim() || file || editing) ? (
           <button type="submit" className="cv-send-text" onPointerDown={(e) => e.preventDefault()} disabled={(!text.trim() && !file) || sending} aria-label={editing ? 'Save edit' : 'Send'}>{editing ? 'Save' : 'Send'}</button>
         ) : (
