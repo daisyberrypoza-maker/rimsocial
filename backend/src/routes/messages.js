@@ -410,8 +410,13 @@ router.get('/conversations', async (req, res, next) => {
       const partner = String(row.senderId === me ? row.recipientId : row.senderId);
       if (prefByPeer.get(partner)?.hidden) continue;
       if (blocked.has(partner)) continue;
-      if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0 });
-      if (String(row.recipientId) === me && !row.readAt) byPartner.get(partner).unread += 1;
+      if (!byPartner.has(partner)) byPartner.set(partner, { last: row, unread: 0, unreadMedia: 0, msgs7d: 0 });
+      const entry = byPartner.get(partner);
+      if (Date.now() - new Date(row.createdAt).getTime() <= 7 * SHARE_DAY_MS) entry.msgs7d += 1;
+      if (String(row.recipientId) === me && !row.readAt) {
+        entry.unread += 1;
+        if (row.mediaKind) entry.unreadMedia += 1;
+      }
     }
     const partners = [...byPartner.keys()];
     const users = partners.length ? await User.findAll({ where: { id: partners }, attributes: PUBLIC_USER, raw: true }) : [];
@@ -444,8 +449,10 @@ router.get('/conversations', async (req, res, next) => {
           },
           unread: entry.unread || (prefByPeer.get(partner)?.markedUnread ? 1 : 0),
           muted: Boolean(prefByPeer.get(partner)?.muted),
+          chatScore: chatListScore(entry, prefByPeer.get(partner)),
         };
-      });
+      })
+      .sort((a, b) => b.chatScore - a.chatScore);
     res.json({ items });
   } catch (error) { next(error); }
 });
@@ -660,6 +667,15 @@ router.post('/with/:userId/typing', async (req, res, next) => {
 
 // Send a text message to one person. Optional replyToId quotes another message in this chat.
 const SHARE_DAY_MS = 86400000;
+
+// Chat_List_Score: unread snaps first, then unread chats, pinned (not tracked yet), streak (not tracked yet),
+// messages in 7 days, minus minutes since the last message
+function chatListScore(entry, pref) {
+  const unreadChat = entry.unread - entry.unreadMedia > 0 ? 1 : 0;
+  const pinned = pref?.pinned ? 1 : 0;
+  const minutesSince = (Date.now() - new Date(entry.last.createdAt).getTime()) / 60000;
+  return (entry.unreadMedia > 0 ? 10000 : 0) + (unreadChat * 5000) + (pinned * 2000) + (entry.msgs7d * 10) - (minutesSince * 1.5);
+}
 const MAX_SHARE_RECIPIENTS = 15;
 
 // Share sheet ranking: people you message, scored by shares sent (14d), chat volume (7d),
