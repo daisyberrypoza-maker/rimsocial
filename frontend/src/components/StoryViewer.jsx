@@ -61,7 +61,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [subscribed, setSubscribed] = useState(false);
   const [reply, setReply] = useState('');
   const [typing, setTyping] = useState(false);
-  const keepTypingRef = useRef(false);   // set while a press lands on a reaction or send control
+  const keepTypingRef = useRef(false);
+  const [sentNote, setSentNote] = useState('');
+  const sentTimerRef = useRef(null);   // set while a press lands on a reaction or send control
   const me = useAppStore((st) => st.user);
   const navigate = useNavigate();
   const swipeRef = useRef(null);
@@ -298,6 +300,9 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body, storyId: current.id } });
       toast('Sent');
+      setSentNote('Sent');
+      clearTimeout(sentTimerRef.current);
+      sentTimerRef.current = setTimeout(() => setSentNote(''), 1800);
     } catch (e) { logError(e); toast(e?.message || 'Could not send your reply'); }
   }
 
@@ -594,6 +599,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" onClick={() => { setReactionPickerOpen(false); onQuickReaction(emoji); }}>{emoji}</button>)}
       </div>}
 
+      {sentNote && <div className="sv-sent-note" role="status" aria-live="polite">{sentNote}</div>}
       {viewersOpen && current && <StoryViewersSheet storyId={current.id} onClose={() => setViewersOpen(false)} />}
       {menuOpen && (
         <div className="sv-owner-backdrop" role="presentation" onClick={() => setMenuOpen(false)}>

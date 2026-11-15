@@ -12,6 +12,7 @@ import { formatMoney } from '../lib/money.js';
 import '../snap-screens.css';
 import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -351,9 +352,12 @@ async function openViewOnce(message) {
 // The story a reply or reaction was sent on, shown above it so the person can see what they reacted to
 function StoryCard({ story, authorId }) {
   const thumb = story.kind === 'photo' ? (story.mediaUrl || story.thumbUrl) : story.kind === 'video' ? story.thumbUrl : null;
+  const textStory = story.kind === 'text';
   return (
     <Link to="/stories" state={{ openUserId: authorId }} className="cv-story-card" aria-label="Open story">
-      {thumb ? <img src={mediaUrl(thumb)} alt="" loading="lazy" /> : <span className="cv-story-card-text">{story.caption || 'Story'}</span>}
+      {thumb && <img src={mediaUrl(thumb)} alt="" loading="lazy" />}
+      {textStory && <span className="cv-story-card-text" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText || story.caption || ''}</span>}
+      {!thumb && !textStory && <span className="cv-story-card-text">{story.caption || 'Story'}</span>}
       <span className="cv-story-card-label">Story</span>
     </Link>
   );

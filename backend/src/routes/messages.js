@@ -136,7 +136,7 @@ async function withPostPreviews(rows, me) {
   if (!ids.length) return rows;
   const posts = await Post.findAll({
     where: { id: ids, status: 'live' },
-    attributes: ['id', 'kind', 'mediaUrl', 'thumbUrl', 'caption', 'authorId'],
+    attributes: ['id', 'kind', 'mediaUrl', 'thumbUrl', 'caption', 'authorId', 'storyText', 'storyBackground'],
     raw: true,
   });
   const authorIds = [...new Set(posts.map((post) => String(post.authorId)))];
@@ -153,6 +153,8 @@ async function withPostPreviews(rows, me) {
       mediaUrl: post.mediaUrl,
       thumbUrl: post.thumbUrl,
       caption: post.caption || '',
+      storyText: post.storyText || '',
+      storyBackground: post.storyBackground || null,
       author: { username: author.username, displayName: author.displayName },
     });
   }
