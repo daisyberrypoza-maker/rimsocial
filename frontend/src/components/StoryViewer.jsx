@@ -60,6 +60,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
   const [subscribed, setSubscribed] = useState(false);
   const [reply, setReply] = useState('');
   const [typing, setTyping] = useState(false);
+  const keepTypingRef = useRef(false);   // set while a press lands on a reaction or send control
   const me = useAppStore((st) => st.user);
   const navigate = useNavigate();
   const swipeRef = useRef(null);
@@ -551,7 +552,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
         <div className="sv-footer">
           <span className="sv-sound"><span className="sv-sound-art"><Avatar user={group.user} size={22} /></span>Original sound</span>
           {!isOwner && typing && <div className="sv-reaction-row" role="group" aria-label="Quick reactions">
-            {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" className="sv-reaction-btn" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onClick={() => onQuickReaction(emoji)}>{emoji}</button>)}
+            {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" className="sv-reaction-btn" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; onQuickReaction(emoji); }}>{emoji}</button>)}
           </div>}
           <div className="sv-reply-row">
             {!isOwner && (
@@ -569,7 +570,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
                 placeholder={`Reply to ${creatorName}...`}
                 aria-label={`Reply to ${group.user.username}`}
                 onFocus={() => setTyping(true)}
-                onBlur={() => setTyping(false)}
+                onBlur={() => { if (!keepTypingRef.current) setTyping(false); }}
                 onChange={(e) => setReply(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && reply.trim()) submitReply(); }}
                 maxLength={2000}
@@ -577,7 +578,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
             </div>
             )}
             {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="smile" size={24} /></button>}
-            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onClick={reply.trim() ? submitReply : openOptions}>
+            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else openOptions(); }}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>
           </div>
