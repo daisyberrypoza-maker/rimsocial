@@ -7105,3 +7105,13 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
   color: #85858d !important;
   font-size: 14px !important;
 }
+
+
+/* Consistent text-field focus: no active border flash; retain a clean static field edge. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
+  outline:none !important;
+  box-shadow:none !important;
+  border-color:inherit !important;
+}
