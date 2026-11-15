@@ -7006,3 +7006,9 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
   .sc-profile .pf-body { padding-left: 14px !important; padding-right: 14px !important; }
   .sc-profile .pf-tabs > button, .sc-profile .pf-tabs > button.on { font-size: 14px !important; }
 }
+
+/* Avatars always fill their circle: the story ring sits inside the avatar size, and photos cover the whole circle */
+.avatar, .avatar.ring { box-sizing: border-box !important; flex: none; aspect-ratio: 1 / 1; border-radius: 50% !important; overflow: hidden !important; }
+.avatar.ring { padding: 3px !important; }
+.avatar.ring .inner { width: 100% !important; height: 100% !important; box-sizing: border-box; border-radius: 50% !important; overflow: hidden; }
+.avatar img, .avatar.ring .inner img { width: 100% !important; height: 100% !important; max-width: none !important; object-fit: cover !important; display: block; border-radius: 50%; }
