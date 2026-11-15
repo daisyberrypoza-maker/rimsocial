@@ -7064,3 +7064,44 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
   box-sizing: border-box !important;
   border-radius: 50% !important;
 }
+
+
+/* Activity page: keep secondary copy consistently light and readable. */
+.activity-page .activity-subtitle,
+.activity-page .activity-copy,
+.activity-page .activity-copy > span,
+.activity-page .activity-comment,
+.activity-page .activity-time,
+.activity-page .activity-read-row,
+.activity-page .activity-read-row > span,
+.activity-page .activity-empty p,
+.activity-page .activity-state p {
+  font-weight: 300 !important;
+}
+.activity-page .activity-copy strong {
+  font-weight: 500 !important;
+}
+.activity-page .activity-subtitle {
+  color: #85858d !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+.activity-page .activity-copy {
+  line-height: 1.45 !important;
+}
+.activity-page .activity-comment,
+.activity-page .activity-time {
+  color: #85858d !important;
+}
+.activity-page .activity-time {
+  font-size: 12px !important;
+}
+.activity-page .activity-read-row {
+  color: #777 !important;
+  font-size: 13px !important;
+}
+.activity-page .activity-empty p,
+.activity-page .activity-state p {
+  color: #85858d !important;
+  font-size: 14px !important;
+}
