@@ -10,6 +10,7 @@ import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
 import './UploadCreate.css';
+import './UploadEditor.css';
 
 // Gallery video tile: shows the clip length (m:ss) once the metadata loads
 function GalleryVideo({ url }) {
@@ -106,7 +107,10 @@ export default function Upload() {
   const [storyVoice, setStoryVoice] = useState(null);
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [musicOpen, setMusicOpen] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const me = useAppStore((s) => s.user);
   const [allowRemix, setAllowRemix] = useState(false);
   const [sourcePost, setSourcePost] = useState(null);
   const [visibility, setVisibility] = useState('public');
@@ -244,6 +248,14 @@ export default function Upload() {
     });
   }
 
+  // The "@" chip: adds an @ to the description and lets the person type a name for suggestions
+  function addMention() {
+    const value = String(draft.caption || '');
+    const next = value + (value && !/\s$/.test(value) ? ' ' : '') + '@';
+    setDraft({ ...(draft || {}), caption: next, topic, aiLabel, shareToStory });
+    requestAnimationFrame(() => captionRef.current?.focus());
+  }
+
   function saveToDevice() {
     if (!preview) return;
     const link = document.createElement('a');
@@ -286,7 +298,7 @@ export default function Upload() {
       setStoryTrack(null);
       setStoryVoice(null);
       setSourcePost(null);
-      setSheetOpen(false);
+      setDetailsOpen(false);
       navigate(toStory ? '/stories' : '/');
     } catch (error) {
       toast(error?.message || 'This video could not be prepared for your Story');
@@ -342,60 +354,82 @@ export default function Upload() {
     </main>;
   }
 
-  return <main className="up-page up-editor">
-    <div className="up-media">
-      {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
-      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
-    </div>
-    <header className="up-editor-top">
-      <button type="button" className="up-icon" onClick={() => setView('gallery')} aria-label="Back to gallery"><Icon name="x" size={28} /></button>
-      <button type="button" className="up-caption-pill" onClick={() => setSheetOpen(true)}>
-        <span>{(draft.caption || '').trim() ? draft.caption.trim().slice(0, 28) : 'Add a caption'}</span><Icon name="plus" size={16} />
-      </button>
-      <span className="up-spacer" aria-hidden="true" />
-    </header>
-    <div className="up-tools">
-      <button type="button" onClick={() => setSheetOpen(true)} aria-label="Caption and options"><span className="up-t">T</span></button>
-      {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={26} /></button>}
-    </div>
-    <footer className="up-bottom">
-      <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
-      {(asStory || shareToStory) && <div className="up-story-audio"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
-      <button type="button" className="up-pill up-post" onClick={() => publish(false)} disabled={trimming}>+ Post</button>
-      <button type="button" className="up-pill up-story" onClick={() => publish(true)} disabled={trimming}>My Story <Icon name="send" size={20} /></button>
-    </footer>
+  const durLabel = Number.isFinite(duration) && duration >= 1
+    ? `${Math.floor(duration / 60)}:${String(Math.floor(duration % 60)).padStart(2, '0')}`
+    : '';
+  const myName = me?.username || 'you';
+  const musicLabel = storyTrack?.title || storyTrack?.name || 'Add music';
 
-    {sheetOpen && <div className="up-sheet-backdrop" role="presentation" onClick={() => setSheetOpen(false)}>
-      <section className="up-sheet" role="dialog" aria-label="Caption and options" onClick={(e) => e.stopPropagation()}>
-        <div className="up-sheet-top">
-          <h2>Caption and options</h2>
-          <button type="button" className="up-done" onClick={() => setSheetOpen(false)}>Done</button>
+  if (detailsOpen) {
+    return <main className="up-page up-details">
+      <button type="button" className="up-drag" onClick={() => setDetailsOpen(false)} aria-label="Back to editor"><span /></button>
+      <h1 className="up-details-title">New Spotlight Post</h1>
+      <div className="up-details-body">
+        <div className="up-details-top">
+          <div className="up-preview-card">
+            <div className="up-preview-media">{isVideo ? <video src={preview} muted playsInline autoPlay loop /> : preview && <img src={preview} alt="" />}</div>
+            <div className="up-preview-rail" aria-hidden="true"><Icon name="heart" size={22} /><Icon name="send" size={22} /><Icon name="share" size={22} /></div>
+          </div>
+          <textarea ref={captionRef} className="up-desc" aria-label="Description" placeholder="Add a description..." maxLength={500} value={draft.caption || ''} onChange={handleCaptionChange} rows={5} />
         </div>
-        <textarea ref={captionRef} id="post-caption" aria-label="Caption" placeholder="Write a caption… add #hashtags and @mentions" maxLength={asStory ? 200 : 500} value={draft.caption || ''} onChange={handleCaptionChange} rows={3} />
-        <div className="up-count">{(draft.caption || '').length}/{asStory ? 200 : 500}</div>
+        <div className="up-preview-user"><span className="up-avatar-sm">{myName.slice(0, 1).toUpperCase()}</span><span>{myName}</span></div>
         {mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="ig-mentions" role="listbox" aria-label="People to mention">
           {mentionLoading ? <p className="ig-empty"></p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="ig-mention" onClick={() => insertMention(person)}><span className="ig-mention-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.username}</strong><small>{person.displayName}</small></span></button>)}
         </div>}
-        <label className="up-row"><span>Topic</span><input id="post-topic" type="text" value={topic} maxLength={60} placeholder="Fashion, comedy, tech…" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} /></label>
-        <div className="up-row"><span>Who can see this</span>
-          <div className="up-choice">
-            <button type="button" className={visibility === 'public' ? 'on' : ''} onClick={() => setVisibility('public')}>Public</button>
-            <button type="button" className={visibility === 'private' ? 'on' : ''} onClick={() => setVisibility('private')}>Only me</button>
-          </div>
+
+        <div className="up-chips">
+          <label className="up-chip"><span>#</span><input id="post-topic" type="text" value={topic} maxLength={60} placeholder="Add topic" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} /><Icon name="chevron" size={16} /></label>
+          <button type="button" className="up-chip" onClick={addMention}><span>@</span>Add mention<Icon name="chevron" size={16} /></button>
         </div>
-        <label className="up-row"><span>Share to story</span><input type="checkbox" checked={shareToStory} onChange={(e) => { setShareToStory(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: e.target.checked }); }} /></label>
-        <label className="up-row"><span>Allow remixing</span><input type="checkbox" checked={allowRemix} onChange={(e) => setAllowRemix(e.target.checked)} /></label>
-        <label className="up-row"><span>AI-generated or AI-altered</span><input type="checkbox" checked={aiLabel} onChange={(e) => { setAiLabel(e.target.checked); setDraft({ ...(draft || {}), topic, aiLabel: e.target.checked, shareToStory }); }} /></label>
-        {visibility === 'public' && <label className="up-row"><span>Paid partnership</span><input type="checkbox" checked={isSponsored} onChange={(e) => setIsSponsored(e.target.checked)} /></label>}
-        {visibility === 'public' && isSponsored && <div className="up-sponsor">
-          <p>Disclose a business or paid partner. Your post shows an Ad label.</p>
-          <label>Sponsor or business name<input type="text" value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} maxLength={100} placeholder="Business name" /></label>
-          <label>Short description<input type="text" value={sponsorDescription} onChange={(e) => setSponsorDescription(e.target.value)} maxLength={200} placeholder="What is being promoted?" /></label>
-          <label>Call-to-action label<select value={sponsorCta} onChange={(e) => setSponsorCta(e.target.value)}><option>Shop Now</option><option>Learn More</option><option>Sign Up</option><option>Contact Us</option><option>Download</option></select></label>
-          <label>Destination URL<input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} placeholder="https://example.com" required={isSponsored} /></label>
-        </div>}
-        <p className="up-note">{visibility === 'public' ? 'Your post is visible to everyone.' : 'Only you can see this post.'} Stories are public and disappear after 24 hours.</p>
-      </section>
+
+        <div className="up-opt">
+          <span className="up-avatar-sm">{myName.slice(0, 1).toUpperCase()}</span>
+          <div className="up-opt-text">
+            <strong>Share to Story</strong>
+            <button type="button" className="up-opt-sub" onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}>My Story · {visibility === 'public' ? 'Public' : 'Only me'} <Icon name="chevron" size={14} /></button>
+          </div>
+          <Switch label="Share to Story" on={shareToStory} onChange={(v) => { setShareToStory(v); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: v }); }} />
+        </div>
+        <div className="up-opt">
+          <span className="up-opt-ico"><Icon name="repeat" size={20} /></span>
+          <div className="up-opt-text"><strong>Allow Remixing</strong></div>
+          <Switch label="Allow Remixing" on={allowRemix} onChange={setAllowRemix} />
+        </div>
+        <div className="up-opt">
+          <span className="up-opt-ico"><Icon name="settings" size={20} /></span>
+          <div className="up-opt-text"><strong>Add AI Label</strong></div>
+          <button type="button" className={aiLabel ? 'up-circle on' : 'up-circle'} aria-pressed={aiLabel} aria-label="Add AI label" onClick={() => { const v = !aiLabel; setAiLabel(v); setDraft({ ...(draft || {}), topic, aiLabel: v, shareToStory }); }}>{aiLabel && <Icon name="check" size={16} />}</button>
+        </div>
+      </div>
+      <button type="button" className="up-post-btn" onClick={() => publish(false)} disabled={trimming}>Post</button>
+    </main>;
+  }
+
+  return <main className="up-page up-editor">
+    <div className="up-media">
+      {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
+      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
+    </div>
+    <header className="up-editor-top">
+      <button type="button" className="up-icon" onClick={() => setView('gallery')} aria-label="Back to gallery"><Icon name="x" size={28} /></button>
+      <button type="button" className="up-music" onClick={() => setMusicOpen((open) => !open)} aria-expanded={musicOpen}><Icon name="music" size={16} /><span>{musicLabel}</span></button>
+      <button type="button" className="up-icon up-t-btn" onClick={() => setDetailsOpen(true)} aria-label="Add caption"><span className="up-t">T</span></button>
+    </header>
+    {isVideo && <div className="up-tools">
+      <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={26} /></button>
     </div>}
+    {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
+    <footer className="up-bottom">
+      <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
+      <div className="up-timeline" aria-hidden="true">
+        {preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" />)}
+        {durLabel && <span>{durLabel}</span>}
+      </div>
+      <button type="button" className="up-next" onClick={() => (asStory ? publish(true) : setDetailsOpen(true))} disabled={trimming}>Next <Icon name="chevron" size={18} /></button>
+    </footer>
   </main>;
+}
+
+function Switch({ on, onChange, label }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={label} className={on ? 'up-switch on' : 'up-switch'} onClick={() => onChange(!on)}><span /></button>;
 }
