@@ -42,6 +42,7 @@ import ShareOptions from './ShareOptions.jsx';
 import ShareSheet from './ShareSheet.jsx';
 import PostOptionsSheet from './PostOptionsSheet.jsx';
 import { logError } from '../toast.js';
+import { confirmDialog } from '../lib/confirm.js';
 
 const countedViews = new Set();
 
@@ -437,7 +438,7 @@ export default function PostCard({ post, active }) {
       onNotInterested={async () => { setHidden(true); setShowMenu(false); try { await api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'not_interested' } }); toast('You will see fewer posts like this'); } catch { toast('Post hidden. Recommendation feedback could not be saved.'); } }}
       onBlock={() => { setShowMenu(false); blockCreator(); }}
       onReport={(reason) => { setReportReason(reason); reportPost(reason); }}
-      onDelete={async () => { setShowMenu(false); if (!window.confirm('Delete this post? This cannot be undone.')) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { logError(e); } }}
+      onDelete={async () => { setShowMenu(false); if (!(await confirmDialog('Delete this post? This cannot be undone.'))) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { logError(e); } }}
     />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}

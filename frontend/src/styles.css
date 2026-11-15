@@ -7192,3 +7192,15 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Smile button: icon only, no background circle */
 .sv-root .sv-sticker { background:transparent !important; box-shadow:none !important; border:0 !important; }
+
+/* ---------- confirmation modal and toast layering ---------- */
+.toast { z-index: 1600; }
+.cv-confirm-backdrop { position: fixed; inset: 0; z-index: 1700; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.cv-confirm { width: 100%; max-width: 320px; background: #fff; color: #111; border-radius: 14px; padding: 20px 18px 10px; box-shadow: 0 8px 30px rgba(0,0,0,.25); text-align: center; }
+.cv-confirm h2 { margin: 0 0 6px; font-size: 17px; font-weight: 700; }
+.cv-confirm p { margin: 0 0 16px; font-size: 14px; color: #555; line-height: 1.4; }
+.cv-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #e5e5e5; margin: 0 -18px; }
+.cv-confirm-actions button { border: 0; background: transparent; padding: 14px 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.cv-confirm-cancel { color: #111; border-right: 1px solid #e5e5e5 !important; }
+.cv-confirm-ok { color: #0095f6; }
+.cv-confirm-ok.is-danger { color: #ed4956; }

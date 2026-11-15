@@ -19,6 +19,7 @@ import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 import '../settings-menu.css';
+import { confirmDialog } from '../lib/confirm.js';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
 const PROFILE_TABS = ['posts', 'stories', 'reposts', 'saved'];
@@ -355,7 +356,7 @@ export default function Profile() {
 
   async function removeFollower(person) {
     if (!profile?.isMe || peopleBusy[person.id]) return;
-    if (!window.confirm(`Remove @${person.username} as a follower?`)) return;
+    if (!(await confirmDialog(`Remove @${person.username} as a follower?`))) return;
     setPeopleBusy((current) => ({ ...current, [person.id]: true }));
     try {
       await api(`/v1/users/${person.id}/follower`, { method: 'DELETE' });
@@ -439,7 +440,7 @@ export default function Profile() {
   }
 
   async function blockProfile() {
-    if (!window.confirm(`Block @${profile.username}? They will no longer be able to interact with you.`)) return;
+    if (!(await confirmDialog(`Block @${profile.username}? They will no longer be able to interact with you.`))) return;
     try {
       await api(`/v1/users/${profile.id}/block`, { method: 'POST' });
       setOptionsOpen(false);
@@ -476,7 +477,7 @@ export default function Profile() {
   }
 
   async function deletePost(post) {
-    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    if (!(await confirmDialog('Delete this post? This cannot be undone.'))) return;
     setDeleting(post.id);
     try {
       await api(`/v1/posts/${post.id}`, { method: 'DELETE' });

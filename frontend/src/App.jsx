@@ -17,6 +17,7 @@ import { DirectChatRoute, GroupChatRoute } from './pages/ChatRoutes.jsx';
 import LiveChat from './components/LiveChat.jsx';
 import NewMessage from './pages/NewMessage.jsx';
 import Toast from './components/Toast.jsx';
+import ConfirmDialog from './components/ConfirmDialog.jsx';
 import Login from './pages/Login.jsx';
 import Feed from './pages/Feed.jsx';
 import Explore from './pages/Explore.jsx';
@@ -193,6 +194,7 @@ export default function App() {
       {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && <BottomNav />}
       <LiveChat />
       <Toast />
+      <ConfirmDialog />
     </div>
   );
 }

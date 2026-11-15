@@ -16,7 +16,7 @@ export default function ShareOptions({ url, title = 'RimSocial post', text = '',
       await navigator.clipboard.writeText(url);
       toast('Post link copied');
     } catch {
-      window.prompt('Copy this post link', url);
+      toast('Could not copy the link');
     }
   }
   async function systemShare() {

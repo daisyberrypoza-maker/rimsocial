@@ -15,6 +15,7 @@ import ActionSheet from './ActionSheet.jsx';
 import StoryViewersSheet from './StoryViewersSheet.jsx';
 import { prefetchMedia, evictMedia, missingItems } from '../lib/prefetch.js';
 import { logError } from '../toast.js';
+import { confirmDialog } from '../lib/confirm.js';
 
 const PHOTO_MS = 5000;
 const SWIPE_PX = 60;
@@ -267,6 +268,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
     try {
       const r = await api(`/v1/stories/${id}/like`, { method: 'POST' });
       updateCurrent(id, { liked: r.liked, likeCount: r.likeCount });
+      toast(r.liked ? 'Liked' : 'Like removed');
     } catch (e) {
       updateCurrent(id, { liked, likeCount });
       logError(e);
@@ -419,7 +421,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   async function blockCreator() {
     if (!group.user?.id || isOwner) return;
-    if (!window.confirm(`Block @${group.user.username}? You will no longer see their content.`)) return;
+    if (!(await confirmDialog(`Block @${group.user.username}? You will no longer see their content.`))) return;
     try {
       await api(`/v1/users/${group.user.id}/block`, { method: 'POST' });
       toast(`@${group.user.username} blocked`);
@@ -462,7 +464,7 @@ export default function StoryViewer({ groups, startIndex, onClose }) {
 
   async function deleteCurrent() {
     if (!current) return;
-    if (!window.confirm('Delete this story? This cannot be undone.')) return;
+    if (!(await confirmDialog('Delete this story? This cannot be undone.'))) return;
     try {
       await api(`/v1/stories/${current.id}`, { method: 'DELETE' });
       const rest = stories.filter((item) => item.id !== current.id);

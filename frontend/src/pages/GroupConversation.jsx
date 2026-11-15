@@ -10,6 +10,7 @@ import { mediaUrl } from '../lib/config.js';
 import { MessageRow, MediaViewer, LinkPreview, attachmentLabel, groupRows, isLastOfRun } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
+import { confirmDialog } from '../lib/confirm.js';
 
 function formatClock(total) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
@@ -102,7 +103,7 @@ export default function GroupConversationPage({ groupId }) {
 
   async function deleteGroupForEveryone() {
     setOptionsOpen(false);
-    if (!window.confirm('Delete this group and its messages for every member? This cannot be undone.')) return;
+    if (!(await confirmDialog('Delete this group and its messages for every member? This cannot be undone.'))) return;
     try {
       await api('/v1/messages/groups/' + groupId + '?scope=everyone', { method: 'DELETE' });
       navigate('/chat', { replace: true });
@@ -111,7 +112,7 @@ export default function GroupConversationPage({ groupId }) {
 
   async function leaveGroup() {
     setOptionsOpen(false);
-    if (!window.confirm('Leave this group? You will stop receiving its messages.')) return;
+    if (!(await confirmDialog('Leave this group? You will stop receiving its messages.'))) return;
     try {
       await api('/v1/messages/groups/' + groupId, { method: 'DELETE' });
       navigate('/chat', { replace: true });
@@ -320,7 +321,7 @@ export default function GroupConversationPage({ groupId }) {
 
   async function deleteGroupMessage(message) {
     setMessageMenu(null);
-    if (!window.confirm('Delete this message for everyone in the group?')) return;
+    if (!(await confirmDialog('Delete this message for everyone in the group?'))) return;
     try {
       await api('/v1/messages/groups/' + groupId + '/messages/' + message.id, { method: 'DELETE' });
       setMessages((current) => (current || []).filter((row) => row.id !== message.id));

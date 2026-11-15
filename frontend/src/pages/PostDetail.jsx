@@ -14,6 +14,7 @@ import ActionSheet from '../components/ActionSheet.jsx';
 import { goBack } from '../lib/goBack.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { logError } from '../toast.js';
+import { confirmDialog } from '../lib/confirm.js';
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -76,7 +77,7 @@ export default function PostDetail() {
   }
 
   async function deletePost() {
-    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    if (!(await confirmDialog('Delete this post? This cannot be undone.'))) return;
     try {
       await api(`/v1/posts/${encodeURIComponent(postId)}`, { method: 'DELETE' });
       toast('Post deleted');

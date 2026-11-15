@@ -11,6 +11,7 @@ import Activity from './Activity.jsx';
 import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 import './ChatList.css';
+import { confirmDialog } from '../lib/confirm.js';
 
 // Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
@@ -84,7 +85,7 @@ export default function Messages() {
     try {
       if (!isGroup && action === 'read') { await api(`/v1/messages/with/${item.user.id}/read`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: 0 } : row)); toast('Marked as read');
       } else if (!isGroup && action === 'unread') { await api(`/v1/messages/with/${item.user.id}/unread`, { method: 'POST' }); setItems((current) => (current || []).map((row) => row.user.id === item.user.id ? { ...row, unread: Math.max(1, row.unread || 0) } : row)); toast('Marked as unread');
-      } else if (!isGroup && action === 'block') { if (!window.confirm(`Block ${item.user.displayName || item.user.username}?`)) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
+      } else if (!isGroup && action === 'block') { if (!(await confirmDialog(`Block ${item.user.displayName || item.user.username}?`))) return; await api(`/v1/users/${item.user.id}/block`, { method: 'POST' }); setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id)); toast('Account blocked');
       } else if (action === 'mute') {
         const endpoint = isGroup ? `/v1/messages/groups/${item.id}/mute` : `/v1/messages/direct/${item.user.id}/mute`;
         const data = await api(endpoint, { method: 'PUT', body: { enabled: !item.muted } });
@@ -93,13 +94,13 @@ export default function Messages() {
         toast(data.muted ? 'Notifications muted' : 'Notifications unmuted');
       } else if (isGroup) {
         const deleteAll = action === 'deleteAll';
-        if (!window.confirm(deleteAll ? `Delete “${item.name}” for every member?` : `Leave “${item.name}”?`)) return;
+        if (!(await confirmDialog(deleteAll ? `Delete “${item.name}” for every member?` : `Leave “${item.name}”?`))) return;
         await api(`/v1/messages/groups/${item.id}${deleteAll ? '?scope=everyone' : ''}`, { method: 'DELETE' });
         setGroups((current) => current.filter((row) => row.id !== item.id));
         toast(deleteAll ? 'Group deleted' : 'You left the group');
       } else {
         const name = item.user.displayName || item.user.username;
-        if (!window.confirm(`Delete your conversation with ${name}? This only removes it from your inbox.`)) return;
+        if (!(await confirmDialog(`Delete your conversation with ${name}? This only removes it from your inbox.`))) return;
         await api(`/v1/messages/direct/${item.user.id}`, { method: 'DELETE' });
         setItems((current) => (current || []).filter((row) => row.user.id !== item.user.id));
         toast('Conversation deleted');

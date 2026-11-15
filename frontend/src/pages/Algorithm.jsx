@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { goBack } from '../lib/goBack.js';
+import { confirmDialog } from '../lib/confirm.js';
 
 // "Your algorithm": topics the viewer wants more or less of. Stored on this device only.
 const KEY = 'rimsocial.algorithm';
@@ -32,8 +33,8 @@ export default function Algorithm() {
 
   const removeTopic = (list, name) => update({ ...prefs, [list]: prefs[list].filter((item) => item !== name) });
 
-  const resetAll = () => {
-    if (window.confirm('Clear all your algorithm choices?')) update({ more: [], less: [] });
+  const resetAll = async () => {
+    if (await confirmDialog('Clear all your algorithm choices?')) update({ more: [], less: [] });
   };
 
   const section = (list, title, hint) => (

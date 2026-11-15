@@ -11,6 +11,7 @@ import { toast, logError } from '../toast.js';
 import { formatMoney } from '../lib/money.js';
 import '../snap-screens.css';
 import './Conversation.css';
+import { confirmDialog } from '../lib/confirm.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -962,7 +963,7 @@ export default function Conversation({ userId }) {
 
   async function deleteConversation() {
     setChatMenu(false);
-    if (!window.confirm('Delete this conversation from your inbox? The other person will still have their messages.')) return;
+    if (!(await confirmDialog('Delete this conversation from your inbox? The other person will still have their messages.'))) return;
     try {
       await api(`/v1/messages/direct/${userId}`, { method: 'DELETE' });
       navigate('/chat', { replace: true });
