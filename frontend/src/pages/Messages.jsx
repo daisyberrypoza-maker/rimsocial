@@ -12,7 +12,7 @@ import { toast, logError } from '../toast.js';
 import '../snap-screens.css';
 import './ChatList.css';
 import { confirmDialog } from '../lib/confirm.js';
-import { isEncrypted } from '../lib/e2ee.js';
+import { isEncrypted, openBody } from '../lib/e2ee.js';
 
 // Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
@@ -64,7 +64,12 @@ export default function Messages() {
   useEffect(() => {
     let alive = true;
     const load = () => Promise.all([api('/v1/messages/conversations'), api('/v1/messages/groups')])
-      .then(([data, groupData]) => { if (alive) { setItems(data.items || []); setGroups(groupData.items || []); setError(''); useAppStore.getState().setStoryRings(Object.fromEntries((data.items || []).map((i) => [i.user.id, i.storyRing || null]))); } })
+      .then(async ([data, groupData]) => {
+        // Show the readable text of each latest message
+        const list = await Promise.all((data.items || []).map(async (item) => (item.last
+          ? { ...item, last: { ...item.last, body: await openBody(item.last, me?.id) } }
+          : item)));
+        if (alive) { setItems(list); setGroups(groupData.items || []); setError(''); useAppStore.getState().setStoryRings(Object.fromEntries((data.items || []).map((i) => [i.user.id, i.storyRing || null]))); } })
       .catch((e) => { if (alive) setError(e.message || 'Could not load messages'); });
     load();
     const timer = setInterval(load, 4000);

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store.js';
 import { refreshMyThumb } from './lib/myThumb.js';
-import { ensureIdentity } from './lib/e2ee.js';
+import { ensureIdentity, syncConversation } from './lib/e2ee.js';
 import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
@@ -74,6 +74,15 @@ export default function App() {
   useEffect(() => { if (meId) refreshMyThumb(); }, [meId]);
   // Publish this device's encryption key on sign-in, so others can message this person
   useEffect(() => { if (meId) ensureIdentity().catch(() => {}); }, [meId]);
+  // New direct messages are decrypted as they arrive from the live stream, not when the chat is opened
+  useEffect(() => {
+    if (!meId) return undefined;
+    const onChange = (e) => {
+      if (e.detail?.kind === 'direct' && e.detail.with) syncConversation(e.detail.with, meId).catch(() => {});
+    };
+    window.addEventListener('rs-chat', onChange);
+    return () => window.removeEventListener('rs-chat', onChange);
+  }, [meId]);
 
   // On a fresh load at "/", return to the last screen the user was on
   // Status bar: white on Stories and Chat, dark everywhere else

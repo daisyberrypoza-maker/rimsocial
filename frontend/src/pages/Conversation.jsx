@@ -13,7 +13,7 @@ import '../snap-screens.css';
 import './Conversation.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
-import { sealFor, openMessages } from '../lib/e2ee.js';
+import { sealFor, openMessages, rememberPlain } from '../lib/e2ee.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
 // edit (own text within 15 minutes), forward, delete for me or for everyone (own messages within 48 hours),
@@ -753,6 +753,7 @@ export default function Conversation({ userId }) {
       const sealed = await sealFor(userId, clean);
       const data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: from?.id || undefined } });
       const quoted = from ? { id: from.id, senderId: from.senderId, body: '', mediaKind: viewerMedia.kind || 'photo', mediaUrl: from.mediaUrl || null, deletedForEveryone: false } : null;
+      rememberPlain(data.message.id, clean);
       const sent = { ...data.message, body: clean, replyTo: quoted };
       setMessages((current) => {
         const list = current || [];
@@ -909,6 +910,7 @@ export default function Conversation({ userId }) {
         const sealed = await sealFor(userId, body);
         data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id } });
       }
+      if (!file) rememberPlain(data.message.id, body);
       const sent = { ...data.message, ...(file ? {} : { body }), replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
       setMessages((current) => {
         const list = current || [];

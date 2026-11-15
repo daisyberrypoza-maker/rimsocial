@@ -7,6 +7,7 @@ import { api } from '../api.js';
 export const E2E_PREFIX = 'e2e:v1:';
 const DB_NAME = 'rs-e2ee';
 const STORE = 'keys';
+const PLAIN_STORE = 'plain';   // decrypted text, keyed by message id, so each message is opened once
 const IDENTITY_KEY = 'identity';
 const CANT_OPEN = 'Encrypted message';
 
@@ -18,8 +19,12 @@ export const isEncrypted = (body) => typeof body === 'string' && body.startsWith
 
 function openDb() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(DB_NAME, 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(PLAIN_STORE)) db.createObjectStore(PLAIN_STORE);
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
@@ -32,6 +37,31 @@ async function idbGet(key) {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+
+async function plainGet(id) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(PLAIN_STORE).objectStore(PLAIN_STORE).get(String(id));
+    request.onsuccess = () => resolve(request.result ?? null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Remember the readable text of a message (sent or received) so it is never decrypted twice
+export async function rememberPlain(id, text) {
+  if (!id || typeof text !== 'string') return;
+  try {
+    const db = await openDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(PLAIN_STORE, 'readwrite');
+      tx.objectStore(PLAIN_STORE).put(text, String(id));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.warn('[RimSocial] could not keep decrypted text:', error);
+  }
 }
 
 async function idbPut(key, value) {
@@ -129,6 +159,10 @@ export async function sealFor(recipientId, text) {
 // Returns the readable text of a message. Plain (non-encrypted) bodies are returned unchanged.
 export async function openBody(message, meId) {
   if (!isEncrypted(message.body)) return message.body;
+  if (message.id) {
+    const cached = await plainGet(message.id).catch(() => null);
+    if (cached !== null) return cached;
+  }
   try {
     const identity = await ensureIdentity();
     const parts = JSON.parse(message.body.slice(E2E_PREFIX.length));
@@ -136,7 +170,9 @@ export async function openBody(message, meId) {
     const key = mine
       ? await pairKey('self', identity.publicKey, identity)
       : await pairKey(String(message.senderId), await peerPublicKey(message.senderId), identity);
-    return await open(key, mine ? parts.s : parts.r);
+    const text = await open(key, mine ? parts.s : parts.r);
+    await rememberPlain(message.id, text);
+    return text;
   } catch {
     return CANT_OPEN;
   }
@@ -149,4 +185,11 @@ export async function openMessages(items, meId) {
     body: await openBody(message, meId),
     replyTo: message.replyTo ? { ...message.replyTo, body: await openBody(message.replyTo, meId) } : message.replyTo,
   })));
+}
+
+// Decrypts the newest messages of one conversation as soon as they arrive, so they are readable
+// before anyone opens the chat. Called from the live stream for every new message.
+export async function syncConversation(peerId, meId) {
+  const data = await api(`/v1/messages/with/${peerId}`);
+  await Promise.all((data.items || []).filter((m) => isEncrypted(m.body)).map((m) => openBody(m, meId)));
 }
