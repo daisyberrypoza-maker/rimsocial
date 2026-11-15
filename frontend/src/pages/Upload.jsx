@@ -361,49 +361,78 @@ export default function Upload() {
   const musicLabel = storyTrack?.title || storyTrack?.name || 'Add music';
 
   if (detailsOpen) {
+    const displayName = me?.displayName || myName;
     return <main className="up-page up-details">
       <button type="button" className="up-drag" onClick={() => setDetailsOpen(false)} aria-label="Back to editor"><span /></button>
       <h1 className="up-details-title">New Spotlight Post</h1>
       <div className="up-details-body">
-        <div className="up-details-top">
-          <div className="up-preview-card">
-            <div className="up-preview-media">{isVideo ? <video src={preview} muted playsInline autoPlay loop /> : preview && <img src={preview} alt="" />}</div>
-            <div className="up-preview-rail" aria-hidden="true"><Icon name="heart" size={22} /><Icon name="send" size={22} /><Icon name="share" size={22} /></div>
+        <div className="up-preview-card">
+          <div className="up-preview-media">
+            {isVideo ? <video src={preview} muted playsInline autoPlay loop /> : preview && <img src={preview} alt="" />}
+            <div className="up-preview-rail" aria-hidden="true"><Icon name="heart" size={22} /><CommentGlyph /><Icon name="share" size={22} /></div>
+            <div className="up-preview-meta" aria-hidden="true">
+              <span className="up-preview-name">{displayName}</span>
+              <span className="up-preview-bar long" />
+              <span className="up-preview-bar short" />
+            </div>
           </div>
-          <textarea ref={captionRef} className="up-desc" aria-label="Description" placeholder="Add a description..." maxLength={500} value={draft.caption || ''} onChange={handleCaptionChange} rows={5} />
         </div>
-        <div className="up-preview-user"><span className="up-avatar-sm">{myName.slice(0, 1).toUpperCase()}</span><span>{myName}</span></div>
+
+        <div className="up-desc-wrap">
+          <textarea ref={captionRef} className="up-desc" aria-label="Description" placeholder="Add a description..." maxLength={500} value={draft.caption || ''} onChange={handleCaptionChange} rows={3} />
+        </div>
         {mentionAnchor && (mentionLoading || mentionSuggestions.length > 0) && <div className="ig-mentions" role="listbox" aria-label="People to mention">
           {mentionLoading ? <p className="ig-empty"></p> : mentionSuggestions.map((person) => <button type="button" key={person.id} role="option" className="ig-mention" onClick={() => insertMention(person)}><span className="ig-mention-avatar">{(person.displayName || person.username || '?').slice(0, 1).toUpperCase()}</span><span><strong>{person.username}</strong><small>{person.displayName}</small></span></button>)}
         </div>}
 
         <div className="up-chips">
-          <label className="up-chip"><span>#</span><input id="post-topic" type="text" value={topic} maxLength={60} placeholder="Add topic" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} /><Icon name="chevron" size={16} /></label>
-          <button type="button" className="up-chip" onClick={addMention}><span>@</span>Add mention<Icon name="chevron" size={16} /></button>
+          <label className="up-chip"><span className="up-chip-sym">#</span><input id="post-topic" type="text" value={topic} maxLength={60} placeholder="Add topic" onChange={(e) => { setTopic(e.target.value); setDraft({ ...(draft || {}), topic: e.target.value, aiLabel, shareToStory }); }} /><Icon name="chevron-right" size={14} /></label>
+          <button type="button" className="up-chip" onClick={addMention}><span className="up-chip-sym">@</span><span>Add mention</span><Icon name="chevron-right" size={14} /></button>
         </div>
 
-        <div className="up-opt">
-          <span className="up-avatar-sm">{myName.slice(0, 1).toUpperCase()}</span>
-          <div className="up-opt-text">
-            <strong>Share to Story</strong>
-            <button type="button" className="up-opt-sub" onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}>My Story · {visibility === 'public' ? 'Public' : 'Only me'} <Icon name="chevron" size={14} /></button>
+        <div className="up-section">
+          <div className="up-row up-row-share">
+            <span className="up-row-avatar" aria-hidden="true">{myName.slice(0, 1).toUpperCase()}</span>
+            <div className="up-row-text">
+              <strong>Share to Story</strong>
+              <button type="button" className="up-row-sub" onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}>My Story · {visibility === 'public' ? 'Public' : 'Only me'}<Icon name="chevron-right" size={14} /></button>
+            </div>
+            <Check on={shareToStory} label="Share to Story" onChange={(v) => { setShareToStory(v); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: v }); }} />
           </div>
-          <Switch label="Share to Story" on={shareToStory} onChange={(v) => { setShareToStory(v); setDraft({ ...(draft || {}), topic, aiLabel, shareToStory: v }); }} />
-        </div>
-        <div className="up-opt">
-          <span className="up-opt-ico"><Icon name="repeat" size={20} /></span>
-          <div className="up-opt-text"><strong>Allow Remixing</strong></div>
-          <Switch label="Allow Remixing" on={allowRemix} onChange={setAllowRemix} />
-        </div>
-        <div className="up-opt">
-          <span className="up-opt-ico"><Icon name="settings" size={20} /></span>
-          <div className="up-opt-text"><strong>Add AI Label</strong></div>
-          <button type="button" className={aiLabel ? 'up-circle on' : 'up-circle'} aria-pressed={aiLabel} aria-label="Add AI label" onClick={() => { const v = !aiLabel; setAiLabel(v); setDraft({ ...(draft || {}), topic, aiLabel: v, shareToStory }); }}>{aiLabel && <Icon name="check" size={16} />}</button>
+          <div className="up-row">
+            <span className="up-row-ico" aria-hidden="true"><RemixGlyph /></span>
+            <div className="up-row-text">
+              <strong>Allow Remixing</strong>
+              <span className="up-row-note">Enable others to use your audio or video content.</span>
+            </div>
+            <Check on={allowRemix} label="Allow Remixing" onChange={setAllowRemix} />
+          </div>
+          <div className="up-row">
+            <span className="up-row-ico up-row-ai" aria-hidden="true"><AiGlyph /></span>
+            <div className="up-row-text">
+              <strong>Add AI Label</strong>
+              <span className="up-row-note">We require you to label content made with AI.</span>
+            </div>
+            <Check on={aiLabel} label="Add AI label" onChange={(v) => { setAiLabel(v); setDraft({ ...(draft || {}), topic, aiLabel: v, shareToStory }); }} />
+          </div>
         </div>
       </div>
       <button type="button" className="up-post-btn" onClick={() => publish(false)} disabled={trimming}>Post</button>
     </main>;
   }
+
+  const soon = () => toast('This tool is not available yet');
+  const rail = [
+    { key: 'draw', label: 'Draw', glyph: 'pencil' },
+    { key: 'sticker', label: 'Stickers', glyph: 'sticker' },
+    { key: 'effects', label: 'Effects', glyph: 'effects' },
+    { key: 'face', label: 'Face stickers', glyph: 'face' },
+    { key: 'ai', label: 'AI effects', glyph: 'sparkle' },
+    { key: 'link', label: 'Link', glyph: 'link' },
+    { key: 'crop', label: 'Crop', glyph: 'crop' },
+    { key: 'loop', label: 'Loop', glyph: 'infinity' },
+    { key: 'friend', label: 'Add friend', glyph: 'friend' },
+  ];
 
   return <main className="up-page up-editor">
     <div className="up-media">
@@ -412,24 +441,64 @@ export default function Upload() {
     </div>
     <header className="up-editor-top">
       <button type="button" className="up-icon" onClick={() => setView('gallery')} aria-label="Back to gallery"><Icon name="x" size={28} /></button>
-      <button type="button" className="up-music" onClick={() => setMusicOpen((open) => !open)} aria-expanded={musicOpen}><Icon name="music" size={16} /><span>{musicLabel}</span></button>
+      <button type="button" className="up-music" onClick={() => setMusicOpen((open) => !open)} aria-expanded={musicOpen}>
+        <span className="up-music-disc" aria-hidden="true"><Icon name="music" size={14} /></span>
+        <span className="up-music-title">{musicLabel}</span>
+        <span className="up-music-sep" aria-hidden="true" />
+        <span className="up-music-plus" aria-hidden="true"><Icon name="plus" size={18} /></span>
+      </button>
       <button type="button" className="up-icon up-t-btn" onClick={() => setDetailsOpen(true)} aria-label="Add caption"><span className="up-t">T</span></button>
     </header>
-    {isVideo && <div className="up-tools">
-      <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={26} /></button>
-    </div>}
+    <nav className="up-rail" aria-label="Editing tools">
+      {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={24} /></button>}
+      {rail.map((tool) => <button key={tool.key} type="button" onClick={soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
+    </nav>
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
-    <footer className="up-bottom">
-      <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
+    <div className="up-filters">
+      <span className="up-filter-thumb on">{preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" />)}</span>
+      <button type="button" className="up-hd" onClick={soon} aria-label="HD">HD</button>
+    </div>
+    <div className="up-timeline-wrap">
       <div className="up-timeline" aria-hidden="true">
         {preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" />)}
         {durLabel && <span>{durLabel}</span>}
       </div>
-      <button type="button" className="up-next" onClick={() => (asStory ? publish(true) : setDetailsOpen(true))} disabled={trimming}>Next <Icon name="chevron" size={18} /></button>
+    </div>
+    <footer className="up-bottom">
+      <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
+      <button type="button" className="up-next" onClick={() => (asStory ? publish(true) : setDetailsOpen(true))} disabled={trimming}>Next <Icon name="arrow-right" size={22} /></button>
     </footer>
   </main>;
 }
 
-function Switch({ on, onChange, label }) {
-  return <button type="button" role="switch" aria-checked={on} aria-label={label} className={on ? 'up-switch on' : 'up-switch'} onClick={() => onChange(!on)}><span /></button>;
+function Check({ on, onChange, label }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={label} className={on ? 'up-check on' : 'up-check'} onClick={() => onChange(!on)}>{on && <Icon name="check" size={16} />}</button>;
+}
+
+function CommentGlyph() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-5 4v-4a1 1 0 0 1-1-1z" /></svg>;
+}
+
+function RemixGlyph() {
+  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="3" /><circle cx="12" cy="13.5" r="3.5" /><path d="M9 7l1.5-2.5h3L15 7" /></svg>;
+}
+
+function AiGlyph() {
+  return <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 27L8 9l6 18" /><path d="M4.5 21h7" /><path d="M21 6l1.2 3.3L25.5 10.5 22.2 11.7 21 15l-1.2-3.3L16.5 10.5l3.3-1.2z" fill="currentColor" stroke="none" /></svg>;
+}
+
+function RailGlyph({ name }) {
+  const common = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+  switch (name) {
+    case 'pencil': return <svg {...common}><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M4 21h16" /></svg>;
+    case 'sticker': return <svg {...common}><path d="M5 3h10l6 6v8a4 4 0 0 1-4 4H5z" /><path d="M15 3v5a1 1 0 0 0 1 1h5" /></svg>;
+    case 'effects': return <svg {...common}><path d="M9 4l1.5 3.5L14 9l-3.5 1.5L9 14l-1.5-3.5L4 9l3.5-1.5z" /><path d="M17 12l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" /></svg>;
+    case 'face': return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4 4 0 0 0 7 0" /><path d="M9 9.5h.01M15 9.5h.01" strokeWidth="2.6" /></svg>;
+    case 'sparkle': return <svg {...common}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" fill="currentColor" /></svg>;
+    case 'link': return <svg {...common}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>;
+    case 'crop': return <svg {...common}><path d="M6 2v16h16" /><path d="M2 6h16v16" /></svg>;
+    case 'infinity': return <svg {...common}><path d="M12 12c-2-3-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1 6-4s4-4 6-4a4 4 0 0 1 0 8c-2 0-4-1-6-4z" /></svg>;
+    case 'friend': return <svg {...common}><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0" /><path d="M19 8v6M16 11h6" /></svg>;
+    default: return null;
+  }
 }
