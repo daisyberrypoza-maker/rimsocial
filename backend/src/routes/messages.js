@@ -659,6 +659,87 @@ router.post('/with/:userId/typing', async (req, res, next) => {
 });
 
 // Send a text message to one person. Optional replyToId quotes another message in this chat.
+const SHARE_DAY_MS = 86400000;
+const MAX_SHARE_RECIPIENTS = 15;
+
+// Share sheet ranking: people you message, scored by shares sent (14d), chat volume (7d),
+// mutual follows (stands in for best friends) and recency. Group chats are not ranked yet.
+router.get('/share-targets', async (req, res, next) => {
+  try {
+    const me = req.user.id;
+    const blocked = await blockedUserIds(me);
+    const now = Date.now();
+    const rows = await DirectMessage.findAll({
+      where: { [Op.or]: [{ senderId: me }, { recipientId: me }], createdAt: { [Op.gt]: new Date(now - 30 * SHARE_DAY_MS) } },
+      attributes: ['senderId', 'recipientId', 'postId', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 2000,
+      raw: true,
+    });
+    const stats = new Map();
+    for (const row of rows) {
+      const peer = String(row.senderId === me ? row.recipientId : row.senderId);
+      if (blocked.has(peer)) continue;
+      if (!stats.has(peer)) stats.set(peer, { shares14d: 0, chat7d: 0, last: 0 });
+      const s = stats.get(peer);
+      const t = new Date(row.createdAt).getTime();
+      if (t > s.last) s.last = t;
+      if (now - t <= 7 * SHARE_DAY_MS) s.chat7d += 1;
+      if (now - t <= 14 * SHARE_DAY_MS && String(row.senderId) === me && row.postId) s.shares14d += 1;
+    }
+    const peers = [...stats.keys()];
+    if (!peers.length) return res.json({ items: [] });
+    const [following, followedBy, users] = await Promise.all([
+      Follow.findAll({ where: { followerId: me, followeeId: peers }, attributes: ['followeeId'], raw: true }),
+      Follow.findAll({ where: { followeeId: me, followerId: peers }, attributes: ['followerId'], raw: true }),
+      User.findAll({ where: { id: peers }, attributes: PUBLIC_USER, raw: true }),
+    ]);
+    const iFollow = new Set(following.map((r) => String(r.followeeId)));
+    const followsMe = new Set(followedBy.map((r) => String(r.followerId)));
+    const userById = new Map(users.map((u) => [String(u.id), u]));
+    const items = peers
+      .filter((id) => userById.has(id))
+      .map((id) => {
+        const s = stats.get(id);
+        const mutual = iFollow.has(id) && followsMe.has(id) ? 1 : 0;
+        const hoursSince = (now - s.last) / 3600000;
+        const score = (s.shares14d * 8) + (s.chat7d * 5) + (mutual * 25) - (hoursSince * 0.25);
+        return { user: userById.get(id), score: Math.round(score * 100) / 100 };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 30);
+    res.json({ items });
+  } catch (error) { next(error); }
+});
+
+// Share a post to up to 15 people at once. Each copy is sealed for its own recipient on the device.
+router.post('/share', async (req, res, next) => {
+  try {
+    const me = req.user.id;
+    const items = Array.isArray(req.body?.messages) ? req.body.messages : [];
+    const postId = req.body?.postId ? String(req.body.postId) : null;
+    if (!items.length) throw httpError(400, 'Choose at least one person');
+    if (items.length > MAX_SHARE_RECIPIENTS) throw httpError(400, `You can share with up to ${MAX_SHARE_RECIPIENTS} people at once`);
+    const seen = new Set();
+    for (const item of items) {
+      const userId = String(item?.userId || '');
+      if (!userId || !textBody(item?.body)) throw httpError(400, 'Each message needs a recipient and text');
+      if (seen.has(userId)) throw httpError(400, 'Each person can be chosen only once');
+      seen.add(userId);
+      await assertCanMessage(me, userId);
+    }
+    if (postId && !(await Post.findOne({ where: { id: postId, status: 'live' }, attributes: ['id'] }))) {
+      throw httpError(404, 'This post is no longer available');
+    }
+    for (const item of items) {
+      const other = String(item.userId);
+      await createMessage({ me, other, body: textBody(item.body), storyPostId: postId });
+      await unhideChat(me, other);
+    }
+    res.status(201).json({ sent: items.length });
+  } catch (error) { next(error); }
+});
+
 router.post('/with/:userId', async (req, res, next) => {
   try {
     const me = req.user.id;

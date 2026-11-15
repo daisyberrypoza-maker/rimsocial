@@ -7230,3 +7230,33 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Tile to post page: the media morphs over the same 320ms ease as the story viewer */
 ::view-transition-group(post-media) { animation-duration: 320ms; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+
+/* Design tokens from the architecture blueprint. Values match the current RimSocial look; primary buttons stay Instagram blue (#0095f6). */
+:root {
+  --color-action: #0095f6;
+  --color-action-text: #ffffff;
+  --header-height: 56px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-floating: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.btn-primary {
+  height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  border: 0;
+  background: var(--color-action);
+  color: var(--color-action-text);
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:disabled { opacity: .6; }
+.share-sendbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
+.share-count { font-size: 13px; color: #8e8e93; }
