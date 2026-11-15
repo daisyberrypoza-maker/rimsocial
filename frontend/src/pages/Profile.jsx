@@ -10,6 +10,7 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
@@ -725,7 +726,7 @@ export default function Profile() {
               <div key={p.id} className="sc-tile" role="button" tabIndex={0} onClick={() => navigate(`/p/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/p/${p.id}`); }}>
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
-                  : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
+                  : p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
                 <span className="sc-tile-count"><Icon name="play" size={11} />{formatCount(p.viewCount)}</span>
                 {profile.isMe && <button className="sc-tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
               </div>
@@ -747,7 +748,7 @@ export default function Profile() {
               <button key={s.id} className="sc-tile" onClick={() => setViewing(i)}>
                 {s.kind === 'video'
                   ? <video src={mediaUrl(s.mediaUrl)} muted playsInline preload="metadata" />
-                  : <img src={mediaUrl(s.mediaUrl)} alt="" loading="lazy" />}
+                  : s.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(s.storyBackground) }}>{s.storyText}</span> : <img src={mediaUrl(s.mediaUrl)} alt="" loading="lazy" />}
                 <span className="sc-tile-count">{hoursLeft(s)}h left</span>
               </button>
             ))}

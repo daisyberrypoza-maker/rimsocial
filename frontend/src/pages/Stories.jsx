@@ -243,7 +243,7 @@ export default function Stories() {
           <div className="st-big-grid">
             {sponsored.map((post) => (
               <button className="st-big st-sponsor" key={`sp-${post.id}`} onClick={() => navigate('/p/' + post.id)} aria-label={`Sponsored: ${post.sponsorName || 'ad'}`}>
-                {post.thumbUrl || post.kind === 'image' ? <img className="st-card-img" src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" /> : <span className="st-card-img st-card-fallback" />}
+                {post.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText}</span> : post.thumbUrl || post.kind === 'image' ? <img className="st-card-img" src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" /> : <span className="st-card-img st-card-fallback" />}
                 <span className="st-card-shade" />
                 <span className="st-sponsored-tag">Sponsored</span>
                 <span className="st-card-name">{post.sponsorName || post.author?.username}</span>

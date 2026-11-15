@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { logError } from '../toast.js';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
@@ -168,7 +169,8 @@ export default function Search() {
           <div className="sr-grid">
             {posts.map((post) => (
               <button key={post.id} type="button" className="sr-cell" onClick={() => navigate(`/p/${post.id}`)} aria-label="Open post">
-                {post.kind === 'video'
+                {post.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText}</span>
+                  : post.kind === 'video'
                   ? <video src={mediaUrl(post.mediaUrl)} poster={post.thumbUrl ? mediaUrl(post.thumbUrl) : undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" loading="lazy" />}
               </button>
