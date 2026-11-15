@@ -60,11 +60,15 @@ app.get('/ready', async (req, res) => {
   try {
     await sequelize.authenticate();
     const postColumns = await sequelize.getQueryInterface().describeTable('posts');
+    const userKeyColumns = await sequelize.getQueryInterface().describeTable('user_keys');
     const requiredPostColumns = [
       'id', 'authorId', 'kind', 'mediaUrl', 'status', 'isStory', 'expiresAt',
       'storyText', 'storyBackground', 'voiceUrl', 'musicUrl', 'musicTitle',
     ];
     const missing = requiredPostColumns.filter((column) => !postColumns[column]);
+    for (const column of ['userId', 'publicKey', 'updatedAt']) {
+      if (!userKeyColumns[column]) missing.push(`user_keys.${column}`);
+    }
     const kindType = String(postColumns.kind?.type || '').toLowerCase();
     if (!kindType.includes("'text'") && !kindType.includes('"text"')) missing.push('posts.kind:text');
     if (missing.length) {
@@ -147,6 +151,12 @@ async function start() {
   if (config.createDatabase) await ensureDatabaseExists();
   await sequelize.authenticate();
   if (config.syncDatabase) await sequelize.sync();
+  // Idempotent application of migration 037: public E2E keys only; private keys never reach the server.
+  await sequelize.query(`CREATE TABLE IF NOT EXISTS user_keys (
+    userId CHAR(36) NOT NULL PRIMARY KEY,
+    publicKey TEXT NOT NULL,
+    updatedAt DATETIME NOT NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
   // Creates only the direct messages table when it is missing; safe to run in production.
   await DirectMessage.sync();
   // Additive group-chat tables; existing direct messages and user data are untouched.
