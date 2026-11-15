@@ -362,6 +362,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }
 
   function snapBack() {
+    if (videoRef.current) videoRef.current.volume = 1;
     if (rootRef.current) snapMotion(rootRef.current, backdropRef.current);
   }
 
@@ -389,7 +390,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       setHolding(false);
     }
     if (!rootRef.current) return;
-    dragMotion(rootRef.current, backdropRef.current, dx, dy);
+    const ds = dragMotion(rootRef.current, backdropRef.current, dx, dy);
+    if (videoRef.current) videoRef.current.volume = ds.audio;
   }
 
   function onPointerUp(event) {

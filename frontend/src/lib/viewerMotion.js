@@ -38,6 +38,7 @@ export function dragState(dx, dy) {
     scale: lerp(1, 0.75, d),
     radius: lerp(0, 24, d),
     backdrop: lerp(0.85, 0, d),
+    audio: lerp(1, 0, d),   // Audio_Volume: the story's sound fades as it is dragged away
     hud: clamp(1 - d * 3, 0, 1),
   };
 }

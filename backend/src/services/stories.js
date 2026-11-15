@@ -1,7 +1,8 @@
 const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
-const { discoverScore } = require('./formulas');
+const { discoverScore, interestBoostFor } = require('./formulas');
+const { sequelize } = require('../db');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
@@ -155,6 +156,13 @@ async function getDiscoverStories(viewerId, limit) {
     Follow.findAll({ where: { followerId: viewerId, followeeId: authorIds }, attributes: ['followeeId'], raw: true }),
   ]);
   const followedIds = new Set(follows.map((row) => String(row.followeeId)));
+  // Interest_Boost: topics of posts the viewer liked (stories carry a topic when one is set)
+  const likedRows = await sequelize.query(
+    `SELECT p.topic FROM post_likes pl JOIN posts p ON p.id = pl.postId
+     WHERE pl.userId = :me AND p.topic IS NOT NULL ORDER BY pl.createdAt DESC LIMIT 200`,
+    { replacements: { me: viewerId } },
+  ).then(([rows]) => rows || []).catch(() => []);
+  const likedTopics = new Set(likedRows.map((row) => row.topic));
   const now = Date.now();
   const scored = candidates.map((story) => {
     const hoursPosted = (now - new Date(story.createdAt).getTime()) / 3600000;
@@ -162,7 +170,7 @@ async function getDiscoverStories(viewerId, limit) {
     // Full watch, share, rewatch, skip and exit are not tracked yet, so they are 0.
     const score = discoverScore({
       subscribe: followedIds.has(String(story.authorId)) ? 1 : 0,
-      interestBoost: 1,   // story topics are not tracked yet
+      interestBoost: interestBoostFor(story.topic, likedTopics),
       hoursPosted,
     });
     return { story, score };

@@ -769,14 +769,23 @@ router.post('/share', async (req, res, next) => {
       seen.add(userId);
       await assertCanMessage(me, userId);
     }
-    if (postId && !(await Post.findOne({ where: { id: postId, status: 'live' }, attributes: ['id'] }))) {
-      throw httpError(404, 'This post is no longer available');
+    // Card_Payload privacy re-check: a post that is not public is shared only with people who follow its author
+    const shared = postId ? await Post.findOne({ where: { id: postId, status: 'live' }, attributes: ['id', 'authorId', 'visibility'], raw: true }) : null;
+    if (postId && !shared) throw httpError(404, 'This post is no longer available');
+    if (shared && shared.visibility !== 'public') {
+      const followers = await Follow.findAll({ where: { followeeId: shared.authorId, followerId: [...seen] }, attributes: ['followerId'], raw: true });
+      const allowed = new Set(followers.map((row) => String(row.followerId)));
+      if ([...seen].some((id) => id !== String(shared.authorId) && !allowed.has(id))) {
+        throw httpError(403, 'This post is only shared with the people who follow its author');
+      }
     }
     for (const item of items) {
       const other = String(item.userId);
       await createMessage({ me, other, body: textBody(item.body), storyPostId: postId });
       await unhideChat(me, other);
     }
+    // Increment_Share_Metrics
+    if (postId) await redis.incrby(`post:shares:${postId}`, items.length).catch(() => {});
     res.status(201).json({ sent: items.length });
   } catch (error) { next(error); }
 });

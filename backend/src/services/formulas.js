@@ -61,4 +61,15 @@ function snapTarget(current, deltaY, velocityY, screenHeight) {
   return next ? current + Math.sign(-deltaY) : current;
 }
 
-module.exports = { DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget };
+// Promote_To_Next_Tier = views >= 200 AND (watches over 75% + likes + shares) / views >= 0.18
+// Watches over 75% are not tracked yet, so they count as 0.
+function promotedToNextTier({ views = 0, likes = 0, shares = 0, watches75 = 0 }) {
+  return views >= 200 && (watches75 + likes + shares) / Math.max(1, views) >= 0.18;
+}
+
+// Interest_Boost: 1.5 when the story's topic matches one the viewer has liked, otherwise 1
+function interestBoostFor(topic, likedTopics) {
+  return topic && likedTopics.has(topic) ? 1.5 : 1;
+}
+
+module.exports = { DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };

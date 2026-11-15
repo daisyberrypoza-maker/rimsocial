@@ -3,7 +3,7 @@ const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
-const { spotlightScore } = require('./formulas');
+const { spotlightScore, promotedToNextTier } = require('./formulas');
 
 const authorInclude = (extra = {}) => ({
   model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'], ...extra,
@@ -128,9 +128,13 @@ async function getExplorePage({ userId, cursor, limit }) {
         // watch percentage, loops, trending sound and skips are not tracked yet (0); Creator_Score is 1.
         const views = Math.max(1, Number(p.viewCount) || 0);
         const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
-        const score = spotlightScore({
-          likeRate: Math.min(1, (Number(p.likeCount) || 0) / views),
-          shareRate: Math.min(1, (Number(p.repostCount) || 0) / views),
+        const likes = Number(p.likeCount) || 0;
+        const shares = Number(p.repostCount) || 0;
+        // Promoted posts (Promote_To_Next_Tier) move up one tier: double Spotlight_Score
+        const tier = promotedToNextTier({ views: Number(p.viewCount) || 0, likes, shares }) ? 2 : 1;
+        const score = tier * spotlightScore({
+          likeRate: Math.min(1, likes / views),
+          shareRate: Math.min(1, shares / views),
           hoursPosted: ageHours,
         });
         return { id: p.id, authorId: p.authorId, score, createdAt: new Date(p.createdAt).getTime() };
