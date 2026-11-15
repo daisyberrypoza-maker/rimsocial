@@ -8,7 +8,8 @@ export const E2E_PREFIX = 'e2e:v1:';
 const DB_NAME = 'rs-e2ee';
 const STORE = 'keys';
 const IDENTITY_KEY = 'identity';
-const CANT_OPEN = "🔒 This message can't be opened on this device";
+const CANT_OPEN = '🔒 Message unavailable on this device';
+const SEND_FAILED = 'Something went wrong. Please try again later.';
 
 let identityPromise = null;
 const pairKeys = new Map();   // other user id (or 'self') -> AES-GCM key
@@ -75,9 +76,15 @@ export function ensureIdentity() {
 async function peerPublicKey(userId) {
   const id = String(userId);
   if (!peerKeys.has(id)) {
-    const data = await api(`/v1/messages/keys/${id}`);
-    if (!data.publicKey) throw new Error("This person hasn't set up encryption yet, so they can't receive this message.");
-    const key = await crypto.subtle.importKey('jwk', JSON.parse(data.publicKey), { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    let key = null;
+    try {
+      const data = await api(`/v1/messages/keys/${id}`);
+      if (data.publicKey) key = await crypto.subtle.importKey('jwk', JSON.parse(data.publicKey), { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    } catch (error) {
+      console.warn('[RimSocial] could not load encryption key:', error);
+    }
+    // The person has no usable key yet (they have not opened the app since it was updated)
+    if (!key) throw new Error(SEND_FAILED);
     peerKeys.set(id, key);
   }
   return peerKeys.get(id);
