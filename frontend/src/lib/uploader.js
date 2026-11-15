@@ -66,7 +66,7 @@ export function startUpload(job) {
       }
     } else {
       await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
-      for (const item of postItems) forgetUpload(item);
+      for (const item of postItems) await forgetUpload(item);
     }
 
     if (!toStory && shareToStory) {
@@ -77,7 +77,7 @@ export function startUpload(job) {
       storyFd.append('caption', (caption || '').slice(0, 200));
       try {
         await api('/v1/stories', { method: 'POST', body: storyFd });
-        forgetUpload(storyFile || file);
+        await forgetUpload(storyFile || file);
         // Refresh the Stories rail so the shared story shows at once
         const storyRail = await api('/v1/stories/rail');
         useAppStore.getState().setStoryRail(storyRail.items || []);

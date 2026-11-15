@@ -5,7 +5,19 @@ export const CHUNKED_THRESHOLD = 8 * 1024 * 1024;
 
 // Sessions are remembered per file for this browser tab, so retrying after a failure resumes instead of restarting.
 const sessions = new Map();
-const keyOf = (file) => [file.name, file.size, file.lastModified, file.type].join('|');
+// Identifies a file by name, size, type and a SHA-256 of its first and last 64 KB. The timestamp is left out on purpose:
+// photos are re-encoded before upload, which gives a new timestamp on every retry.
+async function keyOf(file) {
+  const edge = 64 * 1024;
+  const head = new Uint8Array(await file.slice(0, edge).arrayBuffer());
+  const tail = new Uint8Array(await file.slice(Math.max(0, file.size - edge)).arrayBuffer());
+  const joined = new Uint8Array(head.length + tail.length);
+  joined.set(head, 0);
+  joined.set(tail, head.length);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', joined));
+  const hash = Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return [file.name, file.size, file.type, hash].join('|');
+}
 
 export const needsChunks = (list) => list.some((file) => file.size > CHUNKED_THRESHOLD);
 
@@ -25,8 +37,7 @@ async function sendPart(uploadId, index, blob) {
   }
 }
 
-async function uploadOnce(file) {
-  const key = keyOf(file);
+async function uploadOnce(file, key) {
   let session = sessions.get(key);
   if (!session) {
     const init = await api('/v1/uploads/init', {
@@ -53,18 +64,19 @@ async function uploadOnce(file) {
 
 // Uploads one file in parts and resolves to its upload id. A session that the server no longer knows is restarted once.
 export async function uploadInChunks(file) {
+  const key = await keyOf(file);
   try {
-    return await uploadOnce(file);
+    return await uploadOnce(file, key);
   } catch (error) {
     if (error instanceof ApiError && (error.status === 404 || error.status === 409)) {
-      sessions.delete(keyOf(file));
-      return uploadOnce(file);
+      sessions.delete(key);
+      return uploadOnce(file, key);
     }
     throw error;
   }
 }
 
 // Forget a file's session once its post or story is saved
-export function forgetUpload(file) {
-  sessions.delete(keyOf(file));
+export async function forgetUpload(file) {
+  sessions.delete(await keyOf(file));
 }
