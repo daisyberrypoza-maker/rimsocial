@@ -311,4 +311,9 @@ router.get('/ranking', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /v1/stories/popular  -> popular public stories shown in Rimlight
+router.get('/popular', requireAuth, async (req, res, next) => {
+  try { res.json({ items: await stories.getPopularStories(req.user.id) }); } catch (e) { next(e); }
+});
+
 module.exports = router;

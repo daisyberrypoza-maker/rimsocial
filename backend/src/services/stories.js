@@ -132,4 +132,19 @@ async function invalidateRailsFor(authorId) {
   for (let i = 0; i < keys.length; i += 500) await redis.del(...keys.slice(i, i + 500));
 }
 
-module.exports = { getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor };
+// Popular public stories for Rimlight: the most viewed active stories from other people, not blocked.
+async function getPopularStories(viewerId, limit = 4) {
+  const blocked = await blockedUserIds(viewerId);
+  const rows = await Post.findAll({
+    where: {
+      isStory: true, status: 'live', visibility: 'public', expiresAt: { [Op.gt]: new Date() },
+      authorId: { [Op.notIn]: [viewerId, ...blocked] },
+    },
+    include: [{ model: User, as: 'author', attributes: authorAttrs }],
+    order: [['viewCount', 'DESC'], ['createdAt', 'DESC']],
+    limit,
+  });
+  return rows.map((s) => toPostDTO(s));
+}
+
+module.exports = { getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor };

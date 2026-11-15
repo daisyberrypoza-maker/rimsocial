@@ -7,7 +7,7 @@ import { toast, logError } from '../toast.js';
 // Uploads a post or story in the background. The person lands on Rimlight or Stories at once,
 // the upload carries on there (spinner on the screen), and the new item appears when it finishes.
 export function startUpload(job) {
-  const { toStory, file, storyFile, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
+  const { toStory, file, storyFile, storyFiles, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
   const thumb = URL.createObjectURL(file);
   useAppStore.getState().setPendingUpload({
     kind: toStory ? 'story' : 'post',
@@ -36,7 +36,19 @@ export function startUpload(job) {
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
     }
     else (files?.length ? files : [file]).forEach((item) => fd.append('media', item));
-    await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
+    if (toStory && storyFiles?.length > 1) {
+      // Several stories: each photo or video is its own story, in the order chosen
+      for (const media of storyFiles) {
+        const sfd = new FormData();
+        sfd.append('media', media);
+        sfd.append('caption', caption || '');
+        if (storyAudio?.musicId) sfd.append('musicId', storyAudio.musicId);
+        if (storyAudio?.voice) sfd.append('voice', storyAudio.voice);
+        await api('/v1/stories', { method: 'POST', body: sfd });
+      }
+    } else {
+      await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
+    }
 
     if (!toStory && shareToStory) {
       const storyFd = new FormData();
