@@ -356,12 +356,13 @@ router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => 
 // ---- chat list ------------------------------------------------------------
 
 // Chat list: one row per person, newest conversation first, with unread counts.
-// Text messages are end-to-end encrypted on the sender's device; the server only ever stores the ciphertext
+// Text messages are end-to-end encrypted on the sender's device when the recipient has a key;
+// the server stores ciphertext for those, and plain text when the recipient has no key yet
 const E2E_PREFIX = 'e2e:v1:';
-function encryptedTextBody(raw) {
+function textBody(raw) {
   const body = String(raw || '').trim();
   if (!body) return '';
-  if (!body.startsWith(E2E_PREFIX) || body.length > 8000) throw httpError(400, 'Messages must be end-to-end encrypted. Update the app and try again.');
+  if (body.length > (body.startsWith(E2E_PREFIX) ? 8000 : 2000)) throw httpError(400, 'Message is too long');
   return body;
 }
 
@@ -662,7 +663,7 @@ router.post('/with/:userId', async (req, res, next) => {
   try {
     const me = req.user.id;
     const other = req.params.userId;
-    const body = encryptedTextBody(req.body?.body);
+    const body = textBody(req.body?.body);
     const storyId = req.body?.storyId ? String(req.body.storyId) : null;
     if (!body && !storyId) return res.status(400).json({ error: 'Type a message first' });
     await assertCanMessage(me, other);
@@ -880,7 +881,7 @@ router.patch('/message/:id', async (req, res, next) => {
     if (String(row.senderId) !== me) throw httpError(403, 'You can only edit your own messages');
     if (row.deletedForEveryone) throw httpError(400, 'This message was deleted');
     if (Date.now() - new Date(row.createdAt).getTime() > EDIT_WINDOW_MS) throw httpError(400, 'You can only edit a message within 15 minutes');
-    const body = encryptedTextBody(req.body?.body);
+    const body = textBody(req.body?.body);
     if (!body) throw httpError(400, 'Type a message first');
     await row.update({ body, editedAt: new Date(), postId: await linkedPostId(body) });
     res.json({ message: row.toJSON() });

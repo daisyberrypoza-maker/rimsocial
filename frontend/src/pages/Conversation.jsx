@@ -669,7 +669,16 @@ export default function Conversation({ userId }) {
     return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, [userId]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages?.length, typing]);
+  // Always land on the latest message: after the list renders, and again as photos finish loading when the chat opens
+  useEffect(() => {
+    const toEnd = () => endRef.current?.scrollIntoView({ block: 'end' });
+    toEnd();
+    const soon = setTimeout(toEnd, 120);
+    const openedAt = Date.now();
+    const onImageLoad = (event) => { if (event.target?.tagName === 'IMG' && Date.now() - openedAt < 4000) toEnd(); };
+    window.addEventListener('load', onImageLoad, true);
+    return () => { clearTimeout(soon); window.removeEventListener('load', onImageLoad, true); };
+  }, [messages?.length, typing, userId]);
 
   // Preview of the file waiting to be sent; the object URL is released when it changes
   useEffect(() => {

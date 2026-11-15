@@ -8,8 +8,7 @@ export const E2E_PREFIX = 'e2e:v1:';
 const DB_NAME = 'rs-e2ee';
 const STORE = 'keys';
 const IDENTITY_KEY = 'identity';
-const CANT_OPEN = '🔒 Message unavailable on this device';
-const SEND_FAILED = 'Something went wrong. Please try again later.';
+const CANT_OPEN = 'Encrypted message';
 
 let identityPromise = null;
 const pairKeys = new Map();   // other user id (or 'self') -> AES-GCM key
@@ -83,11 +82,11 @@ async function peerPublicKey(userId) {
     } catch (error) {
       console.warn('[RimSocial] could not load encryption key:', error);
     }
-    // The person has no usable key yet (they have not opened the app since it was updated)
-    if (!key) throw new Error(SEND_FAILED);
+    // No key yet: the message is sent as plain text, and the key is picked up once they open the app
+    if (!key) return null;
     peerKeys.set(id, key);
   }
-  return peerKeys.get(id);
+  return peerKeys.get(id) || null;
 }
 
 // AES key shared with another person (or with ourselves, for our own copy)
@@ -119,6 +118,7 @@ async function open(key, part) {
 export async function sealFor(recipientId, text) {
   const identity = await ensureIdentity();
   const recipientKey = await peerPublicKey(recipientId);
+  if (!recipientKey) return text;
   const [r, s] = await Promise.all([
     pairKey(String(recipientId), recipientKey, identity).then((key) => seal(key, text)),
     pairKey('self', identity.publicKey, identity).then((key) => seal(key, text)),
