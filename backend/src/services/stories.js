@@ -51,7 +51,7 @@ async function getStoryRail(viewerId) {
     };
     g.storyCount += 1;
     // Stories come newest first, so the first one seen is the latest: its picture shows on the ring
-    if (!g.preview) g.preview = { kind: dto.kind, mediaUrl: dto.mediaUrl, thumbUrl: dto.thumbUrl };
+    if (!g.preview) g.preview = { kind: dto.kind, mediaUrl: dto.mediaUrl, thumbUrl: dto.thumbUrl, storyText: dto.storyText, storyBackground: dto.storyBackground };
     if (!viewed.has(s.id)) g.unseen = true;
     if (dto.expiresAt > g.expiresAt) g.expiresAt = dto.expiresAt;
     groups.set(s.authorId, g);

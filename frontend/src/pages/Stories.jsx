@@ -8,6 +8,7 @@ import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
 import { useAppStore } from '../store.js';
 import StoryViewer from '../components/StoryViewer.jsx';
+import { backgroundCss } from '../lib/storyBackgrounds.js';
 import Avatar from '../components/Avatar.jsx';
 import { logError } from '../toast.js';
 
@@ -40,6 +41,15 @@ function previewSrc(group) {
   if (!p) return null;
   if (p.kind === 'video') return p.thumbUrl ? mediaUrl(p.thumbUrl) : null;
   return mediaUrl(p.mediaUrl);
+}
+
+// Tile thumbnail: the newest story (photo, video thumbnail, or a text story on its background). Falls back to the avatar.
+function StoryFace({ group, user }) {
+  const p = group?.preview;
+  if (p?.kind === 'text') return <span className="st-text-face" style={{ background: backgroundCss(p.storyBackground) }}><span>{p.storyText || ''}</span></span>;
+  const src = previewSrc(group);
+  if (src) return <img src={src} alt="" />;
+  return <Avatar user={user} noRing />;
 }
 
 export default function Stories() {
@@ -186,7 +196,7 @@ export default function Stories() {
           <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
-                {previewSrc(myGroup) ? <img src={previewSrc(myGroup)} alt="" /> : <Avatar user={me || {}} noRing />}
+                <StoryFace group={myGroup} user={me || {}} />
                 {uploading && <span className="up-status-spin" role="status" aria-label="Posting your story" />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
@@ -197,7 +207,7 @@ export default function Stories() {
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
-                <span className="st-face">{previewSrc(group) ? <img src={previewSrc(group)} alt="" /> : <Avatar user={group.user} noRing />}</span>
+                <span className="st-face"><StoryFace group={group} user={group.user} /></span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
