@@ -982,7 +982,8 @@ export default function Conversation({ userId }) {
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       } else {
         const sealed = await sealFor(userId, body);
-        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id } });
+        const clientId = (globalThis.crypto?.randomUUID?.() || `c${Date.now()}${Math.random().toString(36).slice(2)}`).replace(/-/g, '').slice(0, 64);
+        data = await api(`/v1/messages/with/${userId}`, { method: 'POST', body: { body: sealed, replyToId: replyTo?.id, clientId } });
       }
       if (!file) rememberPlain(data.message.id, body);
       const sent = { ...data.message, ...(file ? {} : { body }), replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };

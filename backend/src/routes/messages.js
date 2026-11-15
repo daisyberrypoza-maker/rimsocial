@@ -303,13 +303,18 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
   try {
     const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
     if (!membership) throw httpError(404, 'Group not found');
+    // Group_Member_Count <= 200
+    const members = await GroupMember.count({ where: { groupId: req.params.groupId } });
+    if (members > 200) throw httpError(403, 'This group has too many members to send to');
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     if (!body) throw httpError(400, 'Type a message first');
     const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
     const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId });
+    // Sequence_ID = Redis_INCR("group_seq:" + Group_ID): strict ordering per group (returned with the message)
+    const seq = await redis.incr('group_seq:' + req.params.groupId).catch(() => null);
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
     publishToGroup(req.params.groupId);
-    res.status(201).json({ message: message.toJSON() });
+    res.status(201).json({ message: { ...message.toJSON(), seq } });
   } catch (error) { next(error); }
 });
 
@@ -779,6 +784,21 @@ router.post('/with/:userId', async (req, res, next) => {
     if (!body && !storyId) return res.status(400).json({ error: 'Type a message first' });
     await assertCanMessage(me, other);
     const replyToId = await validReplyTarget(me, other, req.body?.replyToId);
+    // Send_Direct_Image step 2: a client id makes a retried send return the message it already created
+    const clientId = typeof req.body?.clientId === 'string' && /^[\w-]{8,64}$/.test(req.body.clientId) ? req.body.clientId : null;
+    let claimKey = null;
+    if (clientId) {
+      const key = `dm:idem:${me}:${clientId}`;
+      let claimed = 'OK';
+      try { claimed = await redis.set(key, 'pending', 'EX', 86400, 'NX'); } catch { claimed = 'OK'; }
+      if (claimed) claimKey = key;
+      else {
+        const prior = await redis.get(key).catch(() => null);
+        const old = prior && prior !== 'pending' ? await DirectMessage.findByPk(prior) : null;
+        if (old) return res.status(200).json({ message: old.toJSON(), duplicate: true });
+        throw httpError(409, 'This message is already being sent');
+      }
+    }
     // A reply to a story sends the story's photo or video with the comment
     let media = {};
     if (storyId) {
@@ -790,7 +810,14 @@ router.post('/with/:userId', async (req, res, next) => {
       // The chat shows a card for the story (its thumbnail), with the reply or reaction under it
       media = { storyAuthorId: other, storyPostId: story.id };
     }
-    const message = await createMessage({ me, other, body, replyToId, ...media });
+    let message;
+    try {
+      message = await createMessage({ me, other, body, replyToId, ...media });
+    } catch (error) {
+      if (claimKey) await redis.del(claimKey).catch(() => {});
+      throw error;
+    }
+    if (claimKey) await redis.set(claimKey, String(message.id), 'EX', 86400).catch(() => {});
     await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
