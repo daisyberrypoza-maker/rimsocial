@@ -186,7 +186,7 @@ export default function Stories() {
           <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={() => (myGroup ? openStories(myGroup) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
-                {previewSrc(myGroup) ? <img src={previewSrc(myGroup)} alt="" /> : <Avatar user={me || {}} />}
+                {previewSrc(myGroup) ? <img src={previewSrc(myGroup)} alt="" /> : <Avatar user={me || {}} noRing />}
                 {uploading && <span className="up-status-spin" role="status" aria-label="Posting your story" />}
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
@@ -197,7 +197,7 @@ export default function Stories() {
           {!loading && orderedOthers.map((group) => (
             <button className="st-friend" key={group.user.id} aria-label={`View ${nameOf(group.user)}'s story`} onClick={() => openStories(group)}>
               <span className={`st-ring ${group.unseen ? 'unseen' : 'seen'}`}>
-                <span className="st-face">{previewSrc(group) ? <img src={previewSrc(group)} alt="" /> : <Avatar user={group.user} />}</span>
+                <span className="st-face">{previewSrc(group) ? <img src={previewSrc(group)} alt="" /> : <Avatar user={group.user} noRing />}</span>
               </span>
               <span className="st-name">{nameOf(group.user)}</span>
               {group.user.username && <span className="st-handle">{group.user.username}</span>}
