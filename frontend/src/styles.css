@@ -7115,3 +7115,8 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   box-shadow:none !important;
   border-color:inherit !important;
 }
+
+/* Profile header: white icons over the cover; the compact header is a full-width white bar */
+.sc-profile .pf-round { background: rgba(0, 0, 0, 0.35) !important; color: #fff !important; border: 0 !important; box-shadow: none !important; }
+.sc-profile .pf-round svg { color: #fff !important; stroke: #fff !important; }
+.sc-profile .sc-compact-nav, .sc-profile .sc-compact-nav.visible { left: 0 !important; right: 0 !important; top: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; box-sizing: border-box !important; background: #fff !important; color: #111 !important; }
