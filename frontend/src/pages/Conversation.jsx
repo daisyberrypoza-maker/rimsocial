@@ -835,7 +835,7 @@ export default function Conversation({ userId }) {
       setReplyTo(null);
     } catch (e) {
       logError(e);
-      toast(`Voice note not sent${e.status ? ` (error ${e.status})` : ''}`);
+      toast(e?.message || 'Voice note not sent. Please try again.');
     } finally {
       setSending(false);
     }
@@ -892,7 +892,10 @@ export default function Conversation({ userId }) {
       window.removeEventListener('pointercancel', onRelease);
       window.removeEventListener('pointermove', onMove);
       logError(e);
-      toast('Allow microphone access to record a voice note');
+      const denied = e?.name === 'NotAllowedError' || e?.name === 'SecurityError';
+      toast(denied ? 'Microphone access is blocked. Allow it for this site to record a voice note.'
+        : e?.name === 'NotFoundError' ? 'No microphone was found on this device.'
+          : 'Could not start the voice note. Please try again.');
     }
   }
 
