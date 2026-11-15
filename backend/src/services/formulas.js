@@ -3,6 +3,8 @@
 
 const DAY = 86400000;
 
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
 // Time_Decay(hours, gravity) = 1 / ((1 + hours) ^ gravity)
 function timeDecay(hours, gravity) {
   return 1 / Math.pow(1 + Math.max(0, hours), gravity);
@@ -72,4 +74,61 @@ function interestBoostFor(topic, likedTopics) {
   return topic && likedTopics.has(topic) ? 1.5 : 1;
 }
 
-module.exports = { DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
+
+// Shared interpolation and production-ranking helpers from the RimSocial architecture blueprint.
+function lerp(start, end, t) { return start + (end - start) * clamp(t, 0, 1); }
+function normalize(value, min, max) {
+  if (max <= min) return 0;
+  return clamp((value - min) / (max - min), 0, 1);
+}
+function cameraZoom(dragDelta, maxHardwareZoom = 1) {
+  return clamp(1 + Math.max(0, dragDelta) / 150, 1, Math.max(1, maxHardwareZoom));
+}
+function galleryProgress(deltaY, screenHeight) {
+  return screenHeight > 0 ? clamp(-deltaY / (screenHeight * 0.7), 0, 1) : 0;
+}
+function heroDragState(deltaX, deltaY, swipeVelocity = 0) {
+  const distance = Math.hypot(deltaX, deltaY);
+  const progress = 1 - Math.pow(1 - clamp(distance / 250, 0, 1), 1.5);
+  return {
+    distance,
+    progress,
+    scale: lerp(1, 0.75, progress),
+    radius: lerp(0, 24, progress),
+    backdropAlpha: lerp(0.85, 0, progress),
+    audioVolume: lerp(1, 0, progress),
+    dismiss: distance > 90 || Math.abs(swipeVelocity) > 800,
+  };
+}
+function musicTrackScore({ uses24h = 0, completion = 0, genreAffinity = 0, featured = 0, daysSinceRelease = 0 }) {
+  return (uses24h * 4 + completion * 20 + genreAffinity * 15 + featured * 25) * timeDecay(daysSinceRelease * 24, 0.8);
+}
+function adaptiveBitrate({ throughputBps = 0, packetLossPct = 0 }) {
+  const bandwidth = Math.max(0, throughputBps) * 0.8;
+  const penalty = packetLossPct > 0.02 ? Math.max(0, 1 - packetLossPct * 4) : 1;
+  return clamp(bandwidth * penalty, 150000, 6000000);
+}
+function liveStreamScore({ viewers = 0, giftsPerMinute = 0, chatsPerMinute = 0, followed = 0, minutesLive = 0 }) {
+  return (viewers * 1.5 + giftsPerMinute * 10 + chatsPerMinute * 3 + followed * 500) * timeDecay(minutesLive, 0.4);
+}
+function adRankScore({ bid = 0, predictedActionRate = 0, creativeQuality = 0 }) {
+  return Math.max(0, bid) * clamp(predictedActionRate, 0, 1) * clamp(creativeQuality, 0, 1);
+}
+function canShowAd({ secondsSinceLastAd = Infinity, adsShown = 0, maxSessionAds = 0 }) {
+  return secondsSinceLastAd >= 90 && adsShown < maxSessionAds;
+}
+function profileCollapse(scrollY) {
+  const t = clamp(scrollY / 140, 0, 1);
+  return {
+    progress: t,
+    avatarScale: lerp(1, 0.45, t),
+    avatarY: lerp(0, -45, t),
+    stickyHeaderAlpha: clamp((t - 0.6) * 2.5, 0, 1),
+  };
+}
+function botRiskScore({ friendRequests1h = 0, failedLogins24h = 0, accountsPerDevice = 0, links1h = 0 }) {
+  return friendRequests1h * 2 + failedLogins24h * 10 + accountsPerDevice * 15 + links1h * 5;
+}
+function shouldChallengeBot(signals) { return botRiskScore(signals) >= 50; }
+
+module.exports = { lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
