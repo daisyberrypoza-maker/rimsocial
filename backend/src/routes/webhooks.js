@@ -1,3 +1,4 @@
+const { pricingForCurrency } = require('../lib/boostPricing');
 const router = require('express').Router();
 const crypto = require('crypto');
 const express = require('express');
@@ -41,10 +42,11 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
     if (metadata.purpose === 'post_boost') {
       const { Post } = require('../db');
       const days = Number(metadata.days);
+      const pricing = pricingForCurrency(currency);
       const total = Number(metadata.amountMinor);
       const credit = Number(metadata.creditMinor) || 0;
-      if (!Number.isInteger(days) || days < 1 || days > 14 || currency !== 'NGN' || Number(amount) !== total - credit ||
-          credit < 0 || total < days * 50000 || total > days * 5000000) return res.status(200).end();
+      if (!pricing || metadata.currency !== currency || !Number.isInteger(days) || days < 1 || days > 14 || Number(amount) !== total - credit ||
+          credit < 0 || total < days * pricing.dailyMinMinor || total > days * pricing.dailyMaxMinor) return res.status(200).end();
       const post = await Post.findOne({ where: { id: metadata.postId, authorId: metadata.userId, status: 'live', isStory: false } });
       if (!post) return res.status(200).end();
       try {

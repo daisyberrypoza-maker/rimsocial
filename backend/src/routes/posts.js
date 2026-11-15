@@ -1,4 +1,5 @@
 const config = require('../config');
+const { pricingFor, pricingForCurrency, PAYSTACK_MIN_MINOR } = require('../lib/boostPricing');
 const router = require('express').Router();
 
 async function assertPostAuthorNotBlocked(viewerId, authorId) {
@@ -82,16 +83,24 @@ router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) 
   }
 });
 
-// First-boost offer: the credit this account can still use (once per account). Paystack needs at least NGN 50 per charge.
-const PAYSTACK_MIN_MINOR = 5000;
-async function firstBoostCreditFor(userId) {
+// Promotion pricing and the one-time first-boost credit, in the owner's country currency
+async function promotionPricingFor(userId) {
+  const user = await User.findByPk(userId, { attributes: ['id', 'country'], raw: true });
+  return pricingFor(user?.country);
+}
+async function firstBoostCreditFor(userId, pricing) {
   const used = await LedgerEntry.findOne({ where: { kind: 'boost_credit', refId: String(userId) }, attributes: ['id'], raw: true });
-  return used ? 0 : config.boostFirstCreditMinor;
+  return used ? 0 : pricing.creditMinor;
 }
 router.get('/boost-offer', requireAuth, async (req, res, next) => {
   try {
-    const creditMinor = await firstBoostCreditFor(req.user.id);
-    res.json({ creditMinor, eligible: creditMinor > 0 });
+    const pricing = await promotionPricingFor(req.user.id);
+    const creditMinor = await firstBoostCreditFor(req.user.id, pricing);
+    res.json({
+      currency: pricing.currency, minorUnit: 100,
+      dailyMinMinor: pricing.dailyMinMinor, dailyMaxMinor: pricing.dailyMaxMinor, dailyDefaultMinor: pricing.dailyDefaultMinor,
+      creditMinor, eligible: creditMinor > 0,
+    });
   } catch (e) { next(e); }
 });
 
@@ -262,19 +271,17 @@ router.delete('/:id/save', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Promote: pay with Paystack to show a post as an ad for 1, 3 or 7 days. Activated by the payment webhook.
-// Budget is chosen by the owner: NGN 500 to NGN 50,000 a day, for 1 to 14 days
-const BOOST_MIN_DAILY_MINOR = 50000;
-const BOOST_MAX_DAILY_MINOR = 5000000;
+// Promote: pay with Paystack to show a post as an ad. The budget and currency follow the owner's country.
 router.post('/:id/boost', requireAuth, async (req, res, next) => {
   try {
     if (!config.paystackSecret) throw httpError(503, 'Promotion payments are not set up yet');
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, authorId: req.user.id } });
     if (!post) throw httpError(404, 'Post not found');
+    const pricing = await promotionPricingFor(req.user.id);
     const days = Math.round(Number(req.body?.days));
     if (!Number.isInteger(days) || days < 1 || days > 14) throw httpError(400, 'Choose between 1 and 14 days');
-    const dailyMinor = Math.round(Number(req.body?.dailyNaira) * 100);
-    if (!Number.isFinite(dailyMinor) || dailyMinor < BOOST_MIN_DAILY_MINOR || dailyMinor > BOOST_MAX_DAILY_MINOR) throw httpError(400, 'Choose a daily budget between NGN 500 and NGN 50,000');
+    const dailyMinor = Math.round(Number(req.body?.dailyMinor));
+    if (!Number.isFinite(dailyMinor) || dailyMinor < pricing.dailyMinMinor || dailyMinor > pricing.dailyMaxMinor) throw httpError(400, 'Choose a daily budget within the allowed range');
     const sponsorName = String(req.body?.sponsorName || '').trim().slice(0, 100);
     const sponsorDescription = String(req.body?.sponsorDescription || '').trim().slice(0, 200);
     const sponsorCta = String(req.body?.sponsorCta || 'Shop Now').trim().slice(0, 30);
@@ -284,9 +291,10 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
     const user = await User.findByPk(req.user.id, { attributes: ['id', 'email'] });
     const email = String(user?.email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Add a valid email to your account first');
+
     const amountMinor = dailyMinor * days;
-    // First boost: the credit covers part or all of it. Paystack charges at least the minimum when anything is charged.
-    let creditMinor = Math.min(await firstBoostCreditFor(req.user.id), amountMinor);
+    // The first-boost credit covers part or all of it. A card charge is at least the Paystack minimum.
+    let creditMinor = Math.min(await firstBoostCreditFor(req.user.id, pricing), amountMinor);
     let chargeMinor = amountMinor - creditMinor;
     if (chargeMinor > 0 && chargeMinor < PAYSTACK_MIN_MINOR) { chargeMinor = PAYSTACK_MIN_MINOR; creditMinor = amountMinor - chargeMinor; }
     if (chargeMinor === 0) {
@@ -306,22 +314,26 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
         if (e.name === 'SequelizeUniqueConstraintError') throw httpError(409, 'Your first-boost offer has already been used');
         throw e;
       }
-      return res.json({ free: true, boosted: true, days, amountMinor, creditMinor, chargeMinor: 0 });
+      return res.json({ free: true, boosted: true, days, currency: pricing.currency, amountMinor, creditMinor, chargeMinor: 0 });
     }
+
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.paystackSecret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         amount: chargeMinor,
-        currency: 'NGN',
+        currency: pricing.currency,
         ...(config.appUrl ? { callback_url: `${config.appUrl}/#/p/${post.id}` } : {}),
-        metadata: { userId: req.user.id, purpose: 'post_boost', postId: post.id, days, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl },
+        metadata: {
+          userId: req.user.id, purpose: 'post_boost', postId: post.id, days, currency: pricing.currency,
+          dailyMinor, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl,
+        },
       }),
     });
     const data = await response.json();
     if (!response.ok || !data.status || !data.data?.authorization_url || !data.data?.reference) throw httpError(502, 'Payment provider could not start checkout');
-    res.json({ free: false, authorizationUrl: data.data.authorization_url, reference: data.data.reference, amountMinor, creditMinor, chargeMinor, days });
+    res.json({ free: false, authorizationUrl: data.data.authorization_url, reference: data.data.reference, currency: pricing.currency, amountMinor, creditMinor, chargeMinor, days });
   } catch (e) { next(e); }
 });
 

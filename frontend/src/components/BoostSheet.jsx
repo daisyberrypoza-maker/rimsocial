@@ -10,35 +10,41 @@ const GOALS = [
   { id: 'visits', label: 'More Website Visits', button: 'Visit Site', icon: <><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></> },
 ];
 const BUTTONS = ['Shop Now', 'Learn More', 'Sign Up', 'Visit Site', 'Follow', 'Watch'];
-const MIN_DAILY = 500;
-const MAX_DAILY = 50000;
 const MAX_DAYS = 14;
-const naira = (n) => `NGN ${Math.round(n).toLocaleString()}`;
-const PAYSTACK_MIN = 5000; // kobo: smallest card charge
+const PAYSTACK_MIN = 100; // smallest card charge, in minor units
+const formatterCache = new Map();
+function money(minor, currency) {
+  if (!formatterCache.has(currency)) formatterCache.set(currency, new Intl.NumberFormat(undefined, { style: 'currency', currency }));
+  return formatterCache.get(currency).format(minor / 100);
+}
 
 export default function BoostSheet({ postId, defaultName, onClose }) {
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState('followers');
-  const [daily, setDaily] = useState(1000);
+  const [offer, setOffer] = useState(null); // currency, limits and the first-boost credit, from the server
+  const [dailyMinor, setDailyMinor] = useState(null);
   const [days, setDays] = useState(2);
   const [sponsorName, setSponsorName] = useState(defaultName || '');
   const [sponsorDescription, setSponsorDescription] = useState('');
   const [sponsorCta, setSponsorCta] = useState('Follow');
   const [sponsorUrl, setSponsorUrl] = useState('');
   const [busy, setBusy] = useState(false);
-  const total = daily * days;
-  // One-time first-boost credit from the server (in kobo); the amount actually charged follows the same rule as the server
-  const totalMinor = total * 100;
-  const [offer, setOffer] = useState({ creditMinor: 0, eligible: false });
-  const creditMinor = Math.min(offer.creditMinor || 0, totalMinor);
+  const currency = offer?.currency || 'NGN';
+  const fmt = (minor) => money(minor, currency);
+  const totalMinor = (dailyMinor || 0) * days;
+  const creditMinor = offer ? Math.min(offer.creditMinor || 0, totalMinor) : 0;
   let chargeMinor = totalMinor - creditMinor;
   let appliedCredit = creditMinor;
   if (chargeMinor > 0 && chargeMinor < PAYSTACK_MIN) { chargeMinor = PAYSTACK_MIN; appliedCredit = totalMinor - chargeMinor; }
-  const payNow = chargeMinor / 100;
-  // Real numbers only: the average views of your most recent posts
   useEffect(() => {
     let alive = true;
-    api('/v1/posts/boost-offer').then((data) => { if (alive) setOffer({ creditMinor: Number(data.creditMinor) || 0, eligible: Boolean(data.eligible) }); }).catch(() => {});
+    api('/v1/posts/boost-offer')
+      .then((data) => {
+        if (!alive) return;
+        setOffer(data);
+        setDailyMinor(data.dailyDefaultMinor);
+      })
+      .catch((e) => { if (alive) toast(e.message || 'Could not load promotion options'); });
     return () => { alive = false; };
   }, []);
   const [avgViews, setAvgViews] = useState(null);
@@ -65,7 +71,7 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
     try {
       const data = await api(`/v1/posts/${postId}/boost`, {
         method: 'POST',
-        body: { days, dailyNaira: daily, sponsorName: sponsorName.trim(), sponsorDescription: sponsorDescription.trim(), sponsorCta, sponsorUrl: sponsorUrl.trim() },
+        body: { days, dailyMinor, sponsorName: sponsorName.trim(), sponsorDescription: sponsorDescription.trim(), sponsorCta, sponsorUrl: sponsorUrl.trim() },
       });
       if (data.free) {
         toast('Your post is now promoted with your first-boost credit');
@@ -120,11 +126,11 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
         </div>
         <div className="bs-block">
           <strong>Budget &amp; Duration</strong>
-          <small>{naira(total)} over {days} {days === 1 ? 'day' : 'days'}</small>
-          <div className="bs-slider-label">Budget (NGN)</div>
-          <div className="bs-value">{naira(daily)} per day</div>
-          <input type="range" min={MIN_DAILY} max={MAX_DAILY} step={500} value={daily} onChange={(e) => setDaily(Number(e.target.value))} aria-label="Daily budget" />
-          {offer.eligible && <p className="bs-offer"><strong>First boost offer:</strong> {naira(offer.creditMinor / 100)} free on your first promotion.</p>}
+          <small>{fmt(totalMinor)} over {days} {days === 1 ? 'day' : 'days'}</small>
+          <div className="bs-slider-label">Budget ({currency})</div>
+          <div className="bs-value">{fmt(dailyMinor || 0)} per day</div>
+          <input type="range" min={offer?.dailyMinMinor || 0} max={offer?.dailyMaxMinor || 0} step={offer?.dailyMinMinor || 1} value={dailyMinor || 0} onChange=\{(e) => setDailyMinor(Number(e.target.value))} disabled={!offer} aria-label="Daily budget" />
+          {offer?.eligible && <p className="bs-offer"><strong>First boost offer:</strong> {fmt(offer.creditMinor)} free on your first promotion.</p>}
           <p className="bs-note">{avgViews === null ? '' : avgViews > 0 ? `Your last posts average ${avgViews.toLocaleString()} views each.` : 'Post more to see how many views your ads can get.'}</p>
           <div className="bs-slider-label">Duration</div>
           <div className="bs-value">{days} {days === 1 ? 'day' : 'days'}</div>
@@ -151,18 +157,18 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
         </div>
         <div className="bs-block bs-summary">
           <div><span>Goal</span><strong>{GOALS.find((g) => g.id === goal)?.label}</strong></div>
-          <div><span>Budget</span><strong>{naira(daily)} per day</strong></div>
+          <div><span>Budget</span><strong>{fmt(dailyMinor || 0)} per day</strong></div>
           <div><span>Duration</span><strong>{days} {days === 1 ? 'day' : 'days'}</strong></div>
-          <div><span>Total</span><strong>{naira(total)}</strong></div>
-          {appliedCredit > 0 && <div><span>First-boost credit</span><strong>− {naira(appliedCredit / 100)}</strong></div>}
-          <div className="bs-total"><span>You pay</span><strong>{naira(payNow)}</strong></div>
+          <div><span>Total</span><strong>{fmt(totalMinor)}</strong></div>
+          {appliedCredit > 0 && <div><span>First-boost credit</span><strong>− {fmt(appliedCredit)}</strong></div>}
+          <div className="bs-total"><span>You pay</span><strong>{fmt(chargeMinor)}</strong></div>
         </div>
       </section>}
 
       <footer className="bs-foot">
         {step < 2
           ? <button type="button" className="bs-cta" onClick={next}>{step === 0 ? 'Next' : 'Review Promotion'}</button>
-          : <button type="button" className="bs-cta" onClick={pay} disabled={busy || !adReady}>{busy ? (chargeMinor === 0 ? 'Promoting…' : 'Opening payment…') : chargeMinor === 0 ? 'Promote for free' : `Pay ${naira(payNow)}`}</button>}
+          : <button type="button" className="bs-cta" onClick={pay} disabled={busy || !adReady || !offer}>{busy ? (chargeMinor === 0 ? 'Promoting…' : 'Opening payment…') : chargeMinor === 0 ? 'Promote for free' : `Pay ${fmt(chargeMinor)}`}</button>}
       </footer>
     </div>
   );
