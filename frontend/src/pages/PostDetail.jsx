@@ -105,8 +105,10 @@ export default function PostDetail() {
   return <main className={`rv-page ${showComments ? 'sheet-open' : ''}`}>
     <header className="rv-top">
       <button className="rv-icon" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button>
-      <strong className="rv-title">Reels</strong>
-      <button className="rv-icon" onClick={() => navigate('/upload')} aria-label="Add post"><Icon name="plus" size={28} /></button>
+      {isOwner && <div className="rv-promote-wrap">
+        <button type="button" className="rv-promote" onClick={() => setShowShare(true)}>Promote</button>
+        <div className="rv-promote-tip">Get more followers and views!</div>
+      </div>}
     </header>
 
     <div className="rv-media">
@@ -116,6 +118,7 @@ export default function PostDetail() {
     </div>
 
     {!showComments && <aside className="rv-rail" aria-label="Post actions">
+      <button className="rv-rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={44} /></button>
       <button className={liked ? 'liked' : ''} onClick={toggleLike} disabled={busy} aria-pressed={liked} aria-label={liked ? 'Unlike' : 'Like'}>
         <Icon name="heart" size={30} /><span>{formatCount(post.likeCount)}</span>
       </button>
@@ -136,8 +139,8 @@ export default function PostDetail() {
     </div>}
 
     {!showComments && <footer className="rv-bottom">
-      <span className="rv-views"><Icon name="eye" size={18} /> {formatCount(post.viewCount)} views</span>
-      <button className="rv-share" onClick={shareExternally}>Share</button>
+      <strong className="rv-bottom-name" onClick={() => navigate(`/u/${username}`)}>{post.author?.displayName || username}</strong>
+      <button className="rv-more-btn" onClick={() => (isOwner ? setMenuOpen(true) : shareExternally())} aria-label="More options"><span className="rv-more-dots">•••</span></button>
     </footer>}
 
     {showComments && <section className="rv-sheet" role="dialog" aria-label="Comments">

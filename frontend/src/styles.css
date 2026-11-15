@@ -7120,3 +7120,20 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sc-profile .pf-round { background: rgba(0, 0, 0, 0.35) !important; color: #fff !important; border: 0 !important; box-shadow: none !important; }
 .sc-profile .pf-round svg { color: #fff !important; stroke: #fff !important; }
 .sc-profile .sc-compact-nav, .sc-profile .sc-compact-nav.visible { left: 0 !important; right: 0 !important; top: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; box-sizing: border-box !important; background: #fff !important; color: #111 !important; }
+
+/* Post page, matching the reference: black screen, yellow Promote with tooltip, white rail, name and dots at the bottom */
+.rv-page { background: #000 !important; }
+.rv-top { position: absolute !important; top: 0; left: 0; right: 0; z-index: 6; display: flex !important; align-items: flex-start !important; justify-content: space-between !important; padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0 !important; background: transparent !important; }
+.rv-top .rv-icon { width: 40px !important; height: 40px !important; border: 0 !important; border-radius: 50% !important; background: rgba(0, 0, 0, 0.35) !important; color: #fff !important; display: grid; place-items: center; padding: 0; }
+.rv-top .rv-icon svg { color: #fff !important; stroke: #fff !important; }
+.rv-promote-wrap { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
+.rv-promote { height: 40px; padding: 0 20px; border: 0 !important; border-radius: 999px; background: #fffc00 !important; color: #000 !important; font-size: 16px; font-weight: 600; cursor: pointer; }
+.rv-promote-tip { position: absolute; top: calc(100% + 10px); right: 0; width: max-content; max-width: 260px; padding: 10px 14px; border-radius: 12px; background: #fff; color: #000; font-size: 15px; font-weight: 400; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+.rv-promote-tip::before { content: ''; position: absolute; top: -6px; right: 52px; width: 12px; height: 12px; background: #fff; transform: rotate(45deg); }
+.rv-rail-avatar { border: 0 !important; background: transparent !important; padding: 0 !important; margin-bottom: 14px; cursor: pointer; }
+.rv-rail-avatar .avatar { box-shadow: 0 0 0 2px #fff; }
+.rv-bottom { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 12px) !important; background: #000 !important; }
+.rv-bottom-name { font-size: 17px; font-weight: 600; color: #fff; cursor: pointer; }
+.rv-more-btn { border: 0 !important; background: transparent !important; color: #fff !important; padding: 4px 6px; cursor: pointer; }
+.rv-more-dots { font-size: 22px; letter-spacing: 2px; color: #fff; }
+.rv-bottom .rv-views, .rv-bottom .rv-share { display: none !important; }
