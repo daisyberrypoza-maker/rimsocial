@@ -6850,3 +6850,37 @@ button[aria-label="Back"] svg, button[aria-label^="Back "] svg, button[aria-labe
   font-size: clamp(11px, 3.2vw, 14px) !important;
   line-height: 1.2 !important;
 }
+
+
+/* Profile refresh — reference-led layout, preserving all existing profile actions and data. */
+.sc-profile .pf-hero { min-height: clamp(340px, 82vw, 520px) !important; background: #242424 !important; }
+.sc-profile .pf-cover { background-size: cover !important; background-position: center center !important; }
+.sc-profile .pf-shade { background: linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,.04) 36%, rgba(0,0,0,.18) 57%, rgba(0,0,0,.78) 100%) !important; }
+.sc-profile .pf-top { padding: max(12px, env(safe-area-inset-top)) 16px 12px !important; }
+.sc-profile .pf-top-right { gap: 8px !important; }
+.sc-profile .pf-round { width: 44px !important; height: 44px !important; }
+.sc-profile .pf-id { align-items: flex-end !important; gap: 12px !important; padding: 24px 18px 16px !important; }
+.sc-profile .pf-avatar, .sc-profile .pf-avatar-btn, .sc-profile .pf-avatar-btn .avatar { width: 88px !important; height: 88px !important; }
+.sc-profile .pf-avatar { flex: 0 0 88px !important; }
+.sc-profile .pf-name-block { flex: 1 1 auto !important; min-width: 0 !important; padding-bottom: 4px !important; }
+.sc-profile .pf-name { gap: 6px !important; font-size: clamp(19px, 5.1vw, 25px) !important; line-height: 1.16 !important; overflow-wrap: anywhere !important; }
+.sc-profile .pf-handle { margin-top: 4px !important; font-size: 14px !important; font-weight: 500 !important; }
+.sc-profile .pf-sub { margin-top: 3px !important; font-size: 13px !important; font-weight: 500 !important; }
+.sc-profile .pf-star { width: 19px !important; height: 19px !important; flex: 0 0 19px !important; }
+.sc-profile .pf-actions { gap: 10px !important; padding: 0 18px 18px !important; }
+.sc-profile .pf-actions .pf-btn { min-width: 0 !important; height: 48px !important; border-radius: 999px !important; font-size: 16px !important; font-weight: 650 !important; }
+.sc-profile .pf-actions .pf-add { background: #fff000 !important; color: #111 !important; }
+.sc-profile .pf-actions .pf-add.added { background: rgba(255,255,255,.22) !important; color: #fff !important; }
+.sc-profile .pf-actions .pf-more { flex: 0 0 48px !important; width: 48px !important; height: 48px !important; }
+.sc-profile .pf-body { padding: 14px 18px 8px !important; }
+.sc-profile .pf-chips { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 7px !important; padding: 0 0 10px !important; }
+.sc-profile .pf-chip { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; min-height: 32px !important; height: auto !important; max-width: 100% !important; padding: 5px 11px !important; border: 1px solid #dedee3 !important; border-radius: 999px !important; background: #fff !important; color: #555b63 !important; font-size: 13px !important; font-weight: 500 !important; line-height: 1.25 !important; text-decoration: none !important; white-space: normal !important; overflow-wrap: anywhere !important; }
+.sc-profile .pf-chip svg { flex: 0 0 15px !important; color: #555b63 !important; }
+.sc-profile .pf-bio { margin: 0 !important; color: #262626 !important; font-size: 15px !important; font-weight: 400 !important; line-height: 1.48 !important; white-space: pre-wrap !important; overflow-wrap: anywhere !important; }
+.sc-profile .sc-profile-stats { margin: 0 !important; padding: 10px 12px 12px !important; border-bottom: 1px solid #efeff1 !important; }
+.sc-profile .sc-profile-stats button { min-width: 0 !important; }
+.sc-profile .pf-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; min-width: 0 !important; }
+.sc-profile .pf-tabs.is-owner { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.sc-profile .pf-tabs > button { min-width: 0 !important; height: 50px !important; padding: 0 2px !important; font-size: clamp(12px, 3.5vw, 15px) !important; font-weight: 600 !important; white-space: nowrap !important; }
+.sc-profile .pf-tabs > button.on { font-weight: 700 !important; }
+@media (max-width: 380px) { .sc-profile .pf-id { gap: 9px !important; padding-left: 14px !important; padding-right: 14px !important; } .sc-profile .pf-avatar, .sc-profile .pf-avatar-btn, .sc-profile .pf-avatar-btn .avatar { width: 76px !important; height: 76px !important; flex-basis: 76px !important; } .sc-profile .pf-name { font-size: 18px !important; } .sc-profile .pf-body { padding-left: 14px !important; padding-right: 14px !important; } .sc-profile .pf-tabs > button { font-size: 11px !important; } }
