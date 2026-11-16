@@ -22,8 +22,11 @@ function streakDays(dayKeys, now = Date.now()) {
 }
 
 // Friend_Story_Score = (Direct_Snaps_Sent*3 + Chat_Msgs_7d*2 + Streak_Days*0.5 + Completion_Rate*5) * Time_Decay(hours, 1.2)
-function friendStoryScore({ snapsSent7d = 0, chats7d = 0, streak = 0, completionRate = 0, hoursPosted = 0 }) {
-  return (snapsSent7d * 3 + chats7d * 2 + streak * 0.5 + completionRate * 5) * timeDecay(hoursPosted, 1.2);
+// Friends story score: (Chat_Score + Story_Affinity) * exp(-0.08 * hours). Story replies are not tracked yet (0).
+function friendStoryScore({ snapsSent7d = 0, chats7d = 0, streak = 0, storyReplies30d = 0, completionRate = 0, hoursPosted = 0 }) {
+  const chatScore = snapsSent7d * 2 + chats7d * 1.5 + streak * 0.5;
+  const storyAffinity = storyReplies30d * 5 + completionRate * 3;
+  return (chatScore + storyAffinity) * Math.exp(-0.08 * Math.max(0, hoursPosted));
 }
 
 // Best_Friend_Score = Snaps_Sent_30d*2.5 + Snaps_Recv_30d*2.5 + Chats_30d*1.0 + Streak_Days*1.5

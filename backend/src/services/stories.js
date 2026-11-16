@@ -118,8 +118,12 @@ async function getStoryRail(viewerId) {
     groups.set(s.authorId, g);
   }
 
+  // Friends order: unseen first, then the friend story score (chat, affinity, recency), then newest
+  const friendScore = await require('./ranking').friendScores(viewerId, [...groups.keys()].map(String)).catch(() => ({}));
   const items = [...groups.values()]
-    .sort((a, b) => Number(b.unseen) - Number(a.unseen) || new Date(b.latestAt) - new Date(a.latestAt))
+    .sort((a, b) => Number(b.unseen) - Number(a.unseen)
+      || (friendScore[String(b.user?.id)] || 0) - (friendScore[String(a.user?.id)] || 0)
+      || new Date(b.latestAt) - new Date(a.latestAt))
     .slice(0, 50);
 
   const out = { items };
