@@ -36,6 +36,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   const firstStoryRef = useRef(startStory);
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [paused, setPaused] = useState(false);
   // Press and hold anywhere pauses the story; releasing carries on (like Rimlight and Instagram)
   const [holding, setHolding] = useState(false);
@@ -88,10 +90,14 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   useEffect(() => {
     let alive = true;
     const saved = useAppStore.getState().storyCache?.[group.user.id];
-    setSi(firstStoryRef.current);
+    const savedItems = Array.isArray(saved?.items) && saved.items.length ? saved.items : null;
+    const requestedIndex = firstStoryRef.current;
     firstStoryRef.current = 0;
-    if (saved) {
-      setStories(saved.items);
+    setSi(requestedIndex);
+    setLoadError(false);
+    if (savedItems) {
+      setStories(savedItems);
+      setSi(Math.min(requestedIndex, savedItems.length - 1));
       setSubscribed(Boolean(saved.isSubscribed));
     } else {
       setStories(null);
@@ -99,14 +105,24 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     api(`/v1/stories/users/${group.user.id}`)
       .then((d) => {
         if (!alive) return;
-        evictMedia(missingItems(saved?.items, d.items));
-        setStories(d.items);
+        const items = Array.isArray(d.items) ? d.items : [];
+        evictMedia(missingItems(savedItems, items));
+        setStories(items);
+        setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
+        setLoadError(false);
         setSubscribed(Boolean(d.isSubscribed));
-        useAppStore.getState().setStoryCache(group.user.id, { items: d.items, isSubscribed: Boolean(d.isSubscribed) });
+        useAppStore.getState().setStoryCache(group.user.id, { items, isSubscribed: Boolean(d.isSubscribed) });
       })
-      .catch(() => { if (alive && !saved) setStories([]); });
+      .catch(() => {
+        if (!alive) return;
+        if (savedItems) setStories(savedItems);
+        else {
+          setStories(null);
+          setLoadError(true);
+        }
+      });
     return () => { alive = false; };
-  }, [group.user.id]);
+  }, [group.user.id, reloadKey]);
 
   // Voice note and music follow the same pause rules as the story itself
   useEffect(() => {
@@ -578,7 +594,12 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
 
       <div className={`sv-stage sv-grade-${current?.filterPreset || 'discover'}`} onClick={onStageTap}>
-        {current ? (
+        {loadError && !current ? (
+          <div className="sv-load-error" role="alert" onClick={(event) => event.stopPropagation()}>
+            <p>Couldn't load this story.</p>
+            <button type="button" className="sc-pill" onClick={() => { setLoadError(false); setReloadKey((key) => key + 1); }}>Retry</button>
+          </div>
+        ) : current ? (
           isVideo ? (
             <>
               {current.thumbUrl && <img className="sv-ambient" src={mediaUrl(current.thumbUrl)} alt="" aria-hidden="true" />}
@@ -605,7 +626,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
             </>
           )
         ) : (
-          <p className="sv-empty">{stories ? 'No stories' : ''}</p>
+          <p className="sv-empty">{stories ? 'No stories' : 'Loading story…'}</p>
         )}
         {current?.caption && <p className="sv-caption">{current.caption}</p>}
         {flash && <span key={flash.key} className="sv-flash" aria-hidden="true"><Icon name={flash.icon} size={34} /></span>}
