@@ -73,3 +73,46 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
 
   return data;
 }
+
+// XHR is used only for media transfers so the UI can report actual bytes sent.
+export function apiWithProgress(path, { method = 'POST', body, headers = {}, onUploadProgress } = {}) {
+  if (Capacitor.isNativePlatform() && !API_BASE) {
+    return Promise.reject(new ApiError('The app is not connected to its service yet. Please try again later.', 0));
+  }
+  const { token, logout } = useAppStore.getState();
+  const requestHeaders = { ...headers };
+  if (token) requestHeaders.Authorization = `Bearer ${token}`;
+  let payload = body;
+  if (body && !(body instanceof FormData) && !(body instanceof Blob)) {
+    requestHeaders['Content-Type'] = 'application/json';
+    payload = JSON.stringify(body);
+  }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, `${API_BASE}${path}`);
+    Object.entries(requestHeaders).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && typeof onUploadProgress === 'function') {
+        onUploadProgress({ loaded: event.loaded, total: event.total, percent: Math.round((event.loaded / event.total) * 100) });
+      }
+    };
+    xhr.onerror = () => {
+      useAppStore.getState().setOffline(true);
+      reject(new ApiError(safeErrorMessage(0), 0));
+    };
+    xhr.onabort = () => reject(new ApiError(safeErrorMessage(0), 0));
+    xhr.onload = () => {
+      useAppStore.getState().setOffline(false);
+      const data = xhr.status === 204 ? null : (() => { try { return JSON.parse(xhr.responseText || 'null'); } catch { return null; } })();
+      if (xhr.status === 401 && token) logout();
+      if (xhr.status < 200 || xhr.status >= 300) {
+        console.warn('[RimSocial] API upload failed:', { method, path, status: xhr.status, serverMessage: typeof data?.error === 'string' ? data.error : undefined });
+        reject(new ApiError(safeErrorMessage(xhr.status), xhr.status));
+        return;
+      }
+      if (typeof onUploadProgress === 'function') onUploadProgress({ loaded: 1, total: 1, percent: 100 });
+      resolve(data);
+    };
+    xhr.send(payload ?? null);
+  });
+}
