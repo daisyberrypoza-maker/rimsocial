@@ -84,7 +84,8 @@ export default function Stories() {
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
   const [loaded, setLoaded] = useState(() => storedRailAt > 0);
-  const loading = false;
+  const loading = !loaded;
+  const [railError, setRailError] = useState(false);
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
   const [friendsActive, setFriendsActive] = useState(false);
   // Badge on the add-friend icon: people who followed you since you last opened it
@@ -180,12 +181,14 @@ export default function Stories() {
   }, []);
 
   const loadRail = useCallback(async () => {
+    setRailError(false);
     try {
       const result = await api('/v1/stories/rail');
-      const items = result.items || [];
+      const items = Array.isArray(result.items) ? result.items : [];
       setRail(items);
       useAppStore.getState().setStoryRail(items);
     } catch (error) {
+      setRailError(true);
       logError(error);
     } finally {
       setLoaded(true);
@@ -273,7 +276,14 @@ export default function Stories() {
             </button>
           ))}
         </div>
-        {!loading && loaded && others.length === 0 && !myGroup && (
+        {!loading && loaded && railError && rail.length === 0 && (
+          <div className="st-empty" role="alert">
+            <strong>Stories couldn't load</strong>
+            <p>Check your connection and try again.</p>
+            <button type="button" className="sc-pill" onClick={loadRail}>Retry</button>
+          </div>
+        )}
+        {!loading && loaded && !railError && others.length === 0 && !myGroup && (
           <div className="st-empty">
             <span className="st-empty-icon" aria-hidden="true"><Icon name="users" size={28} /></span>
             <strong>No stories yet</strong>
