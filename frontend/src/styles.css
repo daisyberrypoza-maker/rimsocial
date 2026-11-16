@@ -7328,3 +7328,13 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post .snap-disc .avatar, .post .snap-disc img { width:100% !important; height:100% !important; border-radius:50% !important; }
 @keyframes snap-disc-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .post .snap-disc { animation:none; } }
+
+
+/* Stories header: keep the page navbar visible while the Stories feed scrolls. */
+.st-page > .st-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 80 !important;
+  background: #fff !important;
+  isolation: isolate;
+}
