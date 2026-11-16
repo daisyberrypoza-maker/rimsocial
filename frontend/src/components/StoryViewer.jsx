@@ -588,10 +588,12 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
       {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
 
-      <div className="sv-stage" onClick={onStageTap}>
+      <div className={`sv-stage sv-grade-${current?.filterPreset || 'discover'}`} onClick={onStageTap}>
         {current ? (
           isVideo ? (
-            <video
+            <>
+              {current.thumbUrl && <img className="sv-ambient" src={mediaUrl(current.thumbUrl)} alt="" aria-hidden="true" />}
+              <video
               key={current.id}
               ref={videoRef}
               className="sv-media"
@@ -603,11 +605,15 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
               onEnded={next}
               onError={next}
               onTimeUpdate={onVideoTime}
-            />
+              />
+            </>
           ) : isText ? (
             <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText}</div>
           ) : (
-            <img key={current.id} className="sv-media" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
+            <>
+              <img className="sv-ambient" src={mediaUrl(current.mediaUrl)} alt="" aria-hidden="true" />
+              <img key={current.id} className="sv-media sv-image" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
+            </>
           )
         ) : (
           <p className="sv-empty">{stories ? 'No stories' : ''}</p>
