@@ -7457,3 +7457,19 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root .sv-stage > .sv-caption,
 .sv-root .sv-stage > .sv-flash,
 .sv-root .sv-stage > .sv-liked-mark { z-index: 2; }
+
+
+/* Stories rail typography: medium-weight section labels, compact display-name/handle stack. */
+.st-page .st-h2 { font-weight: 500 !important; }
+.st-page .st-friend { gap: 1px !important; }
+.st-page .st-name {
+  font-size: 12px !important;
+  line-height: 14px !important;
+  font-weight: 500 !important;
+  margin-top: 0 !important;
+}
+.st-page .st-handle {
+  font-size: 10px !important;
+  line-height: 12px !important;
+  font-weight: 400 !important;
+}
