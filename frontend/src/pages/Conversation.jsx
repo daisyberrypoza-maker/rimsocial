@@ -1,4 +1,5 @@
 import AppLink from '../components/AppLink.jsx';
+import { newClientId } from '../lib/clientId.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -15,6 +16,7 @@ import { confirmDialog } from '../lib/confirm.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { sealFor, openMessages, rememberPlain } from '../lib/e2ee.js';
 import { fitImage } from '../lib/imageFit.js';
+import { blurhashOfFile, placeholderFor } from '../lib/blurhash.js';
 import { boxOf, closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 
 // One conversation, WhatsApp-style: delivered and seen ticks, times, typing, reply (swipe right or the menu),
@@ -420,7 +422,7 @@ function Attachment({ message, storyAuthorId, mine }) {
   if (message.mediaKind === 'video' || message.mediaKind === 'photo') {
     const media = message.mediaKind === 'video'
       ? <span className="cv-media-frame"><video className="cv-media" src={src} muted playsInline preload="metadata" /><span className="cv-play" aria-hidden="true">▶</span></span>
-      : <img className="cv-media" src={src} alt="Photo" loading="lazy" />;
+      : <img className="cv-media" src={src} alt="Photo" loading="lazy" style={placeholderFor(message.blurhash) ? { backgroundImage: `url(${placeholderFor(message.blurhash)})`, backgroundSize: 'cover' } : undefined} />;
     if (storyAuthorId) return <Link to="/stories" state={{ openUserId: storyAuthorId }} className="cv-media-link" aria-label="Open story">{media}</Link>;
     return <button type="button" className="cv-media-link" onClick={(e) => openMedia(src, message.mediaKind, message.createdAt, { id: message.id, senderId: message.senderId, mediaUrl: message.mediaKind === 'photo' ? message.mediaUrl : null }, e.currentTarget)} aria-label={message.mediaKind === 'video' ? 'Play video' : 'Open photo'}>{media}</button>;
   }
@@ -779,6 +781,11 @@ export default function Conversation({ userId }) {
       try {
         const form = new FormData();
         form.append('media', item);
+        form.append('clientId', newClientId());
+        if (String(item.type).startsWith('image/')) {
+          const hash = await blurhashOfFile(item);
+          if (hash) form.append('blurhash', hash);
+        }
         const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
         setMessages((current) => {
           const list = current || [];
@@ -877,6 +884,7 @@ export default function Conversation({ userId }) {
       const form = new FormData();
       form.append('media', voice);
       if (replyTo) form.append('replyToId', replyTo.id);
+      form.append('clientId', newClientId());
       const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       const sent = { ...data.message, replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
       setMessages((current) => {
@@ -985,6 +993,7 @@ export default function Conversation({ userId }) {
         if (body) form.append('body', body);
         if (replyTo) form.append('replyToId', replyTo.id);
         if (ephemeral) form.append('ephemeral', ephemeral);
+        form.append('clientId', newClientId());
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       } else {
         const sealed = await sealFor(userId, body);

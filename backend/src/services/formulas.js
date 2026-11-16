@@ -130,5 +130,9 @@ function botRiskScore({ friendRequests1h = 0, failedLogins24h = 0, accountsPerDe
   return friendRequests1h * 2 + failedLogins24h * 10 + accountsPerDevice * 15 + links1h * 5;
 }
 function shouldChallengeBot(signals) { return botRiskScore(signals) >= 50; }
+// Quick_Add_Score: mutual friends, phone contacts, shared groups, profile searches, same location, minus dismissals
+function quickAddScore({ mutual = 0, contacts = 0, sharedGroups = 0, profileSearches = 0, sameLocation = 0, dismissCount = 0 }) {
+  return mutual * 10 + contacts * 50 + sharedGroups * 15 + profileSearches * 20 + sameLocation * 5 - dismissCount * 100;
+}
 
-module.exports = { lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
+module.exports = { quickAddScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };

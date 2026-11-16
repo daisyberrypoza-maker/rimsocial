@@ -3,7 +3,9 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
-const { Op, AudioTrack, User } = require('../db');
+const { Op, AudioTrack, User, Post } = require('../db');
+const { fn, col } = require('sequelize');
+const { musicTrackScore } = require('../services/formulas');
 const { requireAuth } = require('../middleware/auth');
 const httpError = require('../utils/httpError');
 const config = require('../config');
@@ -38,8 +40,26 @@ router.get('/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 80);
     const where = q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {};
-    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: 40 });
-    res.json({ items: rows.map(toDTO) });
+    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: 200 });
+    // Music_Track_Score: uses in the last 24 hours (story music URLs), then age since release.
+    // Completion, genre affinity and featured flags are not tracked yet, so they count as 0.
+    const since = new Date(Date.now() - 24 * 3600 * 1000);
+    const urls = rows.map((row) => row.mediaUrl);
+    const useRows = urls.length ? await Post.findAll({
+      attributes: ['musicUrl', [fn('COUNT', col('id')), 'n']],
+      where: { isStory: true, musicUrl: urls, createdAt: { [Op.gt]: since } },
+      group: ['musicUrl'], raw: true,
+    }) : [];
+    const uses = new Map(useRows.map((row) => [row.musicUrl, Number(row.n)]));
+    const now = Date.now();
+    const ranked = rows.map((row) => ({
+      row,
+      score: musicTrackScore({
+        uses24h: uses.get(row.mediaUrl) || 0,
+        daysSinceRelease: (now - new Date(row.createdAt).getTime()) / (24 * 3600 * 1000),
+      }),
+    })).sort((a, b) => b.score - a.score || new Date(b.row.createdAt) - new Date(a.row.createdAt));
+    res.json({ items: ranked.slice(0, 40).map((item) => toDTO(item.row)) });
   } catch (e) { next(e); }
 });
 

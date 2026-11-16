@@ -1,4 +1,5 @@
 import { chatPath } from '../lib/chatLink.js';
+import { newClientId } from '../lib/clientId.js';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -133,6 +134,7 @@ export default function Messages() {
     try {
       const form = new FormData();
       form.append('media', file);
+      form.append('clientId', newClientId());
       await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       toast('Sent');
     } catch (e) {

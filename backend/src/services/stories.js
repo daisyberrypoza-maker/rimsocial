@@ -235,7 +235,33 @@ async function getDiscoverStories(viewerId, limit) {
     return { story, score };
   });
   scored.sort((a, b) => b.score - a.score || new Date(b.story.createdAt) - new Date(a.story.createdAt));
-  return scored.slice(0, limit).map(({ story }) => toPostDTO(story));
+  return scored.slice(0, limit).map(({ story }) => ({ ...toPostDTO(story), subscribed: followedIds.has(String(story.authorId)) }));
+}
+
+// Diversity rule: never put two items from the same creator side by side (adjacent grid slots)
+function diversify(list, keyOf) {
+  const pool = [...list];
+  const out = [];
+  while (pool.length) {
+    const prev = out[out.length - 1];
+    let index = prev ? pool.findIndex((item) => keyOf(item) !== keyOf(prev)) : 0;
+    if (index < 0) index = 0;
+    out.push(pool.splice(index, 1)[0]);
+  }
+  return out;
+}
+
+// Discover sections (backend ranking pipeline): a carousel of unseen stories from creators the viewer follows
+// (high affinity, 112px cards), and a 2-column grid of the rest, diversified. Ads are added by the client.
+const CAROUSEL_SIZE = 8;
+async function getDiscoverSections(viewerId, limit = 24) {
+  const ranked = await getDiscoverStories(viewerId, limit);
+  const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
+  const withViewed = ranked.map((item) => ({ ...item, viewed: viewed.has(item.id) }));
+  const carousel = withViewed.filter((item) => item.subscribed && !item.viewed).slice(0, CAROUSEL_SIZE);
+  const carouselIds = new Set(carousel.map((item) => item.id));
+  const grid = diversify(withViewed.filter((item) => !carouselIds.has(item.id)), (item) => String(item.author?.id || item.authorId));
+  return { items: grid, carousel };
 }
 
 async function getPopularStories(viewerId, limit = 4, { personalized = false } = {}) {
@@ -253,4 +279,4 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
   return rows.map((s) => toPostDTO(s));
 }
 
-module.exports = { getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor, fanOutStory, addFolloweeToTray };
+module.exports = { getDiscoverSections, getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor, fanOutStory, addFolloweeToTray };

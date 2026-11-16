@@ -67,9 +67,9 @@ function normalizeEphemeral(value) {
   return EPHEMERAL_MODES.includes(value) ? value : null;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0, ephemeral = null }) {
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0, ephemeral = null, blurhash = null }) {
   const postId = storyPostId || await linkedPostId(body);
-  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral });
+  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral, blurhash });
   liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
   // Push a generic alert unless the recipient muted this chat (no message text is sent)
   const muted = await ChatPreference.findOne({ where: { userId: other, peerId: me, muted: true }, attributes: ['id'], raw: true }).catch(() => null);
@@ -259,7 +259,7 @@ router.get('/groups/:groupId', async (req, res, next) => {
     if (!group) throw httpError(404, 'Group not found');
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
     const users = await User.findAll({ where: { id: members.map((member) => member.userId) }, attributes: PUBLIC_USER, raw: true });
-    const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']], limit: 300, raw: true });
+    const items = await GroupMessage.findAll({ where: { groupId: group.id }, order: [['seq', 'DESC'], ['createdAt', 'DESC']], limit: 300, raw: true });
     const limitedIds = items.filter((m) => m.viewLimit > 0).map((m) => m.id);
     const views = limitedIds.length ? await GroupMessageView.findAll({ where: { messageId: limitedIds, userId: req.user.id }, raw: true }) : [];
     const myViews = new Map(views.map((row) => [String(row.messageId), row.viewCount]));
@@ -267,6 +267,12 @@ router.get('/groups/:groupId', async (req, res, next) => {
     res.json({ group: { id: group.id, name: group.name, avatarUrl: group.avatarUrl || null, createdById: group.createdById, members: users }, items: await withGroupReplyPreviews(withViews.reverse()) });
   } catch (error) { next(error); }
 });
+
+// Sequence_ID = Redis_INCR("group_seq:" + Group_ID): strict ordering per group. Null if Redis is unavailable.
+async function nextGroupSeq(groupId) {
+  const seq = await redis.incr('group_seq:' + groupId).catch(() => null);
+  return seq;
+}
 
 // A group reply must quote a message from the same group
 async function groupReplyTarget(groupId, replyToId) {
@@ -330,13 +336,12 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     if (!body) throw httpError(400, 'Type a message first');
     const replyToId = await groupReplyTarget(req.params.groupId, req.body?.replyToId);
-    const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId });
+    const seq = await nextGroupSeq(req.params.groupId);
+    const message = await GroupMessage.create({ groupId: req.params.groupId, senderId: req.user.id, body, replyToId, seq });
     notifyGroupMembers(req.params.groupId, req.user.id);
-    // Sequence_ID = Redis_INCR("group_seq:" + Group_ID): strict ordering per group (returned with the message)
-    const seq = await redis.incr('group_seq:' + req.params.groupId).catch(() => null);
     await GroupConversation.update({ updatedAt: new Date() }, { where: { id: req.params.groupId } });
     publishToGroup(req.params.groupId);
-    res.status(201).json({ message: { ...message.toJSON(), seq } });
+    res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }
 });
 
@@ -356,6 +361,7 @@ router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req,
       senderId: req.user.id,
       body,
       replyToId,
+      seq: await nextGroupSeq(req.params.groupId),
       viewLimit,
       mediaUrl: asset.url,
       mediaKind: chatKindFor(req.file.mimetype),
@@ -872,18 +878,48 @@ router.post('/with/:userId', async (req, res, next) => {
 });
 
 // Send any file to one person (photo, video, audio or document), with an optional caption and reply.
+// BlurHash strings use base-83 characters, 6 to 40 long (see lib/blurhash.js)
+function validBlurhash(value) {
+  return typeof value === 'string' && /^[0-9A-Za-z#$%*+,\-.:;=?@\[\]^_{|}~]{6,40}$/.test(value) ? value : null;
+}
+
+// Send_Direct_Image step 2: a client id makes a retried send return the message it already created (24 hours)
+async function claimClientId(me, raw) {
+  const clientId = typeof raw === 'string' && /^[\w-]{8,64}$/.test(raw) ? raw : null;
+  if (!clientId) return { claimKey: null, duplicate: null };
+  const key = `dm:idem:${me}:${clientId}`;
+  let claimed = 'OK';
+  try { claimed = await redis.set(key, 'pending', 'EX', 86400, 'NX'); } catch { claimed = 'OK'; }
+  if (claimed) return { claimKey: key, duplicate: null };
+  const prior = await redis.get(key).catch(() => null);
+  const old = prior && prior !== 'pending' ? await DirectMessage.findByPk(prior) : null;
+  if (old) return { claimKey: null, duplicate: old };
+  throw httpError(409, 'This message is already being sent');
+}
+
 router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, res, next) => {
+  let claimKey = null;
   try {
     const me = req.user.id;
     const other = req.params.userId;
     if (!req.file) throw httpError(400, 'Choose a file to send');
     await assertCanMessage(me, other);
     const replyToId = await validReplyTarget(me, other, req.body?.replyToId);
+    const claim = await claimClientId(me, req.body?.clientId);
+    if (claim.duplicate) return res.status(200).json({ message: claim.duplicate.toJSON(), duplicate: true });
+    claimKey = claim.claimKey;
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/messages', { resourceType: 'auto' });
     const body = String(req.body?.body || '').trim().slice(0, 2000);
     const fileName = String(req.file.originalname || 'File').slice(0, 255);
     const viewLimit = [1, 2].includes(Number(req.body?.viewLimit)) && chatKindFor(req.file.mimetype) === 'photo' ? Number(req.body.viewLimit) : 0;
-    const message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit, ephemeral: normalizeEphemeral(req.body?.ephemeral) });
+    let message;
+    try {
+      message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit, ephemeral: normalizeEphemeral(req.body?.ephemeral), blurhash: validBlurhash(req.body?.blurhash) });
+    } catch (error) {
+      if (claimKey) await redis.del(claimKey).catch(() => {});
+      throw error;
+    }
+    if (claimKey) await redis.set(claimKey, String(message.id), 'EX', 86400).catch(() => {});
     await unhideChat(me, other);
     res.status(201).json({ message: message.toJSON() });
   } catch (error) { next(error); }

@@ -1,5 +1,6 @@
 import { fitImage } from './imageFit.js';
 import { uploadInChunks, needsChunks, forgetUpload, CHUNKED_THRESHOLD } from './chunkUpload.js';
+import { dominantColorOf } from './dominantColor.js';
 import { api } from '../api.js';
 import { refreshMyThumb } from './myThumb.js';
 import { useAppStore } from '../store.js';
@@ -45,6 +46,8 @@ export function startUpload(job) {
     if (toStory) {
       const storyMedia = await fitImage(storyFile || file, 0.9);
       await attachMedia(fd, storyMedia);
+      const dominant = String(storyMedia.type).startsWith('image/') ? await dominantColorOf(storyMedia) : null;
+      if (dominant) fd.append('dominantColor', dominant);
       if (storyAudio?.musicId) fd.append('musicId', storyAudio.musicId);
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
     }

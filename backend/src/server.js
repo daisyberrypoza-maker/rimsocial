@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
+const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -179,12 +179,15 @@ async function start() {
       ['replyToId', { type: DataTypesGroup.UUID, allowNull: true }],
       ['viewLimit', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
       ['viewCount', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
+      ['seq', { type: DataTypesGroup.BIGINT, allowNull: true }],
     ]) {
       if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
     }
   }
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
+  await ProfileView.sync();
+  await QuickAddDismissal.sync();
   // Add the mark-as-unread flag to existing chat_preferences tables (additive, idempotent)
   {
     const qiPref = sequelize.getQueryInterface();
@@ -264,10 +267,12 @@ async function start() {
   }
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
-  // Disappearing messages (direct_messages.ephemeral), added only when the table exists and the column is missing
+  // DataTypes must be declared before the first migration below uses it (a use before the const threw at startup)
   const DataTypes = require('sequelize').DataTypes;
+  // Disappearing messages (direct_messages.ephemeral), added only when the table exists and the column is missing
   const dmColumns = await qi.describeTable('direct_messages').catch(() => ({}));
   if (dmColumns.senderId && !dmColumns.ephemeral) await qi.addColumn('direct_messages', 'ephemeral', { type: DataTypes.STRING(20), allowNull: true });
+  if (dmColumns.senderId && !dmColumns.blurhash) await qi.addColumn('direct_messages', 'blurhash', { type: DataTypes.STRING(40), allowNull: true });
   // Carousel media is optional for legacy single-media posts. Add the nullable JSON
   // column only when missing; never rewrite or remove existing post content.
   if (!currentPostColumns.mediaItems) {
@@ -279,6 +284,7 @@ async function start() {
   if (!currentPostColumns.voiceUrl) await qi.addColumn('posts', 'voiceUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicUrl) await qi.addColumn('posts', 'musicUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicTitle) await qi.addColumn('posts', 'musicTitle', { type: DataTypes.STRING(120), allowNull: true });
+  if (!currentPostColumns.dominantColor) await qi.addColumn('posts', 'dominantColor', { type: DataTypes.STRING(7), allowNull: true });
   if (currentPostColumns.mediaUrl && currentPostColumns.mediaUrl.allowNull === false) {
     await qi.changeColumn('posts', 'mediaUrl', { type: DataTypes.STRING(512), allowNull: true });
   }

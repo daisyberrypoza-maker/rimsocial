@@ -34,6 +34,8 @@ const Post = sequelize.define('Post', {
   voiceUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicTitle: { type: DataTypes.STRING(120), allowNull: true },
+  // Dominant colour of the cover, computed on the uploader's device, so the card shows its colour before the image loads
+  dominantColor: { type: DataTypes.STRING(7), allowNull: true },
   mediaPublicId: { type: DataTypes.STRING(255), allowNull: true },
   mediaItems: { type: DataTypes.JSON, allowNull: true },
   allowRemix: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
@@ -359,7 +361,9 @@ const GroupMessage = sequelize.define('GroupMessage', {
   replyToId: { type: DataTypes.UUID, allowNull: true },
   // View limit for a photo: 0 = unlimited, 1 = once, 2 = twice (each member counts separately)
   viewLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
+  // Sequence_ID from Redis INCR per group: strict ordering (null for messages sent before this was added)
+  seq: { type: DataTypes.BIGINT, allowNull: true },
+}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }, { fields: ['groupId', 'seq'] }] });
 
 
 
@@ -391,6 +395,24 @@ const ChatPreference = sequelize.define('ChatPreference', {
   { unique: true, fields: ['userId', 'groupId'] },
   { fields: ['userId', 'muted'] },
 ] });
+
+// Profile visits: one row per viewer and profile. Counts feed Follow_Rank_Score (visits by followers) and
+// Quick_Add_Score (profile searches: how often I opened this person's profile).
+const ProfileView = sequelize.define('ProfileView', {
+  viewerId: { type: DataTypes.UUID, allowNull: false },
+  profileId: { type: DataTypes.UUID, allowNull: false },
+  views: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  lastViewedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'profile_views', indexes: [
+  { unique: true, fields: ['viewerId', 'profileId'] },
+  { fields: ['profileId'] },
+] });
+
+// Quick Add: people a person dismissed from suggestions (each dismissal subtracts from Quick_Add_Score)
+const QuickAddDismissal = sequelize.define('QuickAddDismissal', {
+  userId: { type: DataTypes.UUID, allowNull: false },
+  personId: { type: DataTypes.UUID, allowNull: false },
+}, { tableName: 'quick_add_dismissals', indexes: [{ unique: true, fields: ['userId', 'personId'] }] });
 
 // Posts a person saved (bookmark); shown on their own profile's Saved tab
 const SavedPost = sequelize.define('SavedPost', {
@@ -427,6 +449,8 @@ const DirectMessage = sequelize.define('DirectMessage', {
   viewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   // Disappearing messages: 'AFTER_VIEWING' (removed once read and the chat is left) or '24_HOURS'
   ephemeral: { type: DataTypes.STRING(20), allowNull: true, defaultValue: null },
+  // BlurHash of a photo: a placeholder shown while the image loads (Thumbnail_Base64_BlurHash)
+  blurhash: { type: DataTypes.STRING(40), allowNull: true, defaultValue: null },
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
 // Order created inside a direct chat by the seller, for the other person (buyer)
@@ -454,7 +478,7 @@ const PushSubscription = sequelize.define('PushSubscription', {
 module.exports = {
   Order,
   AudioTrack,
-  DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost,
+  DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost, ProfileView, QuickAddDismissal,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,

@@ -1,5 +1,6 @@
 import AppLink from '../components/AppLink.jsx';
 import { boxOf, goToPost } from '../lib/viewerMotion.js';
+import { profileCollapse } from '../lib/profileCollapse.js';
 import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
@@ -101,6 +102,8 @@ export default function Profile() {
   const [notifyBusy, setNotifyBusy] = useState(false);
   // 0 to 1: how far the scrolled bar has faded in
   const [compactProgress, setCompactProgress] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+  const collapse = profileCollapse(scrollY);
   const compactHeader = compactProgress > 0.5;
 
   useEffect(() => {
@@ -510,7 +513,7 @@ export default function Profile() {
   const hoursLeft = (s) => Math.max(1, Math.round((new Date(s.expiresAt) - Date.now()) / 3.6e6));
 
   return (
-    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110)))}>
+    <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => { setScrollY(e.currentTarget.scrollTop); setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110))); }}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, pointerEvents: compactHeader ? 'auto' : 'none' }}>
         <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
@@ -535,7 +538,7 @@ export default function Profile() {
           </div>
         </div>
         <div className="pf-id">
-          <div className="pf-avatar">
+          <div className="pf-avatar" style={{ transform: `translateY(${collapse.avatarY}px) scale(${collapse.avatarScale})`, transformOrigin: "center top" }}>
             <button type="button" className="pf-avatar-btn" aria-label={profile.avatarUrl ? 'View profile picture' : 'View profile avatar'} onClick={() => setImageViewerOpen(true)}>
               <Avatar keepPhoto user={avatarPreview ? { ...profile, avatarUrl: avatarPreview } : profile} size={84} storyRing={profile.storyRing || (profile.hasStory ? "unseen" : null)} />
             </button>

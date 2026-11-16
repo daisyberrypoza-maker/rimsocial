@@ -53,6 +53,22 @@ function StoryFace({ group, user }) {
   return <Avatar user={user} noRing />;
 }
 
+// Discover tile spec: creator or brand names are capped at 25 characters
+const capName = (text) => (text.length > 25 ? text.slice(0, 24).trimEnd() + '…' : text);
+// Discover tile spec: the headline is the story caption, up to 55 characters
+// Discover tile subtitle: when the story was posted ("Today", "Yesterday", or the date)
+const postedLabel = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  const now = new Date();
+  const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((dayStart(now) - dayStart(date)) / 86400000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+};
+const capHeadline = (text) => (text.length > 55 ? text.slice(0, 54).trimEnd() + '…' : text);
+
 export default function Stories() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,6 +122,7 @@ export default function Stories() {
 
   // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
+  const [carousel, setCarousel] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
   // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
   const AD_START_OFFSET = 3;
@@ -127,7 +144,8 @@ export default function Stories() {
     api('/v1/stories/popular?discover=1')
       .then((data) => {
         if (!current) return;
-        setPopular(data.items || []);   // already ranked by the server for this viewer
+        setCarousel(data.carousel || []);   // followed creators with unseen stories (high affinity)
+        setPopular(data.items || []);   // already ranked and diversified by the server for this viewer
       })
       .catch(logError);
     return () => { current = false; };
@@ -264,29 +282,47 @@ export default function Stories() {
       </section>
 
       {discoverItems.length > 0 && (
-        <section className="st-section" aria-label="Discover">
+        <section className="st-section st-discover" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
-          <div className="st-cards">
+          {carousel.length > 0 && (
+            <div className="st-discover-carousel" role="list">
+              {carousel.map((story) => (
+                <button key={'c' + story.id} role="listitem" className="st-discover-card-h" style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                  {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
+                    ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
+                    : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
+                  <span className="st-card-shade" />
+                  <span className="st-card-foot">
+                    <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
+                    <span className="st-card-name">{capName(nameOf(story.author || {}))}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="st-cards st-discover-grid">
             {discoverItems.map((item) => item.type === 'ad' ? (
-              <a className="st-card st-card-ad" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
+              <a className="st-card st-card-ad st-discover-tile" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
                 {item.ad.thumbUrl || item.ad.mediaUrl
                   ? <img className="st-card-img" src={mediaUrl(item.ad.thumbUrl || item.ad.mediaUrl)} alt="" />
                   : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
                 <span className="st-card-shade" />
                 <span className="st-card-foot">
-                  <span className="st-card-name">{item.ad.sponsorName || 'Sponsored'}</span>
+                  <span className="st-card-name">{capName(item.ad.sponsorName || 'Sponsored')}</span>
                   <span className="st-ad-label">Sponsored</span>
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className="st-card" key={item.key} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className="st-card st-discover-tile" key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
                 <span className="st-card-shade" />
+                {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
-                  <span className="st-card-name">{nameOf(story.author || {})}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                  <span className="st-card-name">{capName(nameOf(story.author || {}))}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                  <span className="st-discover-sub">{postedLabel(story.createdAt)}</span>
                 </span>
               </button>
             ); })())}

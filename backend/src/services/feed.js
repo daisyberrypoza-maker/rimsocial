@@ -100,6 +100,10 @@ async function getDiscoverPage({ userId, cursor, limit }) {
 const EXPLORE_AUTHOR_CAP = 2;
 const EXPLORE_WINDOW = 30;
 
+const SEED_POOL = 300;        // seed_pool_remaining starts at 300 (the blueprint's cold-start batch)
+const SEED_EVERY = 4;         // one seeding post per four ranked posts
+const SEED_WINDOW_HOURS = 72; // a post stops seeding after this long even if it has few views
+
 async function getExplorePage({ userId, cursor, limit }) {
   const n = clampLimit(limit);
   const offset = parseRankCursor(cursor);
@@ -137,7 +141,9 @@ async function getExplorePage({ userId, cursor, limit }) {
           shareRate: Math.min(1, shares / views),
           hoursPosted: ageHours,
         });
-        return { id: p.id, authorId: p.authorId, score, createdAt: new Date(p.createdAt).getTime() };
+        // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
+        const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
+        return { id: p.id, authorId: p.authorId, score, seeding, createdAt: new Date(p.createdAt).getTime() };
       })
       .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);
 
@@ -151,7 +157,18 @@ async function getExplorePage({ userId, cursor, limit }) {
       perAuthor.set(item.authorId, count + 1);
       head.push(item);
     }
-    ids = [...head, ...tail].map((item) => item.id);
+    // Seeding posts take one slot after every SEED_EVERY ranked posts, newest first, so new posts get early views
+    const ranked = [...head, ...tail];
+    const seedQueue = ranked.filter((item) => item.seeding).sort((a, b) => b.createdAt - a.createdAt);
+    const rankedOnly = ranked.filter((item) => !item.seeding);
+    const merged = [];
+    let next = 0;
+    rankedOnly.forEach((item, index) => {
+      merged.push(item);
+      if ((index + 1) % SEED_EVERY === 0 && next < seedQueue.length) merged.push(seedQueue[next++]);
+    });
+    merged.push(...seedQueue.slice(next));
+    ids = merged.map((item) => item.id);
     await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
   }
 
