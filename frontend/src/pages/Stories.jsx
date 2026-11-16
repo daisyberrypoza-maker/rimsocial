@@ -56,6 +56,17 @@ function StoryFace({ group, user }) {
 // Discover tile spec: creator or brand names are capped at 25 characters
 const capName = (text) => (text.length > 25 ? text.slice(0, 24).trimEnd() + '…' : text);
 // Discover tile spec: the headline is the story caption, up to 55 characters
+// Discover tile subtitle: when the story was posted ("Today", "Yesterday", or the date)
+const postedLabel = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  const now = new Date();
+  const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((dayStart(now) - dayStart(date)) / 86400000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+};
 const capHeadline = (text) => (text.length > 55 ? text.slice(0, 54).trimEnd() + '…' : text);
 
 export default function Stories() {
@@ -293,6 +304,7 @@ export default function Stories() {
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
                   <span className="st-card-name">{capName(nameOf(story.author || {}))}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                  <span className="st-discover-sub">{postedLabel(story.createdAt)}</span>
                 </span>
               </button>
             ); })())}

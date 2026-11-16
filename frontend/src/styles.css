@@ -7289,3 +7289,12 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-tile .st-ad-label { color:rgba(255,255,255,.8); font-size:11px; }
 /* Discover headline: the story caption, above the creator row (Discover card spec, 14px / 800, 3 lines) */
 .st-page .st-discover-tile .st-discover-headline { position:absolute; left:12px; right:12px; bottom:50px; color:#fff; font-size:14px; font-weight:800; line-height:1.2; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 1px 4px rgba(0,0,0,.35); }
+
+/* Discover grid tiles, updated spec: 3:5, 10px corners, #1c1c1e backing, 0.82/0.35/0 scrim, avatar stacked above a 16px name with a subtitle */
+.st-page .st-discover-tile { border-radius:10px !important; background:#1c1c1e !important; }
+.st-page .st-discover-tile .st-card-shade { background:linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.35) 35%, rgba(0,0,0,0) 60%); }
+.st-page .st-discover-tile .st-card-foot { left:8px; right:8px; bottom:8px; flex-direction:column; align-items:flex-start; gap:0; }
+.st-page .st-discover-tile .st-card-avatar { width:32px; height:32px; border:1.5px solid #fff; margin-bottom:6px; }
+.st-page .st-discover-tile .st-card-name { flex:none; width:100%; font-size:16px; font-weight:700; line-height:1.2; }
+.st-page .st-discover-tile .st-discover-sub { color:rgba(255,255,255,.75); font-size:12px; font-weight:500; line-height:1.2; margin-top:2px; }
+.st-page .st-discover-tile .st-discover-headline { bottom:112px; }
