@@ -127,8 +127,10 @@ jobs:
           cache: gradle
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools, platforms;android-34, build-tools;34.0.0'
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
       - name: Build web assets for the Capacitor shell
