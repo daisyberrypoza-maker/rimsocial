@@ -88,7 +88,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
-  const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen;
+  const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
@@ -568,7 +568,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       <div className="sv-bars">
         {Array.from({ length: total }).map((_, i) => (
           i === si ? (
-            <div key={`${i}-${current?.id || ''}`} className="sv-bar">
+            <div key={`${i}-${current?.id || '' }-${mediaReloadKey}`} className="sv-bar">
               <i
                 ref={activeFillRef}
                 className={isVideo ? 'sv-fill-live' : 'sv-fill-run'}
