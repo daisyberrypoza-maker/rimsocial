@@ -68,7 +68,7 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
     const storyKind = kindFor(media.mimetype);
     // Cloudinary can return a first-frame JPEG for a video; keep the original video URL untouched.
     const thumbUrl = storyKind === 'video' && String(asset.url || '').includes('/upload/')
-      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\\.[^/.]+$/, '.jpg')
+      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\.[^/.]+$/, '.jpg')
       : null;
     let voiceUrl = null;
     if (voice) {
