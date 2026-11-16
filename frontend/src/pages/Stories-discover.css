@@ -119,7 +119,7 @@
 
 /* Use one identical corner radius and clipping model for the carousel and grid. */
 .st-page {
-  --st-discover-card-radius:8px;
+  --st-discover-card-radius:7px;
 }
 .st-page .st-discover-carousel .st-discover-card-h,
 .st-page .st-discover-grid > .st-card,
