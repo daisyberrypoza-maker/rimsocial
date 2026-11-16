@@ -14,6 +14,7 @@ import Icon from '../components/Icon.jsx';
 import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 import '../snap-screens.css';
+import './Explore-radius.css';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 
 const KEY = 'explore';
