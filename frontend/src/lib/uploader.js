@@ -90,6 +90,7 @@ export function startUpload(job) {
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
       if (!isChunked) await requestWithProgress('/v1/stories', fd, 'Uploading story', 0, 90);
       else await api('/v1/stories', { method: 'POST', body: fd });
+    } else if (chunked) {
       const totalBytes = postItems.reduce((sum, item) => sum + item.size, 0);
       let completedBytes = 0;
       const ids = [];
