@@ -156,3 +156,26 @@
 
 
 /* The same 3.5-tile calculation applies at every viewport width. */
+
+
+/* Enforce the reference layout in the page stylesheet itself.
+   3.5 equal cards + three 10px gaps = 3 full cards and half of card four. */
+.st-page .st-discover-carousel {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  padding: 0 14px 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+.st-page .st-discover-carousel > .st-discover-card-h {
+  flex: 0 0 calc((100% - 30px) / 3.5) !important;
+  width: calc((100% - 30px) / 3.5) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 3 / 5 !important;
+  box-sizing: border-box !important;
+}
