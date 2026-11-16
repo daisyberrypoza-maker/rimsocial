@@ -70,7 +70,11 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
       const pipe = redis.pipeline();
       pipe.hincrbyfloat(spotKey, 'watchPct', completion);
       pipe.hincrby(spotKey, 'watches', 1);
-      if (completion >= 0.9) pipe.hincrby(spotKey, 'completions', 1);
+      pipe.expire(spotKey, 60 * 60 * 24 * 30);
+      await pipe.exec();
+    } else if (event === 'completed') {
+      const pipe = redis.pipeline();
+      pipe.hincrby(spotKey, 'completions', 1);
       pipe.expire(spotKey, 60 * 60 * 24 * 30);
       await pipe.exec();
     } else if (event === 'skipped') {
