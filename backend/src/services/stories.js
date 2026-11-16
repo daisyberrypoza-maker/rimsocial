@@ -88,7 +88,7 @@ async function getStoryRail(viewerId) {
       if (hit && Array.isArray(hit.items)) {
         return {
           ...hit,
-          items: hit.items.filter((item) => !blocked.has(String(item.user?.id)) && !muted.has(String(item.user?.id))),
+          items: hit.items.filter((item) => !blocked.has(item.user?.id) && !muted.has(String(item.user?.id))),
         };
       }
     } catch { /* Discard malformed cache and rebuild from the story tray/database. */ }
