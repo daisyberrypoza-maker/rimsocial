@@ -2,6 +2,36 @@ const router = require('express').Router();
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 
+// GET /v1/feed/personalization: whether public feeds use this viewer's personal signals
+router.get('/personalization', requireAuth, async (req, res, next) => {
+  try {
+    const redis = require('../redis');
+    const off = await redis.get(`feed:personalization-off:${req.user.id}`).catch(() => null);
+    res.json({ enabled: off !== '1' });
+  } catch (e) { next(e); }
+});
+
+// PUT /v1/feed/personalization { enabled: boolean }
+router.put('/personalization', requireAuth, async (req, res, next) => {
+  try {
+    if (typeof req.body?.enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be a boolean' });
+    const redis = require('../redis');
+    const key = `feed:personalization-off:${req.user.id}`;
+    if (req.body.enabled) await redis.del(key);
+    else await redis.set(key, '1');
+    res.json({ enabled: req.body.enabled });
+  } catch (e) { next(e); }
+});
+
+// POST /v1/feed/personalization/reset: clear learned per-viewer preference signals
+router.post('/personalization/reset', requireAuth, async (req, res, next) => {
+  try {
+    const redis = require('../redis');
+    await redis.del(`feed:preferences:${req.user.id}`, `feed:topic-preferences:${req.user.id}`);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 // GET /v1/feed/discover?cursor=...&limit=10
 router.get('/discover', requireAuth, async (req, res, next) => {
   try {
