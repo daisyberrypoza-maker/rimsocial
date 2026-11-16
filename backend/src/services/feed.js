@@ -72,7 +72,6 @@ async function getDiscoverPage({ userId, cursor, limit }) {
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
       UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
-      redis.hgetall(`feed:preferences:${userId}`).catch(() => ({})),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
@@ -121,6 +120,7 @@ async function getExplorePage({ userId, cursor, limit }) {
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
       UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
+      redis.hgetall(`feed:preferences:${userId}`).catch(() => ({})),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
