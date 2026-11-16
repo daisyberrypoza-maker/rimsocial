@@ -13,8 +13,8 @@
 .st-page .st-discover-card-h {
   position:relative;
   /* Responsive Snapchat-style tray: about 2.4 tile widths across the viewport. */
-  flex:0 0 calc((100vw - 48px) / 2.4);
-  width:calc((100vw - 48px) / 2.4);
+  flex:0 0 calc((100vw - 48px) / 2.4 - 3px);
+  width:calc((100vw - 48px) / 2.4 - 3px);
   height:auto;
   aspect-ratio:3 / 5;
   min-width:0;
@@ -155,7 +155,7 @@
 /* Keep the responsive carousel tile ratio stable across narrow and wide phones. */
 @media (min-width:700px) {
   .st-page .st-discover-card-h {
-    flex-basis:clamp(148px, calc((100vw - 48px) / 2.4), 220px);
-    width:clamp(148px, calc((100vw - 48px) / 2.4), 220px);
+    flex-basis:clamp(145px, calc((100vw - 48px) / 2.4 - 3px), 217px);
+    width:clamp(145px, calc((100vw - 48px) / 2.4 - 3px), 217px);
   }
 }
