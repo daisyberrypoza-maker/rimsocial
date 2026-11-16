@@ -91,8 +91,7 @@ export default function StoryViewer() {
   // Stop playback as soon as the app is minimised; playback resumes only on a tap
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => { if (state !== 'active') setPaused(true); });
-    return (
-    {focused && <StatusBar barStyle="light-content" />}) => sub.remove();
+    return () => sub.remove();
   }, []);
 
   // Swipe up on the lower half opens the options, swipe down closes
@@ -581,6 +580,7 @@ function Sheet({ visible, title, onClose, children }) {
 
 function SheetRow({ icon, label, onPress, danger = false, disabled = false }) {
   return (
+    {focused && <StatusBar barStyle="light-content" />}
     <Pressable style={[styles.row, disabled && styles.rowDisabled]} onPress={onPress} disabled={disabled}>
       <View style={styles.rowIcon}>{icon}</View>
       <Text style={[styles.rowLabel, danger && styles.rowDanger]}>{label}</Text>
