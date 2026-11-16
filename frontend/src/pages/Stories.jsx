@@ -236,7 +236,11 @@ export default function Stories() {
     else navigate('/u/' + person.username);
   }
   const others = rail.filter((group) => group.user?.id !== me?.id);
-  const orderedOthers = [...others].sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
+  const orderedOthers = [...others].sort((a, b) =>
+    Number(Boolean(b.unseen)) - Number(Boolean(a.unseen))
+      || (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0)
+      || new Date(b.latestAt || 0).getTime() - new Date(a.latestAt || 0).getTime()
+  );
   const byId = new Map(suggested.map((u) => [u.id, u]));
   const discoverList = (ranking.discoverOrder.length
     ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean)
