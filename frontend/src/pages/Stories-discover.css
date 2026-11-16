@@ -14,7 +14,8 @@
   position:relative;
   flex:0 0 148px;
   width:148px;
-  height:224px;
+  height:auto;
+  aspect-ratio:3 / 5;
   min-width:148px;
   overflow:hidden;
   border-radius:10px;
@@ -34,10 +35,14 @@
   width:100% !important;
   min-width:0 !important;
   height:auto !important;
-  aspect-ratio:2 / 3;
+  aspect-ratio:3 / 5;
   overflow:hidden !important;
   border-radius:10px !important;
 }
+.st-page .st-discover-card-h > img,
+.st-page .st-discover-card-h .st-card-ambient,
+.st-page .st-discover-card-h .st-card-foreground,
+.st-page .st-discover-card-h .st-card-img,
 .st-page .st-discover-tile > img,
 .st-page .st-discover-tile > video,
 .st-page .st-discover-tile .st-card-ambient,

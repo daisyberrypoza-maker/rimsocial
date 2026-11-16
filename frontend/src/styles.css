@@ -7358,8 +7358,9 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 /* Stories: the page itself scrolls inside the app shell, so the sticky header stays put */
 .app > .st-page { min-height: 0 !important; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-/* Discover tiles and suggestion cards: 3px corner radius */
-.st-page .st-discover-tile, .st-page .st-discover-card-h, .friends-suggestion-row, .rec-discover-row { border-radius: 3px !important; }
+/* Stories Discover: consistent 5px corners on the vertical grid and horizontal carousel cards. */
+.st-page .st-discover-tile, .st-page .st-discover-card-h { border-radius: 5px !important; }
+.friends-suggestion-row, .rec-discover-row { border-radius: 3px !important; }
 
 /* Discover tile text and avatar per spec: 1px soft drop shadow on names, 2px avatar border */
 .st-page .st-discover-tile .st-card-name, .st-page .st-discover-tile .st-discover-headline { text-shadow: 0 1px 2px rgba(0,0,0,.5); }

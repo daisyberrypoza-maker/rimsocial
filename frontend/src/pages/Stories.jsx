@@ -370,7 +370,7 @@ export default function Stories() {
                     <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                   </>}
                 <span className="st-card-shade" />
-                {story.viewed && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
+                {(story.viewed || viewedDiscoverIds.has(String(story.id))) && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
                 {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
