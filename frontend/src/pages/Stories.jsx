@@ -68,6 +68,7 @@ const postedLabel = (value) => {
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 };
 const capHeadline = (text) => (text.length > 55 ? text.slice(0, 54).trimEnd() + '…' : text);
+const discoverStorySrc = (story) => story?.kind === 'video' ? (story.thumbUrl ? mediaUrl(story.thumbUrl) : null) : mediaUrl(story?.thumbUrl || story?.mediaUrl);
 
 export default function Stories() {
   const navigate = useNavigate();
@@ -288,9 +289,12 @@ export default function Stories() {
             <div className="st-discover-carousel" role="list">
               {carousel.map((story) => (
                 <button key={'c' + story.id} role="listitem" className="st-discover-card-h" style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
-                  {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
+                  {story.kind === 'text' || !discoverStorySrc(story)
                     ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground, story.id) }}>{story.storyText}</span>
-                    : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
+                    : <>
+                      <img className="st-card-ambient" src={discoverStorySrc(story)} alt="" aria-hidden="true" />
+                      <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
+                    </>}
                   <span className="st-card-shade" />
                   <span className="st-card-foot">
                     <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
@@ -314,9 +318,12 @@ export default function Stories() {
               </a>
             ) : (() => { const story = item.story; return (
               <button className="st-card st-discover-tile" key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
-                {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
+                {story.kind === 'text' || !discoverStorySrc(story)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
-                  : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
+                  : <>
+                    <img className="st-card-ambient" src={discoverStorySrc(story)} alt="" aria-hidden="true" />
+                    <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
+                  </>}
                 <span className="st-card-shade" />
                 {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
