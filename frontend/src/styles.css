@@ -7523,3 +7523,5 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root .sv-stage.sv-grade-warm > .sv-image { filter: sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04); }
 .sv-root .sv-stage.sv-grade-noir > .sv-image { filter: grayscale(1) contrast(1.25) brightness(.95); }
 .sv-root .sv-stage.sv-grade-soft > .sv-image { filter: contrast(.95) saturate(1.1) brightness(1.06); }
+
+.sv-root .sv-stage > video.sv-media { object-fit: contain; }
