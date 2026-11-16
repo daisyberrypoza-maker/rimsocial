@@ -18,7 +18,8 @@
   aspect-ratio:3 / 5;
   min-width:148px;
   overflow:hidden;
-  border-radius:8px;
+  border-radius:10px;
+  box-sizing:border-box;
   scroll-snap-align:start;
 }
 .st-page .st-discover-grid {
@@ -38,14 +39,18 @@
   height:auto !important;
   aspect-ratio:3 / 5;
   overflow:hidden !important;
-  border-radius:8px !important;
+  border-radius:10px !important;
+  box-sizing:border-box;
 }
 .st-page .st-discover-card-h > img,
+.st-page .st-discover-card-h > video,
+.st-page .st-discover-card-h > picture,
 .st-page .st-discover-card-h .st-card-ambient,
 .st-page .st-discover-card-h .st-card-foreground,
 .st-page .st-discover-card-h .st-card-img,
 .st-page .st-discover-tile > img,
 .st-page .st-discover-tile > video,
+.st-page .st-discover-tile > picture,
 .st-page .st-discover-tile .st-card-ambient,
 .st-page .st-discover-tile .st-card-foreground,
 .st-page .st-discover-tile .st-card-img {
@@ -57,6 +62,26 @@
   min-width:0;
   min-height:0;
   object-fit:cover !important;
+  object-position:center;
+  max-width:100%;
+  max-height:100%;
+  box-sizing:border-box;
+}
+.st-page .st-discover-card-h picture,
+.st-page .st-discover-tile picture {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+.st-page .st-discover-card-h picture > img,
+.st-page .st-discover-tile picture > img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
   object-position:center;
 }
 .st-page .st-discover-tile .st-card-ambient { filter:blur(11.2px) brightness(.62); transform:scale(1.12); }
