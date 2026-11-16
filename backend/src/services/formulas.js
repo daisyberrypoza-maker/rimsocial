@@ -22,8 +22,11 @@ function streakDays(dayKeys, now = Date.now()) {
 }
 
 // Friend_Story_Score = (Direct_Snaps_Sent*3 + Chat_Msgs_7d*2 + Streak_Days*0.5 + Completion_Rate*5) * Time_Decay(hours, 1.2)
-function friendStoryScore({ snapsSent7d = 0, chats7d = 0, streak = 0, completionRate = 0, hoursPosted = 0 }) {
-  return (snapsSent7d * 3 + chats7d * 2 + streak * 0.5 + completionRate * 5) * timeDecay(hoursPosted, 1.2);
+// Friends story score: (Chat_Score + Story_Affinity) * exp(-0.08 * hours). Story replies are not tracked yet (0).
+function friendStoryScore({ snapsSent7d = 0, chats7d = 0, streak = 0, storyReplies30d = 0, completionRate = 0, hoursPosted = 0 }) {
+  const chatScore = snapsSent7d * 2 + chats7d * 1.5 + streak * 0.5;
+  const storyAffinity = storyReplies30d * 5 + completionRate * 3;
+  return (chatScore + storyAffinity) * Math.exp(-0.08 * Math.max(0, hoursPosted));
 }
 
 // Best_Friend_Score = Snaps_Sent_30d*2.5 + Snaps_Recv_30d*2.5 + Chats_30d*1.0 + Streak_Days*1.5
@@ -136,8 +139,19 @@ function botRiskScore({ friendRequests1h = 0, failedLogins24h = 0, accountsPerDe
 }
 function shouldChallengeBot(signals) { return botRiskScore(signals) >= 50; }
 // Quick_Add_Score: mutual friends, phone contacts, shared groups, profile searches, same location, minus dismissals
-function quickAddScore({ mutual = 0, contacts = 0, sharedGroups = 0, profileSearches = 0, sameLocation = 0, dismissCount = 0 }) {
-  return mutual * 10 + contacts * 50 + sharedGroups * 15 + profileSearches * 20 + sameLocation * 5 - dismissCount * 100;
+// Suggest_Score: 2 per mutual friend (closeness 1), 50 per two-way phone contact, 5 same location; dismissed people are removed
+function quickAddScore({ mutual = 0, contacts = 0, sameLocation = 0, dismissCount = 0 }) {
+  return mutual * 2 + contacts * 50 + sameLocation * 5 - dismissCount * 100;
 }
 
-module.exports = { creatorScore, quickAddScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
+// Discover_Score = P_Click * P_Complete * Sub_Boost * Geo_Boost * Skip_Penalty * Freshness
+// P_Click and P_Complete need a trained model, so they default to 1 until one exists.
+function discoverFeedScore({ pClick = 1, pComplete = 1, subscribed = false, sameCountry = false, skipRate = 0, hoursPosted = 0 }) {
+  const subBoost = subscribed ? 1.5 : 1;
+  const geoBoost = sameCountry ? 1.35 : 1;
+  const skipPenalty = skipRate > 0.5 ? 0.4 : 1;
+  const freshness = 1 / (1 + 0.15 * Math.max(0, hoursPosted));
+  return pClick * pComplete * subBoost * geoBoost * skipPenalty * freshness;
+}
+
+module.exports = { creatorScore, quickAddScore, discoverFeedScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
