@@ -30,6 +30,7 @@ test('group inbox uses per-group latest messages and per-member unread cursors',
   assert.match(server, /addColumn\('group_members', 'lastReadAt'/);
   assert.match(messages, /GroupMessage\.findOne\(\{[\s\S]*?order: \[\['seq', 'DESC'\], \['createdAt', 'DESC'\]\]/);
   assert.match(messages, /GroupMessage\.count\(\{[\s\S]*?createdAt: \{ \[Op\.gt\]: membership\.lastReadAt \}/);
+  assert.match(messages, /membership\.lastReadAt \|\| membership\.createdAt/);
   assert.match(messages, /membership\.update\(\{ lastReadAt: new Date\(\) \}\)/);
   assert.match(frontend, /group\.unread/);
 });
