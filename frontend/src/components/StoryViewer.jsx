@@ -596,6 +596,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
               ref={videoRef}
               className="sv-media"
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
+              poster={current.thumbUrl ? mediaUrl(current.thumbUrl) : undefined}
               playsInline
               muted={muted || Boolean(current.musicUrl)}
               preload="auto"
