@@ -1,13 +1,13 @@
 const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
-const { discoverScore, interestBoostFor } = require('./formulas');
+const { discoverFeedScore } = require('./formulas');
 const { sequelize } = require('../db');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
 
-const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator'];
+const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator', 'country'];
 
 async function viewedSet(viewerId, storyIds) {
   if (!storyIds.length) return new Set();
@@ -220,20 +220,14 @@ async function getDiscoverStories(viewerId, limit) {
   ]);
   const followedIds = new Set(follows.map((row) => String(row.followeeId)));
   // Interest_Boost: topics of posts the viewer liked (stories carry a topic when one is set)
-  const likedRows = await sequelize.query(
-    `SELECT p.topic FROM post_likes pl JOIN posts p ON p.id = pl.postId
-     WHERE pl.userId = :me AND p.topic IS NOT NULL ORDER BY pl.createdAt DESC LIMIT 200`,
-    { replacements: { me: viewerId } },
-  ).then(([rows]) => rows || []).catch(() => []);
-  const likedTopics = new Set(likedRows.map((row) => row.topic));
+  const viewer = await User.findByPk(viewerId, { attributes: ['country'], raw: true }).catch(() => null);
   const now = Date.now();
   const scored = candidates.map((story) => {
     const hoursPosted = (now - new Date(story.createdAt).getTime()) / 3600000;
-    // Discover_Score from the signals RimSocial measures: subscribe (following the creator).
-    // Full watch, share, rewatch, skip and exit are not tracked yet, so they are 0.
-    const score = discoverScore({
-      subscribe: followedIds.has(String(story.authorId)) ? 1 : 0,
-      interestBoost: interestBoostFor(story.topic, likedTopics),
+    // Discover_Score: subscription and same-country boosts, freshness. Click and completion models are not built yet (1).
+    const score = discoverFeedScore({
+      subscribed: followedIds.has(String(story.authorId)),
+      sameCountry: Boolean(viewer?.country) && story.author?.country === viewer.country,
       hoursPosted,
     });
     return { story, score };

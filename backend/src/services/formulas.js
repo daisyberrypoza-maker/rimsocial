@@ -139,8 +139,19 @@ function botRiskScore({ friendRequests1h = 0, failedLogins24h = 0, accountsPerDe
 }
 function shouldChallengeBot(signals) { return botRiskScore(signals) >= 50; }
 // Quick_Add_Score: mutual friends, phone contacts, shared groups, profile searches, same location, minus dismissals
-function quickAddScore({ mutual = 0, contacts = 0, sharedGroups = 0, profileSearches = 0, sameLocation = 0, dismissCount = 0 }) {
-  return mutual * 10 + contacts * 50 + sharedGroups * 15 + profileSearches * 20 + sameLocation * 5 - dismissCount * 100;
+// Suggest_Score: 2 per mutual friend (closeness 1), 50 per two-way phone contact, 5 same location; dismissed people are removed
+function quickAddScore({ mutual = 0, contacts = 0, sameLocation = 0, dismissCount = 0 }) {
+  return mutual * 2 + contacts * 50 + sameLocation * 5 - dismissCount * 100;
 }
 
-module.exports = { creatorScore, quickAddScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
+// Discover_Score = P_Click * P_Complete * Sub_Boost * Geo_Boost * Skip_Penalty * Freshness
+// P_Click and P_Complete need a trained model, so they default to 1 until one exists.
+function discoverFeedScore({ pClick = 1, pComplete = 1, subscribed = false, sameCountry = false, skipRate = 0, hoursPosted = 0 }) {
+  const subBoost = subscribed ? 1.5 : 1;
+  const geoBoost = sameCountry ? 1.35 : 1;
+  const skipPenalty = skipRate > 0.5 ? 0.4 : 1;
+  const freshness = 1 / (1 + 0.15 * Math.max(0, hoursPosted));
+  return pClick * pComplete * subBoost * geoBoost * skipPenalty * freshness;
+}
+
+module.exports = { creatorScore, quickAddScore, discoverFeedScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
