@@ -61,8 +61,10 @@ export function startUpload(job) {
     }
 
     const postItems = [];
-    for (const item of (files?.length ? files : [file])) postItems.push(await fitImage(item, 0.9));
-    const chunked = needsChunks(postItems);
+    if (!toStory) {
+      for (const item of (files?.length ? files : [file])) postItems.push(await fitImage(item, 0.9));
+    }
+    const chunked = !toStory && needsChunks(postItems);
 
     if (toStory && storyFiles?.length > 1) {
       for (let index = 0; index < storyFiles.length; index += 1) {
