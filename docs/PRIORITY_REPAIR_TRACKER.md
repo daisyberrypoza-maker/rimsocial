@@ -1,10 +1,19 @@
 # RimSocial Priority Repair Tracker
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-16
 Repository: `daisyberrypoza-maker/rimsocial`
 Default branch: `main`
 
 This is a living repair log. The single release exit criteria and consolidated sign-off are in [RELEASE_FINISH_LINE.md](./RELEASE_FINISH_LINE.md). A branch or pull request is not considered complete until its changes are reviewed, CI passes on the current head, API/database behavior is tested, and mobile/device flows are checked where relevant. Do not treat each small PR as the finish line.
+
+## Verified changes — 2026-11-16
+- [x] PR #121 merged: adaptive blurred media backgrounds and tone treatment for the full-screen Story viewer, Stories cards and Discover cards. CI run 1627 passed.
+- [x] PR #124 merged: fixed the missing `useSwipeTabs` import used by the Messages screen. CI run 1643 passed.
+- [x] PR #128 merged: raised the mobile Rimlight video progress indicator 8 points above the lower edge. CI run 1653 passed.
+- [x] Confirmed existing web PostCard hides the gift action on the owner's own posts, web Rimlight seek control is positioned above the bottom navigation, and web profile-list navigation passes a return path when opening another profile.
+- [x] PR #119 and PR #126 closed as superseded; their work was replaced by the merged #121 and #128 changes.
+- [x] PR #67 closed as superseded: current main already contains migrations 030–032, messaging media routes, Conversation attachment handling and MyFriends. Its 314-commits-behind branch was not merged wholesale.
+- [ ] Physical Android playback/seek verification remains required; CI does not replace device testing.
 
 ## Current priority work
 
