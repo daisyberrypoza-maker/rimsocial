@@ -60,3 +60,8 @@ test('photo and video tone presets and compact Stories typography are defined', 
   assert.match(styles, /\.st-page \.st-friends-heading[\s\S]{0,280}font-weight: 500/);
   assert.match(styles, /\.st-page \.st-handle[\s\S]{0,250}font-weight: 400/);
 });
+
+test('previous creator navigation opens that creator’s latest retained story', () => {
+  assert.match(viewer, /const previousCount = Math\.min\(100, Math\.max\(1, Number\(previousGroup\?\.storyCount\) \|\| 1\)\)/);
+  assert.match(viewer, /firstStoryRef\.current = previousCount - 1/);
+});
