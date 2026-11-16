@@ -366,7 +366,8 @@ async function start() {
     await purgeRemovedMedia();
     await processPendingMediaCleanup();
   };
-  app.listen(config.port, '0.0.0.0', () => console.log(`Clipverse API listening on 0.0.0.0:${config.port}`));
+  const port = Number(process.env.PORT) || Number(config.port) || 3000;
+  app.listen(port, '0.0.0.0', () => console.log(`Clipverse API listening on 0.0.0.0:${port}`));
   Promise.resolve().then(runMediaCleanup).catch((e) => console.error('Initial media cleanup failed:', e.message));
   setInterval(() => runMediaCleanup().catch((e) => console.error('Media cleanup failed:', e.message)), 10 * 60 * 1000).unref();
 }
