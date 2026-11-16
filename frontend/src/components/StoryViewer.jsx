@@ -90,14 +90,16 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   useEffect(() => {
     let alive = true;
     const saved = useAppStore.getState().storyCache?.[group.user.id];
-    const savedItems = Array.isArray(saved?.items) && saved.items.length ? saved.items : null;
+    const cachedItems = Array.isArray(saved?.items) ? saved.items : [];
+    const savedItems = cachedItems.filter((item) => !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now());
+    const usableSavedItems = savedItems.length ? savedItems : null;
     const requestedIndex = firstStoryRef.current;
     firstStoryRef.current = 0;
     setSi(requestedIndex);
     setLoadError(false);
-    if (savedItems) {
-      setStories(savedItems);
-      setSi(Math.min(requestedIndex, savedItems.length - 1));
+    if (usableSavedItems) {
+      setStories(usableSavedItems);
+      setSi(Math.min(requestedIndex, usableSavedItems.length - 1));
       setSubscribed(Boolean(saved.isSubscribed));
     } else {
       setStories(null);
@@ -106,7 +108,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       .then((d) => {
         if (!alive) return;
         const items = Array.isArray(d.items) ? d.items : [];
-        evictMedia(missingItems(savedItems, items));
+        evictMedia(missingItems(cachedItems, items));
         setStories(items);
         setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
         setLoadError(false);
@@ -115,7 +117,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       })
       .catch(() => {
         if (!alive) return;
-        if (savedItems) setStories(savedItems);
+        if (usableSavedItems) setStories(usableSavedItems);
         else {
           setStories(null);
           setLoadError(true);
@@ -181,11 +183,16 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     setTyping(false);
     setReply('');
     if (!current) return;
-    // The owner's own watching is not counted
-    if (!isOwner) api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
-      if (error.status === 404) dropStory(current.id);
-    });
-    updateCurrent(current.id, { viewed: true });
+    // Only mark a story as viewed after the server confirms the view record.
+    if (isOwner) {
+      updateCurrent(current.id, { viewed: true });
+      return;
+    }
+    api(`/v1/stories/${current.id}/view`, { method: 'POST' })
+      .then(() => updateCurrent(current.id, { viewed: true }))
+      .catch((error) => {
+        if (error.status === 404) dropStory(current.id);
+      });
   }, [current?.id]);
 
   // This viewer's ring goes grey once every story from this creator has been watched on this device
