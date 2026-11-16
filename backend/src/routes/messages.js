@@ -67,9 +67,9 @@ function normalizeEphemeral(value) {
   return EPHEMERAL_MODES.includes(value) ? value : null;
 }
 
-async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0, ephemeral = null }) {
+async function createMessage({ me, other, body = '', mediaUrl = null, mediaKind = null, mediaName = null, replyToId = null, forwarded = false, orderId = null, storyAuthorId = null, storyPostId = null, viewLimit = 0, ephemeral = null, blurhash = null }) {
   const postId = storyPostId || await linkedPostId(body);
-  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral });
+  const message = await DirectMessage.create({ senderId: me, recipientId: other, body, mediaUrl, mediaKind, mediaName, postId, replyToId, forwarded, orderId, storyAuthorId, viewLimit, ephemeral, blurhash });
   liveChat.publish([other], { type: 'changed', kind: 'direct', with: String(me) }).catch(() => {});
   // Push a generic alert unless the recipient muted this chat (no message text is sent)
   const muted = await ChatPreference.findOne({ where: { userId: other, peerId: me, muted: true }, attributes: ['id'], raw: true }).catch(() => null);
@@ -878,6 +878,11 @@ router.post('/with/:userId', async (req, res, next) => {
 });
 
 // Send any file to one person (photo, video, audio or document), with an optional caption and reply.
+// BlurHash strings use base-83 characters, 6 to 40 long (see lib/blurhash.js)
+function validBlurhash(value) {
+  return typeof value === 'string' && /^[0-9A-Za-z#$%*+,\-.:;=?@\[\]^_{|}~]{6,40}$/.test(value) ? value : null;
+}
+
 // Send_Direct_Image step 2: a client id makes a retried send return the message it already created (24 hours)
 async function claimClientId(me, raw) {
   const clientId = typeof raw === 'string' && /^[\w-]{8,64}$/.test(raw) ? raw : null;
@@ -909,7 +914,7 @@ router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, re
     const viewLimit = [1, 2].includes(Number(req.body?.viewLimit)) && chatKindFor(req.file.mimetype) === 'photo' ? Number(req.body.viewLimit) : 0;
     let message;
     try {
-      message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit, ephemeral: normalizeEphemeral(req.body?.ephemeral) });
+      message = await createMessage({ me, other, body, mediaUrl: asset.url, mediaKind: chatKindFor(req.file.mimetype), mediaName: fileName, replyToId, viewLimit, ephemeral: normalizeEphemeral(req.body?.ephemeral), blurhash: validBlurhash(req.body?.blurhash) });
     } catch (error) {
       if (claimKey) await redis.del(claimKey).catch(() => {});
       throw error;

@@ -447,6 +447,8 @@ const DirectMessage = sequelize.define('DirectMessage', {
   viewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   // Disappearing messages: 'AFTER_VIEWING' (removed once read and the chat is left) or '24_HOURS'
   ephemeral: { type: DataTypes.STRING(20), allowNull: true, defaultValue: null },
+  // BlurHash of a photo: a placeholder shown while the image loads (Thumbnail_Base64_BlurHash)
+  blurhash: { type: DataTypes.STRING(40), allowNull: true, defaultValue: null },
 }, { tableName: 'direct_messages', indexes: [{ fields: ['recipientId', 'readAt'] }, { fields: ['senderId', 'recipientId', 'createdAt'] }] });
 
 // Order created inside a direct chat by the seller, for the other person (buyer)
