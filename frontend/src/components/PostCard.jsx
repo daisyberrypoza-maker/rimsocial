@@ -10,6 +10,7 @@ import { startWhenReady } from '../lib/playVideo.js';
 import { formatCount, formatRelativeTime } from '../lib/format.js';
 import Avatar from './Avatar.jsx';
 import './PostCarousel.css';
+import './SponsoredDisclosure.css';
 
 // Sound preference is shared by every video in the feed, like TikTok.
 let feedSoundOn = true;
@@ -413,7 +414,8 @@ export default function PostCard({ post, active }) {
       <div className="snap-sound">♫ Original sound · @{username}</div>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.isSponsored && <>
-        <div className="sponsor-copy"><strong>{post.sponsorName}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
+        <div className="sponsor-disclosure" aria-label="Advertisement and paid partnership">Ad · Paid partnership</div>
+        <div className="sponsor-copy"><strong>{post.sponsorName || 'Sponsored partner'}</strong>{post.sponsorDescription && <span>{post.sponsorDescription}</span>}</div>
         {post.sponsorUrl && <AppLink className="sponsor-cta" href={post.sponsorUrl}>{post.sponsorCta || 'Shop Now'} <span aria-hidden="true">›</span></AppLink>}
       </>}
     </div>
