@@ -24,6 +24,29 @@ const QUICK_REACTIONS = ['❤️', '😂', '😮', '🔥', '👏', '😢'];
 const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual content', 'Violence or dangerous content', 'Something else'];
 const FAVORITES_KEY = 'rimsocial:favoriteStories';
 
+const STORY_BG = {
+  sunset: '#ff9b9b', ocean: '#73c8e8', mint: '#75d9ba', ember: '#ff9c86',
+  night: '#aaa9ed', plain: '#e8dc68', rose: '#f5a8c6', sky: '#a6d7f4',
+  lime: '#c4dc69', lilac: '#c4a9f2',
+};
+function textBackground(key, id) {
+  if (STORY_BG[key]) return STORY_BG[key];
+  const seed = String(id || 'rimsocial');
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) { hash ^= seed.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+  const values = Object.values(STORY_BG);
+  return values[(hash >>> 0) % values.length];
+}
+function toneOverlay(preset) {
+  const stylesByPreset = {
+    warm: { backgroundColor: 'rgba(255,150,70,0.10)' },
+    noir: { backgroundColor: 'rgba(0,0,0,0.20)' },
+    soft: { backgroundColor: 'rgba(255,220,205,0.12)' },
+    discover: { backgroundColor: 'rgba(255,190,130,0.07)' },
+  };
+  return stylesByPreset[preset] || stylesByPreset.discover;
+}
+
 // "14h ago", "3m ago", "now"
 function timeAgo(iso) {
   if (!iso) return '';
@@ -53,6 +76,12 @@ export default function StoryViewer() {
   const [gi, setGi] = useState(() => Math.max(0, groups.findIndex((g) => g.user.id === startUserId)));
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
+  const [storiesOwnerId, setStoriesOwnerId] = useState(null);
+  const [storiesLoadedOwnerId, setStoriesLoadedOwnerId] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [mediaError, setMediaError] = useState(false);
+  const [mediaReloadKey, setMediaReloadKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
   const [flash, setFlash] = useState(null);
@@ -68,12 +97,13 @@ export default function StoryViewer() {
 
   const group = groups[gi];
   const creatorName = group?.user?.displayName || group?.user?.username || 'Creator';
-  const current = stories?.[si];
+  const groupStories = storiesOwnerId === group?.user?.id ? stories : null;
+  const current = groupStories?.[si];
   const isVideo = current?.kind === 'video';
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group?.user?.id === me.id;
   // Stops the story while typing or while a sheet is open
-  const frozen = paused || typing || sheet !== null;
+  const frozen = paused || typing || sheet !== null || loadError || mediaError || !current;
   const playing = focused && !frozen;
 
   const progress = useRef(new Animated.Value(0)).current;
@@ -103,28 +133,52 @@ export default function StoryViewer() {
     },
   })).current;
 
-  // Load the open person's stories. The saved copy shows at once; the server is asked for the latest.
+  // Scope cached and fetched stories to the active creator; a failed request is not an empty story list.
   useEffect(() => {
-    if (!group) { navigation.goBack(); return undefined; }
+    if (!group?.user?.id) { navigation.goBack(); return undefined; }
     let alive = true;
-    const saved = useAppStore.getState().storyCache[group.user.id];
+    const ownerId = group.user.id;
+    const cached = useAppStore.getState().storyCache[ownerId];
+    const cachedItems = Array.isArray(cached?.items)
+      ? cached.items.filter((item) => !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now())
+      : [];
     setSi(0);
-    setStories(saved?.items?.length ? saved.items : null);
-    setSubscribed(Boolean(saved?.isSubscribed));
-    api(`/v1/stories/users/${group.user.id}`)
+    setLoadError(false);
+    setMediaError(false);
+    setStoriesLoadedOwnerId(null);
+    setStoriesOwnerId(ownerId);
+    setStories(cachedItems.length ? cachedItems : null);
+    setSubscribed(Boolean(cached?.isSubscribed));
+    api(`/v1/stories/users/${ownerId}`)
       .then((r) => {
         if (!alive) return;
-        setStories(r.items || []);
+        if (!Array.isArray(r.items)) throw new Error('Invalid Stories response');
+        const items = r.items.filter((item) => !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now());
+        setStories(items);
+        setStoriesOwnerId(ownerId);
+        setStoriesLoadedOwnerId(ownerId);
         setSubscribed(Boolean(r.isSubscribed));
-        useAppStore.getState().setStoryCache(group.user.id, { items: r.items || [], isSubscribed: Boolean(r.isSubscribed) });
+        setLoadError(false);
+        useAppStore.getState().setStoryCache(ownerId, { items, isSubscribed: Boolean(r.isSubscribed) });
       })
-      .catch((e) => { logError(e); if (alive) setStories((list) => list || []); });
+      .catch((e) => {
+        logError(e);
+        if (!alive) return;
+        if (cachedItems.length) {
+          setStories(cachedItems);
+          setStoriesOwnerId(ownerId);
+        } else {
+          setStories(null);
+          setStoriesOwnerId(ownerId);
+          setLoadError(true);
+        }
+      });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [group?.user?.id]);
+  }, [group?.user?.id, reloadKey]);
 
-  // A creator whose stories have all expired is skipped
-  useEffect(() => { if (stories && stories.length === 0) nextRef.current(); }, [stories]);
+  // Skip only after a successful fetch confirms that the creator has no active stories.
+  useEffect(() => { if (storiesLoadedOwnerId === group?.user?.id && groupStories && groupStories.length === 0) nextRef.current(); }, [groupStories, storiesLoadedOwnerId, group?.user?.id]);
 
   // Each story starts fresh and is recorded as viewed
   useEffect(() => {
@@ -132,23 +186,21 @@ export default function StoryViewer() {
     setReply('');
     progress.setValue(0);
     if (!current) return;
-    api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
-      if (error.status === 404) dropStory(current.id);
-    });
-    updateCurrent(current.id, { viewed: true });
+    if (isOwner) { updateCurrent(current.id, { viewed: true }); return; }
+    api(`/v1/stories/${current.id}/view`, { method: 'POST' })
+      .then(() => updateCurrent(current.id, { viewed: true }))
+      .catch((error) => { if (error.status === 404) dropStory(current.id); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.id]);
+  }, [current?.id, isOwner]);
 
-  // This creator's ring goes grey once every story from them has been watched on this device
+  // Update the persisted rail only after the server-loaded stories confirm every view.
   useEffect(() => {
-    if (!stories || stories.length === 0 || !stories.every((s) => s.viewed)) return;
+    if (storiesLoadedOwnerId !== group?.user?.id || !groupStories || groupStories.length === 0 || !groupStories.every((s) => s.viewed)) return;
     const store = useAppStore.getState();
-    store.setStoryRail({
-      items: railItems(store.storyRail).map((g) => (g.user?.id === group?.user?.id ? { ...g, unseen: false } : g)),
-      updatedAt: Date.now(),
-    });
+    const rail = store.storyRail;
+    store.setStoryRail({ ...rail, items: railItems(rail).map((g) => (g.user?.id === group.user.id ? { ...g, unseen: false } : g)) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stories, group?.user?.id]);
+  }, [groupStories, group?.user?.id, storiesLoadedOwnerId]);
 
   // Favorites are kept on this device only
   useEffect(() => {
@@ -279,7 +331,7 @@ export default function StoryViewer() {
     flashIcon(paused ? 'play' : 'pause');
   }
 
-  function onVideoLoad({ duration }) { durationRef.current = duration || 0; }
+  function onVideoLoad({ duration }) { durationRef.current = duration || 0; setMediaError(false); }
   function onVideoProgress({ currentTime }) {
     const d = durationRef.current;
     if (d > 0) progress.setValue(Math.min(1, currentTime / d));
@@ -378,10 +430,12 @@ export default function StoryViewer() {
   return (
     <KeyboardAvoidingView style={[styles.root, { width, height }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={StyleSheet.absoluteFill} {...pan.panHandlers}>
-        {current && (isVideo
+        {current && !isText && (isVideo
           ? (
-            <Video
-              key={current.id}
+            <>
+              {!!current.thumbUrl && <Image source={{ uri: mediaUrl(current.thumbUrl) }} blurRadius={28} style={[StyleSheet.absoluteFill, styles.ambient]} resizeMode="cover" />
+              <Video
+              key={`${current.id}-${mediaReloadKey}`}
               source={{ uri: videoStreamUrl(mediaUrl(current.mediaUrl)) }}
               style={StyleSheet.absoluteFill}
               resizeMode="contain"
@@ -390,10 +444,25 @@ export default function StoryViewer() {
               onLoad={onVideoLoad}
               onProgress={onVideoProgress}
               onEnd={() => nextRef.current()}
-              onError={() => nextRef.current()}
-            />
+              onError={() => setMediaError(true)}
+              />
+            </>
           )
-          : <Image key={current.id} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onError={() => nextRef.current()} />)}
+          : <>
+            <Image key={`${current.id}-ambient-${mediaReloadKey}`} source={{ uri: mediaUrl(current.mediaUrl) }} blurRadius={28} style={[StyleSheet.absoluteFill, styles.ambient]} resizeMode="cover" onError={() => setMediaError(true)} />
+            <Image key={`${current.id}-${mediaReloadKey}`} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onLoad={() => setMediaError(false)} onError={() => setMediaError(true)} />
+          </>)}
+        {isText && <View style={[StyleSheet.absoluteFill, styles.textStory, { backgroundColor: textBackground(current.storyBackground, current.id) }]}><Text style={styles.textStoryCopy}>{current.storyText || ''}</Text></View>}
+        {!!current?.tonePreset && !isText && <View pointerEvents="none" style={[StyleSheet.absoluteFill, toneOverlay(current.tonePreset)]} />}
+        {(loadError || mediaError) && (
+          <View style={styles.errorOverlay}>
+            <Text style={styles.errorTitle}>{loadError ? 'Story could not load' : 'Media could not load'}</Text>
+            <Text style={styles.errorCopy}>Check your connection and try again.</Text>
+            <Pressable style={styles.retryButton} onPress={() => { if (loadError) setReloadKey((v) => v + 1); else { setMediaError(false); setMediaReloadKey((v) => v + 1); } }}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* Tapping the picture: left third back, right third forward, middle pauses or likes */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onStageTap} accessibilityLabel="Story" />
@@ -588,7 +657,15 @@ function SheetRow({ icon, label, onPress, danger = false, disabled = false }) {
 }
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: '#000' },
+  root: { flex: 1, backgroundColor: '#000' },
+  ambient: { opacity: 0.72 },
+  textStory: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, paddingVertical: 80 },
+  textStoryCopy: { color: '#fff', fontSize: 30, lineHeight: 39, fontWeight: '700', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.18)', textShadowRadius: 5 },
+  errorOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, backgroundColor: 'rgba(0,0,0,0.62)' },
+  errorTitle: { color: '#fff', fontSize: 17, fontWeight: '700', marginBottom: 6 },
+  errorCopy: { color: 'rgba(255,255,255,0.85)', fontSize: 13, textAlign: 'center', marginBottom: 14 },
+  retryButton: { minWidth: 104, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center' },
+  retryText: { color: '#111', fontWeight: '700' },
   caption: { position: 'absolute', left: 16, right: 16, color: '#fff', fontSize: 16, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
   flash: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   likedMark: { position: 'absolute', left: 18 },
