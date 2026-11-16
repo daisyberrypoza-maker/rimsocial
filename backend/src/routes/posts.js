@@ -155,6 +155,23 @@ router.post('/:id/report', requireAuth, async (req, res, next) => {
     const existing = await PostReport.findOne({ where: { postId: post.id, reporterId: req.user.id, status: 'pending' } });
     if (existing) throw httpError(409, 'You have already reported this post');
     await PostReport.create({ postId: post.id, reporterId: req.user.id, reason });
+    // A report is a strong negative recommendation signal for the reporting viewer.
+    const preferenceKey = `feed:preferences:${req.user.id}`;
+    const previous = Number(await redis.hget(preferenceKey, post.id).catch(() => 0)) || 0;
+    await redis.hset(preferenceKey, post.id, String(Math.max(-40, previous - 18)));
+    if (post.topic) {
+      const topicKey = `feed:topic-preferences:${req.user.id}`;
+      const topic = String(post.topic).trim().toLowerCase().slice(0, 60);
+      if (topic) {
+        const topicPrevious = Number(await redis.hget(topicKey, topic).catch(() => 0)) || 0;
+        await redis.hset(topicKey, topic, String(Math.max(-40, topicPrevious - 8)));
+        await redis.expire(topicKey, 60 * 60 * 24 * 90);
+      }
+    }
+    await Promise.all([
+      redis.del(`feed:discover:ranked:${req.user.id}`),
+      redis.del(`feed:explore:ranked:${req.user.id}`),
+    ]).catch(() => {});
     res.status(201).json({ reported: true });
   } catch (e) { next(e); }
 });
