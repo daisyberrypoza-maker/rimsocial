@@ -136,23 +136,26 @@ export default function Stories() {
   const [popular, setPopular] = useState([]);
   const [carousel, setCarousel] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
+  const [popSource, setPopSource] = useState('grid');
   const [viewedDiscoverIds, setViewedDiscoverIds] = useState(() => new Set());
   // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
   const AD_START_OFFSET = 3;
   const AD_FREQUENCY_INTERVAL = 6;
-  // Discover viewer sequence: one ordered list of unique creators from both story rails.
-  // StoryViewer advances through every creator instead of closing after the tapped creator.
-  const discoverGroups = useMemo(() => {
+  // Keep the two Discover experiences isolated: carousel playback never enters the grid sequence.
+  const makeDiscoverGroups = (items) => {
     const seen = new Set();
-    return [...carousel, ...popular].map((item) => item?.author ? ({ user: item.author }) : null)
+    return items.map((item) => item?.author ? ({ user: item.author }) : null)
       .filter((group) => {
         const id = group?.user?.id;
         if (!id || seen.has(String(id))) return false;
         seen.add(String(id));
         return true;
       });
-  }, [carousel, popular]);
-  const discoverStartIndex = (author) => discoverGroups.findIndex((group) => String(group.user?.id) === String(author?.id));
+  };
+  const carouselGroups = useMemo(() => makeDiscoverGroups(carousel), [carousel]);
+  const gridGroups = useMemo(() => makeDiscoverGroups(popular), [popular]);
+  const activeDiscoverGroups = popSource === 'carousel' ? carouselGroups : gridGroups;
+  const discoverStartIndex = (groups, author) => groups.findIndex((group) => String(group.user?.id) === String(author?.id));
 
   const discoverItems = useMemo(() => {
     const out = [];
@@ -329,7 +332,7 @@ export default function Stories() {
           {carousel.length > 0 && (
             <div className="st-discover-carousel" role="list">
               {carousel.map((story) => (
-                <button key={'c' + story.id} role="listitem" className={`st-discover-card-h${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                <button key={'c' + story.id} role="listitem" className={`st-discover-card-h${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopSource('carousel'); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                   {story.kind === 'text' || !discoverStorySrc(story)
                     ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground, story.id) }}>{story.storyText}</span>
                     : <>
@@ -359,7 +362,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className={`st-card st-discover-tile${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className={`st-card st-discover-tile${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopSource('grid'); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !discoverStorySrc(story)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <>
@@ -382,7 +385,7 @@ export default function Stories() {
 
       {popOpen && (
         <ViewerBoundary onClose={() => setPopOpen(null)}>
-          <StoryViewer groups={discoverGroups} startIndex={Math.max(0, discoverStartIndex(popOpen))} origin={popOrigin} onStoryViewed={(id) => setViewedDiscoverIds((current) => new Set([...current, String(id)]))} onClose={() => setPopOpen(null)} />
+          <StoryViewer groups={activeDiscoverGroups} startIndex={Math.max(0, discoverStartIndex(activeDiscoverGroups, popOpen))} origin={popOrigin} onStoryViewed={(id) => setViewedDiscoverIds((current) => new Set([...current, String(id)]))} onClose={() => setPopOpen(null)} />
         </ViewerBoundary>
       )}
 
