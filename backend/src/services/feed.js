@@ -55,43 +55,10 @@ async function attachUniqueViewers(items) {
   return items;
 }
 
-// Discover: newest public posts in the viewer's country. First page is cached briefly.
+// Rimlight Discover is the Spotlight-style recommendation feed. It shares the
+// same ranking engine as Explore; Following remains strictly chronological.
 async function getDiscoverPage({ userId, cursor, limit }) {
-  const n = clampLimit(limit);
-  const offset = parseRankCursor(cursor);
-  const cacheKey = `feed:discover:ranked:${userId}`;
-  let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
-
-  if (!ids) {
-    const [candidates, follows, blocks, mutedRows] = await Promise.all([
-      Post.findAll({
-        where: { status: 'live', isStory: false, visibility: 'public' },
-        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
-        order: [['createdAt', 'DESC']], limit: 500, raw: true,
-      }),
-      Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
-      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
-      UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
-    ]);
-    const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
-    const followed = new Set(follows.map((f) => f.followeeId));
-    const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
-    // Rimlight Discover is newest-first (LIFO): the latest published post appears first.
-    // Keep recommendation scoring in Explore, while Following remains chronological too.
-    ids = candidates
-      .filter((p) => !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map((p) => p.id);
-    await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
-  }
-
-  const pageIds = ids.slice(offset, offset + n + 1);
-  const hasMore = pageIds.length > n;
-  const page = await hydrate(pageIds.slice(0, n));
-  return {
-    items: page.map(toPostDTO),
-    nextCursor: hasMore ? `rank:${offset + n}` : null,
-  };
+  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:discover' });
 }
 
 // Explore: what someone is likely to want to see from accounts they do not follow.
@@ -104,10 +71,10 @@ const SEED_POOL = 300;        // seed_pool_remaining starts at 300 (the blueprin
 const SEED_EVERY = 4;         // one seeding post per four ranked posts
 const SEED_WINDOW_HOURS = 72; // a post stops seeding after this long even if it has few views
 
-async function getExplorePage({ userId, cursor, limit }) {
+async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:explore' }) {
   const n = clampLimit(limit);
   const offset = parseRankCursor(cursor);
-  const cacheKey = `feed:explore:ranked:${userId}`;
+  const cacheKey = `${cachePrefix}:ranked:${userId}`;
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
@@ -297,6 +264,10 @@ async function markFollowing(result, viewerId) {
       ? { ...item, author: { ...item.author, isFollowing: followed.has(item.author.id) } }
       : item)),
   };
+}
+
+async function getExplorePage({ userId, cursor, limit }) {
+  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:explore' });
 }
 
 module.exports = {
