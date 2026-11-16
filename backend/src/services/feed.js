@@ -81,7 +81,7 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     const [candidates, follows, blocks, mutedRows] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
-        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
+        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount', 'topic'],
         order: [['createdAt', 'DESC']], limit: 500, raw: true,
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
@@ -91,8 +91,20 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
-    const authors = await User.findAll({ where: { id: [...new Set(candidates.map((p) => p.authorId))] }, attributes: ['id', 'followerCount'], raw: true });
+    const [authors, viewer] = await Promise.all([
+      User.findAll({ where: { id: [...new Set(candidates.map((p) => p.authorId))] }, attributes: ['id', 'followerCount', 'country'], raw: true }),
+      User.findByPk(userId, { attributes: ['id', 'country'], raw: true }),
+    ]);
     const followersOf = new Map(authors.map((u) => [String(u.id), Number(u.followerCount) || 0]));
+    const countryOf = new Map(authors.map((u) => [String(u.id), String(u.country || '').toUpperCase()]));
+    const viewerCountry = String(viewer?.country || '').toUpperCase();
+    // Topic affinity is learned from explicit and behavioural feedback, independently
+    // of any single post's score. Unknown topics remain neutral.
+    const topics = [...new Set(candidates.map((p) => String(p.topic || '').trim().toLowerCase()).filter(Boolean))];
+    const topicPipe = redis.pipeline();
+    for (const topic of topics) topicPipe.hget(`feed:topic-preferences:${userId}`, topic);
+    const topicRows = await topicPipe.exec().catch(() => []);
+    const topicPreferenceOf = new Map(topics.map((topic, i) => [topic, Number(topicRows[i]?.[1]) || 0]));
     // Read only this page's candidate preferences; do not load a viewer's entire history hash.
     const preferencePipe = redis.pipeline();
     for (const p of candidates) preferencePipe.hget(`feed:preferences:${userId}`, String(p.id));
@@ -150,21 +162,32 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
         // lower them. The per-viewer score is deliberately capped to prevent domination.
         const preference = preferenceOf.get(String(p.id)) || 0;
         const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
-        const score = baseScore + personalizedBoost;
+        const topic = String(p.topic || '').trim().toLowerCase();
+        const topicPreference = topicPreferenceOf.get(topic) || 0;
+        const topicBoost = Math.max(-12, Math.min(18, topicPreference * 0.3));
+        // Country is a low-weight localization hint, never a substitute for relevance.
+        const localBoost = viewerCountry && countryOf.get(String(p.authorId)) === viewerCountry ? 3 : 0;
+        const score = baseScore + personalizedBoost + topicBoost + localBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
         const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
-        return { id: p.id, authorId: p.authorId, score, seeding, createdAt: new Date(p.createdAt).getTime() };
+        return { id: p.id, authorId: p.authorId, topic, score, seeding, createdAt: new Date(p.createdAt).getTime() };
       })
       .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);
 
-    // Diversity: the first window keeps at most EXPLORE_AUTHOR_CAP posts per author; the rest follow in score order.
+    // Diversity: cap repeat creators and topics in the first recommendation window.
     const perAuthor = new Map();
+    const perTopic = new Map();
     const head = [];
     const tail = [];
     for (const item of scored) {
       const count = perAuthor.get(item.authorId) || 0;
-      if (head.length < EXPLORE_WINDOW && count >= EXPLORE_AUTHOR_CAP) { tail.push(item); continue; }
+      const topicCount = item.topic ? (perTopic.get(item.topic) || 0) : 0;
+      if (head.length < EXPLORE_WINDOW && (count >= EXPLORE_AUTHOR_CAP || (item.topic && topicCount >= 5))) {
+        tail.push(item);
+        continue;
+      }
       perAuthor.set(item.authorId, count + 1);
+      if (item.topic) perTopic.set(item.topic, topicCount + 1);
       head.push(item);
     }
     // Seeding posts take one slot after every SEED_EVERY ranked posts, newest first, so new posts get early views
