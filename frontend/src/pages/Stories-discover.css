@@ -117,24 +117,25 @@
 }
 .st-page .st-discover-card-h .st-watch-again { z-index:6; }
 
-/* Force the Discover grid's rounded corners to clip every media/overlay layer. */
-.st-page .st-discover-grid > .st-card.st-discover-tile {
-  border-radius:10px !important;
-  overflow:hidden !important;
-  clip-path:inset(0 round 10px);
-  -webkit-clip-path:inset(0 round 10px);
+/* Use one identical corner radius and clipping model for the carousel and grid. */
+.st-page {
+  --st-discover-card-radius:10px;
 }
-
-
-/* Discover cards: enforce the same 10px clip on both grid item types and every media layer. */
+.st-page .st-discover-carousel .st-discover-card-h,
+.st-page .st-discover-grid > .st-card,
+.st-page .st-discover-grid > .st-discover-tile,
 .st-page .st-discover-grid .st-discover-tile,
 .st-page .st-discover-grid .st-card {
-  border-radius:10px !important;
+  border-radius:var(--st-discover-card-radius) !important;
   overflow:hidden !important;
-  clip-path:inset(0 round 10px) !important;
-  -webkit-clip-path:inset(0 round 10px) !important;
+  clip-path:inset(0 round var(--st-discover-card-radius)) !important;
+  -webkit-clip-path:inset(0 round var(--st-discover-card-radius)) !important;
   -webkit-mask-image:-webkit-radial-gradient(white, black);
 }
+.st-page .st-discover-carousel .st-discover-card-h > img,
+.st-page .st-discover-carousel .st-discover-card-h > video,
+.st-page .st-discover-carousel .st-discover-card-h > picture,
+.st-page .st-discover-carousel .st-discover-card-h > span,
 .st-page .st-discover-grid .st-discover-tile > img,
 .st-page .st-discover-grid .st-discover-tile > video,
 .st-page .st-discover-grid .st-discover-tile > picture,
