@@ -107,7 +107,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     api(`/v1/stories/users/${group.user.id}`)
       .then((d) => {
         if (!alive) return;
-        const items = Array.isArray(d.items) ? d.items : [];
+        if (!Array.isArray(d.items)) throw new Error('Invalid Stories response');
+        const items = d.items;
         evictMedia(missingItems(cachedItems, items));
         setStories(items);
         setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
