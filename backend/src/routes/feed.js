@@ -40,7 +40,7 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
     const postId = String(req.body.postId || '').trim();
     const event = String(req.body.event || '').trim();
     if (!/^[0-9a-f-]{36}$/i.test(postId)) return res.status(400).json({ error: 'Valid postId is required' });
-    const weights = { completed: 5, liked: 7, shared: 6, followed: 8, rewatch: 4, skipped: -3, not_interested: -18 };
+    const weights = { completed: 5, liked: 7, shared: 6, followed: 8, saved: 6, rewatch: 4, skipped: -3, not_interested: -18 };
     if (!Object.prototype.hasOwnProperty.call(weights, event) && event !== 'watch') {
       return res.status(400).json({ error: 'Unsupported feedback event' });
     }
@@ -60,25 +60,35 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
       const completion = Math.max(0, Math.min(1, watchMs / durationMs));
       delta = completion >= 0.9 ? 5 : completion >= 0.5 ? 2 : completion < 0.15 ? -2 : 0;
     }
-    // Spotlight aggregates per post: watch completion sums, watch count and skips (under 2s)
+    // Rimlight is the Spotlight-ranked short-video surface. Keep aggregate signals
+    // separate from per-viewer preferences so ranking reflects real audience behaviour.
     const spotKey = `spot:${postId}`;
     if (event === 'watch') {
       const watchMs = Number(req.body.watchMs);
       const durationMs = Number(req.body.durationMs);
       const completion = Math.max(0, Math.min(1, watchMs / durationMs));
-      await redis.hincrbyfloat(spotKey, 'watchPct', completion).catch(() => {});
-      await redis.hincrby(spotKey, 'watches', 1).catch(() => {});
-      await redis.expire(spotKey, 60 * 60 * 24 * 30).catch(() => {});
+      const pipe = redis.pipeline();
+      pipe.hincrbyfloat(spotKey, 'watchPct', completion);
+      pipe.hincrby(spotKey, 'watches', 1);
+      if (completion >= 0.9) pipe.hincrby(spotKey, 'completions', 1);
+      pipe.expire(spotKey, 60 * 60 * 24 * 30);
+      await pipe.exec();
     } else if (event === 'skipped') {
-      await redis.hincrby(spotKey, 'skips', 1).catch(() => {});
-      await redis.expire(spotKey, 60 * 60 * 24 * 30).catch(() => {});
+      const pipe = redis.pipeline();
+      pipe.hincrby(spotKey, 'skips', 1);
+      pipe.expire(spotKey, 60 * 60 * 24 * 30);
+      await pipe.exec();
+    } else if (event === 'rewatch') {
+      const pipe = redis.pipeline();
+      pipe.hincrby(spotKey, 'rewatches', 1);
+      pipe.expire(spotKey, 60 * 60 * 24 * 30);
+      await pipe.exec();
     }
     const key = `feed:preferences:${req.user.id}`;
     const oldValue = Number(await redis.hget(key, postId).catch(() => 0)) || 0;
     const score = Math.max(-40, Math.min(80, oldValue + delta));
     await redis.hset(key, postId, String(score));
-    // The ranked list is cached briefly; invalidate it so feedback takes effect
-    // on the viewer's next Discover request.
+    // Invalidate both recommendation caches so feedback affects the next request.
     await Promise.all([
       redis.del(`feed:discover:ranked:${req.user.id}`),
       redis.del(`feed:explore:ranked:${req.user.id}`),
