@@ -7436,3 +7436,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Discover grid margins match the reference: tiles line up with the heading, 8px gap (16px at 2x) */
 .st-page .st-discover-grid { margin: 0 -14px; padding: 0; gap: 8px; }
+
+/* Discover grid tiles match the reference: photos shown at full brightness, no dim or grade */
+.st-page .st-discover-tile .st-card-img { filter: none !important; }
