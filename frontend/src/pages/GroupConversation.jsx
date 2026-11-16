@@ -7,6 +7,7 @@ import ChatMenu from '../components/ChatMenu.jsx';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
+import { blurhashOfFile, placeholderFor } from '../lib/blurhash.js';
 import { MessageRow, MediaViewer, LinkPreview, attachmentLabel, groupRows, isLastOfRun } from './Conversation.jsx';
 import '../snap-screens.css';
 import './Conversation.css';
@@ -24,7 +25,7 @@ function GroupMedia({ message, mine, onOpenPhoto, onView }) {
     if ((message.viewedByMe || 0) >= message.viewLimit) return <span className="cv-once opened">Opened</span>;
     return <button type="button" className="cv-once" onClick={() => onView(message)}>Tap to view</button>;
   }
-  if (message.mediaKind === 'photo') return <button type="button" className="cv-media-link" onClick={() => onOpenPhoto(src)} aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" /></button>;
+  if (message.mediaKind === 'photo') return <button type="button" className="cv-media-link" onClick={() => onOpenPhoto(src)} aria-label="Open photo"><img className="cv-media" src={src} alt="Photo" loading="lazy" style={placeholderFor(message.blurhash) ? { backgroundImage: `url(${placeholderFor(message.blurhash)})`, backgroundSize: 'cover' } : undefined} /></button>;
   if (message.mediaKind === 'video') return <video className="cv-media" src={src} controls playsInline preload="metadata" />;
   if (message.mediaKind === 'audio') return <audio className="cv-audio" src={src} controls preload="metadata" />;
   return <a className="cv-file" href={src} target="_blank" rel="noopener noreferrer" download={message.mediaName || 'File'}><span className="cv-file-name">{message.mediaName || 'File'}</span></a>;
@@ -130,6 +131,10 @@ export default function GroupConversationPage({ groupId }) {
       if (caption) form.append('body', caption);
       if (quoted) form.append('replyToId', quoted.id);
       if (viewLimit) form.append('viewLimit', String(viewLimit));
+      if (String(file.type).startsWith('image/')) {
+        const hash = await blurhashOfFile(file);
+        if (hash) form.append('blurhash', hash);
+      }
       const data = await api('/v1/messages/groups/' + groupId + '/media', { method: 'POST', body: form });
       setMessages((current) => [...(current || []), { ...data.message, replyTo: quoteOf(quoted) }]);
       setReply(null);

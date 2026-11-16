@@ -81,3 +81,60 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 /* Keep ordinary destinations light and the full-screen video experience dark. */
 .page, .activity-page, .sc-stories { background-color: var(--snap-bg-light); }
+
+/* Applied screen-level treatments: these selectors match classes rendered by the
+   current Stories, Chat, Profile, Feed and Upload components. */
+.app { background: var(--snap-bg-light); color: var(--snap-text-light); }
+.topbar:not(.overlay) { color: var(--snap-text-light); }
+.bottomnav:not(.bottomnav-dark):not(.bottomnav-live) { color: var(--snap-text-light); }
+.bottomnav:not(.bottomnav-dark):not(.bottomnav-live) a.active { color: #000; }
+.bottomnav a { transition: color .15s ease, transform .15s ease; }
+.bottomnav a:active { transform: scale(.94); }
+
+/* Stories landing and story rail */
+.st-page { background: var(--snap-bg-light); color: var(--snap-text-light); }
+.st-top { background: var(--snap-glass-light); }
+.st-title, .st-h2, .st-name { color: var(--snap-text-light); }
+.st-round { border-radius: var(--snap-radius-pill); }
+.st-friend { transition: transform .15s ease; }
+.st-friend:active { transform: scale(.97); }
+.st-plus { background: var(--snap-yellow); color: #000; }
+.story-rail { background: var(--snap-bg-light); }
+.story-ring.unseen { background: var(--snap-yellow); }
+.story-name { color: var(--snap-text-light); font-weight: 500; }
+
+/* Chat list and conversations */
+.sn-page, .dm-convo { background: var(--snap-bg-light); color: var(--snap-text-light); }
+.sn-circle, .dm-icon, .cv-camera, .cv-send-text { border-radius: var(--snap-radius-pill); }
+.sn-circle.sn-yellow, .sn-fab { background: var(--snap-yellow); color: #000; }
+.sn-name, .dm-cname { color: var(--snap-text-light); }
+.dm-chead { background: var(--snap-glass-light); border-bottom: 1px solid var(--snap-border-light); }
+.cv-form, .cv-composer-bar { background: var(--snap-surface-light); border-radius: var(--snap-radius-pill); }
+.cv-text { overflow-wrap: anywhere; }
+
+/* Profile */
+.profile-page { background: var(--snap-bg-light); color: var(--snap-text-light); }
+.pf-hero { background-color: var(--snap-surface-light); }
+.pf-round, .pf-avatar-btn { border-radius: var(--snap-radius-pill); }
+.pf-btn-on { background: var(--snap-yellow); color: #000; border-color: var(--snap-yellow); }
+.pf-chip { border-radius: var(--snap-radius-pill); }
+
+/* Feed and media cards */
+.feed { background: #000; }
+.post { border-radius: 0; }
+.snap-follow, .rail-btn { border-radius: var(--snap-radius-pill); }
+.snap-follow { background: var(--snap-yellow); color: #000; }
+.sponsored-label { border-radius: var(--snap-radius-sm); }
+
+/* Capture and upload surfaces */
+.cam-page { background: #000; color: #fff; }
+.cam-shutter { border: 5px solid #fff; box-shadow: 0 0 0 3px rgba(255,252,0,.9); }
+.ig-create, .up-page { background: var(--snap-bg-light); color: var(--snap-text-light); }
+.ig-create-pick, .up-post-btn, .up-next { background: var(--snap-yellow); color: #000; border-radius: var(--snap-radius-pill); }
+.up-chip, .up-row { border-radius: var(--snap-radius-md); }
+
+/* Controls retain accessible focus indicators and touch feedback. */
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--snap-blue);
+  outline-offset: 2px;
+}

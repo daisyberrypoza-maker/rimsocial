@@ -7311,3 +7311,20 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-card-h .st-card-name { position:static; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px; font-weight:700; text-shadow:none; }
 /* Grid tiles use the creator's dominant colour before the cover loads */
 .st-page .st-discover-tile { background:var(--dom, #1c1c1e) !important; }
+
+/* Spotlight full-screen spec applied to Rimlight cards (overrides earlier .post rules) */
+.post .shade { background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.25) 30%, rgba(0,0,0,0) 55%) !important; }
+.post .info { left: 14px !important; right: 76px !important; }
+.post .info p { font-size: 14px !important; line-height: 1.3 !important; margin-bottom: 8px !important; }
+.post .snap-title { font-size: 15px !important; font-weight: 700 !important; gap: 4px !important; }
+.post .snap-sound { font-size: 13px !important; font-weight: 400 !important; color: rgba(255,255,255,.85) !important; margin: 4px 0 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post .rail { gap: 16px !important; }
+.post .rail-btn svg, .post .rail-btn svg.ellipsis-icon { width: 42px !important; height: 42px !important; box-sizing: border-box !important; padding: 10px !important; border-radius: 50% !important; background: rgba(0,0,0,.38) !important; backdrop-filter: blur(4px); stroke-width: 2 !important; }
+.post .rail-btn { font-size: 12px !important; font-weight: 600 !important; gap: 3px !important; }
+
+/* Spotlight spinning audio disc: spins only while the card is on screen */
+.post .snap-disc { width:32px; height:32px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.85); background:#111; box-sizing:border-box; animation:snap-disc-spin 4s linear infinite; animation-play-state:paused; pointer-events:none; }
+.post .snap-disc.is-active { animation-play-state:running; }
+.post .snap-disc .avatar, .post .snap-disc img { width:100% !important; height:100% !important; border-radius:50% !important; }
+@keyframes snap-disc-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .post .snap-disc { animation:none; } }
