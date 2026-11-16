@@ -824,8 +824,18 @@ router.post('/share', async (req, res, next) => {
       await createMessage({ me, other, body: textBody(item.body), storyPostId: postId });
       await unhideChat(me, other);
     }
-    // Increment_Share_Metrics
-    if (postId) await redis.incrby(`post:shares:${postId}`, items.length).catch(() => {});
+    // Increment_Share_Metrics only after every recipient send has succeeded.
+    if (postId) {
+      await redis.incrby(`post:shares:${postId}`, items.length).catch(() => {});
+      const preferenceKey = `feed:preferences:${me}`;
+      const previous = Number(await redis.hget(preferenceKey, postId).catch(() => 0)) || 0;
+      const nextScore = Math.max(-40, Math.min(80, previous + 6));
+      await redis.hset(preferenceKey, postId, String(nextScore)).catch(() => {});
+      await Promise.all([
+        redis.del(`feed:explore:ranked:${me}`),
+        redis.del(`feed:discover:ranked:${me}`),
+      ]).catch(() => {});
+    }
     res.status(201).json({ sent: items.length });
   } catch (error) { next(error); }
 });
