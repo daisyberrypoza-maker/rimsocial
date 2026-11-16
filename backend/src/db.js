@@ -365,7 +365,7 @@ const GroupMessage = sequelize.define('GroupMessage', {
   seq: { type: DataTypes.BIGINT, allowNull: true },
   // BlurHash of a photo: placeholder shown while the image loads
   blurhash: { type: DataTypes.STRING(40), allowNull: true, defaultValue: null },
-}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }, { fields: ['groupId', 'seq'] }] });
+}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
 
 
 
