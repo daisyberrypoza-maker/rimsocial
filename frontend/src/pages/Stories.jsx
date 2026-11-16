@@ -83,7 +83,7 @@ export default function Stories() {
   const uploading = pending?.kind === 'story';
   const storedDiscover = useAppStore((s) => s.storyDiscover);
   const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
-  const [loaded, setLoaded] = useState(() => storedRailAt > 0);
+  const [loaded, setLoaded] = useState(() => Array.isArray(storedRail) && storedRail.length > 0);
   const loading = !loaded;
   const [railError, setRailError] = useState(false);
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
@@ -181,6 +181,7 @@ export default function Stories() {
   }, []);
 
   const loadRail = useCallback(async () => {
+    if (!rail.length) setLoaded(false);
     setRailError(false);
     try {
       const result = await api('/v1/stories/rail');
@@ -193,7 +194,7 @@ export default function Stories() {
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [rail.length]);
 
   // Reopening the page reuses the saved rail; it is requested again only when it is old
   const { indicator } = usePullRefresh(() => loadRail());
