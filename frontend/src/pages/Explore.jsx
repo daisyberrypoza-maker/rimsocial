@@ -1,4 +1,5 @@
 import { goToPost } from '../lib/viewerMotion.js';
+import { dismissSuggestion } from '../lib/suggestions.js';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -163,7 +164,7 @@ export default function Explore() {
                   <span><strong>{person.username || person.displayName}</strong><small>{person.mutualCount > 0 ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'}` : (person.displayName || 'Suggested for you')}</small></span>
                 </button>
                 <button type="button" className={person.isFollowing ? 'friends-suggestion-follow following' : 'friends-suggestion-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
-                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}><Icon name="x" size={17} /></button>
+                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => { setDismissed((current) => ({ ...current, [person.id]: true })); dismissSuggestion(person.id); }}><Icon name="x" size={17} /></button>
               </li>
             ))}</ul>
           </section>}
@@ -176,7 +177,7 @@ export default function Explore() {
                   <span><strong>{person.username || person.displayName}</strong><small>Follows you</small></span>
                 </button>
                 <button type="button" className={person.isFollowing ? 'friends-suggestion-follow following' : 'friends-suggestion-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
-                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((current) => ({ ...current, [person.id]: true }))}><Icon name="x" size={17} /></button>
+                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => { setDismissed((current) => ({ ...current, [person.id]: true })); dismissSuggestion(person.id); }}><Icon name="x" size={17} /></button>
               </li>
             ))}</ul>
           </section>}

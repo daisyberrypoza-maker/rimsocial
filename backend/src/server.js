@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
+const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -186,6 +186,8 @@ async function start() {
   }
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
+  await ProfileView.sync();
+  await QuickAddDismissal.sync();
   // Add the mark-as-unread flag to existing chat_preferences tables (additive, idempotent)
   {
     const qiPref = sequelize.getQueryInterface();

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { dismissSuggestion } from '../lib/suggestions.js';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import Avatar from '../components/Avatar.jsx';
@@ -58,7 +59,7 @@ export default function Recommended() {
         <button type="button" className={`rec-discover-follow${following ? ' is-following' : ''}`} onClick={() => toggle(person, section)} disabled={Boolean(busy[person.id])}>
           {busy[person.id] ? '…' : following ? 'Following' : section === 'followBack' ? 'Follow back' : 'Follow'}
         </button>
-        <button type="button" className="rec-discover-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => setDismissed((items) => [...items, person.id])}>
+        <button type="button" className="rec-discover-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => { setDismissed((items) => [...items, person.id]); dismissSuggestion(person.id); }}>
           <Icon name="x" size={18} />
         </button>
       </li>

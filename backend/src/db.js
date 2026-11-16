@@ -394,6 +394,24 @@ const ChatPreference = sequelize.define('ChatPreference', {
   { fields: ['userId', 'muted'] },
 ] });
 
+// Profile visits: one row per viewer and profile. Counts feed Follow_Rank_Score (visits by followers) and
+// Quick_Add_Score (profile searches: how often I opened this person's profile).
+const ProfileView = sequelize.define('ProfileView', {
+  viewerId: { type: DataTypes.UUID, allowNull: false },
+  profileId: { type: DataTypes.UUID, allowNull: false },
+  views: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  lastViewedAt: { type: DataTypes.DATE, allowNull: true },
+}, { tableName: 'profile_views', indexes: [
+  { unique: true, fields: ['viewerId', 'profileId'] },
+  { fields: ['profileId'] },
+] });
+
+// Quick Add: people a person dismissed from suggestions (each dismissal subtracts from Quick_Add_Score)
+const QuickAddDismissal = sequelize.define('QuickAddDismissal', {
+  userId: { type: DataTypes.UUID, allowNull: false },
+  personId: { type: DataTypes.UUID, allowNull: false },
+}, { tableName: 'quick_add_dismissals', indexes: [{ unique: true, fields: ['userId', 'personId'] }] });
+
 // Posts a person saved (bookmark); shown on their own profile's Saved tab
 const SavedPost = sequelize.define('SavedPost', {
   userId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
@@ -456,7 +474,7 @@ const PushSubscription = sequelize.define('PushSubscription', {
 module.exports = {
   Order,
   AudioTrack,
-  DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost,
+  DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost, ProfileView, QuickAddDismissal,
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,

@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const crypto = require('node:crypto');
 const jwt = require('jsonwebtoken');
-const { LiveBroadcast, LiveBroadcastMessage, User } = require('../db');
+const { Op, fn, col } = require('sequelize');
+const { LiveBroadcast, LiveBroadcastMessage, User, Follow } = require('../db');
+const { liveStreamScore } = require('../services/formulas');
 const { requireAuth } = require('../middleware/auth');
 const config = require('../config');
 const httpError = require('../utils/httpError');
@@ -34,8 +36,29 @@ router.get('/', async (req, res, next) => {
     const ids = [...new Set(items.map((item) => item.hostId))];
     const users = await User.findAll({ where: { id: ids }, attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
     const byId = new Map(users.map((user) => [user.id, user]));
+    // Live_Stream_Score: viewers, chats per minute (last 5 minutes), whether the viewer follows the host, minutes live.
+    // Gifts per minute are not recorded per minute yet, so they count as 0.
+    const broadcastIds = items.map((item) => item.id);
+    const recentChats = broadcastIds.length ? await LiveBroadcastMessage.findAll({
+      attributes: ['broadcastId', [fn('COUNT', col('id')), 'n']],
+      where: { broadcastId: broadcastIds, createdAt: { [Op.gt]: new Date(Date.now() - 5 * 60 * 1000) } },
+      group: ['broadcastId'], raw: true,
+    }) : [];
+    const chats = new Map(recentChats.map((row) => [String(row.broadcastId), Number(row.n)]));
+    const follows = ids.length ? await Follow.findAll({ where: { followerId: req.user.id, followeeId: ids }, attributes: ['followeeId'], raw: true }) : [];
+    const followed = new Set(follows.map((row) => String(row.followeeId)));
+    const now = Date.now();
+    const ranked = items.map((item) => ({
+      item,
+      score: liveStreamScore({
+        viewers: item.viewerCount,
+        chatsPerMinute: (chats.get(String(item.id)) || 0) / 5,
+        followed: followed.has(String(item.hostId)) ? 1 : 0,
+        minutesLive: (now - new Date(item.startedAt).getTime()) / 60000,
+      }),
+    })).sort((a, b) => b.score - a.score);
     res.set('Cache-Control', 'no-store');
-    res.json({ items: items.map((item) => ({ ...item.toJSON(), host: byId.get(item.hostId) || null })) });
+    res.json({ items: ranked.map(({ item }) => ({ ...item.toJSON(), host: byId.get(item.hostId) || null })) });
   } catch (e) { next(e); }
 });
 

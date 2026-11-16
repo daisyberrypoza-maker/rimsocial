@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { DAY, followRankScore } = require('../services/formulas');
+const { DAY, followRankScore, quickAddScore } = require('../services/formulas');
 const redis = require('../redis');
 
 // Post-notification bell state, read with SQL so the app works before migration 025 adds the column
@@ -13,7 +13,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage, ProfileView, QuickAddDismissal } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -125,6 +125,16 @@ router.post('/me/cover', requireAuth, upload.single('media'), async (req, res, n
 
 
 // Suggested creators and people to follow back for the Discover screen.
+// POST /v1/users/suggestions/:id/dismiss: hide this person from Suggested (Quick_Add_Score subtracts 100 for a dismissal)
+router.post('/suggestions/:id/dismiss', requireAuth, async (req, res, next) => {
+  try {
+    const personId = req.params.id;
+    if (String(personId) === String(req.user.id)) throw httpError(400, 'Invalid suggestion');
+    await QuickAddDismissal.findOrCreate({ where: { userId: req.user.id, personId }, defaults: { userId: req.user.id, personId } });
+    res.status(204).end();
+  } catch (e) { next(e); }
+});
+
 router.get('/suggestions', requireAuth, async (req, res, next) => {
   try {
     const [followingRows, followerRows, blockRows] = await Promise.all([
@@ -175,14 +185,23 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
     }) : [];
     const sharedGroups = new Map();
     for (const row of sharedGroupRows) sharedGroups.set(String(row.userId), (sharedGroups.get(String(row.userId)) || 0) + 1);
-    const me = await User.findByPk(req.user.id, { attributes: ['country'], raw: true });
-    const quickAddScore = (person) => {
-      const mutual = mutualCounts.get(person.id) || 0;
-      const sameCountry = me?.country && person.country === me.country ? 1 : 0;
-      return mutual * 10 + (sharedGroups.get(String(person.id)) || 0) * 15 + sameCountry * 5;
-    };
+    const candidateIds = candidates.map((person) => person.id);
+    const [me, searchRows, dismissRows] = await Promise.all([
+      User.findByPk(req.user.id, { attributes: ['country'], raw: true }),
+      candidateIds.length ? ProfileView.findAll({ where: { viewerId: req.user.id, profileId: candidateIds }, attributes: ['profileId', 'views'], raw: true }) : [],
+      candidateIds.length ? QuickAddDismissal.findAll({ where: { userId: req.user.id, personId: candidateIds }, attributes: ['personId'], raw: true }) : [],
+    ]);
+    const searches = new Map(searchRows.map((row) => [String(row.profileId), Number(row.views) || 0]));
+    const dismissed = new Set(dismissRows.map((row) => String(row.personId)));
+    const scoreOf = (person) => quickAddScore({
+      mutual: mutualCounts.get(person.id) || 0,
+      sharedGroups: sharedGroups.get(String(person.id)) || 0,
+      profileSearches: searches.get(String(person.id)) || 0,
+      sameLocation: me?.country && person.country === me.country ? 1 : 0,
+      dismissCount: dismissed.has(String(person.id)) ? 1 : 0,
+    });
     const suggested = candidates
-      .map((person, index) => ({ person, index, score: quickAddScore(person) }))
+      .map((person, index) => ({ person, index, score: scoreOf(person) }))
       .sort((a, b) => (b.score - a.score) || (a.index - b.index))
       .map(({ person }) => person)
       .slice(0, 24);
@@ -272,11 +291,23 @@ async function ownUsername(req) {
   return row.username;
 }
 
+// Counts one profile visit per viewer per profile per day (a Redis guard stops refreshes from inflating the count)
+async function recordProfileView(viewerId, profileId) {
+  if (String(viewerId) === String(profileId)) return;
+  const day = new Date().toISOString().slice(0, 10);
+  const first = await redis.set(`pv:${viewerId}:${profileId}:${day}`, '1', 'EX', 86400, 'NX').catch(() => 'OK');
+  if (!first) return;
+  const [row] = await ProfileView.findOrCreate({ where: { viewerId, profileId }, defaults: { views: 0 } });
+  await row.increment('views', { by: 1 });
+  await row.update({ lastViewedAt: new Date() });
+}
+
 const profileFor = async (req, res, next, username) => {
   try {
     const user = await resolveUser(req, username, PUBLIC_ATTRS);
     if (!user) throw httpError(404, 'User not found');
     await assertNotBlocked(req.user.id, user.id);
+    recordProfileView(req.user.id, user.id).catch((viewError) => console.error('Profile view record failed:', viewError.message));
     const [postCount, follow, followerCount, followingCount, storyCount] = await Promise.all([
       Post.count({ where: { authorId: user.id, status: 'live', isStory: false } }),
       Follow.findOne({ where: { followerId: req.user.id, followeeId: user.id } }),
@@ -357,11 +388,13 @@ async function rankFollowers(rows, userId) {
   if (!rows.length) return rows;
   const ids = rows.map((row) => String(row.followerId));
   const since = new Date(Date.now() - 30 * DAY);
-  const [followsBack, replies, creators] = await Promise.all([
+  const [followsBack, replies, creators, visits] = await Promise.all([
     Follow.findAll({ where: { followerId: userId, followeeId: ids }, attributes: ['followeeId'], raw: true }),
     DirectMessage.findAll({ where: { senderId: ids, recipientId: userId, storyAuthorId: userId, createdAt: { [Op.gt]: since } }, attributes: ['senderId'], raw: true }),
     User.findAll({ where: { id: ids }, attributes: ['id', 'isCreator'], raw: true }),
+    ProfileView.findAll({ where: { viewerId: ids, profileId: userId }, attributes: ['viewerId', 'views'], raw: true }),
   ]);
+  const visitsBy = new Map(visits.map((row) => [String(row.viewerId), Number(row.views) || 0]));
   const mutual = new Set(followsBack.map((row) => String(row.followeeId)));
   const replied = new Map();
   for (const row of replies) replied.set(String(row.senderId), (replied.get(String(row.senderId)) || 0) + 1);
@@ -371,6 +404,7 @@ async function rankFollowers(rows, userId) {
       const id = String(row.followerId);
       const rank = followRankScore({
         mutual: mutual.has(id) ? 1 : 0,
+        profileVisits: visitsBy.get(id) || 0,
         storyReplies: replied.get(id) || 0,
         verified: verified.has(id) ? 1 : 0,
         daysFollowed: (Date.now() - new Date(row.createdAt).getTime()) / DAY,
