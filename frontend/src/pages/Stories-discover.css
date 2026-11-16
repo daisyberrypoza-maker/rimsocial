@@ -1,0 +1,71 @@
+/* Discover/Suggestions story cards: horizontal feed, contained media and a clear rewatch state. */
+.st-page .st-discover-grid {
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:10px !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  padding:0 14px 12px !important;
+  scroll-snap-type:x mandatory;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.st-page .st-discover-grid > .st-card,
+.st-page .st-discover-grid > .st-discover-tile {
+  position:relative;
+  display:block;
+  flex:0 0 148px !important;
+  width:148px !important;
+  height:224px !important;
+  min-width:148px !important;
+  overflow:hidden !important;
+  border-radius:10px !important;
+  scroll-snap-align:start;
+}
+.st-page .st-discover-tile > img,
+.st-page .st-discover-tile > video,
+.st-page .st-discover-tile .st-card-ambient,
+.st-page .st-discover-tile .st-card-foreground,
+.st-page .st-discover-tile .st-card-img {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100% !important;
+  height:100% !important;
+  min-width:0;
+  min-height:0;
+  object-fit:cover !important;
+  object-position:center;
+}
+.st-page .st-discover-tile .st-card-ambient { filter:blur(14px) brightness(.62); transform:scale(1.12); }
+.st-page .st-discover-tile .st-card-foreground { z-index:1; object-fit:contain !important; }
+.st-page .st-discover-tile .st-card-shade { position:absolute; inset:0; z-index:2; pointer-events:none; }
+.st-page .st-discover-tile .st-card-foot,
+.st-page .st-discover-tile .st-discover-headline { position:absolute; z-index:3; }
+.st-page .st-discover-tile.is-viewed::after,
+.st-page .st-discover-card-h.is-viewed::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:4;
+  background:rgba(0,105,255,.30);
+  pointer-events:none;
+}
+.st-page .st-watch-again {
+  position:absolute;
+  inset:0;
+  z-index:5;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#fff;
+  text-align:center;
+  font-size:13px;
+  font-weight:700;
+  text-shadow:0 1px 4px rgba(0,0,0,.55);
+  pointer-events:none;
+}
+.st-page .st-discover-card-h { position:relative; overflow:hidden; }
+.st-page .st-discover-card-h .st-watch-again { z-index:6; }
