@@ -44,7 +44,7 @@ test('temporary story fetch failures show retry instead of being treated as an e
 });
 
 test('story viewed state is committed locally only after the server confirms it', () => {
-  assert.match(viewer, /api\(\`\/v1\/stories\/\$\{current\.id\}\/view\`[\s\S]{0,180}\.then\(\(\) => updateCurrent\(current\.id, \{ viewed: true \}\)\)/);
+  assert.match(viewer, /api\(\`\/v1\/stories\/\$\{current\.id\}\/view\`[\s\S]{0,220}\.then\(\(\) => \{[\s\S]{0,120}updateCurrent\(current\.id, \{ viewed: true \}\);[\s\S]{0,100}onStoryViewed\?\.\(current\.id\);[\s\S]{0,40}\}\)/);
   assert.match(viewer, /groupStories\.every\(\(s\) => s\.viewed\)/);
 });
 
