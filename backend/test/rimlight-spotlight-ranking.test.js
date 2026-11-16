@@ -26,8 +26,9 @@ test('authenticated feedback aggregates completion, rewatch and fast-skip signal
 });
 
 test('Rimlight player reports natural replay and saved-post preference', () => {
-  const card = read('../../frontend/src/components/PostCard.jsx');
+  const card = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend/src/components/PostCard.jsx'), 'utf8');
   assert.match(card, /event: 'rewatch'/);
+  assert.match(card, /event: 'completed'/);
   assert.match(card, /event: 'saved'/);
 });
 
