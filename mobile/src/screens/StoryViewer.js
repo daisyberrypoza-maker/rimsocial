@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Pressable, TextInput, StyleSheet, Animated, PanResponder, Modal, Alert, Share, AppState, Keyboard, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, Image, Pressable, TextInput, StyleSheet, Animated, PanResponder, Modal, Alert, Share, AppState, Keyboard, KeyboardAvoidingView, Platform, useWindowDimensions, StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
@@ -91,7 +91,8 @@ export default function StoryViewer() {
   // Stop playback as soon as the app is minimised; playback resumes only on a tap
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => { if (state !== 'active') setPaused(true); });
-    return () => sub.remove();
+    return (
+    {focused && <StatusBar barStyle="light-content" />}) => sub.remove();
   }, []);
 
   // Swipe up on the lower half opens the options, swipe down closes
