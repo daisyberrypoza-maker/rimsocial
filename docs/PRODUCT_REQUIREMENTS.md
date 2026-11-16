@@ -1,6 +1,6 @@
 # RimSocial Product Requirements and Verification Tracker
 
-**Audit baseline:** `main` at `1edbcb3d0aeac4cb792b91fb20b20236fa8821a1`.
+**Audit baseline:** `main` at `002fa3ab57703247b39492a8adea2d2566d9b329`.
 **Policy:** A PR or commit is not proof of completion. **Done** means code is on main and relevant automated checks pass. Visual playback and Android-specific requirements still need physical-device QA. No deployment is authorized by this tracker.
 
 ## Status definitions
@@ -58,7 +58,7 @@
 | #120 | Stories typography and spacing | Merged; CI passed. |
 | #121 | Adaptive ambient backgrounds and tone grades | Merged; CI passed. |
 | #122 | Swipe navigation for Messages and Search | Merged; CI passed. |
-| #123 | Shared relative-time formatting and Activity Likes filter | Open; CI running. |
+| #123 | Shared relative-time formatting and Activity Likes filter | Merged as `002fa3a`; CI passed. |
 | #105 | Story loading, Search navigation and upload progress | Closed as stale. Story cache invalidation and Search initialization are already fixed; video thumbnails are in #117. Upload progress remains open. |
 | #99 | Find Friends and settings-menu polish | Closed as already covered by main. |
 | #91 | Swipe between Messages and Search tabs | Closed; ported and merged in #122. |
