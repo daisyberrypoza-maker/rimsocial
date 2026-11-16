@@ -41,7 +41,7 @@
 | Media | Cloudinary storage, video thumbnails, safe cleanup/retry and no orphaned media | Partial | Video Story thumbnail generation merged in #117; cleanup/retry system exists. Test provider failures and shared assets. |
 | Android parity | React Native app mirrors web screen behavior and visual rules | Open | #118/#120/#121/#122 are web-only. `mobile/README.md` says the native app has not been installed or run; Creator Studio, Business Hub, Live, Algorithm, Ads, Explore Watch and profile feed are not ported. |
 | Android parity | Native gallery, video trimming, notification chime and Snapchat editor tools | Blocked | Native modules and real-device implementation required; mobile chime is currently a placeholder. |
-| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115, #116, #117, #118, #120 and #121. Full Android build and end-to-end physical-device pass remain. |
+| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115, #116, #117, #118, #120, #121, #122 and #123. Full Android build and end-to-end physical-device pass remain. |
 | Release | Merge verified GitHub work before any deployment | Open | No deployment until outstanding GitHub requirements and release checks are complete. |
 
 ## Relevant pull requests
@@ -62,7 +62,7 @@
 | #105 | Story loading, Search navigation and upload progress | Closed as stale. Story cache invalidation and Search initialization are already fixed; video thumbnails are in #117. Upload progress remains open. |
 | #99 | Find Friends and settings-menu polish | Closed as already covered by main. |
 | #91 | Swipe between Messages and Search tabs | Closed; ported and merged in #122. |
-| #89 | Activity feed consistency and relative-time formatting | Ported to #123; close after CI and merge. |
+| #89 | Activity feed consistency and relative-time formatting | Closed; shared formatter and Activity Likes filter ported in #123. |
 | #67 | Messaging integration draft and migrations 030–032 | Draft only; review schema, authorization, encryption and migration ordering before any merge. |
 
 ## Verification required before marking a requirement Done
