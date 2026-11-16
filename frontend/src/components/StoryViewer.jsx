@@ -30,7 +30,7 @@ const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual cont
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
 // Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
 // Videos play with sound; photos advance after PHOTO_MS.
-export default function StoryViewer({ groups, startIndex, startStory = 0, onClose, origin = null }) {
+export default function StoryViewer({ groups, startIndex, startStory = 0, onClose, onStoryViewed, origin = null }) {
   const [gi, setGi] = useState(startIndex);
   // Which story of the group opens first (used once, on the first load of that group)
   const firstStoryRef = useRef(startStory);
@@ -209,7 +209,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       return;
     }
     api(`/v1/stories/${current.id}/view`, { method: 'POST' })
-      .then(() => updateCurrent(current.id, { viewed: true }))
+      .then(() => { updateCurrent(current.id, { viewed: true }); onStoryViewed?.(current.id); })
       .catch((error) => {
         if (error.status === 404) dropStory(current.id);
       });
