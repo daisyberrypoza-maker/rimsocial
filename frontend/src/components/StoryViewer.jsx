@@ -30,7 +30,7 @@ const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual cont
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
 // Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
 // Videos play with sound; photos advance after PHOTO_MS.
-export default function StoryViewer({ groups, startIndex, startStory = 0, onClose, onStoryViewed, origin = null }) {
+export default function StoryViewer({ groups, startIndex, startStory = 0, startStoryId = null, onClose, onStoryViewed, origin = null }) {
   const [gi, setGi] = useState(startIndex);
   // Which story of the group opens first (used once, on the first load of that group)
   const firstStoryRef = useRef(startStory);
@@ -100,13 +100,15 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     const savedItems = cachedItems.filter((item) => !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now());
     const usableSavedItems = savedItems.length ? savedItems : null;
     const requestedIndex = firstStoryRef.current;
+    const requestedStoryId = String(startStoryId || '');
     firstStoryRef.current = 0;
     setSi(requestedIndex);
     setLoadError(false);
     if (usableSavedItems) {
       setStories(usableSavedItems);
       setStoriesOwnerId(group.user.id);
-      setSi(Math.min(requestedIndex, usableSavedItems.length - 1));
+      const exactIndex = requestedStoryId ? usableSavedItems.findIndex((item) => String(item.id) === requestedStoryId) : -1;
+      setSi(exactIndex >= 0 ? exactIndex : Math.min(requestedIndex, usableSavedItems.length - 1));
       setSubscribed(Boolean(saved.isSubscribed));
     } else {
       setStories(null);
@@ -121,7 +123,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
         setStories(items);
         setStoriesOwnerId(group.user.id);
         setStoriesLoadedOwnerId(group.user.id);
-        setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
+        const exactIndex = requestedStoryId ? items.findIndex((item) => String(item.id) === requestedStoryId) : -1;
+        setSi(exactIndex >= 0 ? exactIndex : (items.length ? Math.min(requestedIndex, items.length - 1) : 0));
         setLoadError(false);
         setSubscribed(Boolean(d.isSubscribed));
         useAppStore.getState().setStoryCache(group.user.id, { items, isSubscribed: Boolean(d.isSubscribed) });
