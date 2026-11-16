@@ -270,7 +270,7 @@ export default function Stories() {
       <section className="st-section" aria-label="Friends">
         <h2 className="st-h2 st-friends-heading">{friendsActive ? 'Friends' : 'My Stories'} <Icon name="chevron-right" size={22} /></h2>
         <div className="st-row" onScroll={(event) => setFriendsActive(event.currentTarget.scrollLeft > 60)}>
-          <button className="st-friend" aria-label={uploading ? 'Posting your story' : myGroup ? 'View my story' : 'Create a story'} onClick={(event) => (myGroup ? openStories(myGroup, event.currentTarget) : navigate('/upload?story=1'))}>
+          <button className="st-friend" aria-label={uploading ? `Posting your story: ${pending.progress || 0}%` : myGroup ? 'View my story' : 'Create a story'} onClick={(event) => (myGroup ? openStories(myGroup, event.currentTarget) : navigate('/upload?story=1'))}>
             <span className={`st-ring ${myGroup ? 'mine' : 'none'}`}>
               <span className="st-face">
                 <StoryFace group={myGroup} user={me || {}} />
@@ -278,7 +278,7 @@ export default function Stories() {
               </span>
               <span className="st-plus" role="button" aria-label="Add a story" onClick={(event) => { event.stopPropagation(); navigate('/upload?story=1'); }}><Icon name="plus" size={13} /></span>
             </span>
-            <span className="st-name">{uploading ? 'Posting…' : 'My Story'}</span>
+            <span className="st-name">{uploading ? `Posting ${pending.progress || 0}%` : 'My Story'}</span>
           </button>
           
           {!loading && orderedOthers.map((group) => (
