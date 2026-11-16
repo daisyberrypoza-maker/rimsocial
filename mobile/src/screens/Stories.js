@@ -18,6 +18,14 @@ const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
 function nameOf(user) { return user?.displayName || user?.username || 'Creator'; }
+function activeRailItems(value) {
+  const now = Date.now();
+  return railItems(value).filter((group) => {
+    if (!group?.expiresAt) return true;
+    const expiresAt = new Date(group.expiresAt).getTime();
+    return !Number.isFinite(expiresAt) || expiresAt > now;
+  });
+}
 
 // Stories screen: opens from saved data at once; the server is asked again only when that data is old.
 export default function Stories() {
@@ -30,6 +38,7 @@ export default function Stories() {
   const [friendsActive, setFriendsActive] = useState(false);
   // Badge on the add-friend icon: people who followed you since you last opened it
   const [newFollows, setNewFollows] = useState(0);
+  const [railError, setRailError] = useState(false);
   const feedItems = useAppStore((s) => s.feeds.discover?.items || []);
   // Sponsored posts first in the Discover grid, like the reference
   const sponsored = feedItems.filter((p) => p.isSponsored).slice(0, 2);
@@ -50,16 +59,20 @@ export default function Stories() {
   }
   const [suggested, setSuggested] = useState(storedDiscover.suggested || []);
   const [ranking, setRanking] = useState(storedDiscover.ranking || { friends: {}, discoverOrder: [] });
-  const rail = railItems(storedRail);
+  const rail = activeRailItems(storedRail);
 
   const loadRail = useCallback(() => {
-    return api('/v1/stories/rail').then((r) => useAppStore.getState().setStoryRail({ items: r.items || [], updatedAt: Date.now() })).catch(logError);
+    setRailError(false);
+    return api('/v1/stories/rail').then((r) => {
+      if (!Array.isArray(r.items)) throw new Error('Invalid Stories rail response');
+      useAppStore.getState().setStoryRail({ items: activeRailItems(r.items), updatedAt: Date.now() });
+    }).catch((error) => { setRailError(true); logError(error); throw error; });
   }, []);
   const [pulling, setPulling] = useState(false);
-  async function pullRefresh() { setPulling(true); try { await loadRail(); } finally { setPulling(false); } }
+  async function pullRefresh() { setPulling(true); try { await loadRail(); } catch { /* retry state is shown below */ } finally { setPulling(false); } }
 
   useEffect(() => {
-    if (Date.now() - (useAppStore.getState().storyRailAt || 0) > RAIL_FRESH_MS) loadRail();
+    if (Date.now() - (useAppStore.getState().storyRailAt || 0) > RAIL_FRESH_MS) loadRail().catch(() => {});
   }, [loadRail]);
 
   // Discover and friend ordering, refreshed only when old
@@ -86,7 +99,9 @@ export default function Stories() {
 
   const myGroup = rail.find((g) => g.user?.id === me?.id);
   const others = rail.filter((g) => g.user?.id !== me?.id)
-    .sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
+    .sort((a, b) => Number(Boolean(b.unseen)) - Number(Boolean(a.unseen))
+      || (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0)
+      || new Date(b.latestAt || 0).getTime() - new Date(a.latestAt || 0).getTime());
   const byId = new Map(suggested.map((u) => [u.id, u]));
   const discover = (ranking.discoverOrder.length ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean) : suggested)
     .filter((u) => u.id !== me?.id);
@@ -153,7 +168,8 @@ export default function Stories() {
             </Pressable>
           ))}
         </ScrollView>
-        {others.length === 0 && !myGroup && (
+        {railError && <View style={styles.empty}><Text style={styles.emptyTitle}>Stories couldn't refresh</Text><Pressable style={styles.pill} onPress={() => loadRail().catch(() => {})}><Text style={styles.pillText}>Retry</Text></Pressable></View>}
+        {others.length === 0 && !myGroup && !railError && (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}><Icon name="users" size={26} color={colors.muted} /></View>
             <Text style={styles.emptyTitle}>No stories yet</Text>
