@@ -7392,3 +7392,28 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-tile .st-card-img {
   filter: brightness(0.55) !important;
 }
+
+/* Story viewer: top and bottom readability scrims, matching Discover cards.
+   Keep media below the scrim and captions above it; the overlay never intercepts taps. */
+.sv-root .sv-stage { isolation:isolate; }
+.sv-root .sv-stage > .sv-media,
+.sv-root .sv-stage > .sv-text { z-index:0; }
+.sv-root .sv-stage::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(
+    180deg,
+    rgba(0,0,0,.22) 0%,
+    rgba(0,0,0,.08) 18%,
+    rgba(0,0,0,0) 36%,
+    rgba(0,0,0,.04) 62%,
+    rgba(0,0,0,.28) 78%,
+    rgba(0,0,0,.62) 100%
+  );
+}
+.sv-root .sv-stage > .sv-caption,
+.sv-root .sv-stage > .sv-flash,
+.sv-root .sv-stage > .sv-liked-mark { z-index:2; }
