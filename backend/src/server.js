@@ -164,6 +164,17 @@ async function start() {
   // Additive group-chat tables; existing direct messages and user data are untouched.
   await GroupConversation.sync();
   await GroupMember.sync();
+  // Additive per-member group read cursor; existing memberships remain intact.
+  {
+    const qiMembers = sequelize.getQueryInterface();
+    const memberColumns = await qiMembers.describeTable('group_members');
+    if (!memberColumns.lastReadAt) {
+      await qiMembers.addColumn('group_members', 'lastReadAt', {
+        type: require('sequelize').DataTypes.DATE,
+        allowNull: true,
+      });
+    }
+  }
   await GroupMessage.sync();
   await PushSubscription.sync();
   await GroupMessageView.sync();
