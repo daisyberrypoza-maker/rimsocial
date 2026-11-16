@@ -148,9 +148,11 @@ async function getUserStories(userId, viewerId) {
   const stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: userId, expiresAt: { [Op.gt]: new Date() } },
     include: [{ model: User, as: 'author', attributes: authorAttrs }],
-    order: [['createdAt', 'ASC']],
+    // Keep the newest 100 active stories, then play that retained window oldest-first.
+    order: [['createdAt', 'DESC']],
     limit: 100,
   });
+  stories.reverse();
   const ids = stories.map((s) => s.id);
   const viewed = await viewedSet(viewerId, ids);
   // If migration 026 has not run yet, stories still load without like state instead of failing.
