@@ -113,8 +113,12 @@ export default function Feed({ tab }) {
 
   return (
     <>
-      {pending?.kind === 'post' && <span className="feed-uploading" aria-hidden="true">
+      {pending?.kind === 'post' && <span className="feed-uploading" aria-label={`${pending.status || 'Uploading'} ${pending.progress || 0}%`}>
         {pending.mediaKind === 'video' ? <video src={pending.thumb} muted playsInline preload="metadata" /> : <img src={pending.thumb} alt="" />}
+        <span className="feed-upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={pending.progress || 0}>
+          <span style={{ width: `${pending.progress || 0}%` }} />
+        </span>
+        <span className="feed-upload-label">{pending.status || 'Uploading'} {pending.progress || 0}%</span>
       </span>}
       <div className="feed" ref={containerRef} onScroll={onScroll} onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; touchStartT.current = Date.now(); if (containerRef.current) containerRef.current.style.scrollSnapType = 'none'; }} onTouchEnd={(e) => { pullToRefresh(e); pageAfterSwipe(e); }}>
         {refreshing && <div className="feed-refresh-indicator"> Refreshing</div>}
