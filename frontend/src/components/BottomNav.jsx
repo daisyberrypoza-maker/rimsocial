@@ -30,8 +30,9 @@ export default function BottomNav() {
     return () => { alive = false; clearInterval(timer); window.removeEventListener('rs-chat', onChat); };
   }, []);
 
-  // Dark on Rimlight and Following; white on LIVE
-  const dark = pathname === '/';
+  // Rimlight, Following and LIVE are one section and share the Rimlight tab state.
+  const rimlightSection = ['/', '/following', '/live'].includes(pathname);
+  const dark = rimlightSection && pathname !== '/live';
   const light = pathname === '/live';
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
@@ -43,7 +44,7 @@ export default function BottomNav() {
       </NavLink>
       <NavLink to="/upload" replace aria-label="Create post"><Icon name="plus" size={28} /></NavLink>
       <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
-      <NavLink to="/" end replace aria-label="Rimlight"><Icon name="play" /></NavLink>
+      <NavLink to="/" end replace aria-label="Rimlight" className={rimlightSection ? "active" : undefined}><Icon name="play" /></NavLink>
     </nav>
   );
 }
