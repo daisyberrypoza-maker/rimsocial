@@ -377,6 +377,7 @@ export default function StoryViewer() {
 
   return (
     <KeyboardAvoidingView style={[styles.root, { width, height }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {focused && <StatusBar barStyle="light-content" />}
       <View style={StyleSheet.absoluteFill} {...pan.panHandlers}>
         {current && (isVideo
           ? (
@@ -580,7 +581,6 @@ function Sheet({ visible, title, onClose, children }) {
 
 function SheetRow({ icon, label, onPress, danger = false, disabled = false }) {
   return (
-    {focused && <StatusBar barStyle="light-content" />}
     <Pressable style={[styles.row, disabled && styles.rowDisabled]} onPress={onPress} disabled={disabled}>
       <View style={styles.rowIcon}>{icon}</View>
       <Text style={[styles.rowLabel, danger && styles.rowDanger]}>{label}</Text>
