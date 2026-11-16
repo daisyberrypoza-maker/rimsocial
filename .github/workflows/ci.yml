@@ -21,6 +21,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       redis:
         image: redis:7-alpine
@@ -47,7 +48,7 @@ jobs:
       - name: Check backend JavaScript syntax
         run: find backend/src -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Run backend unit tests
-        run: npm test --prefix backend
+        run: npm test --prefix backend -- --test-force-exit
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
       - name: Build frontend
@@ -55,6 +56,7 @@ jobs:
 
   business-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       redis:
         image: redis:7-alpine
@@ -102,4 +104,4 @@ jobs:
           AUTO_CREATE_DATABASE: "false"
           SERVE_FRONTEND: "false"
           RUN_BUSINESS_INTEGRATION: "true"
-        run: node --test backend/test/business.integration.test.js
+        run: node --test --test-force-exit backend/test/business.integration.test.js
