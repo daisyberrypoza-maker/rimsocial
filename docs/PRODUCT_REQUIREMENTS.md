@@ -1,67 +1,80 @@
 # RimSocial Product Requirements and Verification Tracker
 
-**Baseline:** `main` at `38fb9c4135c683d655b451a35e947b21b47a0164` (after verified merges #111, #113, #114, #115 and #116).
-**Rule:** A PR, commit, or implementation note is not proof of completion. Mark **Done** only after code inspection and relevant automated/manual verification. No deployment is authorized by this tracker.
+**Audit baseline:** `main` at `1edbcb3d0aeac4cb792b91fb20b20236fa8821a1`.
+**Policy:** A PR or commit is not proof of completion. **Done** means code is on main and relevant automated checks pass. Visual playback and Android-specific requirements still need physical-device QA. No deployment is authorized by this tracker.
 
 ## Status definitions
-- **Done** — implementation exists on main and relevant checks pass.
-- **Partial** — some implementation exists, but required behavior/signals/workflow is incomplete.
-- **Open** — missing, not verified, or only proposed in an unmerged PR.
-- **Blocked** — requires an external service, native module, credentials, policy decision, or physical-device validation.
+- **Done (code/CI):** implemented on main; relevant automated checks passed.
+- **Partial:** implementation exists but behavior, edge cases, or platform parity remain incomplete.
+- **Open:** not implemented or not yet verified.
+- **Blocked:** requires a native module, external provider, credentials, or a product decision.
 
-## Product and UI requirements
+## Requirements
 
-| Area | Requirement | Status | Evidence / next action |
+| Area | Requirement | Status | Evidence / remaining work |
 |---|---|---|---|
-| Stories | My Stories/Friends typography, spacing, divider, ring and add-icon styling match the approved reference | Open | Inspect Stories CSS/component against reference; verify on phone-sized viewport. |
-| Stories | My Story first; friends ordered by interaction and recency; purple unseen and grey fully-watched rings | Partial | Main has story rail/ring logic; verify ordering, multi-story viewed state, own-story behavior. |
-| Stories | Sticky header and independently scrolling story rail/Discover content | Open | Proposed in PR #109; inspect implementation and tests before integration. |
-| Stories | Video Stories start promptly, use poster thumbnails, and progress indicator remains visible and correctly positioned | Partial | Viewer has play readiness logic; PR #105 proposes thumbnails/cache fixes. Verify browser autoplay policy and real Android device. |
-| Story viewer | Left/right tap zones, middle pause, double-tap like, swipe gestures, close/back behavior | Partial | Existing `StoryViewer.jsx`; exercise all interactions and playback cleanup. |
-| Story viewer | Top and bottom readability scrim on photo, video and text stories; overlay must not intercept taps; captions and feedback above scrim | Done (code/CI) | PR #111 merged as `7bef272`; CI passed. Physical-device visual verification remains part of release QA. |
-| Story viewer | Snapchat-style ambient background and tone treatment without modifying original media | Partial | Existing story background utilities; verify Discover, Suggestions and full-screen viewer consistency. |
-| Discover | Image treatment, adaptive blurred background, readability gradients and requested 45% image dimming without dimming text | Partial | PR #110 is included in baseline; verify no compounded dimming with card overlays and viewer scrim. |
-| Discover | One item per creator in adjacent grid positions; carousel contains eligible unseen followed creators | Partial | PR #109 proposes diversity/carousel rules; inspect backend ranking and tests. |
-| Ranking | Discover, Friends story rail, Spotlight and Creator Score use measured signals, freshness and diversity | Partial | `docs/blueprint-reference.md` documents unmeasured signals; do not treat formulas with zero-valued signals as fully personalized. |
-| Suggestions | Keep Follow-back separate; remove unwanted suggested-for-you people modules from Stories/Explore | Done (code/CI) | PR #114 removed Explore/Find Friends people modules and preserved Follow back. Stories shows Discover story cards, not a suggested-people module. |
-| Navigation | Profile > Followers/Following > another profile > Back returns to the original list | Open | PR #104 proposes route-state preservation; branch is stale and must not be merged as-is. Add navigation regression tests. |
-| Navigation | Local screen transitions do not wait on network; tabs replace history; Back returns to originating list/sheet | Partial | Rules in `docs/SCREEN-RULES.md`; audit route state and data hydration. |
-| Chat | Direct and group message menus, copy, sender-only delete, media/status, unread state and chat navigation work consistently | Partial | Group menu now supports Copy, Reply and sender-only Delete for everyone (PR #116, merged). Full direct/group media, unread, navigation and real-device flows still require regression audit. PR #67 migrations 030–032 remain unreviewed. |
-| Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | Inspect feed player and real device; user reported progress bar and playback issues. |
-| Profile/posts | Gift icon hidden on own posts | Open | Verify post-card ownership condition and add component test. |
-| Upload | Real multipart progress and accurate upload/processing/success/error feedback | Open | PR #105 proposes uploader/API changes; branch is 193 commits behind main. Port/rebase safely. |
-| Camera | Press-and-hold video capture, zoom/gesture behavior and editor tools work | Partial | Web press-and-hold capture, 60-second cap and cancel-discard behavior merged in PR #115; CI passed. Native camera parity, gallery and trimming remain unverified/blocked. |
-| Remix | End-to-end remix workflow, attribution, permissions and resulting post/story behavior | Open | Existing viewer action may only repost a story; validate complete post remix workflow and backend semantics. |
-| Sponsorship | Paid-partnership disclosure and CTA | Partial | Display exists; verify rendering and required disclosure. |
-| Sponsorship | Billing, payment verification, campaign accounting and reconciliation | Open | Do not claim paid sponsorship is complete until provider-side webhook verification and ledger tests exist. |
-| Data model | Posts and Stories share `posts` with `isStory`; likes/views/comments/reposts/reports have correct relations | Partial | Inspect Sequelize models and migrations; verify DB constraints and retention/expiry behavior. |
-| Media | Cloudinary assets, thumbnail generation, safe cleanup/retry and no orphaned media | Partial | Existing cleanup migrations documented in README; verify failure/retry and shared-asset safety. |
-| Android parity | React Native app mirrors web screen behavior and visual rules | Open | `mobile/README.md` explicitly says app has not been installed/run; Creator Studio, Business Hub, Live, Algorithm, Ads, Explore Watch, profile feed, trimming and Snapchat editor tools are not ported. |
-| Android parity | Native gallery, video trimming, notification chime, Snapchat editor tools | Blocked | Requires native media/trim modules and implementation; mobile chime is a placeholder. |
-| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Open | Must inspect current workflows and run checks for each integrated change. |
-| Release | Merge all verified GitHub work before any deployment | Open | No deployment in this task until GitHub requirements and checks are complete. |
+| Stories | My Stories/Friends typography, spacing, divider, ring and add-icon styling match the approved reference | Done (code/CI) | #120 sets medium-weight section labels, 12px/500 display names, 10px/400 usernames and reduced vertical gap. Physical-device reference check remains. |
+| Stories | My Story first; friends ordered by interaction and recency; purple unseen and grey fully-watched rings | Partial | Friend ranking and unseen-first ordering merged in #115. Verify multi-story watched state and own-story ring behavior. |
+| Stories | Sticky header and independently scrolling Stories page | Done (code/CI) | Sticky header and Stories page scroll rules merged in #115. Physical-device scroll check remains. |
+| Stories | Video thumbnails/posters display while video starts | Done (code/CI) | Cloudinary first-frame JPEG URL and viewer poster merged in #117; CI passed. Adaptive ambient layer also uses the poster in #121. Verify physical-device rendering. |
+| Story viewer | Left/right tap zones, middle pause, double-tap like, swipe gestures, close/back behavior | Partial | Core interactions exist. Regression-test photo/video/text, hold-to-pause, swipe-dismiss, overlays and app background/foreground. |
+| Story viewer | Top and bottom readability scrim on photo, video and text stories; overlay must not intercept taps; captions and feedback above scrim | Done (code/CI) | #111 merged as `7bef272`; CI passed. Physical-device visual verification remains. |
+| Story viewer | Snapchat-style ambient background and tone treatment without modifying original media | Partial | Adaptive blurred backdrop and display-only Discover/warm/noir/soft grades merged in #121. Original files remain unchanged. A user-facing preset selector/persistence flow is not wired yet. |
+| Discover | 45% photo dimming without dimming text; adaptive blurred background; readable overlays | Done (code/CI) | 45% photo dimming (#110), adaptive ambient photo layers and foreground text/scrim stacking (#121) are on main. Verify at mobile sizes. |
+| Discover | One item per creator in carousel/grid; eligible unseen followed creators in carousel | Done (code/CI) | Ranking/diversity port merged in #115 as `254e919`; CI passed. Verify live ranking behavior with production-like data. |
+| Ranking | Discover, Friends rail, Spotlight and Creator Score use measured signals, freshness and diversity | Partial | Formulas exist, but `docs/blueprint-reference.md` identifies unmeasured signals and approximations. Do not call it a fully learned/personalized algorithm. |
+| Suggestions | Remove Suggested-for-you people modules while retaining Follow back | Done (code/CI) | #114 removed the Explore/Find Friends modules and preserved Follow back. Stories Discover remains story content, not people suggestions. |
+| Navigation | Profile > Followers/Following > another profile > Back returns to the originating list | Done (code/CI) | #113 merged as `4ab3145`; CI passed. Manually verify Followers, Following and Activity list flows. |
+| Navigation | Local screen transitions do not wait on network; tabs replace history; Back returns to originating list/sheet | Partial | Rules are in `docs/SCREEN-RULES.md`; audit remaining routes and saved-data hydration. |
+| Chat | Group message Copy, Reply and sender-only Delete for everyone | Done (code/CI) | Copy action merged in #116 as `38fb9c4`; existing reply/delete retained; CI passed. |
+| Chat | Full direct/group media, unread state, navigation and message lifecycle consistency | Partial | Existing media and message flows need full regression testing on web and Android. Draft PR #67 migrations 030–032 require schema/security review. |
+| Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | #118 moves the seek control 16px higher; player already uses auto-start. Verify visibility, scrubbing and playback lifecycle on a physical device. |
+| Profile/posts | Gift control is available on other people's eligible posts and hidden on own posts | Done (code/CI) | #118 adds Send a gift for eligible other creators' posts and hides it on own/sponsored posts; GiftSheet retains an ownership guard. |
+| Upload | Background/chunked uploads retain multi-file, voice and music support | Partial | Chunked upload and background status exist on main. |
+| Upload | Real percentage progress and accurate uploading/processing/success/error feedback | Open | PR #105 was closed as stale. Its XHR progress code would replace current chunked/multi-file/music support. Implement progress against the current uploader in a fresh PR. |
+| Camera | Press-and-hold video capture with 60-second cap and visible progress; cancelled gestures discard | Done (code/CI, web) | Merged in #115; CI passed. Test on supported mobile browsers. |
+| Camera | Native gallery, video trimming, editor tools and Android camera parity | Blocked | Requires native media/trim modules and React Native implementation. |
+| Remix | Complete post remix workflow, attribution, permissions and resulting post/story behavior | Open | Viewer has a story repost action; end-to-end post remix workflow is not verified. |
+| Sponsorship | Paid-partnership disclosure and CTA display | Partial | Display exists; verify sponsor identity and disclosure across feed, Discover and post detail. |
+| Sponsorship | Billing, payment verification, campaign accounting and reconciliation | Open | Do not treat CTA display as a billing system. Provider-side webhooks and ledger/reconciliation tests are required. |
+| Data model | Posts and Stories share `posts` with `isStory`; likes/views/comments/reposts/reports have correct relations | Partial | Models/migrations exist; verify constraints, ownership, privacy and expiry behavior. |
+| Media | Cloudinary storage, video thumbnails, safe cleanup/retry and no orphaned media | Partial | Video Story thumbnail generation merged in #117; cleanup/retry system exists. Test provider failures and shared assets. |
+| Android parity | React Native app mirrors web screen behavior and visual rules | Open | #118/#120/#121/#122 are web-only. `mobile/README.md` says the native app has not been installed or run; Creator Studio, Business Hub, Live, Algorithm, Ads, Explore Watch and profile feed are not ported. |
+| Android parity | Native gallery, video trimming, notification chime and Snapchat editor tools | Blocked | Native modules and real-device implementation required; mobile chime is currently a placeholder. |
+| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115, #116, #117, #118, #120 and #121. Full Android build and end-to-end physical-device pass remain. |
+| Release | Merge verified GitHub work before any deployment | Open | No deployment until outstanding GitHub requirements and release checks are complete. |
 
-## Open pull requests found during audit
+## Relevant pull requests
 
-| PR | Scope | Audit disposition |
+| PR | Scope | Current disposition |
 |---|---|---|
 | #111 | Story viewer readability scrim | Merged; CI passed. |
-| #109 | Discover, Stories, camera and ranking follow-up | Superseded by current-main port PR #115; stale branch should be closed after #115 passes. |
-| #105 | Story loading, Search navigation, upload feedback | 15 commits, 193 commits behind main; do not merge as-is. Story-cache, Search crash and upload-progress fixes still need selective porting. |
-| #104 | Story discovery, profile return navigation, group chat actions | Navigation and Explore suggestions were ported in #113/#114. Group-chat actions still need a selective port; do not merge stale branch. |
-| #113 | Profile list return navigation | Merged; CI passed. |\n| #114 | Remove Explore suggested-people modules | Merged; CI passed. |\n| #115 | Discover ranking and camera capture | Merged as `254e919`; CI passed. |\n| #112 | Requirements tracker | This document; CI passed, merge pending. |\n| #116 | Group chat copy action | Merged as `38fb9c4`; CI passed. |\n| #99, #91, #89 | Suggestions polish, tab swipe, activity consistency | Inspect whether still applicable and whether changes are already covered by main. |
-| #67 | Messaging integration draft and migrations 030–032 | Draft only; schema, authorization, E2EE, and migration review required before any merge. |
+| #113 | Profile list return navigation | Merged; CI passed. |
+| #114 | Remove Explore suggested-people modules | Merged; CI passed. |
+| #115 | Discover ranking, Stories sticky header, camera hold-to-record | Merged; CI passed. |
+| #116 | Group chat copy action | Merged; CI passed. |
+| #117 | Cloudinary video Story thumbnails and viewer poster | Merged; CI passed. |
+| #118 | Gift action and raised Rimlight progress bar | Merged; CI passed. |
+| #120 | Stories typography and spacing | Merged; CI passed. |
+| #121 | Adaptive ambient backgrounds and tone grades | Merged; CI passed. |
+| #122 | Swipe navigation for Messages and Search | Merged; CI passed. |
+| #123 | Shared relative-time formatting and Activity Likes filter | Open; CI running. |
+| #105 | Story loading, Search navigation and upload progress | Closed as stale. Story cache invalidation and Search initialization are already fixed; video thumbnails are in #117. Upload progress remains open. |
+| #99 | Find Friends and settings-menu polish | Closed as already covered by main. |
+| #91 | Swipe between Messages and Search tabs | Closed; ported and merged in #122. |
+| #89 | Activity feed consistency and relative-time formatting | Ported to #123; close after CI and merge. |
+| #67 | Messaging integration draft and migrations 030–032 | Draft only; review schema, authorization, encryption and migration ordering before any merge. |
 
-## Verification checklist before marking a requirement Done
-- Inspect the actual implementation on the candidate branch and current main.
-- Add or update a focused regression test for the reported behavior.
-- Run relevant backend tests, frontend build/lint/tests, and migration checks.
-- Check privacy, blocking/muting, authorization, ownership, and media lifecycle edge cases.
-- For visual/playback requirements, verify photo, video and text states at mobile viewport sizes and on a physical Android device where required.
-- Update this tracker with the merged commit and test evidence.
-- Keep deployment separate; do not deploy merely because a PR merged.
+## Verification required before marking a requirement Done
+1. Inspect the implementation on current main and the candidate branch.
+2. Add/update focused regression tests for the reported behavior.
+3. Run backend tests, frontend build/tests, and migration checks.
+4. Check privacy, block/mute, authorization, ownership, and media lifecycle edge cases.
+5. For visual/playback requirements, verify photo, video and text states at mobile viewport sizes and on a physical Android device where required.
+6. Update this tracker with the merged commit and test evidence.
+7. Keep deployment separate; do not deploy merely because a PR merged.
 
-## Audit notes
-- `docs/SCREEN-RULES.md` is the behavioral contract.
-- `docs/blueprint-reference.md` is the ranking/architecture status reference and already acknowledges several missing signals and unimplemented systems.
-- `mobile/README.md` is explicit that the native project has not been installed or run. Web parity cannot be marked complete while those gaps remain.
+## Source documents
+- `docs/SCREEN-RULES.md` — behavioral contract.
+- `docs/blueprint-reference.md` — ranking/architecture status, including missing signals and unimplemented systems.
+- `mobile/README.md` — native app setup and explicitly unported features.
