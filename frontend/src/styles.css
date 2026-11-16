@@ -7457,3 +7457,38 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root .sv-stage > .sv-caption,
 .sv-root .sv-stage > .sv-flash,
 .sv-root .sv-stage > .sv-liked-mark { z-index: 2; }
+
+
+/* Story viewer adaptive ambient backdrop and display-only tone presets. */
+.sv-root .sv-stage { position: relative; overflow: hidden; background: #111; }
+.sv-root .sv-stage > .sv-ambient {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: cover;
+  filter: blur(28px) brightness(.55) saturate(1.2);
+  transform: scale(1.04);
+  opacity: .95;
+  pointer-events: none;
+  z-index: 0;
+}
+.sv-root .sv-stage > .sv-media {
+  position: relative;
+  z-index: 1;
+  filter: contrast(1.08) saturate(1.15) brightness(1.02);
+}
+.sv-root .sv-stage.sv-grade-warm > .sv-media {
+  filter: sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04);
+}
+.sv-root .sv-stage.sv-grade-noir > .sv-media {
+  filter: grayscale(1) contrast(1.25) brightness(.95);
+}
+.sv-root .sv-stage.sv-grade-soft > .sv-media {
+  filter: contrast(.95) saturate(1.1) brightness(1.06);
+}
+.sv-root .sv-stage.sv-grade-discover > .sv-media { filter: contrast(1.08) saturate(1.15) brightness(1.02); }
+.sv-root .sv-stage > .sv-text { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .sv-root .sv-stage > .sv-ambient { filter: blur(18px) brightness(.55) saturate(1.1); }
+}
