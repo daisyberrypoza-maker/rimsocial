@@ -588,7 +588,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
       {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
 
-      <div className="sv-stage" onClick={onStageTap}>
+      <div className={`sv-stage sv-grade-${current?.filterPreset || 'discover'}`} onClick={onStageTap}>
         {current ? (
           isVideo ? (
             <>
