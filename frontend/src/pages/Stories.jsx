@@ -1,6 +1,7 @@
 import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { boxOf } from '../lib/viewerMotion.js';
 import './UploadStatus.css';
+import './Stories-discover.css';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
@@ -138,6 +139,20 @@ export default function Stories() {
   // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
   const AD_START_OFFSET = 3;
   const AD_FREQUENCY_INTERVAL = 6;
+  // Discover viewer sequence: one ordered list of unique creators from both story rails.
+  // StoryViewer advances through every creator instead of closing after the tapped creator.
+  const discoverGroups = useMemo(() => {
+    const seen = new Set();
+    return [...carousel, ...popular].map((item) => item?.author ? ({ user: item.author }) : null)
+      .filter((group) => {
+        const id = group?.user?.id;
+        if (!id || seen.has(String(id))) return false;
+        seen.add(String(id));
+        return true;
+      });
+  }, [carousel, popular]);
+  const discoverStartIndex = (author) => discoverGroups.findIndex((group) => String(group.user?.id) === String(author?.id));
+
   const discoverItems = useMemo(() => {
     const out = [];
     let adIndex = 0;
@@ -313,7 +328,7 @@ export default function Stories() {
           {carousel.length > 0 && (
             <div className="st-discover-carousel" role="list">
               {carousel.map((story) => (
-                <button key={'c' + story.id} role="listitem" className="st-discover-card-h" style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                <button key={'c' + story.id} role="listitem" className={`st-discover-card-h${story.viewed ? ' is-viewed' : ''}`} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                   {story.kind === 'text' || !discoverStorySrc(story)
                     ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground, story.id) }}>{story.storyText}</span>
                     : <>
@@ -321,6 +336,7 @@ export default function Stories() {
                       <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                     </>}
                   <span className="st-card-shade" />
+                  {story.viewed && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
                   <span className="st-card-foot">
                     <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
                     <span className="st-card-name">{capName(nameOf(story.author || {}))}</span>
@@ -342,7 +358,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className="st-card st-discover-tile" key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className={`st-card st-discover-tile${story.viewed ? ' is-viewed' : ''}`} key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !discoverStorySrc(story)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <>
@@ -350,6 +366,7 @@ export default function Stories() {
                     <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                   </>}
                 <span className="st-card-shade" />
+                {story.viewed && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
                 {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
@@ -364,7 +381,7 @@ export default function Stories() {
 
       {popOpen && (
         <ViewerBoundary onClose={() => setPopOpen(null)}>
-          <StoryViewer groups={[{ user: popOpen }]} startIndex={0} origin={popOrigin} onClose={() => setPopOpen(null)} />
+          <StoryViewer groups={discoverGroups} startIndex={Math.max(0, discoverStartIndex(popOpen))} origin={popOrigin} onClose={() => setPopOpen(null)} />
         </ViewerBoundary>
       )}
 
