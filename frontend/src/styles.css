@@ -7616,3 +7616,9 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 }
 .app > .feed .post .info { bottom: 48px !important; }
 .app > .feed .post .post-seek { bottom: 8px !important; }
+
+/* Discover grid: margins match the reference, 8px gaps, and each tile is a 3:5 box with the photo filling it */
+.st-page .st-discover-grid { margin: 0 -14px; padding: 0; gap: 8px; align-items: start; }
+.st-page .st-discover-grid .st-discover-tile { display: block; position: relative; width: 100%; height: auto; aspect-ratio: 3 / 5; margin: 0; padding: 0; border: 0 !important; border-radius: 3px !important; overflow: hidden; }
+.st-page .st-discover-grid .st-discover-tile > .st-card-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; transform: none !important; transition: none !important; }
+.st-page .st-discover-grid .st-discover-tile > .post-text-tile { position: absolute; inset: 0; width: 100%; height: 100%; }
