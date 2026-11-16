@@ -15,20 +15,11 @@ import '../snap-screens.css';
 import './ChatList.css';
 import { confirmDialog } from '../lib/confirm.js';
 import { isEncrypted, openBody } from '../lib/e2ee.js';
+import { formatRelativeTime } from '../lib/format.js';
 
 // Instagram-style inbox with API-backed Primary, General and Requests categories, unread counts, and direct/group conversations.
 
 const MEDIA_LABEL = { photo: 'Photo', video: 'Video', audio: 'Audio', file: 'File' };
-
-// Compact time since a message: now, 5m, 3h, 2d
-function timeAgo(iso) {
-  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (!Number.isFinite(minutes) || minutes < 1) return 'now';
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
-}
 
 function previewOf(last) {
   if (last.deleted) return 'This message was deleted';
@@ -252,7 +243,7 @@ export default function Messages() {
                       </span>
                       <span className="sn-sub">
                         {mine && <Ticks last={last} />}
-                        <><span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{timeAgo(last.createdAt)}</span></>
+                        <><span className="sn-txt">{previewOf(last)}</span><span className="sn-time">{formatRelativeTime(last.createdAt)}</span></>
                       </span>
                     </span>
                   </Link>
@@ -280,7 +271,7 @@ export default function Messages() {
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={26} /></span>
                   <span className="sn-text">
                     <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
-                    <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{timeAgo(last.createdAt)}</span>}</span>
+                    <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{formatRelativeTime(last.createdAt)}</span>}</span>
                   </span>
                 </Link>
               </li>
