@@ -5,7 +5,7 @@ import { chatPath } from '../lib/chatLink.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePullRefresh } from '../lib/pullRefresh.jsx';
 import { createPortal } from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -52,6 +52,15 @@ function SettingsItem({ icon, title, subtitle, onClick, disabled, danger }) {
 export default function Profile() {
   const { username = 'me', list = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backFromProfile = () => {
+    const returnTo = location.state?.returnTo;
+    if (typeof returnTo === 'string' && /^\/u\/[^/]+\/(followers|following|activity)$/.test(returnTo)) {
+      navigate(returnTo, { replace: true });
+      return;
+    }
+    goBack(navigate);
+  };
   const logout = useAppStore((s) => s.logout);
   const setProfile = useAppStore((s) => s.setProfile);
   const setFeed = useAppStore((s) => s.setFeed);
@@ -515,7 +524,7 @@ export default function Profile() {
   return (
     <div className={`page profile-page sc-profile${profile.isMe ? ' is-me' : ' is-other'}`} onScroll={(e) => { setScrollY(e.currentTarget.scrollTop); setCompactProgress(Math.min(1, Math.max(0, (e.currentTarget.scrollTop - 40) / 110))); }}>
       <div className={`sc-compact-nav${compactProgress > 0 ? ' visible' : ''}`} aria-hidden={!compactHeader} style={{ opacity: compactProgress, pointerEvents: compactHeader ? 'auto' : 'none' }}>
-        <button className="sc-compact-back" aria-label="Back" onClick={() => goBack(navigate)} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
+        <button className="sc-compact-back" aria-label="Back" onClick={backFromProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-compact-name">{profile.displayName || profile.username}</div>
         <div className="sc-compact-actions">
           <button type="button" className="sc-compact-round" aria-label="Share profile" onClick={shareProfile} tabIndex={compactHeader ? 0 : -1}><Icon name="share" size={18} /></button>
@@ -528,7 +537,7 @@ export default function Profile() {
         <div className="pf-cover" aria-hidden="true" style={coverPreview ? { backgroundImage: `url(${coverPreview})` } : profile.coverUrl ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` } : { background: defaultCover(profile.username).css }} />
         <span className="pf-shade" aria-hidden="true" />
         <div className="pf-top">
-          <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
+          <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Back" onClick={backFromProfile}><Icon name="arrow-left" size={22} /></button>
           <div className="pf-top-right">
             {!profile.isMe && profile.isFollowing && <button type="button" className={`pf-round pf-bell${profile.isNotifying ? ' on' : ''}`} style={{ color: '#fff' }} aria-label={profile.isNotifying ? 'Turn off new post notifications' : 'Turn on new post notifications'} aria-pressed={Boolean(profile.isNotifying)} onClick={toggleNotify} disabled={notifyBusy}><Icon name="bell" size={20} /></button>}
             <button type="button" className="pf-round" style={{ color: '#fff' }} aria-label="Share profile" onClick={shareProfile}><Icon name="share" size={20} /></button>
@@ -688,7 +697,7 @@ export default function Profile() {
             <ul className="pv-list">
               {[...people].filter((person) => `${person.displayName || ''} ${person.username || ''}`.toLowerCase().includes(peopleQuery.trim().toLowerCase())).sort((a, b) => { if (peopleSort === 'default') return 0; const delta = new Date(a.relationshipCreatedAt || 0).getTime() - new Date(b.relationshipCreatedAt || 0).getTime(); return peopleSort === 'newest' ? -delta : delta; }).map((person) => (
                 <li className="pv-row" key={person.id}>
-                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`)}>
+                  <button type="button" className="pv-person" onClick={() => navigate(`/u/${person.username}`, { state: { returnTo: location.pathname } })}>
                     <Avatar user={person} size={52} />
                     <span className="pv-person-text"><strong>{person.username}</strong><small>{person.displayName || ''}</small></span>
                   </button>
