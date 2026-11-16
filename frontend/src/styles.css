@@ -7329,6 +7329,44 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 @keyframes snap-disc-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .post .snap-disc { animation:none; } }
 
+/* Story viewer spec: top scrim, 2.5px segmented bars, 15px bold name, translucent reply controls */
+.sv-root::before { content:''; position:absolute; top:0; left:0; right:0; height:140px; background:linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 100%); z-index:2; pointer-events:none; }
+.sv-root .sv-bar { height:2.5px; border-radius:2px; background:rgba(255,255,255,.35); }
+.sv-root .sv-name { font-size:15px; font-weight:700; }
+.sv-root .sv-reply { background:rgba(255,255,255,.2) !important; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.25); }
+.sv-root .sv-cam, .sv-root .sv-send { background:rgba(255,255,255,.2) !important; backdrop-filter:blur(8px); }
+
+/* Camera spec: 76px shutter, 40px translucent side tools, 16px rail gap */
+.cam-shutter { width: 76px; height: 76px; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+.cam-shutter span { width: 58px; height: 58px; }
+.cam-side { gap: 16px; }
+.cam-side button, .cam-side-btn { width: 40px; height: 40px; background: rgba(0,0,0,.38); backdrop-filter: blur(8px); }
+.cam-close { background: rgba(0,0,0,.38); backdrop-filter: blur(8px); }
+
+/* Camera: press-and-hold video progress ring around the shutter */
+.cam-shutter { position: relative; }
+.cam-shutter.recording { border-color: #ff2d55; }
+.cam-ring { position: absolute; left: -8px; top: -8px; width: 92px; height: 92px; pointer-events: none; }
+
+/* Camera shutter: a long press must record, not open the system menu or select text */
+.cam-shutter, .cam-shutter * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
+
+/* Stories header stays at the top while the page scrolls */
+.st-page { overflow-x: clip; }
+.st-page .st-top { position: sticky; top: 0; z-index: 20; background: #fff; }
+
+/* Stories: the page itself scrolls inside the app shell, so the sticky header stays put */
+.app > .st-page { min-height: 0 !important; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Discover tiles and suggestion cards: 3px corner radius */
+.st-page .st-discover-tile, .st-page .st-discover-card-h, .friends-suggestion-row, .rec-discover-row { border-radius: 3px !important; }
+
+/* Discover tile text and avatar per spec: 1px soft drop shadow on names, 2px avatar border */
+.st-page .st-discover-tile .st-card-name, .st-page .st-discover-tile .st-discover-headline { text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.st-page .st-discover-tile .st-card-avatar { border-width: 2px; }
+
+/* Discover tile photo: 45% dark overlay (rgba 0,0,0,.45) so the overlay text reads clearly */
+.st-page .st-discover-tile .st-card-img { filter: brightness(0.55); }
 
 /* Stories header: keep the page navbar visible while the Stories feed scrolls. */
 .st-page > .st-top {
@@ -7393,18 +7431,20 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   filter: brightness(0.55) !important;
 }
 
-/* Story viewer: top and bottom readability scrims, matching Discover cards.
-   Keep media below the scrim and captions above it; the overlay never intercepts taps. */
-.sv-root .sv-stage { isolation:isolate; }
+/* Discover photo grade (display only): contrast 1.08, saturate 1.15, with the 45% dim */
+.st-page .st-discover-tile .st-card-img { filter: contrast(1.08) saturate(1.15) brightness(0.55) !important; }
+
+/* Story viewer: top and bottom readability scrims; media remains interactive and captions stay above. */
+.sv-root .sv-stage { isolation: isolate; }
 .sv-root .sv-stage > .sv-media,
-.sv-root .sv-stage > .sv-text { z-index:0; }
+.sv-root .sv-stage > .sv-text { z-index: 0; }
 .sv-root .sv-stage::after {
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:1;
-  pointer-events:none;
-  background:linear-gradient(
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
     180deg,
     rgba(0,0,0,.22) 0%,
     rgba(0,0,0,.08) 18%,
@@ -7416,4 +7456,4 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 }
 .sv-root .sv-stage > .sv-caption,
 .sv-root .sv-stage > .sv-flash,
-.sv-root .sv-stage > .sv-liked-mark { z-index:2; }
+.sv-root .sv-stage > .sv-liked-mark { z-index: 2; }

@@ -428,10 +428,10 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const now = Date.now();
-    const middle = x >= 0.33 && x <= 0.67;
+    const middle = x >= 0.28 && x <= 0.72;
     if (!middle) {
       tapRef.current = { time: 0, middle: false };
-      if (x < 0.33) prev(); else next();
+      if (x < 0.28) prev(); else next();
       return;
     }
     // Middle tap: pause or play right away. A second middle tap within the window likes the story.

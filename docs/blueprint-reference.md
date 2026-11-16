@@ -1,12 +1,14 @@
 # Architecture blueprint: what RimSocial applies
 
 Applied (backend `services/formulas.js` holds the formulas):
-- Time_Decay, streaks (days with activity), Friend_Story_Score: friends carousel (`services/ranking.js`).
-- Discover_Score: Discover stories (`services/stories.js`); only the subscribe signal is measured.
+- Time_Decay, streaks (days with activity): used across ranking.
+- Friend_Story_Score = (snaps x2 + chats x1.5 + streak x0.5 + replies x5 + completion x3) x e^(-0.08 h). Story replies are not tracked yet (0). The story rail orders unseen first, then this score, then newest (`services/formulas.js`, `services/ranking.js`, `services/stories.js`).
+- Discover: personalised score from `main` (subscribe, interest, engagement, unseen, freshness) in `services/stories.js`. Carousel shows one story per creator; the grid shows one story per creator, and a creator in the carousel is left out of the grid.
+- Discover_Feed formula (`discoverFeedScore`): subscribed x1.5, same country x1.35, skip penalty and freshness 1/(1+0.15h). It is kept as a helper; the live Discover order uses the personalised score above.
 - Follow_Rank_Score: followers list (`routes/users.js`), with profile visits counted from `profile_views`.
 - Best_Friend_Score: top three contacts count as Is_Best_Friend in the share sheet; Share_Target_Score (`routes/messages.js`).
 - Chat_List_Score: chat list order, with streaks and pinned direct chats (up to 3, from the inbox menu).
-- Quick_Add_Score: suggestions (`routes/users.js`): mutual friends, shared groups, same country, profile searches (`profile_views`), and dismissals (`POST /v1/users/suggestions/:id/dismiss`, -100 each).
+- Quick_Add_Score = 2 per mutual friend + 5 same location (country); dismissed people are removed (`POST /v1/users/suggestions/:id/dismiss`). Phone-contact weights (50 two-way, 25 one-way) are defined but unused until contacts are read (`services/formulas.js`, `routes/users.js`).
 - Spring_Damping: viewer open, close and drag snap (`frontend/src/lib/viewerMotion.js`), with stiffness 300/28 and 350/30.
 - Hero tile open, drag and dismiss: `viewerMotion.js` (drag formula, 250px threshold, 0.35 release, 800px/s flick).
 - Share sheet: up to 15 recipients per send, each copy sealed on the device (`POST /v1/messages/share`). A shared post is sent with its post link attached, so the chat shows the post card.
@@ -21,11 +23,18 @@ Applied (backend `services/formulas.js` holds the formulas):
 - Live_Stream_Score: live list ranking by viewers, chats per minute, follows and minutes live (`routes/broadcasts.js`).
 - BlurHash placeholders for photos in direct and group chats (`lib/blurhash.js`, `direct_messages.blurhash`, `group_messages.blurhash`).
 - Spotlight styling on Rimlight: bottom scrim, info block, 42px translucent rail buttons, spinning audio disc.
+- Group chat BlurHash: photos in group chats store and show a BlurHash placeholder.
+- Creator_Score in the Explore Spotlight score (see below).
+- Stories viewer: tap zones at 28% (back) and 72% (forward), top scrim, 2.5px bars, translucent reply controls.
+- Stories header stays fixed while the page scrolls (the Stories page is the scroll container).
+- Camera: 76px shutter, 40px translucent tools, press-and-hold to record video (up to 60s) with a red progress ring; a quick tap takes a photo. Long presses do not open the system menu.
+- Discover tiles and suggestion cards: 3px corner radius; photos dimmed 45% with a contrast and saturation grade (display only).
 - Design tokens (`:root` in `styles.css`). Primary buttons stay `#0095f6`, not the blueprint's `#0FADFF`.
 
 Partly applied (signals not tracked yet count as 0):
 - Discover_Score: full watch, share, rewatch, skip and exit. Story topics (Interest_Boost) are 1.
 - Spotlight_Score: watch percentage and skips come from client watch samples (`spot:<post>` in Redis, written by `POST /v1/feed/feedback`); loops and trending sound are 0. Creator_Score = clamp(1 + log10(1 + followers) * like rate, 1, 3), defined here because the blueprint does not define it.
+- Discover click and completion models: not built, so they are 1 in `discoverFeedScore`.
 - Music_Track_Score: completion, genre affinity and featured flag are 0.
 - Live_Stream_Score: gifts per minute are 0.
 - Quick_Add: phone contacts are not read (needs device permission and an upload path).
@@ -37,6 +46,9 @@ Not applied, and why:
 - Ad ranking (Ad_Rank_Score) and per-session ad caps: the app has no bids or ad campaigns, so there is nothing to score. The current rotation is kept.
 - Bot risk score: the formula exists, but there is no challenge screen and no decision on what a failed challenge does. Blocking without a screen would stop sends, so it is not wired. Next step: a challenge screen, then block on failure.
 - Adaptive live bitrate (`adaptiveBitrate`): the live provider (LiveKit) chooses the bitrate; the formula is not applied in the client.
-- Camera pager, shutter and zoom, gallery grid, header state machine, chat swipe parallax, share drawer gesture, profile collapse, hero morph: these change the screen design, which was not to change. Each needs your approval before it is built.
+- Camera pager, gallery grid, header state machine, chat swipe parallax, share drawer gesture, profile collapse, hero morph: these change the screen design, which was not to change. Each needs your approval before it is built.
+- Blurred ambient backdrop and colour presets for uploaded photos (warm, noir, soft): not built. Discover photos are display-only graded; stored uploads are unchanged.
+- Phone contacts for Quick Add: needs a native contacts plugin and a permission prompt.
+- Video thumbnail placeholders: need a server-side BlurHash encoder.
 - Spotlight cold-start queue as the blueprint describes it (a stored status and a 300-viewer batch): approximated by view counts; not a stored queue.
 - Discover full-watch signals: need watch-time events from the player.
