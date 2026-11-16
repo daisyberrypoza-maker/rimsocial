@@ -65,6 +65,11 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
     const track = await musicFor(req.body.musicId);
     const asset = await cloudinary.uploadFile(media, 'rimsocial/stories', { maxSeconds: 60 });
     uploadedAssets.push({ ...asset, mimetype: media.mimetype });
+    const storyKind = kindFor(media.mimetype);
+    // Cloudinary can return a first-frame JPEG for a video; keep the original video URL untouched.
+    const thumbUrl = storyKind === 'video' && String(asset.url || '').includes('/upload/')
+      ? asset.url.replace('/upload/', '/upload/so_0/').replace(/\\.[^/.]+$/, '.jpg')
+      : null;
     let voiceUrl = null;
     if (voice) {
       const voiceAsset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });
@@ -73,8 +78,9 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
     }
     const story = await Post.create({
       authorId: req.user.id,
-      kind: kindFor(media.mimetype),
+      kind: storyKind,
       mediaUrl: asset.url,
+      thumbUrl,
       mediaPublicId: asset.publicId,
       voiceUrl,
       ...musicFields(track),
