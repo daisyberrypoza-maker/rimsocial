@@ -264,11 +264,11 @@ export default function Stories() {
       </section>
 
       {discoverItems.length > 0 && (
-        <section className="st-section" aria-label="Discover">
+        <section className="st-section st-discover" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
-          <div className="st-cards">
+          <div className="st-cards st-discover-grid">
             {discoverItems.map((item) => item.type === 'ad' ? (
-              <a className="st-card st-card-ad" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
+              <a className="st-card st-card-ad st-discover-tile" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
                 {item.ad.thumbUrl || item.ad.mediaUrl
                   ? <img className="st-card-img" src={mediaUrl(item.ad.thumbUrl || item.ad.mediaUrl)} alt="" />
                   : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
@@ -279,7 +279,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className="st-card" key={item.key} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className="st-card st-discover-tile" key={item.key} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
