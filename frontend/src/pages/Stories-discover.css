@@ -115,3 +115,11 @@
   pointer-events:none;
 }
 .st-page .st-discover-card-h .st-watch-again { z-index:6; }
+
+/* Force the Discover grid's rounded corners to clip every media/overlay layer. */
+.st-page .st-discover-grid > .st-card.st-discover-tile {
+  border-radius:10px !important;
+  overflow:hidden !important;
+  clip-path:inset(0 round 10px);
+  -webkit-clip-path:inset(0 round 10px);
+}
