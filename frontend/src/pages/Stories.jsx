@@ -55,6 +55,8 @@ function StoryFace({ group, user }) {
 
 // Discover tile spec: creator or brand names are capped at 25 characters
 const capName = (text) => (text.length > 25 ? text.slice(0, 24).trimEnd() + '…' : text);
+// Discover tile spec: the headline is the story caption, up to 55 characters
+const capHeadline = (text) => (text.length > 55 ? text.slice(0, 54).trimEnd() + '…' : text);
 
 export default function Stories() {
   const navigate = useNavigate();
@@ -287,6 +289,7 @@ export default function Stories() {
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
                 <span className="st-card-shade" />
+                {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
                   <span className="st-card-name">{capName(nameOf(story.author || {}))}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
