@@ -350,15 +350,18 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
 
 
 async function getDiscoverSections(viewerId, limit = 24) {
-  // Keep the horizontal tray and the lower feed as separate ranked surfaces.
-  // Carousel: unseen stories from followed creators, ordered by the carousel affinity score.
-  // Feed: preserve the ranking engine's order; do not reshuffle items after scoring.
+  // Keep the horizontal tray and lower two-column grid as distinct content sets.
+  // The carousel contains unseen followed-creator stories; those exact story IDs
+  // must not be repeated in the grid. Preserve the ranking engine's order.
   const ranked = await getDiscoverStories(viewerId, Math.max(limit * 3, 72));
   const carousel = ranked
     .filter((story) => story.subscribed && !story.viewed)
     .sort((a, b) => (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0))
     .slice(0, Math.min(8, limit));
-  const items = ranked.slice(0, limit);
+  const carouselIds = new Set(carousel.map((story) => String(story.id)));
+  const items = ranked
+    .filter((story) => !carouselIds.has(String(story.id)))
+    .slice(0, limit);
   return { carousel, items };
 }
 
