@@ -7516,3 +7516,10 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-tile .st-card-foot,
 .st-page .st-discover-card-h .st-card-foot,
 .st-page .st-discover-tile .st-discover-headline { z-index: 3; }
+
+
+/* Display-only Story tone presets. The uploaded source asset is never modified. */
+.sv-root .sv-stage.sv-grade-discover > .sv-image { filter: contrast(1.08) saturate(1.15) brightness(1.02); }
+.sv-root .sv-stage.sv-grade-warm > .sv-image { filter: sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04); }
+.sv-root .sv-stage.sv-grade-noir > .sv-image { filter: grayscale(1) contrast(1.25) brightness(.95); }
+.sv-root .sv-stage.sv-grade-soft > .sv-image { filter: contrast(.95) saturate(1.1) brightness(1.06); }
