@@ -7321,3 +7321,10 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post .rail { gap: 16px !important; }
 .post .rail-btn svg, .post .rail-btn svg.ellipsis-icon { width: 42px !important; height: 42px !important; box-sizing: border-box !important; padding: 10px !important; border-radius: 50% !important; background: rgba(0,0,0,.38) !important; backdrop-filter: blur(4px); stroke-width: 2 !important; }
 .post .rail-btn { font-size: 12px !important; font-weight: 600 !important; gap: 3px !important; }
+
+/* Spotlight spinning audio disc: spins only while the card is on screen */
+.post .snap-disc { width:32px; height:32px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.85); background:#111; box-sizing:border-box; animation:snap-disc-spin 4s linear infinite; animation-play-state:paused; pointer-events:none; }
+.post .snap-disc.is-active { animation-play-state:running; }
+.post .snap-disc .avatar, .post .snap-disc img { width:100% !important; height:100% !important; border-radius:50% !important; }
+@keyframes snap-disc-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .post .snap-disc { animation:none; } }

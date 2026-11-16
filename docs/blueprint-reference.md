@@ -19,6 +19,8 @@ Applied (backend `services/formulas.js` holds the formulas):
 - Spotlight: Spotlight_Score ranks Explore; Promote_To_Next_Tier doubles the score; a cold-start lane shows posts under 300 views and 72 hours old, one after every four ranked posts (`services/feed.js`). Snap_Next_Page sets the Rimlight swipe paging; Rimlight stays newest-first.
 - Music_Track_Score: audio search ranking by uses in the last 24 hours and age (`routes/audio.js`).
 - Live_Stream_Score: live list ranking by viewers, chats per minute, follows and minutes live (`routes/broadcasts.js`).
+- BlurHash placeholders for photos in direct and group chats (`lib/blurhash.js`, `direct_messages.blurhash`, `group_messages.blurhash`).
+- Spotlight styling on Rimlight: bottom scrim, info block, 42px translucent rail buttons, spinning audio disc.
 - Design tokens (`:root` in `styles.css`). Primary buttons stay `#0095f6`, not the blueprint's `#0FADFF`.
 
 Partly applied (signals not tracked yet count as 0):
@@ -30,7 +32,7 @@ Partly applied (signals not tracked yet count as 0):
 - Share_Target_Score: group chats (Is_Active_Group).
 
 Not applied, and why:
-- Media encryption (AES-256-GCM for chat media) and BlurHash placeholders: need client-side decryption of every media view and a BlurHash encoder. Not built, because a bug there would break every chat photo and cannot be tested here.
+- Media encryption (AES-256-GCM for chat media): needs client-side decryption of every media view. Not built, because a bug there would break every chat photo and cannot be tested here.
 - Video bitrate targets (4.5 / 3.0 / 2.2 Mbps): need a transcoder on the server or client. There is none.
 - Ad ranking (Ad_Rank_Score) and per-session ad caps: the app has no bids or ad campaigns, so there is nothing to score. The current rotation is kept.
 - Bot risk score: the formula exists, but a challenge is a product decision (what happens when a challenge fails). Not wired.

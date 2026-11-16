@@ -415,6 +415,7 @@ export default function PostCard({ post, active }) {
       </button>
       <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
+      <div className={`snap-disc ${active ? 'is-active' : ''}`} aria-hidden="true"><Avatar user={post.author} size={32} /></div>
     </aside>
     <div className="info">
       {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}

@@ -363,6 +363,8 @@ const GroupMessage = sequelize.define('GroupMessage', {
   viewLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   // Sequence_ID from Redis INCR per group: strict ordering (null for messages sent before this was added)
   seq: { type: DataTypes.BIGINT, allowNull: true },
+  // BlurHash of a photo: placeholder shown while the image loads
+  blurhash: { type: DataTypes.STRING(40), allowNull: true, defaultValue: null },
 }, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }, { fields: ['groupId', 'seq'] }] });
 
 
