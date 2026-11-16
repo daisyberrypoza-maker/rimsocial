@@ -258,7 +258,17 @@ async function getDiscoverSections(viewerId, limit = 24) {
   const ranked = await getDiscoverStories(viewerId, limit);
   const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
   const withViewed = ranked.map((item) => ({ ...item, viewed: viewed.has(item.id) }));
-  const carousel = withViewed.filter((item) => item.subscribed && !item.viewed).slice(0, CAROUSEL_SIZE);
+  // One carousel card per creator, in ranking order, so a single creator cannot fill the row
+  const seenCreators = new Set();
+  const carousel = [];
+  for (const item of withViewed) {
+    if (carousel.length >= CAROUSEL_SIZE) break;
+    if (!item.subscribed || item.viewed) continue;
+    const creator = String(item.author?.id || item.authorId);
+    if (seenCreators.has(creator)) continue;
+    seenCreators.add(creator);
+    carousel.push(item);
+  }
   const carouselIds = new Set(carousel.map((item) => item.id));
   const grid = diversify(withViewed.filter((item) => !carouselIds.has(item.id)), (item) => String(item.author?.id || item.authorId));
   return { items: grid, carousel };
