@@ -79,7 +79,10 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
     await redis.hset(key, postId, String(score));
     // The ranked list is cached briefly; invalidate it so feedback takes effect
     // on the viewer's next Discover request.
-    await redis.del(`feed:discover:ranked:${req.user.id}`).catch(() => {});
+    await Promise.all([
+      redis.del(`feed:discover:ranked:${req.user.id}`),
+      redis.del(`feed:explore:ranked:${req.user.id}`),
+    ]).catch(() => {});
     res.json({ ok: true, event, preferenceScore: score });
   } catch (e) { next(e); }
 });

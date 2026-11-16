@@ -7367,3 +7367,66 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Discover tile photo: 45% dark overlay (rgba 0,0,0,.45) so the overlay text reads clearly */
 .st-page .st-discover-tile .st-card-img { filter: brightness(0.55); }
+
+/* Stories header: keep the page navbar visible while the Stories feed scrolls. */
+.st-page > .st-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 80 !important;
+  background: #fff !important;
+  isolation: isolate;
+}
+
+
+/* Stories Discover: bright, clean photo finish and soft fallback gradients. */
+.st-page .st-discover-tile,
+.st-page .st-discover-card-h {
+  isolation: isolate;
+  background-color: #dce8f2 !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.st-page .st-discover-tile .st-card-img,
+.st-page .st-discover-card-h .st-card-img {
+  filter: brightness(1.045) saturate(1.09) contrast(1.025);
+  transform: scale(1.005);
+  transition: filter 180ms ease, transform 220ms ease;
+}
+.st-page .st-discover-tile:active .st-card-img,
+.st-page .st-discover-card-h:active .st-card-img {
+  filter: brightness(1.02) saturate(1.06);
+  transform: scale(1.025);
+}
+.st-page .st-discover-tile .post-text-tile,
+.st-page .st-discover-card-h .post-text-tile {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  color: #fff;
+  font-size: clamp(15px, 4vw, 21px);
+  font-weight: 750;
+  line-height: 1.28;
+  letter-spacing: -.02em;
+  text-align: center;
+  text-shadow: 0 1px 8px rgba(25, 35, 55, .18);
+  background-size: 150% 150%;
+}
+.st-page .st-discover-tile .st-card-shade,
+.st-page .st-discover-card-h .st-card-shade {
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(12,18,28,0) 35%, rgba(12,18,28,.12) 58%, rgba(12,18,28,.72) 100%);
+}
+.st-page .st-discover-tile .st-card-avatar {
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-page .st-discover-tile .st-card-img,
+  .st-page .st-discover-card-h .st-card-img { transition: none; }
+}
+
+
+/* Discover photo-only dimming: 45% black overlay effect; text and scrim remain unchanged. */
+.st-page .st-discover-tile .st-card-img {
+  filter: brightness(0.55) !important;
+}

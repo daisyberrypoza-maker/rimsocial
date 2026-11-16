@@ -47,7 +47,7 @@ function previewSrc(group) {
 // Tile thumbnail: the newest story (photo, video thumbnail, or a text story on its background). Falls back to the avatar.
 function StoryFace({ group, user }) {
   const p = group?.preview;
-  if (p?.kind === 'text') return <span className="st-text-face" style={{ background: backgroundCss(p.storyBackground) }}><span>{p.storyText || ''}</span></span>;
+  if (p?.kind === 'text') return <span className="st-text-face" style={{ background: backgroundCss(p.storyBackground, group?.preview?.id || user?.id) }}><span>{p.storyText || ''}</span></span>;
   const src = previewSrc(group);
   if (src) return <img src={src} alt="" />;
   return <Avatar user={user} noRing />;
@@ -289,7 +289,7 @@ export default function Stories() {
               {carousel.map((story) => (
                 <button key={'c' + story.id} role="listitem" className="st-discover-card-h" style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                   {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
-                    ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
+                    ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground, story.id) }}>{story.storyText}</span>
                     : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
                   <span className="st-card-shade" />
                   <span className="st-card-foot">
@@ -305,7 +305,7 @@ export default function Stories() {
               <a className="st-card st-card-ad st-discover-tile" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
                 {item.ad.thumbUrl || item.ad.mediaUrl
                   ? <img className="st-card-img" src={mediaUrl(item.ad.thumbUrl || item.ad.mediaUrl)} alt="" />
-                  : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
+                  : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground, item.ad.id || item.key) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
                 <span className="st-card-shade" />
                 <span className="st-card-foot">
                   <span className="st-card-name">{capName(item.ad.sponsorName || 'Sponsored')}</span>
