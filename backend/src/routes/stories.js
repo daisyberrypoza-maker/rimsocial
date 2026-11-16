@@ -92,7 +92,6 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
     storyPersisted = true;
     if (req.body.uploadId) await uploads.releaseSession(String(req.body.uploadId));
     await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
-    await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) {
@@ -173,6 +172,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       visibility: 'public',
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
+    await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) { next(e); }
