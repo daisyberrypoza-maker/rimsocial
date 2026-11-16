@@ -92,6 +92,18 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
     const oldValue = Number(await redis.hget(key, postId).catch(() => 0)) || 0;
     const score = Math.max(-40, Math.min(80, oldValue + delta));
     await redis.hset(key, postId, String(score));
+    // Learn category-level interests as well as individual-post preferences.
+    if (post.topic) {
+      const topic = String(post.topic).trim().toLowerCase().slice(0, 60);
+      if (topic) {
+        const topicKey = `feed:topic-preferences:${req.user.id}`;
+        const oldTopicValue = Number(await redis.hget(topicKey, topic).catch(() => 0)) || 0;
+        const topicDelta = event === 'watch' ? delta * 0.5 : delta * 0.6;
+        const topicScore = Math.max(-40, Math.min(60, oldTopicValue + topicDelta));
+        await redis.hset(topicKey, topic, String(topicScore));
+        await redis.expire(topicKey, 60 * 60 * 24 * 90);
+      }
+    }
     // Invalidate both recommendation caches so feedback affects the next request.
     await Promise.all([
       redis.del(`feed:discover:ranked:${req.user.id}`),
