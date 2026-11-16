@@ -183,3 +183,9 @@
   aspect-ratio: 3 / 5 !important;
   box-sizing: border-box !important;
 }
+
+/* Discover scrim: dark at the top and the bottom, faded through the middle. */
+.st-page .st-discover-tile .st-card-shade,
+.st-page .st-discover-card-h .st-card-shade {
+  background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.12) 22%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 58%, rgba(0,0,0,.4) 76%, rgba(0,0,0,.82) 100%) !important;
+}
