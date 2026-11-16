@@ -136,6 +136,7 @@ export default function Stories() {
   const [popular, setPopular] = useState([]);
   const [carousel, setCarousel] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
+  const [viewedDiscoverIds, setViewedDiscoverIds] = useState(() => new Set());
   // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
   const AD_START_OFFSET = 3;
   const AD_FREQUENCY_INTERVAL = 6;
@@ -328,7 +329,7 @@ export default function Stories() {
           {carousel.length > 0 && (
             <div className="st-discover-carousel" role="list">
               {carousel.map((story) => (
-                <button key={'c' + story.id} role="listitem" className={`st-discover-card-h${story.viewed ? ' is-viewed' : ''}`} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                <button key={'c' + story.id} role="listitem" className={`st-discover-card-h${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                   {story.kind === 'text' || !discoverStorySrc(story)
                     ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground, story.id) }}>{story.storyText}</span>
                     : <>
@@ -336,7 +337,7 @@ export default function Stories() {
                       <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                     </>}
                   <span className="st-card-shade" />
-                  {story.viewed && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
+                  {(story.viewed || viewedDiscoverIds.has(String(story.id))) && <span className="st-watch-again"><Icon name="eye" size={18} /><strong>Watch again</strong></span>}
                   <span className="st-card-foot">
                     <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
                     <span className="st-card-name">{capName(nameOf(story.author || {}))}</span>
@@ -358,7 +359,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className={`st-card st-discover-tile${story.viewed ? ' is-viewed' : ''}`} key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className={`st-card st-discover-tile${story.viewed || viewedDiscoverIds.has(String(story.id)) ? ' is-viewed' : ''}`} key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !discoverStorySrc(story)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <>
@@ -381,7 +382,7 @@ export default function Stories() {
 
       {popOpen && (
         <ViewerBoundary onClose={() => setPopOpen(null)}>
-          <StoryViewer groups={discoverGroups} startIndex={Math.max(0, discoverStartIndex(popOpen))} origin={popOrigin} onClose={() => setPopOpen(null)} />
+          <StoryViewer groups={discoverGroups} startIndex={Math.max(0, discoverStartIndex(popOpen))} origin={popOrigin} onStoryViewed={(id) => setViewedDiscoverIds((current) => new Set([...current, String(id)]))} onClose={() => setPopOpen(null)} />
         </ViewerBoundary>
       )}
 
