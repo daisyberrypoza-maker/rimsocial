@@ -56,6 +56,7 @@ export default function Messages() {
   const [query, setQuery] = useState('');
   const snapInput = useRef(null);
   const snapTo = useRef(null);
+  const swipeSurfaceRef = useSwipeTabs(filter, ['all', 'stories'], setFilter);
   const longPressTimer = useRef(null);
 
   useEffect(() => {
@@ -174,7 +175,7 @@ export default function Messages() {
   const countFor = { ...unreadByGroup, stories: storiesUnseen };
 
   return (
-    <main className="sn-page">
+    <main ref={swipeSurfaceRef} className="sn-page">
       {searchOpen && (
         <div className="sn-chat-search" role="dialog" aria-label="Search chats">
           <div className="sn-chat-search-top">
