@@ -13,7 +13,7 @@ This is a living repair log. The single release exit criteria and consolidated s
 - [x] Confirmed existing web PostCard hides the gift action on the owner's own posts, web Rimlight seek control is positioned above the bottom navigation, and web profile-list navigation passes a return path when opening another profile.
 - [x] PR #119 and PR #126 closed as superseded; their work was replaced by the merged #121 and #128 changes.
 - [ ] Physical Android playback/seek verification remains required; CI does not replace device testing.
-- [ ] PR #67 remains an old draft integration branch, substantially behind current main. Do not merge it wholesale; review and port only independently verified messaging changes.
+- [x] PR #67 closed as superseded: current main already contains migrations 030–032, messaging media routes, Conversation attachment handling and MyFriends. Its 314-commits-behind branch was not merged wholesale.
 
 ## Current priority work
 
