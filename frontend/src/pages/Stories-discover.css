@@ -1,6 +1,8 @@
 /* Keep the Discover carousel and the lower Discover grid as two separate layouts. */
 .st-page .st-discover-carousel {
   display:flex;
+  width:100%;
+  box-sizing:border-box;
   flex-wrap:nowrap;
   gap:10px;
   overflow-x:auto;
@@ -12,9 +14,10 @@
 }
 .st-page .st-discover-card-h {
   position:relative;
-  /* Fit exactly 3.5 tiles in the visible carousel viewport, including gaps and side padding. */
-  flex:0 0 calc((100vw - 58px) / 3.5);
-  width:calc((100vw - 58px) / 3.5);
+  /* Calculate against the carousel's actual content width, not the device viewport.
+     Three gaps plus 3.5 equal cards fill the visible track exactly. */
+  flex:0 0 calc((100% - 30px) / 3.5);
+  width:calc((100% - 30px) / 3.5);
   height:auto;
   aspect-ratio:3 / 5;
   min-width:0;
