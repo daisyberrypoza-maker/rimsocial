@@ -198,11 +198,15 @@ async function invalidateRailsFor(authorId) {
 // come first, then people they follow and creators, then popular and recent stories. Stories they already watched
 // drop down the list.
 async function getDiscoverStories(viewerId, limit) {
-  const blocked = await blockedUserIds(viewerId);
+  const [blocked, mutedRows] = await Promise.all([
+    blockedUserIds(viewerId),
+    UserMute.findAll({ where: { userId: viewerId }, attributes: ['mutedUserId'], raw: true }),
+  ]);
+  const muted = mutedRows.map((row) => String(row.mutedUserId));
   const candidates = await Post.findAll({
     where: {
       isStory: true, status: 'live', visibility: 'public', expiresAt: { [Op.gt]: new Date() },
-      authorId: { [Op.notIn]: [viewerId, ...blocked] },
+      authorId: { [Op.notIn]: [viewerId, ...blocked, ...muted] },
     },
     include: [{ model: User, as: 'author', attributes: authorAttrs }],
     order: [['createdAt', 'DESC']],
@@ -221,17 +225,29 @@ async function getDiscoverStories(viewerId, limit) {
      WHERE pl.userId = :me AND p.topic IS NOT NULL ORDER BY pl.createdAt DESC LIMIT 200`,
     { replacements: { me: viewerId } },
   ).then(([rows]) => rows || []).catch(() => []);
+  const [viewed, likeRows] = await Promise.all([
+    viewedSet(viewerId, ids),
+    StoryLike.findAll({
+      where: { postId: ids },
+      attributes: ['postId', [fn('COUNT', col('postId')), 'n']],
+      group: ['postId'], raw: true,
+    }).catch(() => []),
+  ]);
+  const likesByStory = new Map(likeRows.map((row) => [String(row.postId), Number(row.n) || 0]));
   const likedTopics = new Set(likedRows.map((row) => row.topic));
   const now = Date.now();
   const scored = candidates.map((story) => {
-    const hoursPosted = (now - new Date(story.createdAt).getTime()) / 3600000;
-    // Discover_Score from the signals RimSocial measures: subscribe (following the creator).
-    // Full watch, share, rewatch, skip and exit are not tracked yet, so they are 0.
+    const hoursPosted = Math.max(0, (now - new Date(story.createdAt).getTime()) / 3600000);
+    const unseenBoost = viewed.has(story.id) ? -12 : 12;
+    const engagementBoost = Math.log10(1 + Math.max(0, Number(story.viewCount) || 0)) * 2
+      + Math.log10(1 + (likesByStory.get(String(story.id)) || 0)) * 3;
+    // Personalize public Story discovery: topic affinity, unseen priority, creator relationship,
+    // real story engagement and freshness. Blocked and muted creators are excluded before scoring.
     const score = discoverScore({
       subscribe: followedIds.has(String(story.authorId)) ? 1 : 0,
       interestBoost: interestBoostFor(story.topic, likedTopics),
       hoursPosted,
-    });
+    }) + unseenBoost + engagementBoost;
     return { story, score };
   });
   scored.sort((a, b) => b.score - a.score || new Date(b.story.createdAt) - new Date(a.story.createdAt));

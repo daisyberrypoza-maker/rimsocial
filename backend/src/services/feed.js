@@ -126,6 +126,11 @@ async function getExplorePage({ userId, cursor, limit }) {
     const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
     const authors = await User.findAll({ where: { id: [...new Set(candidates.map((p) => p.authorId))] }, attributes: ['id', 'followerCount'], raw: true });
     const followersOf = new Map(authors.map((u) => [String(u.id), Number(u.followerCount) || 0]));
+    // Read only this page's candidate preferences; do not load a viewer's entire history hash.
+    const preferencePipe = redis.pipeline();
+    for (const p of candidates) preferencePipe.hget(`feed:preferences:${userId}`, String(p.id));
+    const preferenceRows = await preferencePipe.exec().catch(() => []);
+    const preferenceOf = new Map(candidates.map((p, i) => [String(p.id), Number(preferenceRows[i]?.[1]) || 0]));
     // Spotlight watch aggregates written by POST /v1/feed/feedback (missing values count as 0)
     const spotPipe = redis.pipeline();
     for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips');
@@ -147,7 +152,7 @@ async function getExplorePage({ userId, cursor, limit }) {
         // Promoted posts (Promote_To_Next_Tier) move up one tier: double Spotlight_Score
         const tier = promotedToNextTier({ views: Number(p.viewCount) || 0, likes, shares }) ? 2 : 1;
         const spot = spotOf.get(String(p.id)) || { watchPct: 0, watches: 0, skips: 0 };
-        const score = tier * spotlightScore({
+        const baseScore = tier * spotlightScore({
           avgWatchPct: spot.watches > 0 ? spot.watchPct / spot.watches : 0,
           skipUnder2s: Math.min(1, spot.skips / views),
           likeRate: Math.min(1, likes / views),
@@ -155,6 +160,12 @@ async function getExplorePage({ userId, cursor, limit }) {
           creatorScore: creatorScore({ followers: followersOf.get(String(p.authorId)) || 0, engagementRate: likes / views }),
           hoursPosted: ageHours,
         });
+        // Personalize ranking with this viewer's bounded feedback history. Positive
+        // watch/completion/share signals lift relevant posts; skips and "not interested"
+        // lower them. The per-viewer score is deliberately capped to prevent domination.
+        const preference = preferenceOf.get(String(p.id)) || 0;
+        const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
+        const score = baseScore + personalizedBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
         const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
         return { id: p.id, authorId: p.authorId, score, seeding, createdAt: new Date(p.createdAt).getTime() };
