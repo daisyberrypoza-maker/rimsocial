@@ -352,14 +352,13 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
 async function getDiscoverSections(viewerId, limit = 24) {
   // Keep the horizontal tray and the lower feed as separate ranked surfaces.
   // Carousel: unseen stories from followed creators, ordered by the carousel affinity score.
-  // Feed: all eligible public stories, ranked and diversified by Discover score.
+  // Feed: preserve the ranking engine's order; do not reshuffle items after scoring.
   const ranked = await getDiscoverStories(viewerId, Math.max(limit * 3, 72));
   const carousel = ranked
     .filter((story) => story.subscribed && !story.viewed)
     .sort((a, b) => (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0))
     .slice(0, Math.min(8, limit));
-  const items = diversify(ranked, (story) => String(story.author?.id || story.authorId || ''))
-    .slice(0, limit);
+  const items = ranked.slice(0, limit);
   return { carousel, items };
 }
 
