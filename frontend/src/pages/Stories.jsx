@@ -36,6 +36,15 @@ class ViewerBoundary extends Component {
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
+function activeCachedRail(items) {
+  const now = Date.now();
+  return (Array.isArray(items) ? items : []).filter((group) => {
+    if (!group?.expiresAt) return true;
+    const expiresAt = new Date(group.expiresAt).getTime();
+    return !Number.isFinite(expiresAt) || expiresAt > now;
+  });
+}
+
 // The newest story of a creator, shown as the thumbnail on their tile (video thumbnail when there is one)
 function previewSrc(group) {
   const p = group?.preview;
@@ -82,7 +91,7 @@ export default function Stories() {
   const pending = useAppStore((s) => s.pendingUpload);
   const uploading = pending?.kind === 'story';
   const storedDiscover = useAppStore((s) => s.storyDiscover);
-  const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
+  const [rail, setRail] = useState(() => activeCachedRail(storedRail));
   const [loaded, setLoaded] = useState(() => Array.isArray(storedRail) && storedRail.length > 0);
   const loading = !loaded;
   const [railError, setRailError] = useState(false);
@@ -120,7 +129,7 @@ export default function Stories() {
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
   // The saved rail changes when a story finishes uploading
-  useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
+  useEffect(() => { if (Array.isArray(storedRail)) setRail(activeCachedRail(storedRail)); }, [storedRail]);
 
   // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
@@ -185,7 +194,8 @@ export default function Stories() {
     setRailError(false);
     try {
       const result = await api('/v1/stories/rail');
-      const items = Array.isArray(result.items) ? result.items : [];
+      if (!Array.isArray(result.items)) throw new Error('Invalid Stories rail response');
+      const items = activeCachedRail(result.items);
       setRail(items);
       useAppStore.getState().setStoryRail(items);
     } catch (error) {
