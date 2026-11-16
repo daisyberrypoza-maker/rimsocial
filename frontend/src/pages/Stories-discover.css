@@ -162,11 +162,12 @@
    3.5 equal cards + three 10px gaps = 3 full cards and half of card four. */
 .st-page .st-discover-carousel {
   display: flex !important;
-  width: 100% !important;
+  width: auto !important;
+  margin: 0 -14px !important;
   box-sizing: border-box !important;
   flex-wrap: nowrap !important;
   gap: 10px !important;
-  padding: 0 14px 12px !important;
+  padding: 0 0 12px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
 }
