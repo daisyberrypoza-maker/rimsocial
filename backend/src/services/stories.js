@@ -314,16 +314,21 @@ function diversify(list, keyOf) {
   const out = [];
   while (pool.length) {
     const previous = out[out.length - 1];
-    let index = pool.findIndex((item) => !previous || (
-      keyOf(item) !== keyOf(previous)
-      && (!item.topic || !previous.topic || item.topic !== previous.topic)
-    ));
-    if (index < 0) {
-      index = pool.findIndex((item) => !previous || keyOf(item) !== keyOf(previous));
+    let bestIndex = -1;
+    let bestScore = -Infinity;
+    for (let i = 0; i < pool.length; i += 1) {
+      const item = pool[i];
+      if (previous && keyOf(item) === keyOf(previous)) continue;
+      const repeatedTopic = Boolean(previous?.topic && item.topic && previous.topic === item.topic);
+      const base = Number(item.ranking?.discover ?? item.ranking?.carousel ?? 0);
+      const effective = base * (repeatedTopic ? 0.7 : 1);
+      if (effective > bestScore) { bestScore = effective; bestIndex = i; }
     }
-    if (index < 0) index = 0;
-    const [next] = pool.splice(index, 1);
-    out.push(next);
+    if (bestIndex < 0) {
+      // If every remaining item belongs to the previous creator, preserve ranking order.
+      bestIndex = 0;
+    }
+    out.push(pool.splice(bestIndex, 1)[0]);
   }
   return out;
 }
