@@ -19,6 +19,8 @@ This is a living repair log. The single release exit criteria and consolidated s
 - [x] PR #67 closed as superseded: current main already contains migrations 030–032, messaging media routes, Conversation attachment handling and MyFriends. Its 314-commits-behind branch was not merged wholesale.
 
 ## Current priority work
+- [ ] PR for Discover/Rimlight trending-sound ranking, durable exposure/fatigue ledger, and messaging read-state/inbox reliability is under review; run CI and verify schema + end-to-end chat/feed flows before merging.
+
 
 ### Find, Flip & Fix
 - [x] Additive Sequelize models for business profiles, opportunities, offers, and work updates.
