@@ -120,13 +120,17 @@ async function getExplorePage({ userId, cursor, limit }) {
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
       UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
-      redis.hgetall(`feed:preferences:${userId}`).catch(() => ({})),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
     const authors = await User.findAll({ where: { id: [...new Set(candidates.map((p) => p.authorId))] }, attributes: ['id', 'followerCount'], raw: true });
     const followersOf = new Map(authors.map((u) => [String(u.id), Number(u.followerCount) || 0]));
+    // Read only this page's candidate preferences; do not load a viewer's entire history hash.
+    const preferencePipe = redis.pipeline();
+    for (const p of candidates) preferencePipe.hget(`feed:preferences:${userId}`, String(p.id));
+    const preferenceRows = await preferencePipe.exec().catch(() => []);
+    const preferenceOf = new Map(candidates.map((p, i) => [String(p.id), Number(preferenceRows[i]?.[1]) || 0]));
     // Spotlight watch aggregates written by POST /v1/feed/feedback (missing values count as 0)
     const spotPipe = redis.pipeline();
     for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips');
@@ -159,7 +163,7 @@ async function getExplorePage({ userId, cursor, limit }) {
         // Personalize ranking with this viewer's bounded feedback history. Positive
         // watch/completion/share signals lift relevant posts; skips and "not interested"
         // lower them. The per-viewer score is deliberately capped to prevent domination.
-        const preference = Number(preferences[String(p.id)]) || 0;
+        const preference = preferenceOf.get(String(p.id)) || 0;
         const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
         const score = baseScore + personalizedBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
