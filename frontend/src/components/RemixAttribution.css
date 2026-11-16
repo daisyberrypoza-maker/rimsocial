@@ -1,0 +1,15 @@
+.remix-attribution {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  color: rgba(255,255,255,.78);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.remix-attribution a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
