@@ -39,3 +39,15 @@ test('successful post shares influence both Rimlight and Explore recommendations
   assert.match(messages, /feed:discover:ranked/);
   assert.match(messages, /feed:explore:ranked/);
 });
+
+
+test('Discover ranking learns topic affinity, local relevance and topic diversity', () => {
+  const feed = read('src/services/feed.js');
+  const feedback = read('src/routes/feed.js');
+  assert.match(feed, /feed:topic-preferences/);
+  assert.match(feed, /topicBoost/);
+  assert.match(feed, /localBoost/);
+  assert.match(feed, /topicCount >= 5/);
+  assert.match(feedback, /feed:topic-preferences/);
+  assert.match(feedback, /topicDelta/);
+});
