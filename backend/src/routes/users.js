@@ -201,6 +201,7 @@ router.get('/suggestions', requireAuth, async (req, res, next) => {
       dismissCount: dismissed.has(String(person.id)) ? 1 : 0,
     });
     const suggested = candidates
+      .filter((person) => !dismissed.has(String(person.id)))
       .map((person, index) => ({ person, index, score: scoreOf(person) }))
       .sort((a, b) => (b.score - a.score) || (a.index - b.index))
       .map(({ person }) => person)
