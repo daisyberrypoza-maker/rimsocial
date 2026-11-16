@@ -45,7 +45,7 @@ async function fanOutStory(story) {
 async function addFolloweeToTray(followerId, followeeId) {
   const stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: followeeId, expiresAt: { [Op.gt]: new Date() } },
-    attributes: ['id', 'createdAt'], raw: true, limit: TRAY_LIMIT,
+    attributes: ['id', 'createdAt'], raw: true, order: [['createdAt', 'DESC']], limit: TRAY_LIMIT,
   });
   if (!stories.length) return;
   const pipe = redis.pipeline();
@@ -81,10 +81,18 @@ async function getStoryRail(viewerId) {
     UserMute.findAll({ where: { userId: viewerId }, attributes: ['mutedUserId'], raw: true }),
   ]);
   const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
-  const cached = await redis.get(key);
+  const cached = await redis.get(key).catch(() => null);
   if (cached) {
-    const hit = JSON.parse(cached);
-    return { ...hit, items: (hit.items || []).filter((item) => !blocked.has(item.user?.id) && !muted.has(String(item.user?.id))) };
+    try {
+      const hit = JSON.parse(cached);
+      if (hit && Array.isArray(hit.items)) {
+        return {
+          ...hit,
+          items: hit.items.filter((item) => !blocked.has(String(item.user?.id)) && !muted.has(String(item.user?.id))),
+        };
+      }
+    } catch { /* Discard malformed cache and rebuild from the story tray/database. */ }
+    await redis.del(key).catch(() => {});
   }
 
   const follows = await Follow.findAll({
@@ -127,7 +135,7 @@ async function getStoryRail(viewerId) {
     .slice(0, 50);
 
   const out = { items };
-  await redis.set(key, JSON.stringify(out), 'EX', config.storyRailCacheSeconds);
+  await redis.set(key, JSON.stringify(out), 'EX', config.storyRailCacheSeconds).catch(() => {});
   return out;
 }
 
