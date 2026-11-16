@@ -172,6 +172,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       visibility: 'public',
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
+    await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(201).json(toPostDTO(story));
   } catch (e) { next(e); }
@@ -298,6 +299,7 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     } catch (cleanupError) {
       console.error('Removed story media cleanup deferred:', cleanupError.message);
     }
+    await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
     res.status(204).end();
   } catch (e) { next(e); }
 });

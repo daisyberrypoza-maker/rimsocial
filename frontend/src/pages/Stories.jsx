@@ -36,6 +36,15 @@ class ViewerBoundary extends Component {
 const RAIL_FRESH_MS = 30 * 1000;
 const DISCOVER_FRESH_MS = 10 * 60 * 1000;
 
+function activeCachedRail(items) {
+  const now = Date.now();
+  return (Array.isArray(items) ? items : []).filter((group) => {
+    if (!group?.expiresAt) return true;
+    const expiresAt = new Date(group.expiresAt).getTime();
+    return !Number.isFinite(expiresAt) || expiresAt > now;
+  });
+}
+
 // The newest story of a creator, shown as the thumbnail on their tile (video thumbnail when there is one)
 function previewSrc(group) {
   const p = group?.preview;
@@ -82,9 +91,10 @@ export default function Stories() {
   const pending = useAppStore((s) => s.pendingUpload);
   const uploading = pending?.kind === 'story';
   const storedDiscover = useAppStore((s) => s.storyDiscover);
-  const [rail, setRail] = useState(() => (Array.isArray(storedRail) ? storedRail : []));
-  const [loaded, setLoaded] = useState(() => storedRailAt > 0);
-  const loading = false;
+  const [rail, setRail] = useState(() => activeCachedRail(storedRail));
+  const [loaded, setLoaded] = useState(() => Array.isArray(storedRail) && storedRail.length > 0);
+  const loading = !loaded;
+  const [railError, setRailError] = useState(false);
   // Reads "My Stories" until the row is scrolled to the friends, then "Friends"
   const [friendsActive, setFriendsActive] = useState(false);
   // Badge on the add-friend icon: people who followed you since you last opened it
@@ -119,7 +129,7 @@ export default function Stories() {
   const [ranking, setRanking] = useState(() => storedDiscover?.ranking || { friends: {}, discoverOrder: [] });
 
   // The saved rail changes when a story finishes uploading
-  useEffect(() => { if (Array.isArray(storedRail)) setRail(storedRail); }, [storedRail]);
+  useEffect(() => { if (Array.isArray(storedRail)) setRail(activeCachedRail(storedRail)); }, [storedRail]);
 
   // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
@@ -180,17 +190,21 @@ export default function Stories() {
   }, []);
 
   const loadRail = useCallback(async () => {
+    if (!rail.length) setLoaded(false);
+    setRailError(false);
     try {
       const result = await api('/v1/stories/rail');
-      const items = result.items || [];
+      if (!Array.isArray(result.items)) throw new Error('Invalid Stories rail response');
+      const items = activeCachedRail(result.items);
       setRail(items);
       useAppStore.getState().setStoryRail(items);
     } catch (error) {
+      setRailError(true);
       logError(error);
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [rail.length]);
 
   // Reopening the page reuses the saved rail; it is requested again only when it is old
   const { indicator } = usePullRefresh(() => loadRail());
@@ -222,7 +236,11 @@ export default function Stories() {
     else navigate('/u/' + person.username);
   }
   const others = rail.filter((group) => group.user?.id !== me?.id);
-  const orderedOthers = [...others].sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
+  const orderedOthers = [...others].sort((a, b) =>
+    Number(Boolean(b.unseen)) - Number(Boolean(a.unseen))
+      || (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0)
+      || new Date(b.latestAt || 0).getTime() - new Date(a.latestAt || 0).getTime()
+  );
   const byId = new Map(suggested.map((u) => [u.id, u]));
   const discoverList = (ranking.discoverOrder.length
     ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean)
@@ -273,7 +291,14 @@ export default function Stories() {
             </button>
           ))}
         </div>
-        {!loading && loaded && others.length === 0 && !myGroup && (
+        {!loading && loaded && railError && rail.length === 0 && (
+          <div className="st-empty" role="alert">
+            <strong>Stories couldn't load</strong>
+            <p>Check your connection and try again.</p>
+            <button type="button" className="sc-pill" onClick={loadRail}>Retry</button>
+          </div>
+        )}
+        {!loading && loaded && !railError && others.length === 0 && !myGroup && (
           <div className="st-empty">
             <span className="st-empty-icon" aria-hidden="true"><Icon name="users" size={28} /></span>
             <strong>No stories yet</strong>
