@@ -413,6 +413,7 @@ export default function PostCard({ post, active }) {
       <button className={`rail-btn save-btn ${saved ? 'saved' : ''}`} onClick={toggleSave} disabled={saveBusy} aria-pressed={saved} aria-label={saved ? 'Remove from saved' : 'Save post'}>
         <Icon name={saved ? 'bookmark-check' : 'bookmark'} />
       </button>
+      {!isOwnPost && !post.isSponsored && <button className="rail-btn" onClick={() => setShowGifts(true)} aria-label="Send a gift"><Icon name="gift" /></button>}
       <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
       <div className={`snap-disc ${active ? 'is-active' : ''}`} aria-hidden="true"><Avatar user={post.author} size={32} /></div>
