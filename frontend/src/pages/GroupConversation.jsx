@@ -462,6 +462,7 @@ export default function GroupConversationPage({ groupId }) {
           anchor={messageAnchor}
           onClose={() => setMessageMenu(null)}
           items={[
+            ...(messageMenu.body && !messageMenu.deletedForEveryone ? [{ key: 'copy', label: 'Copy', icon: 'copy', onSelect: () => navigator.clipboard?.writeText(messageMenu.body).catch(() => {}) }] : []),
             { key: 'reply', label: 'Reply', icon: 'reply', onSelect: () => { setMessageMenu(null); setReply(messageMenu); } },
             ...(String(messageMenu.senderId) === String(me?.id) ? [{ key: 'delete', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteGroupMessage(messageMenu) }] : []),
           ]}
