@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   aiLabel: { position: 'absolute', left: 14, top: 100, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: 'rgba(20,20,20,0.68)' },
   adLabel: { position: 'absolute', left: 16, bottom: 250, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: 'rgba(20,20,20,0.68)' },
   labelText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  progressTrack: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
+  progressTrack: { position: 'absolute', left: 0, right: 0, bottom: 8, height: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
   progressFill: { height: 3, backgroundColor: '#fff' },
   seekHit: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 22 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
