@@ -443,6 +443,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }
 
   function onStageTap(event) {
+    if (!current) return;
     if (swipedRef.current) { swipedRef.current = false; return; }
     if (suppressTapRef.current) { suppressTapRef.current = false; return; }
     if (typing) { setTyping(false); return; }
