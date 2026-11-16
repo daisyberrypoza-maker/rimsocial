@@ -1,0 +1,13 @@
+/* Discover and people-suggestion cards use a consistent compact corner radius. */
+.ig-explore .xp-card,
+.ig-explore .friends-suggestion-row,
+.ig-explore .ig-person {
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.ig-explore .xp-card,
+.ig-explore .friends-suggestion-row,
+.ig-explore .ig-person {
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
