@@ -60,6 +60,19 @@ router.post('/feedback', requireAuth, async (req, res, next) => {
       const completion = Math.max(0, Math.min(1, watchMs / durationMs));
       delta = completion >= 0.9 ? 5 : completion >= 0.5 ? 2 : completion < 0.15 ? -2 : 0;
     }
+    // Spotlight aggregates per post: watch completion sums, watch count and skips (under 2s)
+    const spotKey = `spot:${postId}`;
+    if (event === 'watch') {
+      const watchMs = Number(req.body.watchMs);
+      const durationMs = Number(req.body.durationMs);
+      const completion = Math.max(0, Math.min(1, watchMs / durationMs));
+      await redis.hincrbyfloat(spotKey, 'watchPct', completion).catch(() => {});
+      await redis.hincrby(spotKey, 'watches', 1).catch(() => {});
+      await redis.expire(spotKey, 60 * 60 * 24 * 30).catch(() => {});
+    } else if (event === 'skipped') {
+      await redis.hincrby(spotKey, 'skips', 1).catch(() => {});
+      await redis.expire(spotKey, 60 * 60 * 24 * 30).catch(() => {});
+    }
     const key = `feed:preferences:${req.user.id}`;
     const oldValue = Number(await redis.hget(key, postId).catch(() => 0)) || 0;
     const score = Math.max(-40, Math.min(80, oldValue + delta));
