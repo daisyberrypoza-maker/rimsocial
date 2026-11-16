@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
+import { cameraZoom } from '../lib/cameraZoom.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
@@ -35,6 +36,9 @@ function CameraView({ onCapture, onGallery, onClose }) {
   const [facing, setFacing] = useState("user");
   const [error, setError] = useState("");
   const [streamKey, setStreamKey] = useState(0);
+  // Zoom: hardware zoom when the camera reports it, otherwise a digital zoom that is cropped on capture
+  const [zoom, setZoom] = useState(1);
+  const zoomState = useRef({ active: false, startY: 0, startZoom: 1, hardware: false, max: 1, track: null });
 
   useEffect(() => {
     let stream = null;
@@ -45,11 +49,30 @@ function CameraView({ onCapture, onGallery, onClose }) {
         if (!alive) { s.getTracks().forEach((t) => t.stop()); return; }
         stream = s;
         if (videoRef.current) videoRef.current.srcObject = s;
+        const track = s.getVideoTracks()[0] || null;
+        const caps = track?.getCapabilities?.() || {};
+        zoomState.current = { active: false, startY: 0, startZoom: 1, hardware: Boolean(caps.zoom), max: caps.zoom?.max || 3, track };
+        setZoom(1);
         setError("");
       })
       .catch(() => { if (alive) setError("Allow camera access to take a photo, or choose one from your gallery."); });
     return () => { alive = false; stream?.getTracks().forEach((t) => t.stop()); };
   }, [facing, streamKey]);
+
+  // Drag up on the preview to zoom in
+  function onZoomDown(event) {
+    zoomState.current = { ...zoomState.current, active: true, startY: event.clientY, startZoom: zoom };
+  }
+  function onZoomMove(event) {
+    const st = zoomState.current;
+    if (!st.active) return;
+    const next = cameraZoom(st.startY - event.clientY + (st.startZoom - 1) * 150, st.hardware ? st.max : 3);
+    setZoom(next);
+    if (st.hardware) st.track?.applyConstraints?.({ advanced: [{ zoom: Math.min(next, st.max) }] }).catch(() => {});
+  }
+  function onZoomUp() {
+    zoomState.current = { ...zoomState.current, active: false };
+  }
 
   function capture() {
     const video = videoRef.current;
@@ -58,8 +81,14 @@ function CameraView({ onCapture, onGallery, onClose }) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
+    // Digital zoom: keep the centre of the frame that the preview shows
+    const digital = !zoomState.current.hardware && zoom > 1 ? zoom : 1;
+    const sw = canvas.width / digital;
+    const sh = canvas.height / digital;
+    const sx = (canvas.width - sw) / 2;
+    const sy = (canvas.height - sh) / 2;
     if (facing === "user") { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     canvas.toBlob((blob) => {
       if (!blob) return;
       onCapture(new File([blob], "capture.jpg", { type: "image/jpeg" }));
@@ -68,7 +97,9 @@ function CameraView({ onCapture, onGallery, onClose }) {
 
   return (
     <main className="cam-page">
-      <video ref={videoRef} className={facing === "user" ? "cam-video mirror" : "cam-video"} autoPlay playsInline muted />
+      <video ref={videoRef} className={facing === "user" ? "cam-video mirror" : "cam-video"} autoPlay playsInline muted
+        style={zoomState.current.hardware || zoom === 1 ? undefined : { transform: facing === "user" ? `scaleX(-${zoom}) scaleY(${zoom})` : `scale(${zoom})` }}
+        onPointerDown={onZoomDown} onPointerMove={onZoomMove} onPointerUp={onZoomUp} onPointerCancel={onZoomUp} />
       {error && <p className="cam-error">{error}</p>}
       <button type="button" className="cam-close" onClick={onClose} aria-label="Close"><Icon name="x" size={26} /></button>
       <div className="cam-side">
