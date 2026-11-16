@@ -1,6 +1,6 @@
 # RimSocial Product Requirements and Verification Tracker
 
-**Audit baseline:** `main` at `002fa3ab57703247b39492a8adea2d2566d9b329`.
+**Audit baseline:** `main` at `25b02cbbcc5d58c8638438102e78d3becf87fd56`.
 **Policy:** A PR or commit is not proof of completion. **Done** means code is on main and relevant automated checks pass. Visual playback and Android-specific requirements still need physical-device QA. No deployment is authorized by this tracker.
 
 ## Status definitions
@@ -28,7 +28,7 @@
 | Navigation | Local screen transitions do not wait on network; tabs replace history; Back returns to originating list/sheet | Partial | Rules are in `docs/SCREEN-RULES.md`; audit remaining routes and saved-data hydration. |
 | Chat | Group message Copy, Reply and sender-only Delete for everyone | Done (code/CI) | Copy action merged in #116 as `38fb9c4`; existing reply/delete retained; CI passed. |
 | Chat | Full direct/group media, unread state, navigation and message lifecycle consistency | Partial | Existing media and message flows need full regression testing on web and Android. Draft PR #67 migrations 030–032 require schema/security review. |
-| Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | #118 moves the seek control 16px higher; player already uses auto-start. Verify visibility, scrubbing and playback lifecycle on a physical device. |
+| Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | #118 raises the web seek control 16px; #128 raises the native Android progress track 8px while retaining its seek hit area. Verify visibility, scrubbing and playback lifecycle on physical devices. |
 | Profile/posts | Gift control is available on other people's eligible posts and hidden on own posts | Done (code/CI) | #118 adds Send a gift for eligible other creators' posts and hides it on own/sponsored posts; GiftSheet retains an ownership guard. |
 | Upload | Background/chunked uploads retain multi-file, voice and music support | Partial | Chunked upload and background status exist on main. |
 | Upload | Real percentage progress and accurate uploading/processing/success/error feedback | Open | PR #105 was closed as stale. Its XHR progress code would replace current chunked/multi-file/music support. Implement progress against the current uploader in a fresh PR. |
@@ -58,7 +58,7 @@
 | #120 | Stories typography and spacing | Merged; CI passed. |
 | #121 | Adaptive ambient backgrounds and tone grades | Merged; CI passed. |
 | #122 | Swipe navigation for Messages and Search | Merged; CI passed. |
-| #123 | Shared relative-time formatting and Activity Likes filter | Merged as `002fa3a`; CI passed. |
+| #123 | Shared relative-time formatting and Activity Likes filter | Merged as `002fa3a`; CI passed. |\n| #128 | Raise Rimlight mobile video progress bar | Merged as `25b02cb`; native build/device QA still required. |
 | #105 | Story loading, Search navigation and upload progress | Closed as stale. Story cache invalidation and Search initialization are already fixed; video thumbnails are in #117. Upload progress remains open. |
 | #99 | Find Friends and settings-menu polish | Closed as already covered by main. |
 | #91 | Swipe between Messages and Search tabs | Closed; ported and merged in #122. |
