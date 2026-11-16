@@ -7430,3 +7430,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-tile .st-card-img {
   filter: brightness(0.55) !important;
 }
+
+/* Discover photo grade (display only): contrast 1.08, saturate 1.15, with the 45% dim */
+.st-page .st-discover-tile .st-card-img { filter: contrast(1.08) saturate(1.15) brightness(0.55) !important; }
