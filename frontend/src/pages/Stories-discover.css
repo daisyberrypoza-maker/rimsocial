@@ -18,7 +18,7 @@
   aspect-ratio:3 / 5;
   min-width:148px;
   overflow:hidden;
-  border-radius:10px;
+  border-radius:7px;
   scroll-snap-align:start;
 }
 .st-page .st-discover-grid {
@@ -37,7 +37,7 @@
   height:auto !important;
   aspect-ratio:3 / 5;
   overflow:hidden !important;
-  border-radius:10px !important;
+  border-radius:7px !important;
 }
 .st-page .st-discover-card-h > img,
 .st-page .st-discover-card-h .st-card-ambient,
