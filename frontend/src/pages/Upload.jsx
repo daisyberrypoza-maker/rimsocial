@@ -136,6 +136,16 @@ function CameraView({ onCapture, onGallery, onClose }) {
     }
   }
 
+  // The system can cancel the pointer during a long press (long-press menu, scroll): stop recording, take no photo
+  function onShutterCancel() {
+    const rec = recRef.current;
+    clearTimeout(rec.holdTimer);
+    if (rec.held) {
+      rec.held = false;
+      stopRecording();
+    }
+  }
+
   // Drag up on the preview to zoom in
   function onZoomDown(event) {
     zoomState.current = { ...zoomState.current, active: true, startY: event.clientY, startZoom: zoom };
@@ -185,7 +195,7 @@ function CameraView({ onCapture, onGallery, onClose }) {
       </div>
       <div className="cam-bottom">
         <button type="button" className="cam-side-btn" onClick={onGallery} aria-label="Choose from gallery"><Icon name="image" size={28} /></button>
-        <button type="button" className={`cam-shutter ${recording ? 'recording' : ''}`} onPointerDown={onShutterDown} onPointerUp={onShutterUp} onPointerCancel={onShutterUp} aria-label="Take photo, or hold to record video">
+        <button type="button" className={`cam-shutter ${recording ? 'recording' : ''}`} onPointerDown={onShutterDown} onPointerUp={onShutterUp} onPointerCancel={onShutterCancel} onPointerLeave={(e) => { if (e.pointerType !== 'mouse') onShutterCancel(); }} onContextMenu={(e) => e.preventDefault()} aria-label="Take photo, or hold to record video">
           <span />
           {recording && (
             <svg className="cam-ring" viewBox="0 0 92 92" aria-hidden="true">

@@ -7347,3 +7347,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .cam-shutter { position: relative; }
 .cam-shutter.recording { border-color: #ff2d55; }
 .cam-ring { position: absolute; left: -8px; top: -8px; width: 92px; height: 92px; pointer-events: none; }
+
+/* Camera shutter: a long press must record, not open the system menu or select text */
+.cam-shutter, .cam-shutter * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
