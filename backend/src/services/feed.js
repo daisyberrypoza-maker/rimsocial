@@ -75,6 +75,7 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
   const n = clampLimit(limit);
   const offset = parseRankCursor(cursor);
   const cacheKey = `${cachePrefix}:ranked:${userId}`;
+  const surface = cachePrefix === 'feed:discover' ? 'discover' : 'explore';
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
@@ -114,7 +115,6 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
       { replacements: { musicUrls } },
     ).catch(() => [[]]) : [[]];
     const soundUses = new Map(soundRows.map((row) => [row.musicUrl, Number(row.uses24h) || 0]));
-    const surface = cachePrefix === 'feed:discover' ? 'discover' : 'explore';
     // Persistent viewer/post exposure history provides a bounded fatigue penalty.
     // Missing migration/table is treated neutrally until the additive schema is applied.
     const candidateIds = candidates.map((post) => post.id);
@@ -213,11 +213,11 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
 
   const pageIds = ids.slice(offset, offset + n + 1);
   const hasMore = pageIds.length > n;
-  const visiblePageIds = pageIds.slice(0, n);
-  const page = await hydrate(visiblePageIds);
+  const page = await hydrate(pageIds.slice(0, n));
+  const deliveredIds = page.map((post) => post.id);
   // Record each delivered recommendation. The unique key keeps one durable viewer/post/surface row.
   // Counts are capped to prevent unbounded growth from repeated refreshes.
-  await Promise.all(visiblePageIds.map((postId) => sequelize.query(
+  await Promise.all(deliveredIds.map((postId) => sequelize.query(
     `INSERT INTO feed_exposures (viewerId, postId, surface, impressionCount, firstSeenAt, lastSeenAt)
      VALUES (:viewerId, :postId, :surface, 1, NOW(), NOW())
      ON DUPLICATE KEY UPDATE impressionCount = LEAST(impressionCount + 1, 1000), lastSeenAt = NOW()`,
