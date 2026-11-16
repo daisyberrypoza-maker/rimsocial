@@ -7525,3 +7525,53 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root .sv-stage.sv-grade-soft > .sv-image { filter: contrast(.95) saturate(1.1) brightness(1.06); }
 
 .sv-root .sv-stage > video.sv-media { object-fit: contain; }
+
+
+/* Stories final visual pass: consistent creator labels, compact metadata and readable viewer retries. */
+.st-page .st-title {
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 19px !important;
+  line-height: 23px !important;
+  font-weight: 500 !important;
+}
+.st-page .st-friends-heading {
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 12.5px !important;
+  line-height: 16px !important;
+  font-weight: 500 !important;
+}
+.st-page .st-friend { gap: 1px !important; }
+.st-page .st-name {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 14px !important;
+  font-weight: 500 !important;
+}
+.st-page .st-handle {
+  margin: 0 !important;
+  font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 10px !important;
+  line-height: 12px !important;
+  font-weight: 400 !important;
+}
+.sv-load-error {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 280px;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+.sv-load-error p { margin: 0; font-size: 15px; line-height: 21px; }
+
+/* Keep the same display-only tone presets on photos and videos in the full-screen viewer. */
+.sv-root .sv-stage.sv-grade-discover > video.sv-media { filter: contrast(1.08) saturate(1.15) brightness(1.02); }
+.sv-root .sv-stage.sv-grade-warm > video.sv-media { filter: sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04); }
+.sv-root .sv-stage.sv-grade-noir > video.sv-media { filter: grayscale(1) contrast(1.25) brightness(.95); }
+.sv-root .sv-stage.sv-grade-soft > video.sv-media { filter: contrast(.95) saturate(1.1) brightness(1.06); }
