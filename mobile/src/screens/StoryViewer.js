@@ -185,6 +185,8 @@ export default function StoryViewer() {
   useEffect(() => {
     setPaused(false);
     setReply('');
+    setMediaError(false);
+    setMediaReloadKey(0);
     progress.setValue(0);
     if (!current) return;
     if (isOwner) { updateCurrent(current.id, { viewed: true }); return; }
@@ -466,7 +468,7 @@ export default function StoryViewer() {
         )}
 
         {/* Tapping the picture: left third back, right third forward, middle pauses or likes */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={onStageTap} accessibilityLabel="Story" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onStageTap} disabled={!current || loadError || mediaError} accessibilityLabel="Story" />
 
         {!!current?.caption && <Text style={[styles.caption, { bottom: insets.bottom + 130 }]} pointerEvents="none">{current.caption}</Text>}
         {!!flash && (
