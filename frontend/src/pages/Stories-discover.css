@@ -162,13 +162,13 @@
    3.5 equal cards + three 10px gaps = 3 full cards and half of card four. */
 .st-page .st-discover-carousel {
   display: flex !important;
-  width: auto !important;
-  margin: 0 -9px !important;
+  /* Full-bleed like the Stories rail: the track spans the whole screen with
+     no margin at either end, regardless of the section's own padding. */
+  width: 100vw !important;
+  margin: 0 0 0 calc(50% - 50vw) !important;
   box-sizing: border-box !important;
   flex-wrap: nowrap !important;
   gap: 10px !important;
-  /* Left inset matches the section heading; no right inset, so the track
-     runs to the viewport edge like the reference. */
   padding: 0 0 12px 9px !important;
   scroll-padding-left: 9px !important;
   overflow-x: auto !important;
