@@ -171,9 +171,15 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   }, [groupStories, si, gi, groups.length]);
 
   const prev = useCallback(() => {
+    if (!groupStories) return;
     if (si > 0) return setSi(si - 1);
-    if (gi > 0) return setGi(gi - 1);
-  }, [si, gi]);
+    if (gi > 0) {
+      const previousGroup = groups[gi - 1];
+      const previousCount = Math.min(100, Math.max(1, Number(previousGroup?.storyCount) || 1));
+      firstStoryRef.current = previousCount - 1;
+      setGi(gi - 1);
+    }
+  }, [groupStories, si, gi, groups]);
 
   // A creator whose stories all expired is skipped, but a loading or failed request is not.
   useEffect(() => {
