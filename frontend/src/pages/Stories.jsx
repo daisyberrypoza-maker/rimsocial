@@ -53,6 +53,9 @@ function StoryFace({ group, user }) {
   return <Avatar user={user} noRing />;
 }
 
+// Discover tile spec: creator or brand names are capped at 25 characters
+const capName = (text) => (text.length > 25 ? text.slice(0, 24).trimEnd() + '…' : text);
+
 export default function Stories() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -274,7 +277,7 @@ export default function Stories() {
                   : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
                 <span className="st-card-shade" />
                 <span className="st-card-foot">
-                  <span className="st-card-name">{item.ad.sponsorName || 'Sponsored'}</span>
+                  <span className="st-card-name">{capName(item.ad.sponsorName || 'Sponsored')}</span>
                   <span className="st-ad-label">Sponsored</span>
                 </span>
               </a>
@@ -286,7 +289,7 @@ export default function Stories() {
                 <span className="st-card-shade" />
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
-                  <span className="st-card-name">{nameOf(story.author || {})}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
+                  <span className="st-card-name">{capName(nameOf(story.author || {}))}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
                 </span>
               </button>
             ); })())}
