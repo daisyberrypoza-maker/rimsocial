@@ -7357,3 +7357,6 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Stories: the page itself scrolls inside the app shell, so the sticky header stays put */
 .app > .st-page { min-height: 0 !important; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Discover tiles and suggestion cards: 3px corner radius */
+.st-page .st-discover-tile, .st-page .st-discover-card-h, .friends-suggestion-row, .rec-discover-row { border-radius: 3px !important; }
