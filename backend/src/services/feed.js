@@ -72,6 +72,7 @@ async function getDiscoverPage({ userId, cursor, limit }) {
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
       UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
       UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
+      redis.hgetall(`feed:preferences:${userId}`).catch(() => ({})),
     ]);
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
@@ -147,7 +148,7 @@ async function getExplorePage({ userId, cursor, limit }) {
         // Promoted posts (Promote_To_Next_Tier) move up one tier: double Spotlight_Score
         const tier = promotedToNextTier({ views: Number(p.viewCount) || 0, likes, shares }) ? 2 : 1;
         const spot = spotOf.get(String(p.id)) || { watchPct: 0, watches: 0, skips: 0 };
-        const score = tier * spotlightScore({
+        const baseScore = tier * spotlightScore({
           avgWatchPct: spot.watches > 0 ? spot.watchPct / spot.watches : 0,
           skipUnder2s: Math.min(1, spot.skips / views),
           likeRate: Math.min(1, likes / views),
@@ -155,6 +156,12 @@ async function getExplorePage({ userId, cursor, limit }) {
           creatorScore: creatorScore({ followers: followersOf.get(String(p.authorId)) || 0, engagementRate: likes / views }),
           hoursPosted: ageHours,
         });
+        // Personalize ranking with this viewer's bounded feedback history. Positive
+        // watch/completion/share signals lift relevant posts; skips and "not interested"
+        // lower them. The per-viewer score is deliberately capped to prevent domination.
+        const preference = Number(preferences[String(p.id)]) || 0;
+        const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
+        const score = baseScore + personalizedBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
         const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
         return { id: p.id, authorId: p.authorId, score, seeding, createdAt: new Date(p.createdAt).getTime() };
