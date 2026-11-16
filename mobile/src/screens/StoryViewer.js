@@ -452,7 +452,7 @@ export default function StoryViewer() {
             </>
           )
           : <>
-            <Image key={`${current.id}-ambient-${mediaReloadKey}`} source={{ uri: mediaUrl(current.mediaUrl) }} blurRadius={28} style={[StyleSheet.absoluteFill, styles.ambient]} resizeMode="cover" onError={() => setMediaError(true)} />
+            <Image key={`${current.id}-ambient-${mediaReloadKey}`} source={{ uri: mediaUrl(current.mediaUrl) }} blurRadius={28} style={[StyleSheet.absoluteFill, styles.ambient]} resizeMode="cover" />
             <Image key={`${current.id}-${mediaReloadKey}`} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onLoad={() => setMediaError(false)} onError={() => setMediaError(true)} />
           </>)}
         {isText && <View style={[StyleSheet.absoluteFill, styles.textStory, { backgroundColor: textBackground(current.storyBackground, current.id) }]}><Text style={styles.textStoryCopy}>{current.storyText || ''}</Text></View>}
