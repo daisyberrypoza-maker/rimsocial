@@ -185,6 +185,11 @@ async function start() {
       if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
     }
   }
+  // Create the sequence index only after the additive migration guarantees seq exists.
+  const groupIndexes = await qiGroup.showIndex('group_messages');
+  if (!groupIndexes.some((index) => index.name === 'group_messages_group_id_seq')) {
+    await qiGroup.addIndex('group_messages', ['groupId', 'seq'], { name: 'group_messages_group_id_seq' });
+  }
   // Per-user chat mute and inbox visibility preferences; additive table only.
   await ChatPreference.sync();
   await ProfileView.sync();
