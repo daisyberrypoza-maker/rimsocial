@@ -24,7 +24,8 @@
 .st-page .st-discover-grid {
   display:grid !important;
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-  gap:10px !important;
+  column-gap:5px !important;
+  row-gap:10px !important;
   overflow:visible !important;
   padding:0 14px 12px !important;
 }
