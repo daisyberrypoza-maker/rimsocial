@@ -252,7 +252,7 @@ function diversify(list, keyOf) {
 // Discover sections (backend ranking pipeline): a carousel of unseen stories from creators the viewer follows
 // (high affinity, 112px cards), and a 2-column grid of the rest, diversified. Ads are added by the client.
 const CAROUSEL_SIZE = 8;
-const GRID_PER_CREATOR = 2;
+const GRID_PER_CREATOR = 1;
 async function getDiscoverSections(viewerId, limit = 24) {
   const ranked = await getDiscoverStories(viewerId, limit);
   const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
