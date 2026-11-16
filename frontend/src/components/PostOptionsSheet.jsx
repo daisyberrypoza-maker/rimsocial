@@ -4,7 +4,7 @@ const REASONS = ['Spam or misleading', 'Harassment or bullying', 'Hate or harmfu
 
 // Options for a Rimlight post, matching the Snapchat reference: a white card with rows and no Cancel button.
 // Tapping outside the card closes it. Destructive actions are red.
-export default function PostOptionsSheet({ username, isOwn, reporting, onClose, onRemix, onShare, onCopy, onNotInterested, onBlock, onReport, onDelete }) {
+export default function PostOptionsSheet({ username, isOwn, canRemix, reporting, onClose, onRemix, onShare, onCopy, onNotInterested, onBlock, onReport, onDelete }) {
   const [step, setStep] = useState('menu');
   const [reason, setReason] = useState(REASONS[0]);
 
@@ -13,7 +13,7 @@ export default function PostOptionsSheet({ username, isOwn, reporting, onClose, 
       <section className="pos-sheet" role="dialog" aria-label="Rim options" onClick={(e) => e.stopPropagation()}>
         {step === 'menu' ? (
           <ul className="pos-list">
-            <li><button type="button" className="pos-item" onClick={onRemix}>Remix Rim</button></li>
+            {canRemix && !isOwn && <li><button type="button" className="pos-item" onClick={onRemix}>Remix Rim</button></li>}
             {!isOwn && <li><button type="button" className="pos-item danger" onClick={onBlock}>Block @{username}</button></li>}
             {!isOwn && <li><button type="button" className="pos-item danger" onClick={() => setStep('report')}>Report Rim</button></li>}
             {!isOwn && <li><button type="button" className="pos-item" onClick={onNotInterested}>Not Interested</button></li>}
