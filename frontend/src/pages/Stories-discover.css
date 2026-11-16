@@ -1,26 +1,42 @@
-/* Discover/Suggestions story cards: horizontal feed, contained media and a clear rewatch state. */
-.st-page .st-discover-grid {
-  display:flex !important;
-  flex-wrap:nowrap !important;
-  gap:10px !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  padding:0 14px 12px !important;
+/* Keep the Discover carousel and the lower Discover grid as two separate layouts. */
+.st-page .st-discover-carousel {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:10px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:0 14px 12px;
   scroll-snap-type:x mandatory;
   overscroll-behavior-x:contain;
   -webkit-overflow-scrolling:touch;
+}
+.st-page .st-discover-card-h {
+  position:relative;
+  flex:0 0 148px;
+  width:148px;
+  height:224px;
+  min-width:148px;
+  overflow:hidden;
+  border-radius:10px;
+  scroll-snap-align:start;
+}
+.st-page .st-discover-grid {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:10px !important;
+  overflow:visible !important;
+  padding:0 14px 12px !important;
 }
 .st-page .st-discover-grid > .st-card,
 .st-page .st-discover-grid > .st-discover-tile {
   position:relative;
   display:block;
-  flex:0 0 148px !important;
-  width:148px !important;
-  height:224px !important;
-  min-width:148px !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  aspect-ratio:2 / 3;
   overflow:hidden !important;
   border-radius:10px !important;
-  scroll-snap-align:start;
 }
 .st-page .st-discover-tile > img,
 .st-page .st-discover-tile > video,
@@ -38,7 +54,7 @@
   object-position:center;
 }
 .st-page .st-discover-tile .st-card-ambient { filter:blur(14px) brightness(.62); transform:scale(1.12); }
-.st-page .st-discover-tile .st-card-foreground { z-index:1; object-fit:contain !important; }
+.st-page .st-discover-tile .st-card-foreground { z-index:1; object-fit:cover !important; }
 .st-page .st-discover-tile .st-card-shade { position:absolute; inset:0; z-index:2; pointer-events:none; }
 .st-page .st-discover-tile .st-card-foot,
 .st-page .st-discover-tile .st-discover-headline { position:absolute; z-index:3; }
@@ -67,5 +83,4 @@
   text-shadow:0 1px 4px rgba(0,0,0,.55);
   pointer-events:none;
 }
-.st-page .st-discover-card-h { position:relative; overflow:hidden; }
 .st-page .st-discover-card-h .st-watch-again { z-index:6; }
