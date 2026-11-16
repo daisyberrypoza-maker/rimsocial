@@ -58,7 +58,7 @@
   object-fit:cover !important;
   object-position:center;
 }
-.st-page .st-discover-tile .st-card-ambient { filter:blur(14px) brightness(.62); transform:scale(1.12); }
+.st-page .st-discover-tile .st-card-ambient { filter:blur(11.2px) brightness(.62); transform:scale(1.12); }
 .st-page .st-discover-tile .st-card-foreground { z-index:1; object-fit:cover !important; }
 .st-page .st-discover-tile .st-card-shade { position:absolute; inset:0; z-index:2; pointer-events:none; }
 .st-page .st-discover-tile .st-card-foot,
