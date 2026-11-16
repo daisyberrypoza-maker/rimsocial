@@ -1,4 +1,5 @@
 import AppLink from '../components/AppLink.jsx';
+import { newClientId } from '../lib/clientId.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
@@ -779,6 +780,7 @@ export default function Conversation({ userId }) {
       try {
         const form = new FormData();
         form.append('media', item);
+        form.append('clientId', newClientId());
         const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
         setMessages((current) => {
           const list = current || [];
@@ -877,6 +879,7 @@ export default function Conversation({ userId }) {
       const form = new FormData();
       form.append('media', voice);
       if (replyTo) form.append('replyToId', replyTo.id);
+      form.append('clientId', newClientId());
       const data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       const sent = { ...data.message, replyTo: replyTo ? { id: replyTo.id, senderId: replyTo.senderId, body: replyTo.body, mediaKind: replyTo.mediaKind || null, deletedForEveryone: false } : null };
       setMessages((current) => {
@@ -985,6 +988,7 @@ export default function Conversation({ userId }) {
         if (body) form.append('body', body);
         if (replyTo) form.append('replyToId', replyTo.id);
         if (ephemeral) form.append('ephemeral', ephemeral);
+        form.append('clientId', newClientId());
         data = await api(`/v1/messages/with/${userId}/media`, { method: 'POST', body: form });
       } else {
         const sealed = await sealFor(userId, body);

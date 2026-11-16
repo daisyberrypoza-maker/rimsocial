@@ -359,7 +359,9 @@ const GroupMessage = sequelize.define('GroupMessage', {
   replyToId: { type: DataTypes.UUID, allowNull: true },
   // View limit for a photo: 0 = unlimited, 1 = once, 2 = twice (each member counts separately)
   viewLimit: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }] });
+  // Sequence_ID from Redis INCR per group: strict ordering (null for messages sent before this was added)
+  seq: { type: DataTypes.BIGINT, allowNull: true },
+}, { tableName: 'group_messages', indexes: [{ fields: ['groupId', 'createdAt'] }, { fields: ['senderId', 'createdAt'] }, { fields: ['groupId', 'seq'] }] });
 
 
 

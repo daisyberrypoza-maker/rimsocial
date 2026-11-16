@@ -179,6 +179,7 @@ async function start() {
       ['replyToId', { type: DataTypesGroup.UUID, allowNull: true }],
       ['viewLimit', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
       ['viewCount', { type: DataTypesGroup.INTEGER, allowNull: false, defaultValue: 0 }],
+      ['seq', { type: DataTypesGroup.BIGINT, allowNull: true }],
     ]) {
       if (!groupColumns[column]) await qiGroup.addColumn('group_messages', column, definition);
     }
