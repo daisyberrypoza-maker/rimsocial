@@ -7328,3 +7328,10 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .post .snap-disc .avatar, .post .snap-disc img { width:100% !important; height:100% !important; border-radius:50% !important; }
 @keyframes snap-disc-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .post .snap-disc { animation:none; } }
+
+/* Story viewer spec: top scrim, 2.5px segmented bars, 15px bold name, translucent reply controls */
+.sv-root::before { content:''; position:absolute; top:0; left:0; right:0; height:140px; background:linear-gradient(to bottom, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 100%); z-index:2; pointer-events:none; }
+.sv-root .sv-bar { height:2.5px; border-radius:2px; background:rgba(255,255,255,.35); }
+.sv-root .sv-name { font-size:15px; font-weight:700; }
+.sv-root .sv-reply { background:rgba(255,255,255,.2) !important; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.25); }
+.sv-root .sv-cam, .sv-root .sv-send { background:rgba(255,255,255,.2) !important; backdrop-filter:blur(8px); }
