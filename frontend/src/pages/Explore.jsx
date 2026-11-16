@@ -43,8 +43,6 @@ export default function Explore() {
   const items = cached?.items || [];
   const hasMore = Boolean(cached?.nextCursor);
   // One place per person: anyone who follows you or you follow is never under Suggested
-  const followBackIds = new Set(recommendations.followBack.map((person) => person.id));
-  const suggestedOnly = recommendations.suggested.filter((person) => !person.isFollowing && !followBackIds.has(person.id));
 
   function more(reset = false) {
     setLoading(true);
@@ -155,19 +153,6 @@ export default function Explore() {
         {!results.people?.length && !results.posts?.length && <p className="ig-empty">No results. Try another name or hashtag.</p>}
       </> : <>
         {peopleMode && !results && <>
-          {suggestedOnly.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section">
-            <div className="friends-suggestion-heading"><h2>Suggested for you</h2></div>
-            <ul className="friends-suggestion-list">{suggestedOnly.filter((person) => !dismissed[person.id]).map((person) => (
-              <li className="friends-suggestion-row" key={person.id}>
-                <button type="button" className="friends-suggestion-person" onClick={() => navigate(`/u/${person.username}`)}>
-                  <Avatar user={person} size={44} />
-                  <span><strong>{person.username || person.displayName}</strong><small>{person.mutualCount > 0 ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'}` : (person.displayName || 'Suggested for you')}</small></span>
-                </button>
-                <button type="button" className={person.isFollowing ? 'friends-suggestion-follow following' : 'friends-suggestion-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
-                <button type="button" className="friends-suggestion-dismiss" aria-label={`Dismiss ${person.username}`} onClick={() => { setDismissed((current) => ({ ...current, [person.id]: true })); dismissSuggestion(person.id); }}><Icon name="x" size={17} /></button>
-              </li>
-            ))}</ul>
-          </section>}
           {recommendations.followBack.some((person) => !dismissed[person.id]) && <section className="friends-suggestion-section friends-followback-section">
             <div className="friends-suggestion-heading"><h2>Follow back</h2></div>
             <ul className="friends-suggestion-list">{recommendations.followBack.filter((person) => !dismissed[person.id]).map((person) => (
@@ -181,7 +166,7 @@ export default function Explore() {
               </li>
             ))}</ul>
           </section>}
-          {!suggestedOnly.some((person) => !dismissed[person.id]) && !recommendations.followBack.some((person) => !dismissed[person.id]) && <p className="ig-empty">No suggestions right now. Search for people by name or username.</p>}
+          {!recommendations.followBack.some((person) => !dismissed[person.id]) && <p className="ig-empty">No one to follow back right now. Search for people by name or username.</p>}
         </>}
         {!peopleMode && recommendations.followBack.length > 0 && <section className="ig-section">
           <div className="ig-section-head"><h3 className="ig-section-title">Follows you</h3></div>
@@ -190,14 +175,7 @@ export default function Explore() {
             <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow back'}</button>
           </div>)}
         </section>}
-        {!peopleMode && suggestedOnly.length > 0 && <section className="ig-section">
-          <div className="ig-section-head"><h3 className="ig-section-title">Suggested for you</h3></div>
-          {suggestedOnly.map((person) => <div className="ig-person" key={person.id}>
-            <button className="ig-person-main" onClick={() => navigate(`/u/${person.username}`)}><Avatar user={person} size={48} /><span><strong>{person.username}</strong><small>{person.mutualCount ? `${person.mutualCount} mutual connection${person.mutualCount === 1 ? '' : 's'} · ` : ''}${person.displayName || 'Suggested creator'}</small></span></button>
-            <button className={person.isFollowing ? 'ig-follow following' : 'ig-follow'} onClick={() => toggleFollow(person)} disabled={Boolean(followBusy[person.id])}>{followBusy[person.id] ? '…' : person.isFollowing ? 'Following' : 'Follow'}</button>
-          </div>)}
-        </section>}
-        {peopleMode && !suggestedOnly.length && !recommendations.followBack.length && <p className="ig-empty">Search for people by name or username.</p>}
+
         {!peopleMode && <>
           {!searchMode && <div className="xp-title">Explore</div>}
           {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
