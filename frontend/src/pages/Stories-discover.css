@@ -167,13 +167,13 @@
   box-sizing: border-box !important;
   flex-wrap: nowrap !important;
   gap: 10px !important;
-  padding: 0 0 12px !important;
+  padding: 0 20px 12px 0 !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
 }
 .st-page .st-discover-carousel > .st-discover-card-h {
-  flex: 0 0 calc((100% - 30px) / 3.5) !important;
-  width: calc((100% - 30px) / 3.5) !important;
+  flex: 0 0 calc((100% - 50px) / 3.5) !important;
+  width: calc((100% - 50px) / 3.5) !important;
   min-width: 0 !important;
   max-width: none !important;
   height: auto !important;
