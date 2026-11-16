@@ -4,10 +4,46 @@
 .ig-explore .ig-person {
   border-radius: 8px !important;
   overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
-.ig-explore .xp-card,
-.ig-explore .friends-suggestion-row,
-.ig-explore .ig-person {
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
+/* Keep Discover thumbnails fully inside their media frame without stretching. */
+.ig-explore .xp-media {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.ig-explore .xp-media > img,
+.ig-explore .xp-media > video,
+.ig-explore .rim-search-post-thumb > img,
+.ig-explore .rim-search-post-thumb > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Suggestion/profile thumbnails stay contained in their fixed avatar frames. */
+.ig-explore .friends-suggestion-person .avatar,
+.ig-explore .ig-person-main .avatar {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.ig-explore .friends-suggestion-person .avatar img,
+.ig-explore .ig-person-main .avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
