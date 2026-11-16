@@ -3,7 +3,7 @@ const redis = require('../redis');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
-const { spotlightScore, promotedToNextTier } = require('./formulas');
+const { spotlightScore, promotedToNextTier, creatorScore } = require('./formulas');
 
 const authorInclude = (extra = {}) => ({
   model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'], ...extra,
@@ -124,12 +124,14 @@ async function getExplorePage({ userId, cursor, limit }) {
     const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
     const followed = new Set(follows.map((f) => f.followeeId));
     const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
+    const authors = await User.findAll({ where: { id: [...new Set(candidates.map((p) => p.authorId))] }, attributes: ['id', 'followerCount'], raw: true });
+    const followersOf = new Map(authors.map((u) => [String(u.id), Number(u.followerCount) || 0]));
     const now = Date.now();
     const scored = candidates
       .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .map((p) => {
         // Spotlight_Score: like rate and share rate are measured (reposts stand in for shares);
-        // watch percentage, loops, trending sound and skips are not tracked yet (0); Creator_Score is 1.
+        // watch percentage, loops, trending sound and skips are not tracked yet (0). Creator_Score uses the author's followers and like rate.
         const views = Math.max(1, Number(p.viewCount) || 0);
         const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
         const likes = Number(p.likeCount) || 0;
@@ -139,6 +141,7 @@ async function getExplorePage({ userId, cursor, limit }) {
         const score = tier * spotlightScore({
           likeRate: Math.min(1, likes / views),
           shareRate: Math.min(1, shares / views),
+          creatorScore: creatorScore({ followers: followersOf.get(String(p.authorId)) || 0, engagementRate: likes / views }),
           hoursPosted: ageHours,
         });
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass

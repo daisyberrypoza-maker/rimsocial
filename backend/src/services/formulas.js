@@ -52,6 +52,11 @@ function chatListScore({ unreadSnap = 0, unreadChat = 0, pinned = 0, streak = 0,
 }
 
 // Spotlight_Score = ((Avg_Watch_Pct*25 + Loop_Rate*15 + Share_Rate*20 + Like_Rate*10 + Trending_Sound_Boost*8) - Skip_Under_2s*30) * Creator_Score * Time_Decay(hours, 1.05)
+// Creator_Score = clamp(1 + log10(1 + followers) * Engagement_Rate, 1, 3): follower reach scaled by how many viewers like the post
+function creatorScore({ followers = 0, engagementRate = 0 }) {
+  return clamp(1 + Math.log10(1 + Math.max(0, followers)) * clamp(engagementRate, 0, 1), 1, 3);
+}
+
 function spotlightScore({ avgWatchPct = 0, loopRate = 0, shareRate = 0, likeRate = 0, trendingSound = 0, skipUnder2s = 0, creatorScore = 1, hoursPosted = 0 }) {
   return ((avgWatchPct * 25) + (loopRate * 15) + (shareRate * 20) + (likeRate * 10) + (trendingSound * 8) - (skipUnder2s * 30)) * creatorScore * timeDecay(hoursPosted, 1.05);
 }
@@ -135,4 +140,4 @@ function quickAddScore({ mutual = 0, contacts = 0, sharedGroups = 0, profileSear
   return mutual * 10 + contacts * 50 + sharedGroups * 15 + profileSearches * 20 + sameLocation * 5 - dismissCount * 100;
 }
 
-module.exports = { quickAddScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };
+module.exports = { creatorScore, quickAddScore, lerp, clamp, normalize, cameraZoom, galleryProgress, heroDragState, musicTrackScore, adaptiveBitrate, liveStreamScore, adRankScore, canShowAd, profileCollapse, botRiskScore, shouldChallengeBot, DAY, timeDecay, streakDays, friendStoryScore, bestFriendScore, discoverScore, followRankScore, shareTargetScore, chatListScore, spotlightScore, snapTarget, promotedToNextTier, interestBoostFor };

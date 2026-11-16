@@ -25,7 +25,7 @@ Applied (backend `services/formulas.js` holds the formulas):
 
 Partly applied (signals not tracked yet count as 0):
 - Discover_Score: full watch, share, rewatch, skip and exit. Story topics (Interest_Boost) are 1.
-- Spotlight_Score: watch percentage, loops, trending sound and skips are 0; Creator_Score is 1 (the blueprint does not define it).
+- Spotlight_Score: watch percentage, loops, trending sound and skips are 0. Creator_Score = clamp(1 + log10(1 + followers) * like rate, 1, 3), defined here because the blueprint does not define it.
 - Music_Track_Score: completion, genre affinity and featured flag are 0.
 - Live_Stream_Score: gifts per minute are 0.
 - Quick_Add: phone contacts are not read (needs device permission and an upload path).
@@ -35,7 +35,7 @@ Not applied, and why:
 - Media encryption (AES-256-GCM for chat media): needs client-side decryption of every media view. Not built, because a bug there would break every chat photo and cannot be tested here.
 - Video bitrate targets (4.5 / 3.0 / 2.2 Mbps): need a transcoder on the server or client. There is none.
 - Ad ranking (Ad_Rank_Score) and per-session ad caps: the app has no bids or ad campaigns, so there is nothing to score. The current rotation is kept.
-- Bot risk score: the formula exists, but a challenge is a product decision (what happens when a challenge fails). Not wired.
+- Bot risk score: the formula exists, but there is no challenge screen and no decision on what a failed challenge does. Blocking without a screen would stop sends, so it is not wired. Next step: a challenge screen, then block on failure.
 - Adaptive live bitrate (`adaptiveBitrate`): the live provider (LiveKit) chooses the bitrate; the formula is not applied in the client.
 - Camera pager, shutter and zoom, gallery grid, header state machine, chat swipe parallax, share drawer gesture, profile collapse, hero morph: these change the screen design, which was not to change. Each needs your approval before it is built.
 - Spotlight cold-start queue as the blueprint describes it (a stored status and a 300-viewer batch): approximated by view counts; not a stored queue.
