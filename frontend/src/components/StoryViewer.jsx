@@ -36,8 +36,11 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   const firstStoryRef = useRef(startStory);
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
+  const [storiesOwnerId, setStoriesOwnerId] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [mediaError, setMediaError] = useState(false);
+  const [mediaReloadKey, setMediaReloadKey] = useState(0);
   const [paused, setPaused] = useState(false);
   // Press and hold anywhere pauses the story; releasing carries on (like Rimlight and Instagram)
   const [holding, setHolding] = useState(false);
@@ -78,10 +81,11 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
 
   const group = groups[gi] || { user: {} };
   const creatorName = group.user?.displayName || group.user?.username;
-  const current = stories?.[si];
+  const groupStories = storiesOwnerId === group.user?.id ? stories : null;
+  const current = groupStories?.[si];
   const isVideo = current?.kind === 'video';
   const isText = current?.kind === 'text';
-  const total = stories?.length || 0;
+  const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
   const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen;
@@ -99,10 +103,12 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
     setLoadError(false);
     if (usableSavedItems) {
       setStories(usableSavedItems);
+      setStoriesOwnerId(group.user.id);
       setSi(Math.min(requestedIndex, usableSavedItems.length - 1));
       setSubscribed(Boolean(saved.isSubscribed));
     } else {
       setStories(null);
+      setStoriesOwnerId(group.user.id);
     }
     api(`/v1/stories/users/${group.user.id}`)
       .then((d) => {
@@ -111,6 +117,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
         const items = d.items;
         evictMedia(missingItems(cachedItems, items));
         setStories(items);
+        setStoriesOwnerId(group.user.id);
         setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
         setLoadError(false);
         setSubscribed(Boolean(d.isSubscribed));
@@ -121,6 +128,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
         if (usableSavedItems) setStories(usableSavedItems);
         else {
           setStories(null);
+          setStoriesOwnerId(group.user.id);
           setLoadError(true);
         }
       });
@@ -140,8 +148,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   // Behind the scenes: warm the next story (and the one after) while this one plays
   // Waits a moment so it never competes with the story on screen.
   useEffect(() => {
-    if (!stories) return undefined;
-    const item = stories[si + 1];
+    if (!groupStories) return undefined;
+    const item = groupStories[si + 1];
     if (!item) return undefined;
     const timer = setTimeout(() => {
       prefetchMedia([{
@@ -150,27 +158,29 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       }]);
     }, 0);
     return () => clearTimeout(timer);
-  }, [stories, si]);
+  }, [groupStories, si]);
 
   const next = useCallback(() => {
-    if (!stories) return;
-    if (si < stories.length - 1) return setSi(si + 1);
+    if (!groupStories) return;
+    if (si < groupStories.length - 1) return setSi(si + 1);
     if (gi < groups.length - 1) return setGi(gi + 1);
     requestClose();
-  }, [stories, si, gi, groups.length]);
+  }, [groupStories, si, gi, groups.length]);
 
   const prev = useCallback(() => {
     if (si > 0) return setSi(si - 1);
     if (gi > 0) return setGi(gi - 1);
   }, [si, gi]);
 
-  // A creator whose stories all expired is skipped
+  // A creator whose stories all expired is skipped, but a loading or failed request is not.
   useEffect(() => {
-    if (stories && stories.length === 0) next();
-  }, [stories, next]);
+    if (groupStories && groupStories.length === 0) next();
+  }, [groupStories, next]);
 
   // Load this story's saved state from this device and record the view.
   useEffect(() => {
+    setMediaError(false);
+    setMediaReloadKey(0);
     try {
       const saved = JSON.parse(window.localStorage.getItem('rimsocial:favoriteStories') || '[]');
       setFavorite(Boolean(current && saved.includes(String(current.id))));
@@ -221,7 +231,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
       window.addEventListener('pointerdown', unmute, { once: true, capture: true });
     });
     return undefined;
-  }, [current?.id, isVideo, frozen]);
+  }, [current?.id, isVideo, frozen, mediaReloadKey]);
 
   function flashIcon(icon) {
     const key = Date.now();
@@ -607,12 +617,17 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
             <p>Couldn't load this story.</p>
             <button type="button" className="sc-pill" onClick={() => { setLoadError(false); setReloadKey((key) => key + 1); }}>Retry</button>
           </div>
+        ) : current && mediaError && !isText ? (
+          <div className="sv-load-error" role="alert" onClick={(event) => event.stopPropagation()}>
+            <p>Couldn't load this photo or video.</p>
+            <button type="button" className="sc-pill" onClick={() => { setMediaError(false); setMediaReloadKey((key) => key + 1); setPaused(false); }}>Retry</button>
+          </div>
         ) : current ? (
           isVideo ? (
             <>
-              {current.thumbUrl && <img className="sv-ambient" src={mediaUrl(current.thumbUrl)} alt="" aria-hidden="true" />}
+              {current.thumbUrl && <img key={`${current.id}-${mediaReloadKey}-ambient`} className="sv-ambient" src={mediaUrl(current.thumbUrl)} alt="" aria-hidden="true" />}
               <video
-              key={current.id}
+              key={`${current.id}-${mediaReloadKey}`}
               ref={videoRef}
               className="sv-media"
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
@@ -621,7 +636,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
               muted={muted || Boolean(current.musicUrl)}
               preload="auto"
               onEnded={next}
-              onError={next}
+              onError={() => setMediaError(true)}
               onTimeUpdate={onVideoTime}
               />
             </>
@@ -629,8 +644,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
             <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText}</div>
           ) : (
             <>
-              <img className="sv-ambient" src={mediaUrl(current.mediaUrl)} alt="" aria-hidden="true" />
-              <img key={current.id} className="sv-media sv-image" src={mediaUrl(current.mediaUrl)} alt="" onError={next} />
+              <img key={`${current.id}-${mediaReloadKey}-ambient`} className="sv-ambient" src={mediaUrl(current.mediaUrl)} alt="" aria-hidden="true" />
+              <img key={`${current.id}-${mediaReloadKey}`} className="sv-media sv-image" src={mediaUrl(current.mediaUrl)} alt="" onError={() => setMediaError(true)} />
             </>
           )
         ) : (
