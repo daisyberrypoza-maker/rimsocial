@@ -13,13 +13,13 @@ Applied (backend `services/formulas.js` holds the formulas):
 - Hero tile open, drag and dismiss: `viewerMotion.js` (drag formula, 250px threshold, 0.35 release, 800px/s flick).
 - Share sheet: up to 15 recipients per send, each copy sealed on the device (`POST /v1/messages/share`). A shared post is sent with its post link attached, so the chat shows the post card.
 - Idempotent sends: a client id on each text send and each direct media send returns the message already created (Redis, 24h).
-- Group messages: Sequence_ID from Redis INCR, stored on each message and used for history order; refused above 200 members.
+- Group messages: Sequence_ID from Redis INCR, stored on each message and used for history order; refused above 200 members. Per-member `group_members.lastReadAt` records when a group is opened, and the inbox calculates unread group messages after that cursor. Direct conversation open writes `readAt` for incoming messages.
 - Image pipeline: fit inside 1080x1920, JPEG 0.90 for posts and stories, 0.82 for chat photos (`frontend/src/lib/imageFit.js`).
 - Chunked uploads: 1 MB parts over `/v1/uploads` for posts and stories over 8 MB (`Chunk_Size_Bytes`), with resume in the same tab, a daily start cap, and a sweep after 24 hours.
 - Story tray (Redis fan-out on write): `stories:tray:<viewer>`, written on post and on follow, read with a database fallback.
 - Disappearing messages (Delete_Message_Now): "after viewing" and "24 hours"; "keep in chat" is the default (no deletion).
-- Rimlight is the Spotlight-style short-video feed. Rimlight Discover and Explore share the same recommendation ranking engine; Following remains chronological. Ranking uses measured average watch completion, rewatch rate, fast skips, likes, repost/share rate, creator engagement and freshness. Posts under 300 views and 72 hours old receive controlled cold-start exposure (one seed after every four ranked posts). Posts with at least 200 views can move up one tier when measured completions + likes + reposts reach 18% of views. Feedback and successful shares update bounded per-viewer preferences and invalidate both recommendation caches. Trending-sound affinity and a persistent per-viewer exposure ledger are not yet implemented.
-- Music_Track_Score: audio search ranking by uses in the last 24 hours and age (`routes/audio.js`).
+- Rimlight is the Spotlight-style short-video feed. Rimlight Discover and Explore share the same recommendation ranking engine; Following remains chronological. Ranking uses measured average watch completion, rewatch rate, fast skips, likes, repost/share rate, creator engagement, freshness and a normalized trending-sound boost calculated from public short-video uses in the last 24 hours. Posts under 300 views and 72 hours old receive controlled cold-start exposure (one seed after every four ranked posts). Posts with at least 200 views can move up one tier when measured completions + likes + reposts reach 18% of views. Feedback and successful shares update bounded per-viewer preferences and invalidate both recommendation caches. A durable per-viewer/post/surface exposure ledger records feed deliveries; recent repeated exposure applies a capped fatigue penalty, not permanent exclusion.
+- Music_Track_Score: audio search ranking by public short-video uses in the last 24 hours and age (`routes/audio.js`).
 - Live_Stream_Score: live list ranking by viewers, chats per minute, follows and minutes live (`routes/broadcasts.js`).
 - BlurHash placeholders for photos in direct and group chats (`lib/blurhash.js`, `direct_messages.blurhash`, `group_messages.blurhash`).
 - Spotlight styling on Rimlight: bottom scrim, info block, 42px translucent rail buttons, spinning audio disc.
@@ -33,7 +33,7 @@ Applied (backend `services/formulas.js` holds the formulas):
 
 Partly applied (signals not tracked yet count as 0):
 - Discover_Score: full watch, share, rewatch, skip and exit. Story topics (Interest_Boost) are 1.
-- Spotlight_Score: watch percentage and skips come from client watch samples (`spot:<post>` in Redis, written by `POST /v1/feed/feedback`); loops and trending sound are 0. Creator_Score = clamp(1 + log10(1 + followers) * like rate, 1, 3), defined here because the blueprint does not define it.
+- Spotlight_Score: watch percentage, completions, loops and skips come from authenticated viewing-session samples (`spot:<post>` in Redis, written by `POST /v1/feed/feedback`); trending sound is derived from 24-hour public short-video audio usage. Creator_Score = clamp(1 + log10(1 + followers) * like rate, 1, 3), defined here because the blueprint does not define it.
 - Discover click and completion models: not built, so they are 1 in `discoverFeedScore`.
 - Music_Track_Score: completion, genre affinity and featured flag are 0.
 - Live_Stream_Score: gifts per minute are 0.

@@ -194,7 +194,7 @@ async function unhideChat(me, other) {
 // Return groups for the signed-in user, including participants and latest message.
 router.get('/groups', async (req, res, next) => {
   try {
-    const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId'], raw: true });
+    const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId', 'lastReadAt', 'createdAt'], raw: true });
     const ids = memberships.map((row) => row.groupId);
     const groupPrefs = await ChatPreference.findAll({ where: { userId: req.user.id, groupId: ids }, raw: true });
     const groupPrefById = new Map(groupPrefs.map((row) => [String(row.groupId), row]));
@@ -204,9 +204,20 @@ router.get('/groups', async (req, res, next) => {
     const userIds = [...new Set(members.map((row) => String(row.userId)))];
     const users = userIds.length ? await User.findAll({ where: { id: userIds }, attributes: PUBLIC_USER, raw: true }) : [];
     const userById = new Map(users.map((user) => [String(user.id), user]));
-    const messages = await GroupMessage.findAll({ where: { groupId: ids }, order: [['createdAt', 'DESC']], limit: Math.max(ids.length * 3, 100), raw: true });
-    const latest = new Map();
-    for (const message of messages) if (!latest.has(String(message.groupId))) latest.set(String(message.groupId), message);
+    // Fetch the latest message independently per group; one large group must not starve
+    // other groups from the inbox's last-message preview.
+    const latestRows = await Promise.all(ids.map((groupId) => GroupMessage.findOne({
+      where: { groupId }, order: [['seq', 'DESC'], ['createdAt', 'DESC']], raw: true,
+    })));
+    const latest = new Map(ids.map((groupId, index) => [String(groupId), latestRows[index] || null]));
+    const unreadCounts = await Promise.all(memberships.map((membership) => GroupMessage.count({
+      where: {
+        groupId: membership.groupId,
+        senderId: { [Op.ne]: req.user.id },
+        createdAt: { [Op.gt]: membership.lastReadAt || membership.createdAt },
+      },
+    })));
+    const unreadByGroup = new Map(memberships.map((membership, index) => [String(membership.groupId), unreadCounts[index]]));
     res.json({ items: groups.map((group) => ({
       id: group.id,
       name: group.name,
@@ -214,6 +225,7 @@ router.get('/groups', async (req, res, next) => {
       createdById: group.createdById,
       members: members.filter((member) => String(member.groupId) === String(group.id)).map((member) => userById.get(String(member.userId))).filter(Boolean),
       lastMessage: latest.get(String(group.id)) || null,
+      unread: unreadByGroup.get(String(group.id)) || 0,
       muted: Boolean(groupPrefById.get(String(group.id))?.muted),
     })) });
   } catch (error) { next(error); }
@@ -253,8 +265,9 @@ router.post('/groups', async (req, res, next) => {
 // Load a group and its recent messages; membership is required.
 router.get('/groups/:groupId', async (req, res, next) => {
   try {
-    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
+    const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
     if (!membership) throw httpError(404, 'Group not found');
+    await membership.update({ lastReadAt: new Date() });
     const group = await GroupConversation.findByPk(req.params.groupId);
     if (!group) throw httpError(404, 'Group not found');
     const members = await GroupMember.findAll({ where: { groupId: group.id }, raw: true });
@@ -626,6 +639,8 @@ router.get('/with/:userId', async (req, res, next) => {
     const chatPreference = await preferenceFor(me, { peerId: other });
     if (chatPreference?.hidden) return res.json({ items: [], typing: false });
     await DirectMessage.update({ deliveredAt: new Date() }, { where: { senderId: other, recipientId: me, deliveredAt: null } }).catch(() => {});
+    // Opening the thread is the read receipt; do not leave unread badges or sender ticks stale.
+    await DirectMessage.update({ readAt: new Date() }, { where: { senderId: other, recipientId: me, readAt: null } }).catch(() => {});
     const rows = await DirectMessage.findAll({
       where: { [Op.or]: [{ senderId: me, recipientId: other }, { senderId: other, recipientId: me }] },
       order: [['createdAt', 'DESC']],

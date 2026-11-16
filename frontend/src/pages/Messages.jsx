@@ -155,6 +155,9 @@ export default function Messages() {
     counts[group] = all.reduce((sum, item) => sum + (group === 'all' || inGroup(item, group) ? Number(item.unread || 0) : 0), 0);
     return counts;
   }, {});
+  const groupUnread = groups.reduce((sum, group) => sum + Number(group.unread || 0), 0);
+  unreadByGroup.all += groupUnread;
+  unreadByGroup.primary += groupUnread;
   // Stories tab: creators with a story you have not watched yet (your own story is not counted)
   const storyRail = useAppStore((st) => st.storyRail);
   const setStoryRail = useAppStore((st) => st.setStoryRail);
@@ -261,7 +264,7 @@ export default function Messages() {
             return (
               <li
                 key={group.id}
-                className="sn-item"
+                className={group.unread ? 'sn-item unread' : 'sn-item'}
                 onContextMenu={(event) => { event.preventDefault(); setRowMenu({ item: group, isGroup: true, anchor: event.currentTarget.getBoundingClientRect() }); }}
                 onTouchStart={(event) => { const rect = event.currentTarget.getBoundingClientRect(); clearTimeout(longPressTimer.current); longPressTimer.current = setTimeout(() => setRowMenu({ item: group, isGroup: true, anchor: rect }), 550); }}
                 onTouchEnd={() => clearTimeout(longPressTimer.current)}
@@ -270,7 +273,7 @@ export default function Messages() {
                 <Link to={chatPath('group', group.id)} className="sn-row">
                   <span className="sn-ring sn-group-avatar"><Icon name="users" size={26} /></span>
                   <span className="sn-text">
-                    <span className="sn-name-row"><span className="sn-name">{group.name}</span></span>
+                    <span className="sn-name-row"><span className="sn-name">{group.name}</span>{group.unread > 0 && <span className="sn-count">{group.unread > 99 ? '99+' : group.unread}</span>}</span>
                     <span className="sn-sub"><span className="sn-txt">{preview}</span>{last && <span className="sn-time">{formatRelativeTime(last.createdAt)}</span>}</span>
                   </span>
                 </Link>

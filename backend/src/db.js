@@ -346,6 +346,7 @@ const GroupMember = sequelize.define('GroupMember', {
   groupId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
   userId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
   isAdmin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  lastReadAt: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'group_members', indexes: [{ fields: ['userId', 'createdAt'] }] });
 
 const GroupMessage = sequelize.define('GroupMessage', {
