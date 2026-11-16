@@ -100,7 +100,8 @@ export default function StoryViewer() {
   const groupStories = storiesOwnerId === group?.user?.id ? stories : null;
   const current = groupStories?.[si];
   const isVideo = current?.kind === 'video';
-  const total = stories?.length || 0;
+  const isText = current?.kind === 'text';
+  const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group?.user?.id === me.id;
   // Stops the story while typing or while a sheet is open
   const frozen = paused || typing || sheet !== null || loadError || mediaError || !current;
