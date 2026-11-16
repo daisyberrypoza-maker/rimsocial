@@ -13,6 +13,7 @@ import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
 const TABS = [['foryou', 'For you'], ['stories', 'Stories'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
+const TAB_KEYS = TABS.map(([key]) => key);
 
 function tagsFrom(posts, term) {
   const needle = term.replace(/^#/, '').toLowerCase();
