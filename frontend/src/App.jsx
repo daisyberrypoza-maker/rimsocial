@@ -50,7 +50,7 @@ function RequireAuth({ children }) {
 
 const IMMERSIVE_PATHS = ['/', '/following', '/live'];
 // The bottom tab bar and its swipe only appear on these five screens: Stories, Chat, Add post, Search and Rimlight
-const TAB_SCREENS = ['/stories', '/chat', '/upload', '/search', '/'];
+const TAB_SCREENS = ['/stories', '/chat', '/upload', '/search', '/', '/following', '/live'];
 function isTabScreen(pathname, search = '') {
   if (!TAB_SCREENS.includes(pathname)) return false;
   // Story and reel creation share the add-post route but are not the Add post tab
