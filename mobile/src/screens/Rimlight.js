@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, Pressable, Image, StyleSheet, useWindowDimensions, RefreshControl } from 'react-native';
+import { View, FlatList, Text, Pressable, Image, StyleSheet, useWindowDimensions, RefreshControl, StatusBar } from 'react-native';
 import Video from 'react-native-video';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
@@ -60,6 +60,7 @@ export default function Rimlight() {
   const startIndex = isStale(feed) ? 0 : Math.min(feed?.activeIndex || 0, Math.max(items.length - 1, 0));
 
   return (
+    {focused && <StatusBar barStyle="light-content" />}
     <View style={styles.page} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
       {pending?.kind === 'post' && (
         <View style={styles.upload} pointerEvents="none">
