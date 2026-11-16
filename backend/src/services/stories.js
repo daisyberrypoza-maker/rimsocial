@@ -252,7 +252,7 @@ function diversify(list, keyOf) {
 // Discover sections (backend ranking pipeline): a carousel of unseen stories from creators the viewer follows
 // (high affinity, 112px cards), and a 2-column grid of the rest, diversified. Ads are added by the client.
 const CAROUSEL_SIZE = 8;
-const GRID_PER_CREATOR = 2;
+const GRID_PER_CREATOR = 1;
 async function getDiscoverSections(viewerId, limit = 24) {
   const ranked = await getDiscoverStories(viewerId, limit);
   const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
@@ -270,10 +270,13 @@ async function getDiscoverSections(viewerId, limit = 24) {
   }
   const carouselIds = new Set(carousel.map((item) => item.id));
   // Grid: at most GRID_PER_CREATOR stories per creator, then spread so the same creator is not back to back
+  // Each creator appears once in the whole Discover section: in the carousel if shown there, otherwise at most once in the grid
+  const carouselCreators = new Set(carousel.map((item) => String(item.author?.id || item.authorId)));
   const perCreator = new Map();
   const gridPool = withViewed.filter((item) => {
     if (carouselIds.has(item.id)) return false;
     const creator = String(item.author?.id || item.authorId);
+    if (carouselCreators.has(creator)) return false;
     const count = perCreator.get(creator) || 0;
     if (count >= GRID_PER_CREATOR) return false;
     perCreator.set(creator, count + 1);
