@@ -7603,3 +7603,15 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   box-sizing: border-box;
   padding-bottom: 12px !important;
 }
+
+
+/* Keep Rimlight controls inside the visible card, with the navigation already reserved below it. */
+.app > .feed .post .rail {
+  top: calc(env(safe-area-inset-top, 0px) + 78px) !important;
+  right: 8px !important;
+  bottom: 88px !important;
+  gap: clamp(3px, .8vh, 7px) !important;
+  justify-content: space-between !important;
+}
+.app > .feed .post .info { bottom: 48px !important; }
+.app > .feed .post .post-seek { bottom: 8px !important; }
