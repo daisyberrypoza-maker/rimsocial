@@ -105,3 +105,40 @@ jobs:
           SERVE_FRONTEND: "false"
           RUN_BUSINESS_INTEGRATION: "true"
         run: node --test --test-force-exit backend/test/business.integration.test.js
+
+
+  android-capacitor-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+      - name: Build web assets for the Capacitor shell
+        run: npm run build --prefix frontend
+        env:
+          # A reserved invalid host is used only for compilation; no APK is published by CI.
+          VITE_API_URL: https://rimsocial-ci.invalid
+      - name: Sync Capacitor Android project
+        working-directory: frontend
+        run: ./node_modules/.bin/capacitor sync android
+      - name: Assemble Android debug APK
+        working-directory: frontend/android
+        run: bash ./gradlew --no-daemon assembleDebug
