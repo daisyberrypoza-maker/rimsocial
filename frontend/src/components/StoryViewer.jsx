@@ -37,6 +37,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   const [si, setSi] = useState(0);
   const [stories, setStories] = useState(null);
   const [storiesOwnerId, setStoriesOwnerId] = useState(null);
+  const [storiesLoadedOwnerId, setStoriesLoadedOwnerId] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [mediaError, setMediaError] = useState(false);
@@ -94,6 +95,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
   useEffect(() => {
     let alive = true;
     const saved = useAppStore.getState().storyCache?.[group.user.id];
+    setStoriesLoadedOwnerId(null);
     const cachedItems = Array.isArray(saved?.items) ? saved.items : [];
     const savedItems = cachedItems.filter((item) => !item.expiresAt || new Date(item.expiresAt).getTime() > Date.now());
     const usableSavedItems = savedItems.length ? savedItems : null;
@@ -118,6 +120,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
         evictMedia(missingItems(cachedItems, items));
         setStories(items);
         setStoriesOwnerId(group.user.id);
+        setStoriesLoadedOwnerId(group.user.id);
         setSi((index) => (items.length ? Math.min(index, items.length - 1) : 0));
         setLoadError(false);
         setSubscribed(Boolean(d.isSubscribed));
@@ -208,14 +211,14 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, onClos
 
   // This viewer's ring goes grey once every story from this creator has been watched on this device
   useEffect(() => {
-    if (!groupStories || groupStories.length === 0 || !groupStories.every((s) => s.viewed)) return;
+    if (storiesLoadedOwnerId !== group.user.id || !groupStories || groupStories.length === 0 || !groupStories.every((s) => s.viewed)) return;
     const store = useAppStore.getState();
     const rail = store.storyRail;
     // The rail is a list of creators: update it in place. Passing an object here emptied the rail,
     // which closed the viewer while it was open.
     if (!Array.isArray(rail)) return;
     store.setStoryRail(rail.map((g) => (g.user?.id === group.user.id ? { ...g, unseen: false } : g)));
-  }, [groupStories, group.user.id]);
+  }, [groupStories, group.user.id, storiesLoadedOwnerId]);
 
   // Video: one effect decides play or pause from the viewer state. Browsers only allow sound after a tap,
   // so if autoplay with sound is refused the video starts muted and sound comes on at the next tap.
