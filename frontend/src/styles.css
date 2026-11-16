@@ -7342,3 +7342,8 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .cam-side { gap: 16px; }
 .cam-side button, .cam-side-btn { width: 40px; height: 40px; background: rgba(0,0,0,.38); backdrop-filter: blur(8px); }
 .cam-close { background: rgba(0,0,0,.38); backdrop-filter: blur(8px); }
+
+/* Camera: press-and-hold video progress ring around the shutter */
+.cam-shutter { position: relative; }
+.cam-shutter.recording { border-color: #ff2d55; }
+.cam-ring { position: absolute; left: -8px; top: -8px; width: 92px; height: 92px; pointer-events: none; }
