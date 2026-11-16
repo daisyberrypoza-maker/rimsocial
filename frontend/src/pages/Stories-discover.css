@@ -167,7 +167,10 @@
   box-sizing: border-box !important;
   flex-wrap: nowrap !important;
   gap: 10px !important;
-  padding: 0 9px 12px !important;
+  /* Left inset matches the section heading; no right inset, so the track
+     runs to the viewport edge like the reference. */
+  padding: 0 0 12px 9px !important;
+  scroll-padding-left: 9px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
 }
