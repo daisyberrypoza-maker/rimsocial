@@ -138,6 +138,7 @@ export default function PostCard({ post, active }) {
   const [followBusy, setFollowBusy] = useState(false);
   const seekingRef = useRef(false);
   const lastVideoTimeRef = useRef(0);
+  const completedLoopRef = useRef(false);
   const lastTapRef = useRef({ t: 0, side: null });
   const tapTimerRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
@@ -384,6 +385,11 @@ export default function PostCard({ post, active }) {
         if (d > 0 && Number.isFinite(current)) {
           if (previous > d * 0.7 && current < 1.2) {
             api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'rewatch' } }).catch(() => {});
+            completedLoopRef.current = false;
+          }
+          if (!seekingRef.current && !completedLoopRef.current && current / d >= 0.9) {
+            completedLoopRef.current = true;
+            api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'completed' } }).catch(() => {});
           }
           lastVideoTimeRef.current = current;
           if (!seekingRef.current) setProgress(current / d);
