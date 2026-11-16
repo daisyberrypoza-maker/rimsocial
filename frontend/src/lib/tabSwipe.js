@@ -25,8 +25,9 @@ export function useTabSwipe(navigate, pathname, enabled) {
   const fallbackRef = useRef(null);
 
   useEffect(() => {
-    if (!enabled || !TAB_PATHS.includes(pathname)) return undefined;
-    const index = TAB_PATHS.indexOf(pathname);
+    const activePath = ['/', '/following', '/live'].includes(pathname) ? '/' : pathname;
+    if (!enabled || !TAB_PATHS.includes(activePath)) return undefined;
+    const index = TAB_PATHS.indexOf(activePath);
     let gesture = null;
 
     const clearMotion = () => {
