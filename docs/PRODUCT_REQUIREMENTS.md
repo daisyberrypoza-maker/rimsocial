@@ -27,7 +27,7 @@
 | Navigation | Profile > Followers/Following > another profile > Back returns to the originating list | Done (code/CI) | #113 merged as `4ab3145`; CI passed. Manually verify Followers, Following and Activity list flows. |
 | Navigation | Local screen transitions do not wait on network; tabs replace history; Back returns to originating list/sheet | Partial | Rules are in `docs/SCREEN-RULES.md`; audit remaining routes and saved-data hydration. |
 | Chat | Group message Copy, Reply and sender-only Delete for everyone | Done (code/CI) | Copy action merged in #116 as `38fb9c4`; existing reply/delete retained; CI passed. |
-| Chat | Full direct/group media, unread state, navigation and message lifecycle consistency | Partial | Existing media and message flows need full regression testing on web and Android. Draft PR #67 migrations 030–032 require schema/security review. |
+| Chat | Full direct/group media, unread state, navigation and message lifecycle consistency | Partial | Migrations 030–032, authenticated messaging media routes, Conversation attachment handling and MyFriends are present on main. Verify MySQL schema, ownership/authorization, unread state, group media and real-device lifecycle. |
 | Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | #118 raises the web seek control 16px; #128 raises the native Android progress track 8px while retaining its seek hit area. Verify visibility, scrubbing and playback lifecycle on physical devices. |
 | Profile/posts | Gift control is available on other people's eligible posts and hidden on own posts | Done (code/CI) | #118 adds Send a gift for eligible other creators' posts and hides it on own/sponsored posts; GiftSheet retains an ownership guard. |
 | Upload | Background/chunked uploads retain multi-file, voice and music support | Partial | Chunked upload and background status exist on main. |
@@ -41,7 +41,7 @@
 | Media | Cloudinary storage, video thumbnails, safe cleanup/retry and no orphaned media | Partial | Video Story thumbnail generation merged in #117; cleanup/retry system exists. Test provider failures and shared assets. |
 | Android parity | React Native app mirrors web screen behavior and visual rules | Open | #118/#120/#121/#122 are web-only. `mobile/README.md` says the native app has not been installed or run; Creator Studio, Business Hub, Live, Algorithm, Ads, Explore Watch and profile feed are not ported. |
 | Android parity | Native gallery, video trimming, notification chime and Snapchat editor tools | Blocked | Native modules and real-device implementation required; mobile chime is currently a placeholder. |
-| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115, #116, #117, #118, #120, #121, #122 and #123. Full Android build and end-to-end physical-device pass remain. |
+| Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115, #116, #117, #118, #120, #121, #122, #123 and #124. PR #128 is a one-line native style adjustment; a CI run passed per the priority repair tracker, but physical-device QA remains. Full Android build and end-to-end physical-device pass remain. |
 | Release | Merge verified GitHub work before any deployment | Open | No deployment until outstanding GitHub requirements and release checks are complete. |
 
 ## Relevant pull requests
@@ -58,12 +58,12 @@
 | #120 | Stories typography and spacing | Merged; CI passed. |
 | #121 | Adaptive ambient backgrounds and tone grades | Merged; CI passed. |
 | #122 | Swipe navigation for Messages and Search | Merged; CI passed. |
-| #123 | Shared relative-time formatting and Activity Likes filter | Merged as `002fa3a`; CI passed. |\n| #128 | Raise Rimlight mobile video progress bar | Merged as `25b02cb`; native build/device QA still required. |
+| #123 | Shared relative-time formatting and Activity Likes filter | Merged as `002fa3a`; CI passed. |\n| #124 | Fix missing Messages swipe-hook import | Merged; CI passed. |\n| #128 | Raise Rimlight mobile video progress bar | Merged as `25b02cb`; CI passed; native device QA still required. |
 | #105 | Story loading, Search navigation and upload progress | Closed as stale. Story cache invalidation and Search initialization are already fixed; video thumbnails are in #117. Upload progress remains open. |
 | #99 | Find Friends and settings-menu polish | Closed as already covered by main. |
 | #91 | Swipe between Messages and Search tabs | Closed; ported and merged in #122. |
 | #89 | Activity feed consistency and relative-time formatting | Closed; shared formatter and Activity Likes filter ported in #123. |
-| #67 | Messaging integration draft and migrations 030–032 | Draft only; review schema, authorization, encryption and migration ordering before any merge. |
+| #67 | Messaging integration draft and migrations 030–032 | Closed as superseded. Current main already contains the migrations, authenticated media routes, Conversation attachments and MyFriends; the stale 314-commits-behind branch was not merged. Verify production schema and device behavior separately. |
 
 ## Verification required before marking a requirement Done
 1. Inspect the implementation on current main and the candidate branch.
