@@ -283,6 +283,7 @@ async function start() {
   if (!currentPostColumns.voiceUrl) await qi.addColumn('posts', 'voiceUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicUrl) await qi.addColumn('posts', 'musicUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicTitle) await qi.addColumn('posts', 'musicTitle', { type: DataTypes.STRING(120), allowNull: true });
+  if (!currentPostColumns.dominantColor) await qi.addColumn('posts', 'dominantColor', { type: DataTypes.STRING(7), allowNull: true });
   if (currentPostColumns.mediaUrl && currentPostColumns.mediaUrl.allowNull === false) {
     await qi.changeColumn('posts', 'mediaUrl', { type: DataTypes.STRING(512), allowNull: true });
   }

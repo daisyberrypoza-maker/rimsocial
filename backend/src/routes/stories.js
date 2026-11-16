@@ -79,6 +79,7 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
       voiceUrl,
       ...musicFields(track),
       caption: String(req.body.caption || '').slice(0, 200),
+      dominantColor: /^#[0-9a-fA-F]{6}$/.test(String(req.body.dominantColor || '')) ? String(req.body.dominantColor) : null,
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
@@ -318,7 +319,10 @@ router.get('/ranking', requireAuth, async (req, res, next) => {
 
 // GET /v1/stories/popular  -> popular public stories shown in Rimlight
 router.get('/popular', requireAuth, async (req, res, next) => {
-  try { res.json({ items: await stories.getPopularStories(req.user.id, 24, { personalized: req.query.discover === '1' }) }); } catch (e) { next(e); }
+  try {
+    if (req.query.discover === '1') return res.json(await stories.getDiscoverSections(req.user.id, 24));
+    res.json({ items: await stories.getPopularStories(req.user.id, 24, { personalized: false }) });
+  } catch (e) { next(e); }
 });
 
 module.exports = router;

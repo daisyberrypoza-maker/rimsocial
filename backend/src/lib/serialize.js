@@ -6,6 +6,7 @@ function toPostDTO(post) {
     kind: p.kind,
     mediaUrl: p.mediaUrl,
     storyText: p.storyText || null,
+    dominantColor: p.dominantColor || null,
     storyBackground: p.storyBackground || null,
     voiceUrl: p.voiceUrl || null,
     musicUrl: p.musicUrl || null,

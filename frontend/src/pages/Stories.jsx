@@ -122,6 +122,7 @@ export default function Stories() {
 
   // Discover: stories ranked for this viewer (unseen, followed and creators first)
   const [popular, setPopular] = useState([]);
+  const [carousel, setCarousel] = useState([]);
   const [popOpen, setPopOpen] = useState(null);
   // Master feed merge: first ad after 3 organic stories, then every 6 (no bid data: ads rotate in order)
   const AD_START_OFFSET = 3;
@@ -143,7 +144,8 @@ export default function Stories() {
     api('/v1/stories/popular?discover=1')
       .then((data) => {
         if (!current) return;
-        setPopular(data.items || []);   // already ranked by the server for this viewer
+        setCarousel(data.carousel || []);   // followed creators with unseen stories (high affinity)
+        setPopular(data.items || []);   // already ranked and diversified by the server for this viewer
       })
       .catch(logError);
     return () => { current = false; };
@@ -282,6 +284,22 @@ export default function Stories() {
       {discoverItems.length > 0 && (
         <section className="st-section st-discover" aria-label="Discover">
           <h2 className="st-h2">Discover <Icon name="chevron-right" size={18} /></h2>
+          {carousel.length > 0 && (
+            <div className="st-discover-carousel" role="list">
+              {carousel.map((story) => (
+                <button key={'c' + story.id} role="listitem" className="st-discover-card-h" style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+                  {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
+                    ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
+                    : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}
+                  <span className="st-card-shade" />
+                  <span className="st-card-foot">
+                    <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
+                    <span className="st-card-name">{capName(nameOf(story.author || {}))}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className="st-cards st-discover-grid">
             {discoverItems.map((item) => item.type === 'ad' ? (
               <a className="st-card st-card-ad st-discover-tile" key={item.key} href={item.ad.sponsorUrl} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Sponsored: ${item.ad.sponsorName || 'advertisement'}`}>
@@ -295,7 +313,7 @@ export default function Stories() {
                 </span>
               </a>
             ) : (() => { const story = item.story; return (
-              <button className="st-card st-discover-tile" key={item.key} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
+              <button className="st-card st-discover-tile" key={item.key} style={{ '--dom': story.dominantColor || undefined }} onClick={(event) => { setPopOrigin(boxOf(event.currentTarget)); setPopOpen(story.author); }} aria-label={`Open ${story.author?.displayName || story.author?.username || 'story'}`}>
                 {story.kind === 'text' || !(story.thumbUrl || story.mediaUrl)
                   ? <span className="post-text-tile" style={{ background: backgroundCss(story.storyBackground) }}>{story.storyText}</span>
                   : <img className="st-card-img" src={mediaUrl(story.thumbUrl || story.mediaUrl)} alt="" />}

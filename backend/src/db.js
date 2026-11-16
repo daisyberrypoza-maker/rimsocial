@@ -34,6 +34,8 @@ const Post = sequelize.define('Post', {
   voiceUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicTitle: { type: DataTypes.STRING(120), allowNull: true },
+  // Dominant colour of the cover, computed on the uploader's device, so the card shows its colour before the image loads
+  dominantColor: { type: DataTypes.STRING(7), allowNull: true },
   mediaPublicId: { type: DataTypes.STRING(255), allowNull: true },
   mediaItems: { type: DataTypes.JSON, allowNull: true },
   allowRemix: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
