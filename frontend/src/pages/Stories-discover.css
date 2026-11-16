@@ -123,3 +123,28 @@
   clip-path:inset(0 round 10px);
   -webkit-clip-path:inset(0 round 10px);
 }
+
+
+/* Discover cards: enforce the same 10px clip on both grid item types and every media layer. */
+.st-page .st-discover-grid .st-discover-tile,
+.st-page .st-discover-grid .st-card {
+  border-radius:10px !important;
+  overflow:hidden !important;
+  clip-path:inset(0 round 10px) !important;
+  -webkit-clip-path:inset(0 round 10px) !important;
+  -webkit-mask-image:-webkit-radial-gradient(white, black);
+}
+.st-page .st-discover-grid .st-discover-tile > img,
+.st-page .st-discover-grid .st-discover-tile > video,
+.st-page .st-discover-grid .st-discover-tile > picture,
+.st-page .st-discover-grid .st-discover-tile > span,
+.st-page .st-discover-grid .st-card > img,
+.st-page .st-discover-grid .st-card > video,
+.st-page .st-discover-grid .st-card > picture,
+.st-page .st-discover-grid .st-card > span {
+  border-radius:inherit;
+}
+.st-page .st-watch-again > svg {
+  color:#969696 !important;
+  opacity:1;
+}
