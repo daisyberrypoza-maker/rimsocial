@@ -7386,3 +7386,9 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   .st-page .st-discover-tile .st-card-img,
   .st-page .st-discover-card-h .st-card-img { transition: none; }
 }
+
+
+/* Discover photo-only dimming: 45% black overlay effect; text and scrim remain unchanged. */
+.st-page .st-discover-tile .st-card-img {
+  filter: brightness(0.55) !important;
+}
