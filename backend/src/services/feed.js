@@ -81,7 +81,7 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     const [candidates, follows, blocks, mutedRows] = await Promise.all([
       Post.findAll({
         where: { status: 'live', isStory: false, visibility: 'public' },
-        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
+        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount', 'musicUrl'],
         order: [['createdAt', 'DESC']], limit: 500, raw: true,
       }),
       Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
@@ -103,6 +103,31 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     const spotPipe = redis.pipeline();
     for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips', 'completions', 'rewatches');
     const spotRows = await spotPipe.exec().catch(() => []);
+    // Trend audio from public short-form posts published in the last 24 hours.
+    // This is a measured aggregate, not a hard-coded featured-track boost.
+    const musicUrls = [...new Set(candidates.map((post) => post.musicUrl).filter(Boolean))];
+    const [soundRows] = musicUrls.length ? await sequelize.query(
+      `SELECT musicUrl, COUNT(*) AS uses24h FROM posts
+       WHERE musicUrl IN (:musicUrls) AND status = 'live' AND isStory = 0
+         AND visibility = 'public' AND createdAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+       GROUP BY musicUrl`,
+      { replacements: { musicUrls } },
+    ).catch(() => [[]]) : [[]];
+    const soundUses = new Map(soundRows.map((row) => [row.musicUrl, Number(row.uses24h) || 0]));
+    const surface = cachePrefix === 'feed:discover' ? 'discover' : 'explore';
+    // Persistent viewer/post exposure history provides a bounded fatigue penalty.
+    // Missing migration/table is treated neutrally until the additive schema is applied.
+    const candidateIds = candidates.map((post) => post.id);
+    const [exposureRows] = candidateIds.length ? await sequelize.query(
+      `SELECT postId, SUM(impressionCount) AS impressions
+       FROM feed_exposures
+       WHERE viewerId = :viewerId AND surface = :surface
+         AND postId IN (:candidateIds)
+         AND lastSeenAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+       GROUP BY postId`,
+      { replacements: { viewerId: userId, surface, candidateIds } },
+    ).catch(() => [[]]) : [[]];
+    const exposureOf = new Map(exposureRows.map((row) => [String(row.postId), Number(row.impressions) || 0]));
     const spotOf = new Map(candidates.map((p, i) => {
       const [watchPct, watches, skips, completions, rewatches] = (spotRows[i] && spotRows[i][1]) || [];
       const watchCount = Number(watches) || 0;
@@ -142,6 +167,7 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
           skipUnder2s: Math.min(1, spot.skips / views),
           likeRate: Math.min(1, likes / views),
           shareRate: Math.min(1, shares / views),
+          trendingSound: Math.min(1, Math.log1p(soundUses.get(p.musicUrl) || 0) / Math.log(101)),
           creatorScore: creatorScore({ followers: followersOf.get(String(p.authorId)) || 0, engagementRate: likes / views }),
           hoursPosted: ageHours,
         });
@@ -150,7 +176,10 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
         // lower them. The per-viewer score is deliberately capped to prevent domination.
         const preference = preferenceOf.get(String(p.id)) || 0;
         const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
-        const score = baseScore + personalizedBoost;
+        // Repeated recent impressions reduce rank temporarily; a post is never permanently hidden.
+        const recentImpressions = exposureOf.get(String(p.id)) || 0;
+        const fatiguePenalty = Math.min(18, Math.max(0, recentImpressions - 1) * 2);
+        const score = baseScore - fatiguePenalty + personalizedBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
         const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
         return { id: p.id, authorId: p.authorId, score, seeding, createdAt: new Date(p.createdAt).getTime() };
@@ -184,7 +213,16 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
 
   const pageIds = ids.slice(offset, offset + n + 1);
   const hasMore = pageIds.length > n;
-  const page = await hydrate(pageIds.slice(0, n));
+  const visiblePageIds = pageIds.slice(0, n);
+  const page = await hydrate(visiblePageIds);
+  // Record each delivered recommendation. The unique key keeps one durable viewer/post/surface row.
+  // Counts are capped to prevent unbounded growth from repeated refreshes.
+  await Promise.all(visiblePageIds.map((postId) => sequelize.query(
+    `INSERT INTO feed_exposures (viewerId, postId, surface, impressionCount, firstSeenAt, lastSeenAt)
+     VALUES (:viewerId, :postId, :surface, 1, NOW(), NOW())
+     ON DUPLICATE KEY UPDATE impressionCount = LEAST(impressionCount + 1, 1000), lastSeenAt = NOW()`,
+    { replacements: { viewerId: userId, postId, surface } },
+  ).catch(() => null)));
   return {
     items: page.map(toPostDTO),
     nextCursor: hasMore ? `rank:${offset + n}` : null,
