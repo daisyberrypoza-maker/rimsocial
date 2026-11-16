@@ -58,6 +58,8 @@ jobs:
           path: frontend/dist
 
   deploy:
+    # Release is explicit: ordinary main pushes must not publish before the nine repair areas are signed off.
+    if: github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
