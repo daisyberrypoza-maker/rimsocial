@@ -64,7 +64,22 @@ export function startUpload(job) {
     for (const item of (files?.length ? files : [file])) postItems.push(await fitImage(item, 0.9));
     const chunked = needsChunks(postItems);
 
-    if (toStory) {
+    if (toStory && storyFiles?.length > 1) {
+      for (let index = 0; index < storyFiles.length; index += 1) {
+        const media = storyFiles[index];
+        const sfd = new FormData();
+        const base = index / storyFiles.length * 90;
+        const span = 90 / storyFiles.length;
+        const wasChunked = await attachMedia(sfd, media, (loaded, total) => {
+          setUploadProgress(base + (total ? loaded / total * span : 0), 'Uploading stories');
+        });
+        sfd.append('caption', caption || '');
+        if (storyAudio?.musicId) sfd.append('musicId', storyAudio.musicId);
+        if (storyAudio?.voice) sfd.append('voice', storyAudio.voice);
+        if (!wasChunked) await requestWithProgress('/v1/stories', sfd, 'Uploading stories', base, span);
+        else await api('/v1/stories', { method: 'POST', body: sfd });
+      }
+    } else if (toStory) {
       const storyMedia = await fitImage(storyFile || file, 0.9);
       const isChunked = await attachMedia(fd, storyMedia, (loaded, total) => {
         setUploadProgress(total ? loaded / total * 90 : 0, 'Uploading story');
@@ -73,26 +88,8 @@ export function startUpload(job) {
       if (dominant) fd.append('dominantColor', dominant);
       if (storyAudio?.musicId) fd.append('musicId', storyAudio.musicId);
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
-      if (toStory && storyFiles?.length > 1) {
-        for (let index = 0; index < storyFiles.length; index += 1) {
-          const media = storyFiles[index];
-          const sfd = new FormData();
-          const base = index / storyFiles.length * 90;
-          const span = 90 / storyFiles.length;
-          const wasChunked = await attachMedia(sfd, media, (loaded, total) => {
-            setUploadProgress(base + (total ? loaded / total * span : 0), 'Uploading stories');
-          });
-          sfd.append('caption', caption || '');
-          if (storyAudio?.musicId) sfd.append('musicId', storyAudio.musicId);
-          if (storyAudio?.voice) sfd.append('voice', storyAudio.voice);
-          if (!wasChunked) await requestWithProgress('/v1/stories', sfd, 'Uploading stories', base, span);
-          else await api('/v1/stories', { method: 'POST', body: sfd });
-        }
-      } else {
-        if (!isChunked) await requestWithProgress('/v1/stories', fd, 'Uploading story', 0, 90);
-        else await api('/v1/stories', { method: 'POST', body: fd });
-      }
-    } else if (chunked) {
+      if (!isChunked) await requestWithProgress('/v1/stories', fd, 'Uploading story', 0, 90);
+      else await api('/v1/stories', { method: 'POST', body: fd });
       const totalBytes = postItems.reduce((sum, item) => sum + item.size, 0);
       let completedBytes = 0;
       const ids = [];
