@@ -55,7 +55,6 @@ const ICONS = {
   refresh: RefreshCw,
   send: Send,
   'at-sign': AtSign,
-  mail: Mail,
   link: LinkIcon,
   megaphone: Megaphone,
   'shield-check': ShieldCheck,
