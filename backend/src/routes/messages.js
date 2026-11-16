@@ -194,7 +194,7 @@ async function unhideChat(me, other) {
 // Return groups for the signed-in user, including participants and latest message.
 router.get('/groups', async (req, res, next) => {
   try {
-    const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId', 'lastReadAt'], raw: true });
+    const memberships = await GroupMember.findAll({ where: { userId: req.user.id }, attributes: ['groupId', 'lastReadAt', 'createdAt'], raw: true });
     const ids = memberships.map((row) => row.groupId);
     const groupPrefs = await ChatPreference.findAll({ where: { userId: req.user.id, groupId: ids }, raw: true });
     const groupPrefById = new Map(groupPrefs.map((row) => [String(row.groupId), row]));
@@ -214,7 +214,7 @@ router.get('/groups', async (req, res, next) => {
       where: {
         groupId: membership.groupId,
         senderId: { [Op.ne]: req.user.id },
-        ...(membership.lastReadAt ? { createdAt: { [Op.gt]: membership.lastReadAt } } : {}),
+        createdAt: { [Op.gt]: membership.lastReadAt || membership.createdAt },
       },
     })));
     const unreadByGroup = new Map(memberships.map((membership, index) => [String(membership.groupId), unreadCounts[index]]));
