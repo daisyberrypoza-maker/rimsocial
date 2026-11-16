@@ -47,7 +47,7 @@ router.get('/search', async (req, res, next) => {
     const urls = rows.map((row) => row.mediaUrl);
     const useRows = urls.length ? await Post.findAll({
       attributes: ['musicUrl', [fn('COUNT', col('id')), 'n']],
-      where: { isStory: true, musicUrl: urls, createdAt: { [Op.gt]: since } },
+      where: { isStory: false, status: 'live', visibility: 'public', musicUrl: urls, createdAt: { [Op.gt]: since } },
       group: ['musicUrl'], raw: true,
     }) : [];
     const uses = new Map(useRows.map((row) => [row.musicUrl, Number(row.n)]));
