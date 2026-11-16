@@ -12,9 +12,9 @@
 }
 .st-page .st-discover-card-h {
   position:relative;
-  /* Reduce the current tile height by a further 50px while preserving its 3:5 ratio. */
-  flex:0 0 calc((100vw - 48px) / 2.4 - 45px);
-  width:calc((100vw - 48px) / 2.4 - 45px);
+  /* Fit exactly 3.5 tiles in the visible carousel viewport, including gaps and side padding. */
+  flex:0 0 calc((100vw - 58px) / 3.5);
+  width:calc((100vw - 58px) / 3.5);
   height:auto;
   aspect-ratio:3 / 5;
   min-width:0;
@@ -152,10 +152,4 @@
 }
 
 
-/* Keep the responsive carousel tile ratio stable across narrow and wide phones. */
-@media (min-width:700px) {
-  .st-page .st-discover-card-h {
-    flex-basis:clamp(103px, calc((100vw - 48px) / 2.4 - 45px), 175px);
-    width:clamp(103px, calc((100vw - 48px) / 2.4 - 45px), 175px);
-  }
-}
+/* The same 3.5-tile calculation applies at every viewport width. */
