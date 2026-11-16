@@ -10,6 +10,9 @@ This is a living repair log. The single release exit criteria and consolidated s
 - [x] PR #121 merged: adaptive blurred media backgrounds and tone treatment for the full-screen Story viewer, Stories cards and Discover cards. CI run 1627 passed.
 - [x] PR #124 merged: fixed the missing `useSwipeTabs` import used by the Messages screen. CI run 1643 passed.
 - [x] PR #128 merged: raised the mobile Rimlight video progress indicator 8 points above the lower edge. CI run 1653 passed.
+- [x] PR #138 merged: added a dedicated CI build for the shipped Capacitor Android app; latest run 43891667172 passed the Android SDK setup, Capacitor sync and debug APK assembly, plus backend and frontend checks.
+- [x] PR #143 merged: Rimlight Discover and Explore now share the Spotlight recommendation ranking engine; authenticated playback feedback records watch completion, completed loops, natural replays and fast skips; saved posts and successful shares update bounded viewer preferences and invalidate both ranking caches. CI run 43892581597 passed backend syntax, backend tests, frontend production build and MySQL integration.
+- [x] PR #142 closed as superseded by PR #143; its successful-share ranking change was included in #143.
 - [x] Confirmed existing web PostCard hides the gift action on the owner's own posts, web Rimlight seek control is positioned above the bottom navigation, and web profile-list navigation passes a return path when opening another profile.
 - [x] PR #119 and PR #126 closed as superseded; their work was replaced by the merged #121 and #128 changes.
 - [ ] Physical Android playback/seek verification remains required; CI does not replace device testing.
