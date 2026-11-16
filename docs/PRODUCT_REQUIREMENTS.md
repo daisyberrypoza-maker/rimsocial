@@ -1,6 +1,6 @@
 # RimSocial Product Requirements and Verification Tracker
 
-**Audit baseline:** `main` at `38fb9c4135c683d655b451a35e947b21b47a0164`.
+**Audit baseline:** `main` at `56dbfcfbf67a281be19989389b961c65d4637b92`.
 **Policy:** A PR or commit is not proof of completion. **Done** means code is on main and automated checks pass. Visual playback and Android-specific requirements still need physical-device QA. No deployment is authorized by this tracker.
 
 ## Status definitions
@@ -16,7 +16,7 @@
 | Stories | My Stories/Friends typography, spacing, divider, ring and add-icon styling match the approved reference | Open | Compare against reference screenshots; verify on a phone viewport. |
 | Stories | My Story first; friends ordered by interaction and recency; purple unseen and grey fully-watched rings | Partial | Friend ranking and unseen-first ordering merged in #115. Verify multi-story watched state and own-story ring behavior. |
 | Stories | Sticky header and independently scrolling Stories page | Done (code/CI) | Sticky header and Stories page scroll rules merged in #115. Physical-device scroll check remains. |
-| Stories | Video thumbnails/posters display while video starts | Open | Targeted Cloudinary first-frame thumbnail and viewer poster fix is in PR #117; CI pending. |
+| Stories | Video thumbnails/posters display while video starts | Done (code/CI) | Cloudinary first-frame JPEG URL and viewer poster merged in #117 as `56dbfcf`; CI passed. Verify actual poster rendering on physical Android devices. |
 | Story viewer | Left/right tap zones, middle pause, double-tap like, swipe gestures, close/back behavior | Partial | Core interactions exist. Regression-test photo/video/text, hold-to-pause, swipe-dismiss, overlays and app background/foreground. |
 | Story viewer | Top and bottom readability scrim on photo, video and text stories; overlay must not intercept taps; captions and feedback above scrim | Done (code/CI) | #111 merged as `7bef272`; CI passed. Physical-device visual verification remains. |
 | Story viewer | Snapchat-style ambient background and tone treatment without modifying original media | Partial | Existing story background utilities and Discover photo grading; adaptive ambient blur and full preset treatment still need implementation/verification. |
@@ -38,7 +38,7 @@
 | Sponsorship | Paid-partnership disclosure and CTA display | Partial | Display exists; verify sponsor identity and disclosure across feed, Discover and post detail. |
 | Sponsorship | Billing, payment verification, campaign accounting and reconciliation | Open | Do not treat CTA display as a billing system. Provider-side webhooks and ledger/reconciliation tests are required. |
 | Data model | Posts and Stories share `posts` with `isStory`; likes/views/comments/reposts/reports have correct relations | Partial | Models/migrations exist; verify constraints, ownership, privacy and expiry behavior. |
-| Media | Cloudinary storage, video thumbnails, safe cleanup/retry and no orphaned media | Partial | Cleanup/retry system is documented; video thumbnail generation is pending PR #117. Test provider failures and shared assets. |
+| Media | Cloudinary storage, video thumbnails, safe cleanup/retry and no orphaned media | Partial | Video Story thumbnail generation merged in #117; cleanup/retry system exists. Test provider failures and shared assets. |
 | Android parity | React Native app mirrors web screen behavior and visual rules | Open | `mobile/README.md` says the native app has not been installed or run. Creator Studio, Business Hub, Live, Algorithm, Ads, Explore Watch and profile feed are not ported. |
 | Android parity | Native gallery, video trimming, notification chime and Snapchat editor tools | Blocked | Native modules and real-device implementation required; mobile chime is currently a placeholder. |
 | Quality | CI, backend tests, frontend build, Android build and regression tests pass | Partial | CI passed for merged PRs #111, #113, #114, #115 and #116. Full Android build and end-to-end physical-device pass remain. |
@@ -53,7 +53,7 @@
 | #114 | Remove Explore suggested-people modules | Merged; CI passed. |
 | #115 | Discover ranking, Stories sticky header, camera hold-to-record | Merged; CI passed. |
 | #116 | Group chat copy action | Merged; CI passed. |
-| #117 | Cloudinary video Story thumbnails and viewer poster | Open; CI pending. |
+| #117 | Cloudinary video Story thumbnails and viewer poster | Merged as `56dbfcf`; CI passed. |
 | #105 | Story loading, Search navigation and upload progress | Stale by 193 commits; do not merge. Search initialization is already fixed on main; port only missing, compatible improvements. |
 | #99, #91, #89 | Suggestions polish, tab swipe, activity consistency | Recheck whether their changes are still missing or already covered by main. |
 | #67 | Messaging integration draft and migrations 030–032 | Draft only; review schema, authorization, encryption and migration ordering before any merge. |
