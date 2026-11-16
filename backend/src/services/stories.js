@@ -1,13 +1,13 @@
 const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
-const { discoverScore, interestBoostFor } = require('./formulas');
+const { discoverScore, interestBoostFor, discoverFeedScore } = require('./formulas');
 const { sequelize } = require('../db');
 const config = require('../config');
 const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
 
-const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator'];
+const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator', 'country'];
 
 async function viewedSet(viewerId, storyIds) {
   if (!storyIds.length) return new Set();
@@ -118,8 +118,12 @@ async function getStoryRail(viewerId) {
     groups.set(s.authorId, g);
   }
 
+  // Friends order: unseen first, then the friend story score (chat, affinity, recency), then newest
+  const friendScore = await require('./ranking').friendScores(viewerId, [...groups.keys()].map(String)).catch(() => ({}));
   const items = [...groups.values()]
-    .sort((a, b) => Number(b.unseen) - Number(a.unseen) || new Date(b.latestAt) - new Date(a.latestAt))
+    .sort((a, b) => Number(b.unseen) - Number(a.unseen)
+      || (friendScore[String(b.user?.id)] || 0) - (friendScore[String(a.user?.id)] || 0)
+      || new Date(b.latestAt) - new Date(a.latestAt))
     .slice(0, 50);
 
   const out = { items };
@@ -270,13 +274,37 @@ function diversify(list, keyOf) {
 // Discover sections (backend ranking pipeline): a carousel of unseen stories from creators the viewer follows
 // (high affinity, 112px cards), and a 2-column grid of the rest, diversified. Ads are added by the client.
 const CAROUSEL_SIZE = 8;
+const GRID_PER_CREATOR = 1;
 async function getDiscoverSections(viewerId, limit = 24) {
   const ranked = await getDiscoverStories(viewerId, limit);
   const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
   const withViewed = ranked.map((item) => ({ ...item, viewed: viewed.has(item.id) }));
-  const carousel = withViewed.filter((item) => item.subscribed && !item.viewed).slice(0, CAROUSEL_SIZE);
+  // One carousel card per creator, in ranking order, so a single creator cannot fill the row
+  const seenCreators = new Set();
+  const carousel = [];
+  for (const item of withViewed) {
+    if (carousel.length >= CAROUSEL_SIZE) break;
+    if (!item.subscribed || item.viewed) continue;
+    const creator = String(item.author?.id || item.authorId);
+    if (seenCreators.has(creator)) continue;
+    seenCreators.add(creator);
+    carousel.push(item);
+  }
   const carouselIds = new Set(carousel.map((item) => item.id));
-  const grid = diversify(withViewed.filter((item) => !carouselIds.has(item.id)), (item) => String(item.author?.id || item.authorId));
+  // Grid: at most GRID_PER_CREATOR stories per creator, then spread so the same creator is not back to back
+  // Each creator appears once in the whole Discover section: in the carousel if shown there, otherwise at most once in the grid
+  const carouselCreators = new Set(carousel.map((item) => String(item.author?.id || item.authorId)));
+  const perCreator = new Map();
+  const gridPool = withViewed.filter((item) => {
+    if (carouselIds.has(item.id)) return false;
+    const creator = String(item.author?.id || item.authorId);
+    if (carouselCreators.has(creator)) return false;
+    const count = perCreator.get(creator) || 0;
+    if (count >= GRID_PER_CREATOR) return false;
+    perCreator.set(creator, count + 1);
+    return true;
+  });
+  const grid = diversify(gridPool, (item) => String(item.author?.id || item.authorId));
   return { items: grid, carousel };
 }
 
