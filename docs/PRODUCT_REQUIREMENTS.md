@@ -1,6 +1,6 @@
 # RimSocial Product Requirements and Verification Tracker
 
-**Baseline:** `main` at `254e919925ee24ed38747d8889300c2edd17dc3c` (after verified merges #111, #113, #114 and #115).
+**Baseline:** `main` at `38fb9c4135c683d655b451a35e947b21b47a0164` (after verified merges #111, #113, #114, #115 and #116).
 **Rule:** A PR, commit, or implementation note is not proof of completion. Mark **Done** only after code inspection and relevant automated/manual verification. No deployment is authorized by this tracker.
 
 ## Status definitions
@@ -26,7 +26,7 @@
 | Suggestions | Keep Follow-back separate; remove unwanted suggested-for-you people modules from Stories/Explore | Done (code/CI) | PR #114 removed Explore/Find Friends people modules and preserved Follow back. Stories shows Discover story cards, not a suggested-people module. |
 | Navigation | Profile > Followers/Following > another profile > Back returns to the original list | Open | PR #104 proposes route-state preservation; branch is stale and must not be merged as-is. Add navigation regression tests. |
 | Navigation | Local screen transitions do not wait on network; tabs replace history; Back returns to originating list/sheet | Partial | Rules in `docs/SCREEN-RULES.md`; audit route state and data hydration. |
-| Chat | Direct and group message menus, copy, sender-only delete, media/status, unread state and chat navigation work consistently | Open | PR #104 has a partial group-menu change; PR #67 is draft and contains migrations 030–032 requiring schema/security review. Audit complete chat flow. |
+| Chat | Direct and group message menus, copy, sender-only delete, media/status, unread state and chat navigation work consistently | Partial | Group menu now supports Copy, Reply and sender-only Delete for everyone (PR #116, merged). Full direct/group media, unread, navigation and real-device flows still require regression audit. PR #67 migrations 030–032 remain unreviewed. |
 | Rimlight | Full-screen vertical feed, visible raised progress bar, immediate video start, correct playback lifecycle | Partial | Inspect feed player and real device; user reported progress bar and playback issues. |
 | Profile/posts | Gift icon hidden on own posts | Open | Verify post-card ownership condition and add component test. |
 | Upload | Real multipart progress and accurate upload/processing/success/error feedback | Open | PR #105 proposes uploader/API changes; branch is 193 commits behind main. Port/rebase safely. |
@@ -49,7 +49,7 @@
 | #109 | Discover, Stories, camera and ranking follow-up | Superseded by current-main port PR #115; stale branch should be closed after #115 passes. |
 | #105 | Story loading, Search navigation, upload feedback | 15 commits, 193 commits behind main; do not merge as-is. Story-cache, Search crash and upload-progress fixes still need selective porting. |
 | #104 | Story discovery, profile return navigation, group chat actions | Navigation and Explore suggestions were ported in #113/#114. Group-chat actions still need a selective port; do not merge stale branch. |
-| #113 | Profile list return navigation | Merged; CI passed. |\n| #114 | Remove Explore suggested-people modules | Merged; CI passed. |\n| #115 | Discover ranking and camera capture | Merged as `254e919`; CI passed. |\n| #112 | Requirements tracker | This document; CI passed, merge pending. |\n| #116 | Group chat copy action | Open; CI running at audit update. |\n| #99, #91, #89 | Suggestions polish, tab swipe, activity consistency | Inspect whether still applicable and whether changes are already covered by main. |
+| #113 | Profile list return navigation | Merged; CI passed. |\n| #114 | Remove Explore suggested-people modules | Merged; CI passed. |\n| #115 | Discover ranking and camera capture | Merged as `254e919`; CI passed. |\n| #112 | Requirements tracker | This document; CI passed, merge pending. |\n| #116 | Group chat copy action | Merged as `38fb9c4`; CI passed. |\n| #99, #91, #89 | Suggestions polish, tab swipe, activity consistency | Inspect whether still applicable and whether changes are already covered by main. |
 | #67 | Messaging integration draft and migrations 030–032 | Draft only; schema, authorization, E2EE, and migration review required before any merge. |
 
 ## Verification checklist before marking a requirement Done
