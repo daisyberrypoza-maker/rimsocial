@@ -7439,3 +7439,9 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 
 /* Discover grid tiles match the reference: photos shown at full brightness, no dim or grade */
 .st-page .st-discover-tile .st-card-img { filter: none !important; }
+
+/* Discover grid: tiles are exact 3:5 containers and the photo fills each one edge to edge */
+.st-page .st-discover-grid { align-items: start; row-gap: 8px; column-gap: 8px; }
+.st-page .st-discover-grid .st-discover-tile { display: block; position: relative; width: 100%; height: auto; aspect-ratio: 3 / 5; margin: 0; padding: 0; border: 0 !important; border-radius: 3px !important; overflow: hidden; }
+.st-page .st-discover-grid .st-discover-tile > .st-card-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; transform: none !important; transition: none !important; }
+.st-page .st-discover-grid .st-discover-tile > .post-text-tile { position: absolute; inset: 0; width: 100%; height: 100%; }
