@@ -7622,3 +7622,27 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .st-page .st-discover-grid .st-discover-tile { display: block; position: relative; width: 100%; height: auto; aspect-ratio: 3 / 5; margin: 0; padding: 0; border: 0 !important; border-radius: 3px !important; overflow: hidden; }
 .st-page .st-discover-grid .st-discover-tile > .st-card-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; transform: none !important; transition: none !important; }
 .st-page .st-discover-grid .st-discover-tile > .post-text-tile { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+
+/* Final Stories Discover override: the legacy 112px rule above must not control
+   the carousel. Size cards from the actual scrollport so 3.5 equal tiles show. */
+.st-page .st-discover-carousel {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  padding: 0 14px 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory;
+}
+.st-page .st-discover-carousel > .st-discover-card-h {
+  flex: 0 0 calc((100% - 30px) / 3.5) !important;
+  width: calc((100% - 30px) / 3.5) !important;
+  min-width: 0 !important;
+  height: auto !important;
+  aspect-ratio: 3 / 5 !important;
+  box-sizing: border-box !important;
+  scroll-snap-align: start;
+}
