@@ -12,9 +12,9 @@
 }
 .st-page .st-discover-card-h {
   position:relative;
-  /* Reduce the original tile height by 20px while preserving its 3:5 ratio. */
-  flex:0 0 calc((100vw - 48px) / 2.4 - 12px);
-  width:calc((100vw - 48px) / 2.4 - 12px);
+  /* Reduce the current tile height by a further 20px while preserving its 3:5 ratio. */
+  flex:0 0 calc((100vw - 48px) / 2.4 - 15px);
+  width:calc((100vw - 48px) / 2.4 - 15px);
   height:auto;
   aspect-ratio:3 / 5;
   min-width:0;
@@ -155,7 +155,7 @@
 /* Keep the responsive carousel tile ratio stable across narrow and wide phones. */
 @media (min-width:700px) {
   .st-page .st-discover-card-h {
-    flex-basis:clamp(136px, calc((100vw - 48px) / 2.4 - 12px), 208px);
-    width:clamp(136px, calc((100vw - 48px) / 2.4 - 12px), 208px);
+    flex-basis:clamp(133px, calc((100vw - 48px) / 2.4 - 15px), 205px);
+    width:clamp(133px, calc((100vw - 48px) / 2.4 - 15px), 205px);
   }
 }
