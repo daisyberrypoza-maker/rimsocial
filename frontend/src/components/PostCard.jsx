@@ -421,6 +421,7 @@ export default function PostCard({ post, active }) {
       username={username}
       isOwn={isOwnPost}
       reposted={reposted}
+      canRemix={!isOwnPost && Boolean(post.allowRemix)}
       reporting={reporting}
       onClose={() => setShowMenu(false)}
       onRemix={() => { setShowMenu(false); navigate(`/upload?remix=${post.id}`); }}
