@@ -18,13 +18,14 @@
   aspect-ratio:3 / 5;
   min-width:148px;
   overflow:hidden;
-  border-radius:10px;
+  border-radius:7px;
   scroll-snap-align:start;
 }
 .st-page .st-discover-grid {
   display:grid !important;
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-  gap:10px !important;
+  column-gap:5px !important;
+  row-gap:10px !important;
   overflow:visible !important;
   padding:0 14px 12px !important;
 }
@@ -37,7 +38,7 @@
   height:auto !important;
   aspect-ratio:3 / 5;
   overflow:hidden !important;
-  border-radius:10px !important;
+  border-radius:7px !important;
 }
 .st-page .st-discover-card-h > img,
 .st-page .st-discover-card-h .st-card-ambient,
