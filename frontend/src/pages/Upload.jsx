@@ -39,6 +39,13 @@ function CameraView({ onCapture, onGallery, onClose }) {
   // Zoom: hardware zoom when the camera reports it, otherwise a digital zoom that is cropped on capture
   const [zoom, setZoom] = useState(1);
   const zoomState = useRef({ active: false, startY: 0, startZoom: 1, hardware: false, max: 1, track: null });
+  // Press and hold the shutter to record video (up to 60s); a quick tap takes a photo
+  const streamRef = useRef(null);
+  const recRef = useRef({ holdTimer: null, tick: null, recorder: null, chunks: [], startedAt: 0, held: false, cancelled: false });
+  const [recording, setRecording] = useState(false);
+  const [recordProgress, setRecordProgress] = useState(0);
+  const HOLD_MS = 250;
+  const MAX_RECORD_MS = 60000;
 
   useEffect(() => {
     let stream = null;
@@ -48,6 +55,7 @@ function CameraView({ onCapture, onGallery, onClose }) {
       .then((s) => {
         if (!alive) { s.getTracks().forEach((t) => t.stop()); return; }
         stream = s;
+        streamRef.current = s;
         if (videoRef.current) videoRef.current.srcObject = s;
         const track = s.getVideoTracks()[0] || null;
         const caps = track?.getCapabilities?.() || {};
@@ -56,8 +64,89 @@ function CameraView({ onCapture, onGallery, onClose }) {
         setError("");
       })
       .catch(() => { if (alive) setError("Allow camera access to take a photo, or choose one from your gallery."); });
-    return () => { alive = false; stream?.getTracks().forEach((t) => t.stop()); };
+    return () => { alive = false; streamRef.current = null; stream?.getTracks().forEach((t) => t.stop()); };
   }, [facing, streamKey]);
+
+  // Stop any recording and timers when the camera closes (no capture is sent)
+  useEffect(() => () => {
+    const rec = recRef.current;
+    clearTimeout(rec.holdTimer);
+    clearInterval(rec.tick);
+    if (rec.recorder && rec.recorder.state !== 'inactive') { rec.recorder.onstop = null; rec.recorder.stop(); }
+  }, []);
+
+  function pickVideoType() {
+    const types = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+    return types.find((t) => window.MediaRecorder?.isTypeSupported?.(t)) || '';
+  }
+
+  function startRecording() {
+    const stream = streamRef.current;
+    if (!stream || !window.MediaRecorder) { setError('Video recording is not available in this browser.'); return; }
+    const type = pickVideoType();
+    const rec = recRef.current;
+    const recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    rec.recorder = recorder;
+    rec.chunks = [];
+    rec.cancelled = false;
+    rec.startedAt = Date.now();
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) rec.chunks.push(e.data); };
+    recorder.onstop = () => {
+      const mime = recorder.mimeType || type || 'video/webm';
+      const blob = new Blob(rec.chunks, { type: mime });
+      const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+      rec.chunks = [];
+      rec.recorder = null;
+      setRecording(false);
+      setRecordProgress(0);
+      if (blob.size && !rec.cancelled) onCapture(new File([blob], `capture.${ext}`, { type: mime }));
+    };
+    recorder.start(500);
+    setRecording(true);
+    setRecordProgress(0);
+    rec.tick = setInterval(() => {
+      const elapsed = Date.now() - rec.startedAt;
+      setRecordProgress(Math.min(1, elapsed / MAX_RECORD_MS));
+      if (elapsed >= MAX_RECORD_MS) stopRecording();
+    }, 100);
+  }
+
+  function stopRecording() {
+    const rec = recRef.current;
+    clearInterval(rec.tick);
+    rec.tick = null;
+    if (rec.recorder && rec.recorder.state !== 'inactive') rec.recorder.stop();
+  }
+
+  function onShutterDown(event) {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const rec = recRef.current;
+    rec.held = false;
+    clearTimeout(rec.holdTimer);
+    rec.holdTimer = setTimeout(() => { rec.held = true; startRecording(); }, HOLD_MS);
+  }
+
+  function onShutterUp() {
+    const rec = recRef.current;
+    clearTimeout(rec.holdTimer);
+    if (rec.held) {
+      rec.held = false;
+      stopRecording();
+    } else {
+      capture();
+    }
+  }
+
+  // The system can cancel the pointer during a long press (long-press menu, scroll): stop recording, take no photo
+  function onShutterCancel() {
+    const rec = recRef.current;
+    clearTimeout(rec.holdTimer);
+    if (rec.held) {
+      rec.held = false;
+      rec.cancelled = true;
+      stopRecording();
+    }
+  }
 
   // Drag up on the preview to zoom in
   function onZoomDown(event) {
@@ -108,7 +197,16 @@ function CameraView({ onCapture, onGallery, onClose }) {
       </div>
       <div className="cam-bottom">
         <button type="button" className="cam-side-btn" onClick={onGallery} aria-label="Choose from gallery"><Icon name="image" size={28} /></button>
-        <button type="button" className="cam-shutter" onClick={capture} aria-label="Take photo"><span /></button>
+        <button type="button" className={`cam-shutter ${recording ? 'recording' : ''}`} onPointerDown={onShutterDown} onPointerUp={onShutterUp} onPointerCancel={onShutterCancel} onPointerLeave={(e) => { if (e.pointerType !== 'mouse') onShutterCancel(); }} onContextMenu={(e) => e.preventDefault()} aria-label="Take photo, or hold to record video">
+          <span />
+          {recording && (
+            <svg className="cam-ring" viewBox="0 0 92 92" aria-hidden="true">
+              <circle cx="46" cy="46" r="42" fill="none" stroke="#ff2d55" strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 42} strokeDashoffset={(1 - recordProgress) * 2 * Math.PI * 42}
+                transform="rotate(-90 46 46)" />
+            </svg>
+          )}
+        </button>
         <span className="cam-spacer" aria-hidden="true" />
       </div>
     </main>
