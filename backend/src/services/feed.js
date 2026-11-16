@@ -101,6 +101,8 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     // Topic affinity is learned from explicit and behavioural feedback, independently
     // of any single post's score. Unknown topics remain neutral.
     const topics = [...new Set(candidates.map((p) => String(p.topic || '').trim().toLowerCase()).filter(Boolean))];
+    // Personalization opt-out (Snapchat: basic data only). Public signals and country still apply.
+    const personalized = await redis.get(`feed:personalization-off:${userId}`).then((v) => v !== '1').catch(() => true);
     const topicPipe = redis.pipeline();
     for (const topic of topics) topicPipe.hget(`feed:topic-preferences:${userId}`, topic);
     const topicRows = await topicPipe.exec().catch(() => []);
@@ -161,10 +163,10 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
         // watch/completion/share signals lift relevant posts; skips and "not interested"
         // lower them. The per-viewer score is deliberately capped to prevent domination.
         const preference = preferenceOf.get(String(p.id)) || 0;
-        const personalizedBoost = Math.max(-20, Math.min(40, preference * 0.5));
+        const personalizedBoost = personalized ? Math.max(-20, Math.min(40, preference * 0.5)) : 0;
         const topic = String(p.topic || '').trim().toLowerCase();
         const topicPreference = topicPreferenceOf.get(topic) || 0;
-        const topicBoost = Math.max(-12, Math.min(18, topicPreference * 0.3));
+        const topicBoost = personalized ? Math.max(-12, Math.min(18, topicPreference * 0.3)) : 0;
         // Country is a low-weight localization hint, never a substitute for relevance.
         const localBoost = viewerCountry && countryOf.get(String(p.authorId)) === viewerCountry ? 3 : 0;
         const score = baseScore + personalizedBoost + topicBoost + localBoost;

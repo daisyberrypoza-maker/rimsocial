@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api.js';
 import { useNavigate } from 'react-router-dom';
 import { goBack } from '../lib/goBack.js';
 import { confirmDialog } from '../lib/confirm.js';
@@ -21,6 +22,35 @@ function save(value) {
 export default function Algorithm() {
   const navigate = useNavigate();
   const [prefs, setPrefs] = useState(load);
+  const [personalized, setPersonalized] = useState(true);
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    api('/v1/feed/personalization').then((r) => setPersonalized(r.enabled !== false)).catch(() => {});
+  }, []);
+
+  const togglePersonalized = async () => {
+    const next = !personalized;
+    setPersonalized(next);
+    try {
+      const r = await api('/v1/feed/personalization', { method: 'PUT', body: { enabled: next } });
+      setPersonalized(r.enabled !== false);
+      setStatus('');
+    } catch {
+      setPersonalized(!next);
+      setStatus("Couldn't update personalization. Try again.");
+    }
+  };
+
+  const resetSuggested = async () => {
+    if (!await confirmDialog('Reset suggested content? Your learned Rimlight preferences will be cleared.')) return;
+    try {
+      await api('/v1/feed/personalization/reset', { method: 'POST' });
+      setStatus('Suggested content reset.');
+    } catch {
+      setStatus("Couldn't reset suggested content. Try again.");
+    }
+  };
 
   const update = (next) => { setPrefs(next); save(next); };
 
@@ -66,6 +96,17 @@ export default function Algorithm() {
       <p className="algo-summary">Choose what you want more or less of in Rimlight.</p>
       {section('more', 'What you want to see more of', 'Topics you add here are shown more often in Rimlight.')}
       {section('less', 'What you want to see less of', 'Topics you add here are shown less often in Rimlight.')}
+      <section className="algo-section">
+        <h2>Personalized content</h2>
+        <p className="algo-hint">Turn off to see Rimlight and Discover based on basic data only: your language, age and country.</p>
+        <div className="algo-chips">
+          <button type="button" className={`algo-chip ${personalized ? 'filled' : 'outline'}`} onClick={togglePersonalized} aria-pressed={personalized}>
+            {personalized ? 'Personalization on' : 'Personalization off'}
+          </button>
+          <button type="button" className="algo-chip outline" onClick={resetSuggested}>Reset suggested content</button>
+        </div>
+        {status && <p className="algo-hint" role="status">{status}</p>}
+      </section>
       <p className="algo-build">Build {__APP_BUILD__}</p>
     </main>
   );
