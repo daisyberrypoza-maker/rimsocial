@@ -55,43 +55,10 @@ async function attachUniqueViewers(items) {
   return items;
 }
 
-// Discover: newest public posts in the viewer's country. First page is cached briefly.
+// Rimlight Discover is the Spotlight-style recommendation feed. It shares the
+// same ranking engine as Explore; Following remains strictly chronological.
 async function getDiscoverPage({ userId, cursor, limit }) {
-  const n = clampLimit(limit);
-  const offset = parseRankCursor(cursor);
-  const cacheKey = `feed:discover:ranked:${userId}`;
-  let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
-
-  if (!ids) {
-    const [candidates, follows, blocks, mutedRows] = await Promise.all([
-      Post.findAll({
-        where: { status: 'live', isStory: false, visibility: 'public' },
-        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'giftCoins', 'repostCount'],
-        order: [['createdAt', 'DESC']], limit: 500, raw: true,
-      }),
-      Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true }),
-      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
-      UserMute.findAll({ where: { userId }, attributes: ['mutedUserId'], raw: true }),
-    ]);
-    const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
-    const followed = new Set(follows.map((f) => f.followeeId));
-    const muted = new Set(mutedRows.map((row) => String(row.mutedUserId)));
-    // Rimlight Discover is newest-first (LIFO): the latest published post appears first.
-    // Keep recommendation scoring in Explore, while Following remains chronological too.
-    ids = candidates
-      .filter((p) => !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map((p) => p.id);
-    await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
-  }
-
-  const pageIds = ids.slice(offset, offset + n + 1);
-  const hasMore = pageIds.length > n;
-  const page = await hydrate(pageIds.slice(0, n));
-  return {
-    items: page.map(toPostDTO),
-    nextCursor: hasMore ? `rank:${offset + n}` : null,
-  };
+  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:discover' });
 }
 
 // Explore: what someone is likely to want to see from accounts they do not follow.
@@ -104,10 +71,10 @@ const SEED_POOL = 300;        // seed_pool_remaining starts at 300 (the blueprin
 const SEED_EVERY = 4;         // one seeding post per four ranked posts
 const SEED_WINDOW_HOURS = 72; // a post stops seeding after this long even if it has few views
 
-async function getExplorePage({ userId, cursor, limit }) {
+async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:explore' }) {
   const n = clampLimit(limit);
   const offset = parseRankCursor(cursor);
-  const cacheKey = `feed:explore:ranked:${userId}`;
+  const cacheKey = `${cachePrefix}:ranked:${userId}`;
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
@@ -131,29 +98,47 @@ async function getExplorePage({ userId, cursor, limit }) {
     for (const p of candidates) preferencePipe.hget(`feed:preferences:${userId}`, String(p.id));
     const preferenceRows = await preferencePipe.exec().catch(() => []);
     const preferenceOf = new Map(candidates.map((p, i) => [String(p.id), Number(preferenceRows[i]?.[1]) || 0]));
-    // Spotlight watch aggregates written by POST /v1/feed/feedback (missing values count as 0)
+    // Rimlight/Spotlight audience aggregates: average watch completion, completion,
+    // rewatch rate and fast skips. Missing history is neutral rather than negative.
     const spotPipe = redis.pipeline();
-    for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips');
+    for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips', 'completions', 'rewatches');
     const spotRows = await spotPipe.exec().catch(() => []);
     const spotOf = new Map(candidates.map((p, i) => {
-      const [watchPct, watches, skips] = (spotRows[i] && spotRows[i][1]) || [];
-      return [String(p.id), { watchPct: Number(watchPct) || 0, watches: Number(watches) || 0, skips: Number(skips) || 0 }];
+      const [watchPct, watches, skips, completions, rewatches] = (spotRows[i] && spotRows[i][1]) || [];
+      const watchCount = Number(watches) || 0;
+      return [String(p.id), {
+        watchPct: Number(watchPct) || 0,
+        watches: watchCount,
+        skips: Number(skips) || 0,
+        completions: Number(completions) || 0,
+        rewatches: Number(rewatches) || 0,
+      }];
     }));
     const now = Date.now();
     const scored = candidates
       .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .map((p) => {
-        // Spotlight_Score: like rate and share rate are measured (reposts stand in for shares);
-        // watch percentage and skips come from client watch samples; loops and trending sound are not tracked yet (0). Creator_Score uses the author's followers and like rate.
+        // Rimlight uses the same Spotlight ranking engine as Explore. Likes/reposts
+        // are durable post counters; watch, completion, rewatch and fast-skip signals
+        // are aggregated from authenticated viewing-session feedback.
         const views = Math.max(1, Number(p.viewCount) || 0);
         const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
         const likes = Number(p.likeCount) || 0;
         const shares = Number(p.repostCount) || 0;
-        // Promoted posts (Promote_To_Next_Tier) move up one tier: double Spotlight_Score
-        const tier = promotedToNextTier({ views: Number(p.viewCount) || 0, likes, shares }) ? 2 : 1;
-        const spot = spotOf.get(String(p.id)) || { watchPct: 0, watches: 0, skips: 0 };
+        const spot = spotOf.get(String(p.id)) || { watchPct: 0, watches: 0, skips: 0, completions: 0, rewatches: 0 };
+        const avgWatchPct = spot.watches > 0 ? spot.watchPct / spot.watches : 0;
+        const loopRate = spot.watches > 0 ? Math.min(1, spot.rewatches / spot.watches) : 0;
+        // Promote only after a meaningful audience sample; completions are measured,
+        // not inferred from likes or reposts.
+        const tier = promotedToNextTier({
+          views: Number(p.viewCount) || 0,
+          likes,
+          shares,
+          watches75: spot.completions,
+        }) ? 2 : 1;
         const baseScore = tier * spotlightScore({
-          avgWatchPct: spot.watches > 0 ? spot.watchPct / spot.watches : 0,
+          avgWatchPct,
+          loopRate,
           skipUnder2s: Math.min(1, spot.skips / views),
           likeRate: Math.min(1, likes / views),
           shareRate: Math.min(1, shares / views),
@@ -279,6 +264,10 @@ async function markFollowing(result, viewerId) {
       ? { ...item, author: { ...item.author, isFollowing: followed.has(item.author.id) } }
       : item)),
   };
+}
+
+async function getExplorePage({ userId, cursor, limit }) {
+  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:explore' });
 }
 
 module.exports = {

@@ -137,6 +137,8 @@ export default function PostCard({ post, active }) {
   const [following, setFollowing] = useState(Boolean(post.author?.isFollowing));
   const [followBusy, setFollowBusy] = useState(false);
   const seekingRef = useRef(false);
+  const lastVideoTimeRef = useRef(0);
+  const completedLoopRef = useRef(false);
   const lastTapRef = useRef({ t: 0, side: null });
   const tapTimerRef = useRef(null);
   const [likes, setLikes] = useState(post.likeCount);
@@ -335,6 +337,7 @@ export default function PostCard({ post, active }) {
     try {
       const r = await api(`/v1/posts/${post.id}/save`, { method: saved ? 'DELETE' : 'POST' });
       setSaved(Boolean(r.saved));
+      if (r.saved) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'saved' } }).catch(() => {});
       toast(r.saved ? 'Saved to your profile' : 'Removed from saved');
     } catch (e) { toast(e.message || 'Could not save this post'); }
     finally { setSaveBusy(false); }
@@ -374,7 +377,24 @@ export default function PostCard({ post, active }) {
   return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
     {post.popularStory && <span className="post-story-badge">Story</span>}
     {carouselItems ? <div className="post-carousel-wrap"><div className="post-carousel" onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}>{carouselItems.map((item, i) => <div className="post-carousel-slide" key={i}>{item.kind === 'video' ? <video src={active ? videoStreamUrl(mediaUrl(item.url)) : undefined} muted playsInline controls preload={active ? 'metadata' : 'none'} /> : <img src={mediaUrl(item.url)} alt="" loading="lazy" />}</div>)}</div><span className="post-carousel-count">{slide + 1}/{carouselItems.length}</span><div className="post-carousel-dots" aria-hidden="true">{carouselItems.map((_, i) => <span key={i} className={i === slide ? 'on' : ''} />)}</div></div>
-      : isVideoMedia ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => { const d = e.currentTarget.duration; if (!seekingRef.current && d > 0) setProgress(e.currentTarget.currentTime / d); }} />
+      : isVideoMedia ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => {
+        const video = e.currentTarget;
+        const d = Number(video.duration);
+        const current = Number(video.currentTime);
+        const previous = lastVideoTimeRef.current;
+        if (d > 0 && Number.isFinite(current)) {
+          if (previous > d * 0.7 && current < 1.2) {
+            api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'rewatch' } }).catch(() => {});
+            completedLoopRef.current = false;
+          }
+          if (!seekingRef.current && !completedLoopRef.current && current / d >= 0.9) {
+            completedLoopRef.current = true;
+            api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'completed' } }).catch(() => {});
+          }
+          lastVideoTimeRef.current = current;
+          if (!seekingRef.current) setProgress(current / d);
+        }
+      }} />
       : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}><p>{post.storyText || ''}</p></div>
       : <img src={src} alt="" loading="lazy" />}
     {isVideoMedia && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
