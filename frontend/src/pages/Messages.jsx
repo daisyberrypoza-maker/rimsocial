@@ -1,6 +1,7 @@
 import { chatPath } from '../lib/chatLink.js';
 import { newClientId } from '../lib/clientId.js';
 import { useEffect, useRef, useState } from 'react';
+import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
