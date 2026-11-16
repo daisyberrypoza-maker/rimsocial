@@ -52,7 +52,8 @@ router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) 
     if (sourcePostId) {
       const source = await Post.findOne({ where: { id: sourcePostId, status: 'live', isStory: false, visibility: 'public' } });
       if (!source || !source.allowRemix) throw httpError(403, 'This post is not available for remixing');
-      if (source.authorId === req.user.id) throw httpError(400, 'You do not need to remix your own post');
+      if (String(source.authorId) === String(req.user.id)) throw httpError(400, 'You do not need to remix your own post');
+      await assertPostAuthorNotBlocked(req.user.id, source.authorId);
     }
     const sponsorName = String(req.body.sponsorName || '').trim().slice(0, 100);
     const sponsorDescription = String(req.body.sponsorDescription || '').trim().slice(0, 200);
