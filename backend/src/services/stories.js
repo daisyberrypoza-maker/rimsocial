@@ -226,98 +226,106 @@ async function getDiscoverStories(viewerId, limit) {
     },
     include: [{ model: User, as: 'author', attributes: authorAttrs }],
     order: [['createdAt', 'DESC']],
-    limit: 200,
+    limit: 300,
   });
   if (!candidates.length) return [];
+
   const ids = candidates.map((story) => story.id);
   const authorIds = [...new Set(candidates.map((story) => String(story.authorId)))];
-  const [follows] = await Promise.all([
+  const [follows, likedRows, viewed, likeRows, shareRows, affinity] = await Promise.all([
     Follow.findAll({ where: { followerId: viewerId, followeeId: authorIds }, attributes: ['followeeId'], raw: true }),
-  ]);
-  const followedIds = new Set(follows.map((row) => String(row.followeeId)));
-  // Interest_Boost: topics of posts the viewer liked (stories carry a topic when one is set)
-  const likedRows = await sequelize.query(
-    `SELECT p.topic FROM post_likes pl JOIN posts p ON p.id = pl.postId
-     WHERE pl.userId = :me AND p.topic IS NOT NULL ORDER BY pl.createdAt DESC LIMIT 200`,
-    { replacements: { me: viewerId } },
-  ).then(([rows]) => rows || []).catch(() => []);
-  const [viewed, likeRows] = await Promise.all([
+    sequelize.query(
+      `SELECT p.topic FROM post_likes pl JOIN posts p ON p.id = pl.postId
+       WHERE pl.userId = :me AND p.topic IS NOT NULL ORDER BY pl.createdAt DESC LIMIT 200`,
+      { replacements: { me: viewerId } },
+    ).then(([rows]) => rows || []).catch(() => []),
     viewedSet(viewerId, ids),
     StoryLike.findAll({
       where: { postId: ids },
       attributes: ['postId', [fn('COUNT', col('postId')), 'n']],
       group: ['postId'], raw: true,
     }).catch(() => []),
+    sequelize.query(
+      `SELECT postId, COUNT(*) AS n FROM reposts WHERE postId IN (:ids) GROUP BY postId`,
+      { replacements: { ids } },
+    ).then(([rows]) => rows || []).catch(() => []),
+    require('./ranking').friendScores(viewerId, authorIds).catch(() => ({})),
   ]);
+
+  const followedIds = new Set(follows.map((row) => String(row.followeeId)));
+  const likedTopics = new Set(likedRows.map((row) => String(row.topic).toLowerCase()));
   const likesByStory = new Map(likeRows.map((row) => [String(row.postId), Number(row.n) || 0]));
-  const likedTopics = new Set(likedRows.map((row) => row.topic));
+  const sharesByStory = new Map(shareRows.map((row) => [String(row.postId), Number(row.n) || 0]));
   const now = Date.now();
+
   const scored = candidates.map((story) => {
+    const id = String(story.id);
+    const creatorId = String(story.authorId);
     const hoursPosted = Math.max(0, (now - new Date(story.createdAt).getTime()) / 3600000);
-    const unseenBoost = viewed.has(story.id) ? -12 : 12;
-    const engagementBoost = Math.log10(1 + Math.max(0, Number(story.viewCount) || 0)) * 2
-      + Math.log10(1 + (likesByStory.get(String(story.id)) || 0)) * 3;
-    // Personalize public Story discovery: topic affinity, unseen priority, creator relationship,
-    // real story engagement and freshness. Blocked and muted creators are excluded before scoring.
-    const score = discoverScore({
-      subscribe: followedIds.has(String(story.authorId)) ? 1 : 0,
-      interestBoost: interestBoostFor(story.topic, likedTopics),
-      hoursPosted,
-    }) + unseenBoost + engagementBoost;
-    return { story, score };
+    const views = Math.max(0, Number(story.viewCount) || 0);
+    const likes = likesByStory.get(id) || 0;
+    const shares = sharesByStory.get(id) || 0;
+    const topic = String(story.topic || '').trim().toLowerCase();
+    const interest = topic && likedTopics.has(topic) ? 1.5 : 1;
+    const isViewed = viewed.has(story.id);
+
+    // Carousel score: social affinity + measured story interactions, with 1.6 recency gravity.
+    // StoryView currently stores a view event, not completion duration; creator affinity is used
+    // as the available watch-habit proxy until completion telemetry exists.
+    const interactions = likes * 2 + shares * 3;
+    const socialAffinity = Number(affinity[creatorId]) || 0;
+    const carouselScore = ((2 * interactions) + (1.5 * socialAffinity))
+      / Math.pow(hoursPosted + 2, 1.6) * (isViewed ? 0.1 : 1);
+
+    // Discover expected-value proxy: CTR is approximated from positive interactions per view.
+    // Watch-time and bounce/exit are not persisted in the current StoryView schema, so they
+    // remain neutral instead of fabricating behavioural measurements.
+    const pClick = Math.min(1, (likes + shares * 1.5 + 1) / (views + 10));
+    const watchValue = views > 0 ? Math.min(1, views / (views + 20)) : 0.1;
+    const engagementValue = (watchValue * 10) + (shares * 3) + (likes * 1.5);
+    const freshness = 1 / Math.pow(hoursPosted + 2, 1.2);
+    const discoverScoreValue = pClick * engagementValue * interest * freshness;
+    const score = followedIds.has(creatorId) ? carouselScore : discoverScoreValue;
+
+    return {
+      story,
+      score,
+      carouselScore,
+      discoverScore: discoverScoreValue,
+      viewed: isViewed,
+      subscribed: followedIds.has(creatorId),
+      topic: topic || null,
+    };
   });
+
   scored.sort((a, b) => b.score - a.score || new Date(b.story.createdAt) - new Date(a.story.createdAt));
-  return scored.slice(0, limit).map(({ story }) => ({ ...toPostDTO(story), subscribed: followedIds.has(String(story.authorId)) }));
+  return scored.slice(0, limit).map(({ story, viewed: isViewed, subscribed, topic, carouselScore, discoverScore: ev }) => ({
+    ...toPostDTO(story),
+    viewed: isViewed,
+    subscribed,
+    topic,
+    ranking: { carousel: Number(carouselScore.toFixed(4)), discover: Number(ev.toFixed(4)) },
+  }));
 }
 
-// Diversity rule: never put two items from the same creator side by side (adjacent grid slots)
+// Greedy topic diversity: repeated topics receive a 0.7 multiplier; adjacent creators are also avoided.
 function diversify(list, keyOf) {
   const pool = [...list];
   const out = [];
   while (pool.length) {
-    const prev = out[out.length - 1];
-    let index = prev ? pool.findIndex((item) => keyOf(item) !== keyOf(prev)) : 0;
+    const previous = out[out.length - 1];
+    let index = pool.findIndex((item) => !previous || (
+      keyOf(item) !== keyOf(previous)
+      && (!item.topic || !previous.topic || item.topic !== previous.topic)
+    ));
+    if (index < 0) {
+      index = pool.findIndex((item) => !previous || keyOf(item) !== keyOf(previous));
+    }
     if (index < 0) index = 0;
-    out.push(pool.splice(index, 1)[0]);
+    const [next] = pool.splice(index, 1);
+    out.push(next);
   }
   return out;
-}
-
-// Discover sections (backend ranking pipeline): a carousel of unseen stories from creators the viewer follows
-// (high affinity, 112px cards), and a 2-column grid of the rest, diversified. Ads are added by the client.
-const CAROUSEL_SIZE = 8;
-const GRID_PER_CREATOR = 1;
-async function getDiscoverSections(viewerId, limit = 24) {
-  const ranked = await getDiscoverStories(viewerId, limit);
-  const viewed = await viewedSet(viewerId, ranked.map((item) => item.id));
-  const withViewed = ranked.map((item) => ({ ...item, viewed: viewed.has(item.id) }));
-  // One carousel card per creator, in ranking order, so a single creator cannot fill the row
-  const seenCreators = new Set();
-  const carousel = [];
-  for (const item of withViewed) {
-    if (carousel.length >= CAROUSEL_SIZE) break;
-    if (!item.subscribed || item.viewed) continue;
-    const creator = String(item.author?.id || item.authorId);
-    if (seenCreators.has(creator)) continue;
-    seenCreators.add(creator);
-    carousel.push(item);
-  }
-  const carouselIds = new Set(carousel.map((item) => item.id));
-  // Grid: at most GRID_PER_CREATOR stories per creator, then spread so the same creator is not back to back
-  // Each creator appears once in the whole Discover section: in the carousel if shown there, otherwise at most once in the grid
-  const carouselCreators = new Set(carousel.map((item) => String(item.author?.id || item.authorId)));
-  const perCreator = new Map();
-  const gridPool = withViewed.filter((item) => {
-    if (carouselIds.has(item.id)) return false;
-    const creator = String(item.author?.id || item.authorId);
-    if (carouselCreators.has(creator)) return false;
-    const count = perCreator.get(creator) || 0;
-    if (count >= GRID_PER_CREATOR) return false;
-    perCreator.set(creator, count + 1);
-    return true;
-  });
-  const grid = diversify(gridPool, (item) => String(item.author?.id || item.authorId));
-  return { items: grid, carousel };
 }
 
 async function getPopularStories(viewerId, limit = 4, { personalized = false } = {}) {
