@@ -138,7 +138,7 @@ jobs:
           VITE_API_URL: https://rimsocial-ci.invalid
       - name: Sync Capacitor Android project
         working-directory: frontend
-        run: npx cap sync android
+        run: ./node_modules/.bin/capacitor sync android
       - name: Assemble Android debug APK
         working-directory: frontend/android
         run: ./gradlew --no-daemon assembleDebug
