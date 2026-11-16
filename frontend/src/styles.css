@@ -7575,3 +7575,31 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .sv-root .sv-stage.sv-grade-warm > video.sv-media { filter: sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04); }
 .sv-root .sv-stage.sv-grade-noir > video.sv-media { filter: grayscale(1) contrast(1.25) brightness(.95); }
 .sv-root .sv-stage.sv-grade-soft > video.sv-media { filter: contrast(.95) saturate(1.1) brightness(1.06); }
+
+
+/* Rimlight / Following / LIVE: reserve the fixed bottom navigation inside the viewport.
+   Feed cards and LIVE content must end above the bar instead of rendering underneath it. */
+:root { --rimsocial-bottom-nav-height: calc(56px + env(safe-area-inset-bottom, 0px)); }
+.app > .feed {
+  flex: 0 0 calc(100dvh - var(--rimsocial-bottom-nav-height));
+  width: 100%;
+  height: calc(100dvh - var(--rimsocial-bottom-nav-height));
+  min-height: 0;
+  box-sizing: border-box;
+}
+.app > .feed > .post,
+.app > .feed > .slot {
+  height: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+.app > .live-page {
+  flex: 0 0 calc(100dvh - var(--rimsocial-bottom-nav-height));
+  width: 100%;
+  height: calc(100dvh - var(--rimsocial-bottom-nav-height));
+  min-height: 0 !important;
+  max-height: calc(100dvh - var(--rimsocial-bottom-nav-height));
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 12px !important;
+}
