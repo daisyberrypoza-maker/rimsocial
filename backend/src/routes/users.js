@@ -464,12 +464,14 @@ router.post('/:id/block', requireAuth, async (req, res, next) => {
       if (removedOutgoing) await User.decrement('followerCount', { by: removedOutgoing, where: { id: req.params.id }, transaction: t });
       if (removedIncoming) await User.decrement('followerCount', { by: removedIncoming, where: { id: req.user.id }, transaction: t });
     });
+    await Promise.all([req.user.id, req.params.id].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
     res.json({ blocked: true });
   } catch (e) { next(e); }
 });
 router.delete('/:id/block', requireAuth, async (req, res, next) => {
   try {
     await UserBlock.destroy({ where: { blockerId: req.user.id, blockedUserId: req.params.id } });
+    await Promise.all([req.user.id, req.params.id].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
     res.json({ blocked: false });
   } catch (e) { next(e); }
 });
@@ -512,6 +514,7 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
       if (created) await User.increment('followerCount', { by: 1, where: { id: followeeId }, transaction: t });
     });
     await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     res.json({ isFollowing: true, followerCount: fresh.followerCount });
@@ -563,6 +566,7 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
       });
       if (removed) await User.decrement('followerCount', { by: 1, where: { id: followeeId }, transaction: t });
     });
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     if (!fresh) throw httpError(404, 'User not found');
     res.json({ isFollowing: false, followerCount: fresh.followerCount });
