@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { api } from '../api.js';
@@ -8,7 +9,9 @@ import '../pages/UploadStatus.css';
 import { logError } from '../toast.js';
 import { clamp, snapTarget } from '../lib/snapPaging.js';
 
-const STALE_AFTER_MS = 60 * 1000;
+// Tabs already opened in this app session. A cold start (app closed and reopened)
+// clears this, so the feed always starts at the first post.
+const openedThisSession = {};
 const WINDOW = 1; // render the current post and one on each side
 
 // tab: 'discover' | 'following'
@@ -59,20 +62,62 @@ export default function Feed({ tab }) {
       .finally(() => setLoading(false));
   }, [tab, path]);
 
-  // On open: restore the position, or refresh if the saved list is old
+  const location = useLocation();
+  const tabPath = tab === 'following' ? '/following' : '/';
+
+  // Moves the feed to a post index and remembers which post is on screen.
+  function jumpTo(index) {
+    const el = containerRef.current;
+    if (el) el.scrollTop = index * el.clientHeight;
+    setActive(index);
+    setFeed(tab, { activeIndex: index, activePostId: shown[index]?.id || null });
+  }
+
+  // Returning to the tab: if there is a newer first post, open it; otherwise keep the post
+  // being watched. The saved post is shown at once, then the list is refreshed behind it.
+  function returnToTab() {
+    const before = useAppStore.getState().feeds[tab]?.items || [];
+    const headBefore = before[0]?.id;
+    const saved = useAppStore.getState().feeds[tab] || {};
+    const pick = (list) => {
+      const byId = saved.activePostId ? list.findIndex((p) => p.id === saved.activePostId) : -1;
+      return byId >= 0 ? byId : Math.min(saved.activeIndex || 0, Math.max(list.length - 1, 0));
+    };
+    const first = pick(before);
+    if (before.length) jumpTo(first);
+    run(true).then(() => {
+      const after = useAppStore.getState().feeds[tab]?.items || [];
+      if (!after.length) return;
+      if (after[0]?.id !== headBefore) { jumpTo(0); return; }
+      const next = pick(after);
+      if (next !== first) jumpTo(next);
+    });
+  }
+
+  // Opening the tab: first open in this session starts at the first post; otherwise return to the saved post.
   useLayoutEffect(() => {
     const el = containerRef.current;
-    const stale = !cached?.updatedAt || Date.now() - cached.updatedAt > STALE_AFTER_MS;
-    if (stale) {
+    if (!openedThisSession[tab] || !cached?.items?.length) {
+      openedThisSession[tab] = true;
       if (el) el.scrollTop = 0;
       setActive(0);
-      setFeed(tab, { activeIndex: 0 });
+      setFeed(tab, { activeIndex: 0, activePostId: null });
       run(true);
-    } else if (el && cached?.activeIndex) {
-      el.scrollTop = cached.activeIndex * el.clientHeight;
+      return;
     }
+    openedThisSession[tab] = true;
+    returnToTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  // Tapping this tab again (bottom bar or Rimlight/Following header) while already on it
+  const lastLocationKey = useRef(location.key);
+  useEffect(() => {
+    if (location.key === lastLocationKey.current) return;
+    lastLocationKey.current = location.key;
+    if (location.pathname === tabPath) returnToTab();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   // Snap_Next_Page: the native snap is paused for the gesture, then the feed moves one video on
   // when the swipe passes 25% of the screen or is faster than 600px/s
@@ -105,7 +150,7 @@ export default function Feed({ tab }) {
     if (idx !== active) setActive(idx);
 
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => setFeed(tab, { activeIndex: idx }), 300);
+    saveTimer.current = setTimeout(() => setFeed(tab, { activeIndex: idx, activePostId: shown[idx]?.id || null }), 300);
 
     // Load the next page a few posts before the end
     if (nextCursor && !loading && idx >= shown.length - 4) run(false);
