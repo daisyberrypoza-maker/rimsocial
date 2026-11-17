@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Pressable, TextInput, StyleSheet, Animated, PanResponder, Modal, Alert, Share, AppState, Keyboard, KeyboardAvoidingView, Platform, useWindowDimensions, StatusBar } from 'react-native';
+import { View, Text, Image, Pressable, TextInput, StyleSheet, Animated, PanResponder, Modal, Alert, Share, AppState, Keyboard, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import PageStatusBar from '../components/PageStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookmarkCheck, Flag, Ban, Shield } from 'lucide-react-native';
 import Avatar from '../components/Avatar';
@@ -377,7 +378,7 @@ export default function StoryViewer() {
 
   return (
     <KeyboardAvoidingView style={[styles.root, { width, height }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {focused && <StatusBar barStyle="light-content" />}
+      <PageStatusBar light />
       <View style={StyleSheet.absoluteFill} {...pan.panHandlers}>
         {current && (isVideo
           ? (

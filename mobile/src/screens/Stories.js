@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet, Platform, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import PageStatusBar from '../components/PageStatusBar';
+import Scrim from '../components/Scrim';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
 import StoryRing, { railItems } from '../components/StoryRing';
@@ -99,6 +101,7 @@ export default function Stories() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={{ paddingBottom: 24 }} refreshControl={<RefreshControl refreshing={pulling} onRefresh={pullRefresh} tintColor="#737373" />}>
+      <PageStatusBar light />
       <View style={styles.top}>
         <View style={styles.left}>
           {navigation.canGoBack() ? (
@@ -171,7 +174,7 @@ export default function Stories() {
                 {person.avatarUrl
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
-                <View style={styles.shade} />
+                <Scrim />
                 <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}{person.isCreator ? ' ★' : ''}</Text>
               </Pressable>
             ))}
@@ -180,7 +183,7 @@ export default function Stories() {
             {sponsored.map((post) => (
               <Pressable key={`sp-${post.id}`} style={styles.big} onPress={() => navigation.navigate('PostDetail', { postId: post.id })} accessibilityLabel={`Sponsored: ${post.sponsorName || 'ad'}`}>
                 <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.fill} />
-                <View style={styles.shade} />
+                <Scrim />
                 <View style={styles.sponsoredTag}><Text style={styles.sponsoredText}>Sponsored</Text></View>
                 <Text style={styles.cardName} numberOfLines={2}>{post.sponsorName || post.author?.username}</Text>
                 <View style={styles.cta}><Text style={styles.ctaText}>{post.sponsorCta || 'Learn more'}</Text></View>
@@ -191,7 +194,7 @@ export default function Stories() {
                 {person.avatarUrl
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
-                <View style={styles.shade} />
+                <Scrim />
                 <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}</Text>
               </Pressable>
             ))}

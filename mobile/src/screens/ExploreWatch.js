@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, FlatList, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import PageStatusBar from '../components/PageStatusBar';
 import PostCard from '../components/PostCard';
 import Icon from '../components/Icon';
 import { useAppStore } from '../store';
@@ -49,6 +50,7 @@ export default function ExploreWatch() {
 
   return (
     <View style={styles.page}>
+      <PageStatusBar light />
       <Pressable style={styles.back} onPress={() => navigation.goBack()} accessibilityLabel="Back to Explore" hitSlop={8}>
         <Icon name="arrow-left" size={18} color="#fff" />
         <Text style={styles.backText}>Explore</Text>
