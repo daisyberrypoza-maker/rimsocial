@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
+import { FILTERS, cssFilterFor, bakeFilter } from '../lib/photoFilters.js';
 import { cameraZoom } from '../lib/cameraZoom.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -236,6 +237,7 @@ export default function Upload() {
   const [storyVoice, setStoryVoice] = useState(null);
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
+  const [filterKey, setFilterKey] = useState('original');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -413,8 +415,10 @@ export default function Upload() {
       const storyFile = (toStory || shareToStory)
         ? await trimVideo(rawFile || file, STORY_MAX_SECONDS)
         : null;
+      // The chosen photo filter is baked into the file, so the published photo matches the preview.
+      const uploadFile = await bakeFilter(file, filterKey).catch(() => file);
       startUpload({
-        toStory, file: toStory ? (storyFile || file) : file, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
+        toStory, file: toStory ? (storyFile || uploadFile) : uploadFile, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         storyFiles: toStory && carousel.length > 1 ? await Promise.all(carousel.map((f) => (String(f.type).startsWith('video/') ? trimVideo(f, STORY_MAX_SECONDS) : f))) : null,
         caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
         sourcePostId: sourcePost?.id, sponsor, shareToStory,
@@ -422,6 +426,7 @@ export default function Upload() {
       });
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
       setTopic(''); setAiLabel(false); setShareToStory(false);
+      setFilterKey('original');
       setFile(null);
       setRawFile(null);
       setCarousel([]);
@@ -581,12 +586,16 @@ export default function Upload() {
     </nav>
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
     <div className="up-filters">
-      <span className="up-filter-thumb on">{preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" />)}</span>
+      {FILTERS.map((f) => (
+        <button key={f.key} type="button" className={`up-filter-thumb${filterKey === f.key ? ' on' : ''}`} onClick={() => setFilterKey(f.key)} disabled={isVideo || !preview} aria-pressed={filterKey === f.key} aria-label={`${f.label} filter`} title={isVideo ? 'Filters are for photos' : f.label} style={{ padding: 0, cursor: 'pointer' }}>
+          {preview && !isVideo && <img src={preview} alt="" style={{ filter: cssFilterFor(f.key) }} />}
+        </button>
+      ))}
       <button type="button" className="up-hd" onClick={soon} aria-label="HD">HD</button>
     </div>
     <div className="up-timeline-wrap">
       <div className="up-timeline" aria-hidden="true">
-        {preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" />)}
+        {preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" style={{ filter: cssFilterFor(filterKey) }} />)}
         {durLabel && <span>{durLabel}</span>}
       </div>
     </div>
