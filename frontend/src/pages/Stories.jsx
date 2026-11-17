@@ -162,7 +162,11 @@ export default function Stories() {
   const discoverItems = useMemo(() => {
     const out = [];
     let adIndex = 0;
-    popular.forEach((story, i) => {
+    // Stories in the horizontal carousel stay there (until they expire), so the grid never repeats them
+    const carouselIds = new Set(carousel.map((s) => String(s.id)));
+    const carouselCreators = new Set(carousel.map((s) => String(s.author?.id)));
+    const gridStories = popular.filter((s) => !carouselIds.has(String(s.id)) && !carouselCreators.has(String(s.author?.id)));
+    gridStories.forEach((story, i) => {
       if (adPool.length && i >= AD_START_OFFSET && (i - AD_START_OFFSET) % AD_FREQUENCY_INTERVAL === 0) {
         out.push({ type: 'ad', ad: adPool[adIndex % adPool.length], key: `ad-${i}` });
         adIndex += 1;
@@ -170,7 +174,7 @@ export default function Stories() {
       out.push({ type: 'story', story, key: story.id });
     });
     return out;
-  }, [popular, adPool]);
+  }, [popular, adPool, carousel]);
   useEffect(() => {
     let current = true;
     api('/v1/stories/popular?discover=1')
