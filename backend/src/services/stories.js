@@ -350,29 +350,28 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
 
 
 async function getDiscoverSections(viewerId, limit = 24) {
-  // Keep the horizontal tray and lower two-column grid as distinct content sets, and
-  // show each creator once across both. The carousel contains unseen followed-creator
-  // stories; those exact story IDs and creators must not be repeated in the grid.
-  // Preserve the ranking engine's order.
+  // The carousel holds stories from creators the viewer follows, until they expire: watched
+  // ones stay in the carousel (after unseen ones) and never move to the grid. The grid holds
+  // everything else, with one story per creator across both sections.
   const ranked = await getDiscoverStories(viewerId, Math.max(limit * 3, 72));
   const creatorOf = (story) => String(story.author?.id ?? '');
   const seenCreators = new Set();
   const carousel = [];
   const carouselCandidates = ranked
-    .filter((story) => story.subscribed && !story.viewed)
-    .sort((a, b) => (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
+    .filter((story) => story.subscribed)
+    .sort((a, b) => (Number(a.viewed) - Number(b.viewed))
+      || (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
   for (const story of carouselCandidates) {
-    if (carousel.length >= Math.min(8, limit)) break;
+    if (carousel.length >= limit) break;
     const creator = creatorOf(story);
     if (!creator || seenCreators.has(creator)) continue;
     seenCreators.add(creator);
     carousel.push(story);
   }
-  const carouselIds = new Set(carousel.map((story) => String(story.id)));
   const items = [];
   for (const story of ranked) {
     if (items.length >= limit) break;
-    if (carouselIds.has(String(story.id))) continue;
+    if (story.subscribed) continue;
     const creator = creatorOf(story);
     if (!creator || seenCreators.has(creator)) continue;
     seenCreators.add(creator);
