@@ -189,3 +189,11 @@
 .st-page .st-discover-card-h .st-card-shade {
   background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.12) 22%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 58%, rgba(0,0,0,.4) 76%, rgba(0,0,0,.82) 100%) !important;
 }
+
+/* Discover tiles (carousel and grid): brighter photo so it reads clearly. */
+.st-page .st-discover-card-h .st-card-img,
+.st-page .st-discover-card-h .st-card-foreground,
+.st-page .st-discover-tile .st-card-img,
+.st-page .st-discover-tile .st-card-foreground {
+  filter: brightness(1.1) contrast(1.04) saturate(1.08) !important;
+}
