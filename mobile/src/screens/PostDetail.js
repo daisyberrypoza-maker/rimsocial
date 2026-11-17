@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, Pressable, TextInput, ScrollView, Modal, Share, Alert, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
 import Video from 'react-native-video';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import PageStatusBar from '../components/PageStatusBar';
 import { MoreHorizontal } from 'lucide-react-native';
 import Avatar from '../components/Avatar';
 import Icon from '../components/Icon';
@@ -194,6 +195,7 @@ export default function PostDetail() {
 
   return (
     <View style={styles.page}>
+      <PageStatusBar light />
       <View style={[styles.media, mediaStyle]} onLayout={(e) => { widthRef.current = e.nativeEvent.layout.width; }}>
         {isVideo ? (
           <>

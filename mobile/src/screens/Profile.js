@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Pressable, FlatList, ScrollView, Share, StatusBar, StyleSheet, useWindowDimensions, Modal, Alert, Switch, RefreshControl, Linking, Animated, Easing, PanResponder } from 'react-native';
+import { View, Text, Image, Pressable, FlatList, ScrollView, Share, StyleSheet, useWindowDimensions, Modal, Alert, Switch, RefreshControl, Linking, Animated, Easing, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import PageStatusBar from '../components/PageStatusBar';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Hash, Megaphone, Shield, Ban, Flag } from 'lucide-react-native';
 import Avatar from '../components/Avatar';
@@ -426,7 +427,7 @@ export default function Profile() {
   return (
     <View style={styles.page}>
       {/* The cover is drawn behind the status bar; its icons are white on the green */}
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <PageStatusBar />
       <View style={{ flex: 1, overflow: 'hidden' }}>
       <Animated.View style={{ flex: 1, transform: [{ translateX: swipeX }] }} {...swipeResponder.panHandlers}>
       <FlatList

@@ -32,7 +32,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <NavigationContainer>
         <RootNavigator signedIn={Boolean(token)} />
       </NavigationContainer>

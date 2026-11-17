@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, Pressable, Image, StyleSheet, useWindowDimensions, RefreshControl, StatusBar } from 'react-native';
+import { View, FlatList, Text, Pressable, Image, StyleSheet, useWindowDimensions, RefreshControl } from 'react-native';
+import PageStatusBar from '../components/PageStatusBar';
 import Video from 'react-native-video';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
@@ -61,7 +62,7 @@ export default function Rimlight() {
 
   return (
     <View style={styles.page} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
-      {focused && <StatusBar barStyle="light-content" />}
+      <PageStatusBar light />
       {pending?.kind === 'post' && (
         <View style={styles.upload} pointerEvents="none">
           {pending.mediaKind === 'video'
