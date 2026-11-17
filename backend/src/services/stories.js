@@ -100,7 +100,8 @@ async function getStoryRail(viewerId) {
   const follows = await Follow.findAll({
     where: { followerId: viewerId }, attributes: ['followeeId'], raw: true,
   });
-  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)))];
+  const bellIds = await bellFolloweeIds(viewerId);
+  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)) && !bellIds.has(String(id)))];
 
   let stories = await trayStories(viewerId, authorIds).catch(() => null);
   if (!stories) {
@@ -172,6 +173,14 @@ async function getUserStories(userId, viewerId) {
   }));
 }
 
+// Followed creators whose bell (post and story notifications) is on. Their stories belong to the
+// Discover carousel only, so they never repeat in the Stories rail or the grid.
+async function bellFolloweeIds(viewerId) {
+  if (!Follow.rawAttributes.notifyPosts) return new Set();
+  const rows = await Follow.findAll({ where: { followerId: viewerId, notifyPosts: true }, attributes: ['followeeId'], raw: true }).catch(() => []);
+  return new Set(rows.map((r) => String(r.followeeId)));
+}
+
 // Whether the viewer subscribes to a creator (a follow) and has the bell on for new posts and stories.
 async function getSubscription(creatorId, viewerId) {
   const follow = await Follow.findOne({ where: { followerId: viewerId, followeeId: creatorId }, raw: true });
@@ -232,6 +241,7 @@ async function getDiscoverStories(viewerId, limit) {
 
   const ids = candidates.map((story) => story.id);
   const authorIds = [...new Set(candidates.map((story) => String(story.authorId)))];
+  const bellIds = await bellFolloweeIds(viewerId);
   const [follows, likedRows, viewed, likeRows, shareRows, affinity] = await Promise.all([
     Follow.findAll({ where: { followerId: viewerId, followeeId: authorIds }, attributes: ['followeeId'], raw: true }),
     sequelize.query(
@@ -294,15 +304,17 @@ async function getDiscoverStories(viewerId, limit) {
       discoverScore: discoverScoreValue,
       viewed: isViewed,
       subscribed: followedIds.has(creatorId),
+      bell: bellIds.has(creatorId),
       topic: topic || null,
     };
   });
 
   scored.sort((a, b) => b.score - a.score || new Date(b.story.createdAt) - new Date(a.story.createdAt));
-  return scored.slice(0, limit).map(({ story, viewed: isViewed, subscribed, topic, carouselScore, discoverScore: ev }) => ({
+  return scored.slice(0, limit).map(({ story, viewed: isViewed, subscribed, bell, topic, carouselScore, discoverScore: ev }) => ({
     ...toPostDTO(story),
     viewed: isViewed,
     subscribed,
+    bell,
     topic,
     ranking: { carousel: Number(carouselScore.toFixed(4)), discover: Number(ev.toFixed(4)) },
   }));
@@ -358,7 +370,7 @@ async function getDiscoverSections(viewerId, limit = 24) {
   const seenCreators = new Set();
   const carousel = [];
   const carouselCandidates = ranked
-    .filter((story) => story.subscribed)
+    .filter((story) => story.bell)
     .sort((a, b) => (Number(a.viewed) - Number(b.viewed))
       || (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
   for (const story of carouselCandidates) {
