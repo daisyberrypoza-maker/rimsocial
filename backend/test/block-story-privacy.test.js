@@ -23,5 +23,5 @@ test('story routes hide blocked creators', () => {
 test('story rail excludes blocked creators, including from the cached rail', () => {
   assert.match(service, /blockedUserIds\(viewerId\)/);
   assert.match(service, /filter\(\(item\) => !blocked\.has\(item\.user\?\.id\) && !muted\.has\(String\(item\.user\?\.id\)\)\)/);
-  assert.match(service, /filter\(\(id\) => !blocked\.has\(id\) && !muted\.has\(String\(id\)\)\)/);
+  assert.match(service, /filter\(\(id\) => !blocked\.has\(id\) && !muted\.has\(String\(id\)\)/);
 });

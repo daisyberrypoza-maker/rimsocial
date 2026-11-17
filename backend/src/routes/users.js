@@ -536,6 +536,8 @@ router.put('/:id/follow/notify', requireAuth, async (req, res, next) => {
       if (/notifyPosts/.test(err.message)) throw httpError(503, 'Post notifications are not available yet on this server');
       throw err;
     }
+    // The rail leaves out bell creators, so the viewer's rail changes when the bell does
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     res.json({ isNotifying: enabled });
   } catch (e) { next(e); }
 });
