@@ -86,13 +86,16 @@ export default function App() {
   }, [meId]);
 
   // On a fresh load at "/", return to the last screen the user was on
-  // Status bar: white on Stories and Chat, dark everywhere else
+  // Status bar: one rule for web and Android. Black by default; white only on
+  // Stories, Rimlight, and the video and image viewers.
   useEffect(() => {
-    const light = location.pathname === '/stories' || location.pathname.startsWith('/chat');
+    const path = location.pathname;
+    const light = path === '/stories' || path === '/' || path === '/following' || path === '/live'
+      || path.startsWith('/explore/watch/') || path.startsWith('/p/');
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
-    meta.content = light ? '#ffffff' : '#171717';
-    // Android app: dark status bar icons on light pages, white on dark ones (see MainActivity)
+    meta.content = light ? '#ffffff' : '#000000';
+    // Android app: sets the status bar colour and icon colour together (see MainActivity)
     window.RimStatus?.setLightBackground?.(light);
     // Full-bleed pages draw behind the status bar; every other page keeps clear of it
     const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/live';

@@ -15,17 +15,19 @@ public class MainActivity extends BridgeActivity {
     Window window = getWindow();
     // Draw behind the status bar, so the profile background reaches the top edge
     WindowCompat.setDecorFitsSystemWindows(window, false);
-    window.setStatusBarColor(0x00000000);
+    // Default status bar: black with light icons; the web app switches it per page
+    window.setStatusBarColor(0xFF000000);
     // The web app calls window.RimStatus.setLightBackground(true|false)
     getBridge().getWebView().addJavascriptInterface(new StatusBridge(), "RimStatus");
   }
 
   private class StatusBridge {
-    // true: the page behind the status bar is light, so the icons are dark
+    // true: white status bar with dark icons; false: black status bar with light icons
     @JavascriptInterface
     public void setLightBackground(final boolean light) {
       runOnUiThread(() -> {
         View decor = getWindow().getDecorView();
+        getWindow().setStatusBarColor(light ? 0xFFFFFFFF : 0xFF000000);
         new WindowInsetsControllerCompat(getWindow(), decor).setAppearanceLightStatusBars(light);
       });
     }
