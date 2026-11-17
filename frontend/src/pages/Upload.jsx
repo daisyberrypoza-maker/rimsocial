@@ -587,9 +587,12 @@ export default function Upload() {
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
     <div className="up-filters">
       {FILTERS.map((f) => (
-        <button key={f.key} type="button" className={`up-filter-thumb${filterKey === f.key ? ' on' : ''}`} onClick={() => setFilterKey(f.key)} disabled={isVideo || !preview} aria-pressed={filterKey === f.key} aria-label={`${f.label} filter`} title={isVideo ? 'Filters are for photos' : f.label} style={{ padding: 0, cursor: 'pointer' }}>
-          {preview && !isVideo && <img src={preview} alt="" style={{ filter: cssFilterFor(f.key) }} />}
-        </button>
+        <span key={f.key} className="up-filter-col">
+          <button type="button" className={`up-filter-thumb${filterKey === f.key ? ' on' : ''}`} onClick={() => setFilterKey(f.key)} disabled={isVideo || !preview} aria-pressed={filterKey === f.key} aria-label={`${f.label} filter`} title={isVideo ? 'Filters are for photos' : f.label} style={{ padding: 0, cursor: 'pointer' }}>
+            {preview && !isVideo && <img src={preview} alt="" style={{ filter: cssFilterFor(f.key) }} />}
+          </button>
+          <span className="up-filter-name">{f.label}</span>
+        </span>
       ))}
       <button type="button" className="up-hd" onClick={soon} aria-label="HD">HD</button>
     </div>

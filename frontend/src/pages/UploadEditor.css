@@ -192,3 +192,9 @@
 .up-page.up-gallery .ig-tile-camera span,
 .up-page.up-gallery .ig-tile-choose span { font-size: 15px; font-weight: 500; }
 .up-page.up-gallery .up-select-next { position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); height: 46px; padding: 0 22px; border: 0; border-radius: 999px; background: #0095f6; color: #fff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+
+/* Lens picker: each lens is a round thumbnail with its name under it */
+.up-page.up-editor .up-filter-col { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.up-page.up-editor .up-filter-col .up-filter-thumb.on { border-color: #0095f6; box-shadow: 0 0 0 2px rgba(0,149,246,.35); }
+.up-page.up-editor .up-filter-name { color: #fff; font-size: 11px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+
