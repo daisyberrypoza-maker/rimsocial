@@ -218,12 +218,33 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
 
 // Following: a Redis sorted set per user (score = post time), filled on post.
 // Paging walks that set in small windows and resumes after the cursor member.
+// Posts reach the Following index when they are published. Posts made before the
+// viewer followed someone, or while the index was missing, are added from the
+// database so Following always shows the creators the viewer follows.
+async function backfillFollowing(userId) {
+  const follows = await Follow.findAll({ where: { followerId: userId }, attributes: ['followeeId'], raw: true });
+  const authorIds = follows.map((f) => f.followeeId);
+  if (!authorIds.length) return;
+  const rows = await Post.findAll({
+    where: { authorId: authorIds, status: 'live', isStory: false, visibility: 'public' },
+    attributes: ['id', 'createdAt'], order: [['createdAt', 'DESC']], limit: 200, raw: true,
+  });
+  if (!rows.length) return;
+  const pipe = redis.pipeline();
+  for (const row of rows) pipe.zadd(`feed:following:${userId}`, new Date(row.createdAt).getTime(), row.id);
+  await pipe.exec();
+}
+
 async function getFollowingPage({ userId, cursor, limit }) {
   const n = clampLimit(limit);
   const c = decodeCursor(cursor);
   const max = c ? c.t : '+inf';
-  const raw = await redis.zrevrangebyscore(
+  let raw = await redis.zrevrangebyscore(
     `feed:following:${userId}`, max, '-inf', 'WITHSCORES', 'LIMIT', 0, n * 4 + 10);
+  if (!c && raw.length === 0) {
+    await backfillFollowing(userId).catch(() => {});
+    raw = await redis.zrevrangebyscore(`feed:following:${userId}`, max, '-inf', 'WITHSCORES', 'LIMIT', 0, n * 4 + 10);
+  }
 
   const entries = [];
   for (let i = 0; i < raw.length; i += 2) entries.push({ id: raw[i], t: Number(raw[i + 1]) });

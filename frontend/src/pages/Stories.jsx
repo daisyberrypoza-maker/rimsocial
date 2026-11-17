@@ -13,6 +13,7 @@ import StoryViewer from '../components/StoryViewer.jsx';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import Avatar from '../components/Avatar.jsx';
 import { logError } from '../toast.js';
+import { formatCount } from '../lib/format.js';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
@@ -357,6 +358,7 @@ export default function Stories() {
                   ? <img className="st-card-img" src={mediaUrl(item.ad.thumbUrl || item.ad.mediaUrl)} alt="" />
                   : <span className="post-text-tile" style={{ background: backgroundCss(item.ad.storyBackground, item.ad.id || item.key) }}>{item.ad.caption || item.ad.storyText || item.ad.sponsorName}</span>}
                 <span className="st-card-shade" />
+                <span className="st-type-badge" aria-hidden="true"><Icon name="store" size={14} /></span>
                 <span className="st-card-foot">
                   <span className="st-card-name">{capName(item.ad.sponsorName || 'Sponsored')}</span>
                   <span className="st-ad-label">Sponsored</span>
@@ -371,12 +373,14 @@ export default function Stories() {
                     <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                   </>}
                 <span className="st-card-shade" />
+                <span className="st-type-badge" aria-label="Rimlight"><Icon name="play" size={14} /></span>
                 {(story.viewed || viewedDiscoverIds.has(String(story.id))) && <span className="st-watch-again"><Icon name="refresh-cw" size={18} style={{ color: "#b8b8b8" }} /><strong>@{capName(story.author?.username || nameOf(story.author || {}))}</strong></span>}
                 {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}
                 <span className="st-card-foot">
                   <span className="st-card-avatar">{story.author?.avatarUrl ? <img src={mediaUrl(story.author.avatarUrl)} alt="" /> : nameOf(story.author || {}).slice(0, 1).toUpperCase()}</span>
                   <span className="st-card-name">{capName(nameOf(story.author || {}))}{story.author?.isCreator && <span className="st-star" aria-label="Verified">★</span>}</span>
                   <span className="st-discover-sub">{postedLabel(story.createdAt)}</span>
+                  <span className="st-views" aria-label={`${formatCount(story.viewCount || 0)} views`}><Icon name="eye" size={12} />{formatCount(story.viewCount || 0)}</span>
                 </span>
               </button>
             ); })())}
