@@ -144,6 +144,7 @@ export default function PostCard({ post, active }) {
   const [likes, setLikes] = useState(post.likeCount);
   const [liked, setLiked] = useState(false);
   const pressTimer = useRef(null);
+  const postSwipeStart = useRef(null);
   const [reposted, setReposted] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
@@ -374,7 +375,32 @@ export default function PostCard({ post, active }) {
     event.preventDefault();
     setShowMenu(true);
   }
-  return <article className="post" data-id={post.id} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
+
+  // A deliberate left swipe on a post opens its creator. Right swipes do nothing.
+  // Ignore controls and the horizontal media carousel so their own gestures remain intact.
+  function onPostTouchStart(event) {
+    const target = event.target;
+    if (target.closest('button:not(.post-tap-layer),a,input,textarea,select,label,.post-carousel,[role="dialog"]')) {
+      postSwipeStart.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    postSwipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  }
+
+  function onPostTouchEnd(event) {
+    const start = postSwipeStart.current;
+    postSwipeStart.current = null;
+    if (!start || !post.author?.username) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    if (dx <= -70 && Math.abs(dx) > Math.abs(dy) * 1.25 && elapsed < 1000) {
+      navigate(`/u/${encodeURIComponent(post.author.username)}`);
+    }
+  }
+  return <article className="post" data-id={post.id} onTouchStart={onPostTouchStart} onTouchEnd={onPostTouchEnd} onTouchCancel={() => { postSwipeStart.current = null; }} onPointerDown={startPress} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress} onPointerMove={cancelPress} onContextMenu={longPressContext}>
     {post.popularStory && <span className="post-story-badge">Story</span>}
     {carouselItems ? <div className="post-carousel-wrap"><div className="post-carousel" onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}>{carouselItems.map((item, i) => <div className="post-carousel-slide" key={i}>{item.kind === 'video' ? <video src={active ? videoStreamUrl(mediaUrl(item.url)) : undefined} muted playsInline controls preload={active ? 'metadata' : 'none'} /> : <img src={mediaUrl(item.url)} alt="" loading="lazy" />}</div>)}</div><span className="post-carousel-count">{slide + 1}/{carouselItems.length}</span><div className="post-carousel-dots" aria-hidden="true">{carouselItems.map((_, i) => <span key={i} className={i === slide ? 'on' : ''} />)}</div></div>
       : isVideoMedia ? <video ref={videoRef} src={active ? src : undefined} poster={poster} loop playsInline preload={active ? 'auto' : 'none'} onPause={() => setPaused(true)} onPlay={() => setPaused(false)} onTimeUpdate={(e) => {
