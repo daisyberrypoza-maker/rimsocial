@@ -7646,3 +7646,15 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   box-sizing: border-box !important;
   scroll-snap-align: start;
 }
+
+/* Pleasant look (Snapchat Pleasant at intensity 0.75): live on Discover, Stories,
+   the story viewer and Rimlight. Display only; the stored photo is not changed. */
+:root { --pleasant-filter: contrast(1.165) saturate(1.26) brightness(1.08); }
+.st-page .st-discover-card-h .st-card-img,
+.st-page .st-discover-tile .st-card-img,
+.feed .post > img, .feed .post > video,
+.feed .post-carousel-slide img, .feed .post-carousel-slide video {
+  filter: var(--pleasant-filter) !important;
+}
+.sv-root .sv-stage.sv-grade-discover > .sv-image,
+.sv-root .sv-stage.sv-grade-discover > video.sv-media { filter: var(--pleasant-filter) !important; }
