@@ -7665,7 +7665,7 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .feed .post-carousel-slide img, .feed .post-carousel-slide video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
 }
-.feed .post .rail { right: 8px; gap: 14px; align-items: center; }
+.feed .post .rail { right: 8px; gap: 10px; align-items: center; }
 .feed .post .rail button,
 .feed .post .rail .rail-btn,
 .feed .post .rail .snap-avatar,
@@ -7675,7 +7675,7 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
   background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important;
 }
 .feed .post .rail .rail-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 !important; font-size: 12px; font-weight: 600; color: #fff; }
-.feed .post .rail .rail-btn svg { width: 26px !important; height: 26px !important; }
+.feed .post .rail .rail-btn svg { width: 24px !important; height: 24px !important; }
 .feed .post .post-seek { display: none !important; }
 
 /* Discover grid: type badge (store = sponsored, play = Rimlight) and view count */
