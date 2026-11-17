@@ -100,8 +100,7 @@ async function getStoryRail(viewerId) {
   const follows = await Follow.findAll({
     where: { followerId: viewerId }, attributes: ['followeeId'], raw: true,
   });
-  const bellIds = await bellFolloweeIds(viewerId);
-  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)) && !bellIds.has(String(id)))];
+  const authorIds = [viewerId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id) && !muted.has(String(id)))];
 
   let stories = await trayStories(viewerId, authorIds).catch(() => null);
   if (!stories) {
@@ -362,18 +361,18 @@ async function getPopularStories(viewerId, limit = 4, { personalized = false } =
 
 
 async function getDiscoverSections(viewerId, limit = 24) {
-  // The carousel holds stories from creators the viewer follows, until they expire: watched
-  // ones stay in the carousel (after unseen ones) and never move to the grid. The grid holds
-  // everything else, with one story per creator across both sections.
+  // Discover shows only accounts the viewer does not follow yet. The carousel is the featured
+  // row: the strongest trending creators, one story per creator, with watched stories kept
+  // there (after unseen ones) until they expire. The grid is the rest of the discover feed,
+  // ranked by the Discover score, one story per creator and never repeating a carousel creator.
   const ranked = await getDiscoverStories(viewerId, Math.max(limit * 3, 72));
   const creatorOf = (story) => String(story.author?.id ?? '');
+  const candidates = ranked.filter((story) => !story.subscribed);
   const seenCreators = new Set();
   const carousel = [];
-  const carouselCandidates = ranked
-    .filter((story) => story.bell)
-    .sort((a, b) => (Number(a.viewed) - Number(b.viewed))
-      || (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
-  for (const story of carouselCandidates) {
+  const trending = [...candidates].sort((a, b) => (Number(a.viewed) - Number(b.viewed))
+    || (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
+  for (const story of trending) {
     if (carousel.length >= limit) break;
     const creator = creatorOf(story);
     if (!creator || seenCreators.has(creator)) continue;
@@ -381,9 +380,8 @@ async function getDiscoverSections(viewerId, limit = 24) {
     carousel.push(story);
   }
   const items = [];
-  for (const story of ranked) {
+  for (const story of candidates) {
     if (items.length >= limit) break;
-    if (story.subscribed) continue;
     const creator = creatorOf(story);
     if (!creator || seenCreators.has(creator)) continue;
     seenCreators.add(creator);
