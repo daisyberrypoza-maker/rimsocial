@@ -19,11 +19,15 @@ export function cssFilterFor(key) {
   return f && f.css !== 'none' ? f.css : undefined;
 }
 
-// Re-encodes a photo with the chosen lens. Videos and "original" pass through unchanged.
+import { drawTextLayer } from './textLayers.js';
+
+// Re-encodes a photo with the chosen lens and any text layers. Videos and "original" pass through unchanged.
 // Browsers without canvas filter support keep the grade off but still apply glow and tint.
-export async function bakeFilter(file, key) {
+export async function bakeFilter(file, key, layers = []) {
   const lens = FILTERS.find((x) => x.key === key);
-  if (!lens || lens.key === 'original' || !String(file.type).startsWith('image/')) return file;
+  if (!String(file.type).startsWith('image/')) return file;
+  const grade = Boolean(lens) && lens.key !== 'original';
+  if (!grade && !layers.length) return file;
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise((resolve, reject) => {
@@ -38,10 +42,10 @@ export async function bakeFilter(file, key) {
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.filter = lens.css;
+    if (grade) ctx.filter = lens.css;
     ctx.drawImage(img, 0, 0);
     ctx.filter = 'none';
-    if (lens.bloom) {
+    if (grade && lens.bloom) {
       ctx.save();
       ctx.globalAlpha = lens.bloom.alpha;
       ctx.filter = `blur(${lens.bloom.blur}px) brightness(115%)`;
@@ -49,7 +53,7 @@ export async function bakeFilter(file, key) {
       ctx.drawImage(img, 0, 0, w, h);
       ctx.restore();
     }
-    if (lens.tint) {
+    if (grade && lens.tint) {
       ctx.save();
       ctx.globalAlpha = lens.tint.alpha;
       ctx.globalCompositeOperation = 'soft-light';
@@ -57,13 +61,14 @@ export async function bakeFilter(file, key) {
       ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
-    if (lens.vignette) {
+    if (grade && lens.vignette) {
       const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
       g.addColorStop(0, 'rgba(0,0,0,0)');
       g.addColorStop(1, `rgba(0,0,0,${lens.vignette})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
+    layers.forEach((layer) => drawTextLayer(ctx, layer, w, h));
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return file;
     const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
