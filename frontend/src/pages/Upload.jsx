@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
 import { FILTERS, cssFilterFor, bakeFilter } from '../lib/photoFilters.js';
+import { TEXT_FONTS } from '../lib/textLayers.js';
+import TextEditor from '../components/TextEditor.jsx';
 import { cameraZoom } from '../lib/cameraZoom.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -238,6 +240,8 @@ export default function Upload() {
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
   const [filterKey, setFilterKey] = useState('original');
+  const [textLayers, setTextLayers] = useState([]);
+  const [textEdit, setTextEdit] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -416,7 +420,8 @@ export default function Upload() {
         ? await trimVideo(rawFile || file, STORY_MAX_SECONDS)
         : null;
       // The chosen photo filter is baked into the file, so the published photo matches the preview.
-      const uploadFile = await bakeFilter(file, filterKey).catch(() => file);
+      if (isVideo && textLayers.length) toast('Text is shown on photos only for now');
+      const uploadFile = await bakeFilter(file, filterKey, textLayers).catch(() => file);
       startUpload({
         toStory, file: toStory ? (storyFile || uploadFile) : uploadFile, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         storyFiles: toStory && carousel.length > 1 ? await Promise.all(carousel.map((f) => (String(f.type).startsWith('video/') ? trimVideo(f, STORY_MAX_SECONDS) : f))) : null,
@@ -427,6 +432,7 @@ export default function Upload() {
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
       setTopic(''); setAiLabel(false); setShareToStory(false);
       setFilterKey('original');
+      setTextLayers([]);
       setFile(null);
       setRawFile(null);
       setCarousel([]);
@@ -553,6 +559,14 @@ export default function Upload() {
   }
 
   const soon = () => toast('This tool is not available yet');
+  function saveTextLayer(layer) {
+    setTextLayers((list) => (textEdit?.index >= 0 ? list.map((l, i) => (i === textEdit.index ? layer : l)) : [...list, layer]));
+    setTextEdit(null);
+  }
+  function deleteTextLayer() {
+    setTextLayers((list) => list.filter((_, i) => i !== textEdit.index));
+    setTextEdit(null);
+  }
   const rail = [
     { key: 'draw', label: 'Draw', glyph: 'pencil' },
     { key: 'sticker', label: 'Stickers', glyph: 'sticker' },
@@ -567,6 +581,9 @@ export default function Upload() {
 
   return <main className="up-page up-editor">
     <div className="up-media">
+      {textLayers.map((layer, i) => (
+        <button key={i} type="button" className="up-text-layer" onClick={() => setTextEdit({ index: i, layer })} style={{ left: `${layer.x * 100}%`, top: `${layer.y * 100}%`, transform: layer.align === 'left' ? 'translate(0,-50%)' : layer.align === 'right' ? 'translate(-100%,-50%)' : 'translate(-50%,-50%)', color: layer.color, fontFamily: TEXT_FONTS[layer.font]?.family, fontWeight: TEXT_FONTS[layer.font]?.weight, textAlign: layer.align, background: layer.bg === 'box' ? 'rgba(0,0,0,.55)' : 'transparent', textShadow: layer.bg === 'box' ? 'none' : '0 2px 6px rgba(0,0,0,.5)' }} aria-label={`Edit text: ${layer.text}`}>{layer.text}</button>
+      ))}
       {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
       {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
     </div>
@@ -578,13 +595,14 @@ export default function Upload() {
         <span className="up-music-sep" aria-hidden="true" />
         <span className="up-music-plus" aria-hidden="true"><Icon name="plus" size={18} /></span>
       </button>
-      <button type="button" className="up-icon up-t-btn" onClick={() => setDetailsOpen(true)} aria-label="Add caption"><span className="up-t">T</span></button>
+      <button type="button" className="up-icon up-t-btn" onClick={() => setTextEdit({ index: -1, layer: null })} aria-label="Add text"><span className="up-t">T</span></button>
     </header>
     <nav className="up-rail" aria-label="Editing tools">
       {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={24} /></button>}
       {rail.map((tool) => <button key={tool.key} type="button" onClick={soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
     </nav>
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
+    {textEdit && <TextEditor initial={textEdit.layer} onDone={saveTextLayer} onCancel={() => setTextEdit(null)} onDelete={textEdit.index >= 0 ? deleteTextLayer : undefined} />}
     <div className="up-filters">
       {FILTERS.map((f) => (
         <span key={f.key} className="up-filter-col">
