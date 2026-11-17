@@ -98,7 +98,7 @@ export default function App() {
     // Android app: sets the status bar colour and icon colour together (see MainActivity)
     window.RimStatus?.setLightBackground?.(light);
     // Full-bleed pages draw behind the status bar; every other page keeps clear of it
-    const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/live';
+    const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/following' || location.pathname === '/live';
     document.documentElement.classList.toggle('bleed-top', bleed);
   }, [location.pathname]);
 
