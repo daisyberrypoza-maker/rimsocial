@@ -1,9 +1,7 @@
-// Photo filter presets for upload. "Pleasant" follows the look described for the
-// Snapchat Pleasant lens at intensity 0.75: punchy contrast/saturation, a soft
-// bloom, and a warm rose tint. Other presets are simple CSS grades.
+// Photo filter presets for upload. Pleasant is not baked here: it is a live display
+// look on Discover, Stories, the story viewer and Rimlight (see styles.css --pleasant-filter).
 export const FILTERS = [
   { key: 'original', label: 'Original', css: 'none' },
-  { key: 'pleasant', label: 'Pleasant', css: 'contrast(116.5%) saturate(126%) brightness(104.5%)', pleasant: true },
   { key: 'warm', label: 'Warm', css: 'sepia(.18) saturate(1.25) contrast(1.05) brightness(1.04)' },
   { key: 'noir', label: 'Noir', css: 'grayscale(1) contrast(1.25) brightness(.95)' },
   { key: 'soft', label: 'Soft', css: 'contrast(.95) saturate(1.1) brightness(1.06)' },
@@ -33,20 +31,6 @@ export async function bakeFilter(file, key) {
     const ctx = canvas.getContext('2d');
     ctx.filter = filter.css;
     ctx.drawImage(img, 0, 0);
-    if (filter.pleasant) {
-      ctx.save();
-      ctx.globalAlpha = 0.25 * 0.75;
-      ctx.filter = 'blur(8px) brightness(115%)';
-      ctx.globalCompositeOperation = 'screen';
-      ctx.drawImage(img, 0, 0);
-      ctx.restore();
-      ctx.save();
-      ctx.globalAlpha = 0.14 * 0.75;
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.fillStyle = '#ff7b89';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-    }
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return file;
     const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
