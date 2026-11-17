@@ -358,9 +358,12 @@ async function getDiscoverSections(viewerId, limit = 24) {
   const creatorOf = (story) => String(story.author?.id ?? '');
   const seenCreators = new Set();
   const carousel = [];
+  // Followed creators' stories stay in the carousel until they expire. Unseen ones come first,
+  // then watched ones, each ordered by the carousel score.
   const carouselCandidates = ranked
-    .filter((story) => story.subscribed && !story.viewed)
-    .sort((a, b) => (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
+    .filter((story) => story.subscribed)
+    .sort((a, b) => (Number(Boolean(a.viewed)) - Number(Boolean(b.viewed)))
+      || (Number(b.ranking?.carousel) || 0) - (Number(a.ranking?.carousel) || 0));
   for (const story of carouselCandidates) {
     if (carousel.length >= Math.min(8, limit)) break;
     const creator = creatorOf(story);
