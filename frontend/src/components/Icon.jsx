@@ -5,7 +5,7 @@ import {
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
-  File as FileIcon, LogOut, Ban, BellOff, Copy, Reply, Music, Mic, Download, Flag, Smile, BookmarkCheck, Pin, PinOff,
+  File as FileIcon, LogOut, Ban, BellOff, Copy, Reply, Music, Mic, Download, Flag, Smile, BookmarkCheck, Pin, PinOff, Store,
 } from 'lucide-react';
 
 const ICONS = {
@@ -22,6 +22,7 @@ const ICONS = {
   sliders: SlidersHorizontal, ellipsis: MoreHorizontal, 'more-vertical': MoreVertical, trash: Trash2, 'volume-2': Volume2, 'volume-x': VolumeX, pause: Pause, 'skip-back': SkipBack, 'skip-forward': SkipForward,
   'arrow-right': ArrowRight,
   eye: Eye,
+  store: Store,
   'eye-off': EyeOff,
   close: X,
   x: X,
