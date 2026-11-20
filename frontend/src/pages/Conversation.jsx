@@ -179,7 +179,7 @@ function PhotoEditor({ src, tool, texts, emojis, editorRef, onMove }) {
       <img
         ref={img}
         src={src}
-        alt=""
+        alt="Photo to edit"
         onLoad={measure}
         className="cv-edit-img"
         style={box ? { left: box.left, top: box.top, width: box.width, height: box.height } : { visibility: 'hidden' }}
