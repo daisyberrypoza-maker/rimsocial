@@ -108,6 +108,22 @@ export default function Profile() {
   const [imageChoiceOpen, setImageChoiceOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
+  const PROFILE_REPORT_REASONS = ['Spam', 'Harassment or hate', 'Impersonation', 'Inappropriate content', 'Something else'];
+  async function reportProfile(reason) {
+    if (reportBusy) return;
+    setReportBusy(true);
+    try {
+      await api(`/v1/users/${profile.id}/report`, { method: 'POST', body: { reason } });
+      setReportOpen(false);
+      toast('Thanks. We will review this profile.');
+    } catch (err) {
+      toast(err.message || 'Could not send the report');
+    } finally {
+      setReportBusy(false);
+    }
+  }
   const [notifyBusy, setNotifyBusy] = useState(false);
   // 0 to 1: how far the scrolled bar has faded in
   const [compactProgress, setCompactProgress] = useState(0);
@@ -645,9 +661,16 @@ export default function Profile() {
         </section>
       </div>}
 
+      {reportOpen && <div className="sc-options-backdrop" onClick={() => setReportOpen(false)}>
+        <section className="sc-options-sheet" role="dialog" aria-label={`Report @${profile.username}`} onClick={(e) => e.stopPropagation()}>
+          <p className="sc-option"><strong>Why are you reporting @{profile.username}?</strong></p>
+          {PROFILE_REPORT_REASONS.map((reason) => <button key={reason} className="sc-option" disabled={reportBusy} onClick={() => reportProfile(reason)}>{reason}</button>)}
+        </section>
+      </div>}
       {optionsOpen && !profile.isMe && <div className="sc-options-backdrop" onClick={() => setOptionsOpen(false)}>
         <section className="sc-options-sheet" role="dialog" aria-label={`Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
           <button className="sc-option danger" onClick={blockProfile}>Block</button>
+          <button className="sc-option danger" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>Report</button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(chatPath('direct', profile.id)); }}><span>Contact</span><Icon name="mail" size={18} /></button>

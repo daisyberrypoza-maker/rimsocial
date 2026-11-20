@@ -13,7 +13,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage, ProfileView, QuickAddDismissal } = require('../db');
+const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage, ProfileView, QuickAddDismissal, UserReport } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -451,6 +451,21 @@ router.get('/:username/following', requireAuth, async (req, res, next) => {
 });
 
 // Block and unblock creators from the post controls menu.
+// POST /v1/users/:id/report  body: { reason }: report a profile for review (one pending report per reporter)
+router.post('/:id/report', requireAuth, async (req, res, next) => {
+  try {
+    if (req.params.id === req.user.id) throw httpError(400, 'You cannot report yourself');
+    const target = await User.findByPk(req.params.id, { attributes: ['id'] });
+    if (!target) throw httpError(404, 'User not found');
+    const reason = String(req.body?.reason || '').trim().slice(0, 500);
+    if (!reason) throw httpError(400, 'Choose a reason for reporting this profile');
+    const existing = await UserReport.findOne({ where: { reportedUserId: req.params.id, reporterId: req.user.id, status: 'pending' } });
+    if (existing) throw httpError(409, 'You have already reported this profile');
+    await UserReport.create({ reportedUserId: req.params.id, reporterId: req.user.id, reason });
+    res.status(201).json({ reported: true });
+  } catch (err) { next(err); }
+});
+
 router.post('/:id/block', requireAuth, async (req, res, next) => {
   try {
     if (req.params.id === req.user.id) throw httpError(400, 'You cannot block yourself');
