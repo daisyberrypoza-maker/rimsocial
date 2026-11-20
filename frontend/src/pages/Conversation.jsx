@@ -1120,6 +1120,12 @@ export default function Conversation({ userId }) {
           <span className="dm-cname">{name}</span>
           {subtitle && <small className={typing ? 'cv-subtitle typing' : 'cv-subtitle'}>{subtitle}</small>}
         </span>
+        <button type="button" className="dm-icon cv-head-action" onClick={() => toast('Calls are not available yet')} aria-label="Voice call">
+          <svg {...ICON}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" /></svg>
+        </button>
+        <button type="button" className="dm-icon cv-head-action" onClick={() => toast('Video calls are not available yet')} aria-label="Video call">
+          <svg {...ICON}><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+        </button>
         <button type="button" className="dm-icon cv-head-action" onClick={(e) => { setChatAnchor(e.currentTarget.getBoundingClientRect()); setChatMenu(true); }} aria-label="Chat options">
           <svg {...ICON}><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
         </button>

@@ -648,6 +648,7 @@ export default function Profile() {
       {optionsOpen && !profile.isMe && <div className="sc-options-backdrop" onClick={() => setOptionsOpen(false)}>
         <section className="sc-options-sheet" role="dialog" aria-label={`Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
           <button className="sc-option danger" onClick={blockProfile}>Block</button>
+          <button className="sc-option danger" onClick={() => { setOptionsOpen(false); toast('Profile reporting is not available yet.'); }}>Report</button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
           <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
           <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(chatPath('direct', profile.id)); }}><span>Contact</span><Icon name="mail" size={18} /></button>
