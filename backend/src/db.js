@@ -222,6 +222,14 @@ const PostReport = sequelize.define('PostReport', {
   status: { type: DataTypes.ENUM('pending', 'reviewed', 'dismissed'), defaultValue: 'pending' },
 }, { tableName: 'post_reports', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['reporterId', 'createdAt'] }] });
 
+const UserReport = sequelize.define('UserReport', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  reportedUserId: { type: DataTypes.UUID, allowNull: false },
+  reporterId: { type: DataTypes.UUID, allowNull: false },
+  reason: { type: DataTypes.STRING(500), allowNull: false },
+  status: { type: DataTypes.ENUM('pending', 'reviewed', 'dismissed'), defaultValue: 'pending' },
+}, { tableName: 'user_reports', indexes: [{ fields: ['reportedUserId', 'createdAt'] }, { fields: ['reporterId', 'createdAt'] }] });
+
 const ContentEarning = sequelize.define('ContentEarning', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   creatorId: { type: DataTypes.UUID, allowNull: false },
@@ -484,6 +492,6 @@ module.exports = {
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport, UserReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };

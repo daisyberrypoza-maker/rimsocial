@@ -463,7 +463,7 @@ export default function Upload() {
         <nav className="ig-create-modes" aria-label="Create type">
           {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
         </nav>
-        <button type="button" className="ig-create-gear" onClick={() => toast('Not available yet')} aria-label="Settings"><Icon name="settings" size={28} /></button>
+        <button type="button" className="ig-create-gear" onClick={() => navigate('/algorithm')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
       <div className="ig-create-sub">
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
