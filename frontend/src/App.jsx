@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store.js';
 import { refreshMyThumb } from './lib/myThumb.js';
@@ -8,38 +8,55 @@ import { api } from './api.js';
 import { loadAccount } from './account.js';
 import TopBar from './components/TopBar.jsx';
 import BottomNav from './components/BottomNav.jsx';
-import MyFriends from './pages/MyFriends.jsx';
-import Following from './pages/Following.jsx';
-import Algorithm from './pages/Algorithm.jsx';
-import Messages from './pages/Messages.jsx';
-import Conversation from './pages/Conversation.jsx';
-import OrderDetails from './pages/OrderDetails.jsx';
-import GroupConversationPage from './pages/GroupConversation.jsx';
+const MyFriends = lazy(() => import('./pages/MyFriends.jsx'));
+const Following = lazy(() => import('./pages/Following.jsx'));
+const Algorithm = lazy(() => import('./pages/Algorithm.jsx'));
+const Messages = lazy(() => import('./pages/Messages.jsx'));
+const Conversation = lazy(() => import('./pages/Conversation.jsx'));
+const OrderDetails = lazy(() => import('./pages/OrderDetails.jsx'));
+const GroupConversationPage = lazy(() => import('./pages/GroupConversation.jsx'));
 import { DirectChatRoute, GroupChatRoute } from './pages/ChatRoutes.jsx';
 import LiveChat from './components/LiveChat.jsx';
-import NewMessage from './pages/NewMessage.jsx';
+const NewMessage = lazy(() => import('./pages/NewMessage.jsx'));
 import Toast from './components/Toast.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
-import Login from './pages/Login.jsx';
-import Feed from './pages/Feed.jsx';
-import Explore from './pages/Explore.jsx';
-import Upload from './pages/Upload.jsx';
-import StoryComposer from './pages/StoryComposer.jsx';
-import Profile from './pages/Profile.jsx';
-import ProfileFeed from './pages/ProfileFeed.jsx';
-import CreatorStudio from './pages/CreatorStudio.jsx';
-import PostDetail from './pages/PostDetail.jsx';
-import LiveMatchRoom from './pages/LiveMatchRoom.jsx';
-import Activity from './pages/Activity.jsx';
-import Stories from './pages/Stories.jsx';
-import Recommended from './pages/Recommended.jsx';
-import LiveBroadcasts from './pages/LiveBroadcasts.jsx';
-import LiveCreate from './pages/LiveCreate.jsx';
-import AdsSponsors from './pages/AdsSponsors.jsx';
-import ExploreWatch from './pages/ExploreWatch.jsx';
-import Search from './pages/Search.jsx';
-import EditProfile from './pages/EditProfile.jsx';
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Feed = lazy(() => import('./pages/Feed.jsx'));
+const Explore = lazy(() => import('./pages/Explore.jsx'));
+const Upload = lazy(() => import('./pages/Upload.jsx'));
+const StoryComposer = lazy(() => import('./pages/StoryComposer.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
+const ProfileFeed = lazy(() => import('./pages/ProfileFeed.jsx'));
+const CreatorStudio = lazy(() => import('./pages/CreatorStudio.jsx'));
+const PostDetail = lazy(() => import('./pages/PostDetail.jsx'));
+const LiveMatchRoom = lazy(() => import('./pages/LiveMatchRoom.jsx'));
+const Activity = lazy(() => import('./pages/Activity.jsx'));
+const Stories = lazy(() => import('./pages/Stories.jsx'));
+const Recommended = lazy(() => import('./pages/Recommended.jsx'));
+const LiveBroadcasts = lazy(() => import('./pages/LiveBroadcasts.jsx'));
+const LiveCreate = lazy(() => import('./pages/LiveCreate.jsx'));
+const AdsSponsors = lazy(() => import('./pages/AdsSponsors.jsx'));
+const ExploreWatch = lazy(() => import('./pages/ExploreWatch.jsx'));
+const Search = lazy(() => import('./pages/Search.jsx'));
+const EditProfile = lazy(() => import('./pages/EditProfile.jsx'));
 import { useTabSwipe } from './lib/tabSwipe.js';
+import NotFound from './pages/NotFound.jsx';
+
+// Human-readable title per route, so browser tabs and history show what the page is.
+const PAGE_TITLES = {
+  '/': 'Home', '/stories': 'Stories', '/following': 'Following', '/explore': 'Explore',
+  '/live': 'Live', '/search': 'Search', '/upload': 'Create', '/chat': 'Messages',
+  '/activity': 'Activity', '/login': 'Log in', '/recommended': 'Recommended', '/algorithm': 'Your algorithm',
+  '/creator': 'Creator studio', '/friends': 'Friends', '/my-friends': 'Friends', '/u/me/edit': 'Edit profile',
+};
+function pageTitleFor(pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  if (pathname.startsWith('/u/')) return 'Profile';
+  if (pathname.startsWith('/p/')) return 'Post';
+  if (pathname.startsWith('/explore/watch/')) return 'Watch';
+  if (pathname.startsWith('/orders/')) return 'Order';
+  return null;
+}
 
 function RequireAuth({ children }) {
   const token = useAppStore((s) => s.token);
@@ -70,6 +87,10 @@ export default function App() {
   const token = useAppStore((s) => s.token);
   const setSession = useAppStore((s) => s.setSession);
   const setLastPath = useAppStore((s) => s.setLastPath);
+  useEffect(() => {
+    const title = pageTitleFor(location.pathname);
+    document.title = title ? `${title} · RimSocial` : 'RimSocial';
+  }, [location.pathname]);
   const meId = useAppStore((s) => s.user?.id);
   // Your avatar shows your latest story or post everywhere except the profile page
   useEffect(() => { if (meId) refreshMyThumb(); }, [meId]);
@@ -168,6 +189,7 @@ export default function App() {
   return (
     <div className="app">
       {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/following-list' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/search') && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
+      <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading…</div>}>
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
@@ -205,8 +227,9 @@ export default function App() {
         <Route path="/u/me/edit" element={<RequireAuth><EditProfile /></RequireAuth>} />
         <Route path="/u/:username" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/u/:username/:list" element={<RequireAuth><Profile /></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && <BottomNav />}
       <LiveChat />
       <Toast />
