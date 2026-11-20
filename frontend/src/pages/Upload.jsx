@@ -463,7 +463,6 @@ export default function Upload() {
         <nav className="ig-create-modes" aria-label="Create type">
           {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
         </nav>
-        <button type="button" className="ig-create-gear" onClick={() => toast('Not available yet')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
       <div className="ig-create-sub">
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
@@ -558,7 +557,6 @@ export default function Upload() {
     </main>;
   }
 
-  const soon = () => toast('This tool is not available yet');
   function saveTextLayer(layer) {
     setTextLayers((list) => (textEdit?.index >= 0 ? list.map((l, i) => (i === textEdit.index ? layer : l)) : [...list, layer]));
     setTextEdit(null);
@@ -567,17 +565,6 @@ export default function Upload() {
     setTextLayers((list) => list.filter((_, i) => i !== textEdit.index));
     setTextEdit(null);
   }
-  const rail = [
-    { key: 'draw', label: 'Draw', glyph: 'pencil' },
-    { key: 'sticker', label: 'Stickers', glyph: 'sticker' },
-    { key: 'effects', label: 'Effects', glyph: 'effects' },
-    { key: 'face', label: 'Face stickers', glyph: 'face' },
-    { key: 'ai', label: 'AI effects', glyph: 'sparkle' },
-    { key: 'link', label: 'Link', glyph: 'link' },
-    { key: 'crop', label: 'Crop', glyph: 'crop' },
-    { key: 'loop', label: 'Loop', glyph: 'infinity' },
-    { key: 'friend', label: 'Add friend', glyph: 'friend' },
-  ];
 
   return <main className="up-page up-editor">
     <div className="up-media">
@@ -599,7 +586,6 @@ export default function Upload() {
     </header>
     <nav className="up-rail" aria-label="Editing tools">
       {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={24} /></button>}
-      {rail.map((tool) => <button key={tool.key} type="button" onClick={soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
     </nav>
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
     {textEdit && <TextEditor initial={textEdit.layer} onDone={saveTextLayer} onCancel={() => setTextEdit(null)} onDelete={textEdit.index >= 0 ? deleteTextLayer : undefined} />}
@@ -612,7 +598,6 @@ export default function Upload() {
           <span className="up-filter-name">{f.label}</span>
         </span>
       ))}
-      <button type="button" className="up-hd" onClick={soon} aria-label="HD">HD</button>
     </div>
     <div className="up-timeline-wrap">
       <div className="up-timeline" aria-hidden="true">
@@ -643,18 +628,3 @@ function AiGlyph() {
   return <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 27L8 9l6 18" /><path d="M4.5 21h7" /><path d="M21 6l1.2 3.3L25.5 10.5 22.2 11.7 21 15l-1.2-3.3L16.5 10.5l3.3-1.2z" fill="currentColor" stroke="none" /></svg>;
 }
 
-function RailGlyph({ name }) {
-  const common = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
-  switch (name) {
-    case 'pencil': return <svg {...common}><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M4 21h16" /></svg>;
-    case 'sticker': return <svg {...common}><path d="M5 3h10l6 6v8a4 4 0 0 1-4 4H5z" /><path d="M15 3v5a1 1 0 0 0 1 1h5" /></svg>;
-    case 'effects': return <svg {...common}><path d="M9 4l1.5 3.5L14 9l-3.5 1.5L9 14l-1.5-3.5L4 9l3.5-1.5z" /><path d="M17 12l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" /></svg>;
-    case 'face': return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4 4 0 0 0 7 0" /><path d="M9 9.5h.01M15 9.5h.01" strokeWidth="2.6" /></svg>;
-    case 'sparkle': return <svg {...common}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" fill="currentColor" /></svg>;
-    case 'link': return <svg {...common}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>;
-    case 'crop': return <svg {...common}><path d="M6 2v16h16" /><path d="M2 6h16v16" /></svg>;
-    case 'infinity': return <svg {...common}><path d="M12 12c-2-3-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1 6-4s4-4 6-4a4 4 0 0 1 0 8c-2 0-4-1-6-4z" /></svg>;
-    case 'friend': return <svg {...common}><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0" /><path d="M19 8v6M16 11h6" /></svg>;
-    default: return null;
-  }
-}
