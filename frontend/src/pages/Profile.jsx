@@ -12,6 +12,7 @@ import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import { mediaUrl } from '../lib/config.js';
+import { averageTopColor, setPageStatusColor } from '../lib/statusBar.js';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
@@ -186,6 +187,16 @@ export default function Profile() {
     setViewing(0);
     navigate(location.pathname, { replace: true, state: null });
   }, [location.state, location.pathname, tab, stories.length, navigate]);
+  // The status bar takes the colour of the cover: the uploaded photo's top, or the default cover's top colour.
+  const coverSource = coverPreview || (profile?.coverUrl ? mediaUrl(profile.coverUrl) : null);
+  useEffect(() => {
+    if (!profile) return undefined;
+    let cancelled = false;
+    const apply = (hex) => { if (!cancelled) setPageStatusColor(hex || '#000000'); };
+    if (coverSource) averageTopColor(coverSource).then(apply);
+    else apply(defaultCover(profile.username).top);
+    return () => { cancelled = true; };
+  }, [profile?.username, coverSource]);
 
   useEffect(() => {
     if (tab !== 'stories' || !profile) return undefined;
