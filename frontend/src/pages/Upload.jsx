@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
-import { FILTERS, cssFilterFor, bakeFilter } from '../lib/photoFilters.js';
-import { TEXT_FONTS } from '../lib/textLayers.js';
+import { FILTERS, cssFilterFor, bakeFilter, CROP_RATIOS, STROKE_WIDTH } from '../lib/photoFilters.js';
+import { TEXT_COLORS, TEXT_FONTS } from '../lib/textLayers.js';
 import TextEditor from '../components/TextEditor.jsx';
 import { cameraZoom } from '../lib/cameraZoom.js';
 import { api } from '../api.js';
@@ -245,6 +245,14 @@ export default function Upload() {
   const [filterKey, setFilterKey] = useState('original');
   const [textLayers, setTextLayers] = useState([]);
   const [stickersOpen, setStickersOpen] = useState(false);
+  // Draw: strokes are stored as fractions of the photo, so they line up on any screen size.
+  const [strokes, setStrokes] = useState([]);
+  const [liveStroke, setLiveStroke] = useState(null);
+  const [drawMode, setDrawMode] = useState(false);
+  const [drawColor, setDrawColor] = useState('#ffffff');
+  const [photoSize, setPhotoSize] = useState(null);
+  const [cropRatio, setCropRatio] = useState('original');
+  const [cropOpen, setCropOpen] = useState(false);
   const [textEdit, setTextEdit] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
@@ -425,7 +433,8 @@ export default function Upload() {
         : null;
       // The chosen photo filter is baked into the file, so the published photo matches the preview.
       if (isVideo && textLayers.length) toast('Text is shown on photos only for now');
-      const uploadFile = await bakeFilter(file, filterKey, textLayers).catch(() => file);
+      if (isVideo && (strokes.length || cropRatio !== 'original')) toast('Drawing and crop are applied to photos only for now');
+      const uploadFile = await bakeFilter(file, filterKey, textLayers, { strokes, crop: cropRatio }).catch(() => file);
       startUpload({
         toStory, file: toStory ? (storyFile || uploadFile) : uploadFile, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         storyFiles: toStory && carousel.length > 1 ? await Promise.all(carousel.map((f) => (String(f.type).startsWith('video/') ? trimVideo(f, STORY_MAX_SECONDS) : f))) : null,
@@ -583,13 +592,39 @@ export default function Upload() {
     { key: 'friend', label: 'Add friend', glyph: 'friend' },
   ];
 
+  function railAction(key) {
+    return () => {
+      if (key === 'sticker') { setStickersOpen((open) => !open); setDrawMode(false); setCropOpen(false); return; }
+      if (key === 'draw') { setDrawMode((on) => !on); setStickersOpen(false); setCropOpen(false); return; }
+      if (key === 'crop') { setCropOpen((open) => !open); setStickersOpen(false); setDrawMode(false); return; }
+      soon();
+    };
+  }
+  // Pointer position in photo fractions, using the same cover-fit mapping as the preview SVG.
+  function photoPoint(event, svg) {
+    const ctm = svg.getScreenCTM();
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    const p = pt.matrixTransform(ctm.inverse());
+    return { x: Math.min(1, Math.max(0, p.x)), y: Math.min(1, Math.max(0, p.y / (photoSize.h / photoSize.w))) };
+  }
+  const cropFrame = CROP_RATIOS[cropRatio] ?? null;
+
   return <main className="up-page up-editor">
     <div className="up-media">
       {textLayers.map((layer, i) => (
         <button key={i} type="button" className="up-text-layer" onClick={() => setTextEdit({ index: i, layer })} style={{ left: `${layer.x * 100}%`, top: `${layer.y * 100}%`, transform: layer.align === 'left' ? 'translate(0,-50%)' : layer.align === 'right' ? 'translate(-100%,-50%)' : 'translate(-50%,-50%)', color: layer.color, fontFamily: TEXT_FONTS[layer.font]?.family, fontWeight: TEXT_FONTS[layer.font]?.weight, textAlign: layer.align, background: layer.bg === 'box' ? 'rgba(0,0,0,.55)' : 'transparent', textShadow: layer.bg === 'box' ? 'none' : '0 2px 6px rgba(0,0,0,.5)' }} aria-label={`Edit text: ${layer.text}`}>{layer.text}</button>
       ))}
       {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
-      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img src={preview} alt="Selected media" />}
+      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img onLoad={(e) => setPhotoSize({ w: e.currentTarget.naturalWidth || 1, h: e.currentTarget.naturalHeight || 1 })} src={preview} alt="Selected media" />}
+      {photoSize && !isVideo && (strokes.length > 0 || liveStroke || drawMode) && <svg className={`up-draw-layer${drawMode ? ' is-drawing' : ''}`} viewBox={`0 0 1 ${photoSize.h / photoSize.w}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true"
+        onPointerDown={drawMode ? (e) => { e.currentTarget.setPointerCapture(e.pointerId); setLiveStroke({ color: drawColor, points: [photoPoint(e, e.currentTarget)] }); } : undefined}
+        onPointerMove={drawMode && liveStroke ? (e) => setLiveStroke((st) => ({ ...st, points: [...st.points, photoPoint(e, e.currentTarget)] })) : undefined}
+        onPointerUp={drawMode && liveStroke ? () => { setStrokes((list) => [...list, liveStroke]); setLiveStroke(null); } : undefined}>
+        {[...strokes, ...(liveStroke ? [liveStroke] : [])].map((stroke, i) => <polyline key={i} fill="none" stroke={stroke.color} strokeWidth={STROKE_WIDTH} strokeLinecap="round" strokeLinejoin="round" points={stroke.points.map((p) => `${p.x},${p.y * (photoSize.h / photoSize.w)}`).join(' ')} />)}
+      </svg>}
+      {cropFrame && <div className="up-crop-frame" style={{ aspectRatio: String(cropFrame), width: `min(100vw, ${100 * cropFrame}vh)` }} aria-hidden="true" />}
     </div>
     <header className="up-editor-top">
       <button type="button" className="up-icon" onClick={() => setView('gallery')} aria-label="Back to gallery"><Icon name="x" size={28} /></button>
@@ -603,8 +638,16 @@ export default function Upload() {
     </header>
     <nav className="up-rail" aria-label="Editing tools">
       {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={24} /></button>}
-      {rail.map((tool) => <button key={tool.key} type="button" onClick={tool.key === 'sticker' ? () => setStickersOpen((open) => !open) : soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
+      {rail.map((tool) => <button key={tool.key} type="button" onClick={railAction(tool.key)} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
     </nav>
+    {drawMode && <div className="up-draw-bar" role="toolbar" aria-label="Drawing">
+      {TEXT_COLORS.slice(0, 6).map((color) => <button key={color} type="button" className={`up-draw-color${drawColor === color ? ' on' : ''}`} style={{ background: color }} aria-label={`Draw in ${color}`} onClick={() => setDrawColor(color)} />)}
+      <button type="button" onClick={() => setStrokes((list) => list.slice(0, -1))} disabled={!strokes.length}>Undo</button>
+      <button type="button" className="up-draw-done" onClick={() => setDrawMode(false)}>Done</button>
+    </div>}
+    {cropOpen && <div className="up-crop-panel" role="group" aria-label="Crop">
+      {Object.keys(CROP_RATIOS).map((key) => <button key={key} type="button" className={cropRatio === key ? 'on' : ''} onClick={() => { setCropRatio(key); setCropOpen(false); }}>{key === 'original' ? 'Original' : key}</button>)}
+    </div>}
     {stickersOpen && <div className="up-sticker-panel" role="group" aria-label="Stickers">
       {STICKERS.map((emoji) => <button key={emoji} type="button" aria-label={`Add sticker ${emoji}`} onClick={() => { setTextLayers((list) => [...list, { text: emoji, x: 0.5, y: 0.5, color: '#ffffff', font: 'sans', align: 'center', bg: 'none' }]); setStickersOpen(false); }}>{emoji}</button>)}
     </div>}
