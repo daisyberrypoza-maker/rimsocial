@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import App from './App.jsx';
 import './styles.css';
 import './snap-design-system.css';
+import './transparent-nav.css';
 import { startKeyboardAvoidance } from './lib/keyboard.js';
 
 startKeyboardAvoidance();
