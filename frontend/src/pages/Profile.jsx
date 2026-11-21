@@ -16,6 +16,7 @@ import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import StoryViewer from '../components/StoryViewer.jsx';
+import './Profile-tiles.css';
 import { defaultCover } from '../lib/cover.js';
 import CoinSheet from '../components/CoinSheet.jsx';
 import { goBack } from '../lib/goBack.js';
