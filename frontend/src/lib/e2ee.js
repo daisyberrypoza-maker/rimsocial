@@ -13,7 +13,8 @@ const CANT_OPEN = 'Encrypted message';
 
 let identityPromise = null;
 const pairKeys = new Map();   // other user id (or 'self') -> AES-GCM key
-const peerKeys = new Map();   // user id -> ECDH public key
+const peerKeys = new Map();   // user id -> { key, at }: ECDH public key, refreshed so a new device is picked up
+const PEER_KEY_TTL_MS = 60 * 1000;
 
 export const isEncrypted = (body) => typeof body === 'string' && body.startsWith(E2E_PREFIX);
 
@@ -104,7 +105,9 @@ export function ensureIdentity() {
 
 async function peerPublicKey(userId) {
   const id = String(userId);
-  if (!peerKeys.has(id)) {
+  const cached = peerKeys.get(id);
+  if (cached && Date.now() - cached.at < PEER_KEY_TTL_MS) return cached.key;
+  {
     let key = null;
     try {
       const data = await api(`/v1/messages/keys/${id}`);
@@ -114,21 +117,27 @@ async function peerPublicKey(userId) {
     }
     // No key yet: the message is sent as plain text, and the key is picked up once they open the app
     if (!key) return null;
-    peerKeys.set(id, key);
+    peerKeys.set(id, { key, at: Date.now() });
+    return key;
   }
-  return peerKeys.get(id) || null;
 }
 
-// AES key shared with another person (or with ourselves, for our own copy)
+// AES key shared with another person (or with ourselves, for our own copy). Only our own key is cached:
+// a peer's key is derived each time, so a new device on their side is never shadowed by an old key.
 function pairKey(cacheId, otherPublicKey, identity) {
+  if (!otherPublicKey) return Promise.reject(new Error('No public key for this person'));
+  const derive = () => crypto.subtle.deriveKey(
+    { name: 'ECDH', public: otherPublicKey },
+    identity.privateKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+  if (cacheId !== 'self') return derive();
   if (!pairKeys.has(cacheId)) {
-    pairKeys.set(cacheId, crypto.subtle.deriveKey(
-      { name: 'ECDH', public: otherPublicKey },
-      identity.privateKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt'],
-    ));
+    const key = derive();
+    pairKeys.set(cacheId, key);
+    key.catch(() => pairKeys.delete(cacheId));
   }
   return pairKeys.get(cacheId);
 }
@@ -163,19 +172,25 @@ export async function openBody(message, meId) {
     const cached = await plainGet(message.id).catch(() => null);
     if (cached !== null) return cached;
   }
-  try {
-    const identity = await ensureIdentity();
-    const parts = JSON.parse(message.body.slice(E2E_PREFIX.length));
-    const mine = String(message.senderId) === String(meId);
-    const key = mine
-      ? await pairKey('self', identity.publicKey, identity)
-      : await pairKey(String(message.senderId), await peerPublicKey(message.senderId), identity);
-    const text = await open(key, mine ? parts.s : parts.r);
-    await rememberPlain(message.id, text);
-    return text;
-  } catch {
-    return CANT_OPEN;
+  const identity = await ensureIdentity().catch(() => null);
+  if (!identity) return CANT_OPEN;
+  const parts = JSON.parse(message.body.slice(E2E_PREFIX.length));
+  const mine = String(message.senderId) === String(meId);
+  // One retry for a received message: the sender's key may have changed, so fetch it again
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const key = mine
+        ? await pairKey('self', identity.publicKey, identity)
+        : await pairKey(String(message.senderId), await peerPublicKey(message.senderId), identity);
+      const text = await open(key, mine ? parts.s : parts.r);
+      await rememberPlain(message.id, text);
+      return text;
+    } catch {
+      if (mine || attempt > 0) break;
+      peerKeys.delete(String(message.senderId));
+    }
   }
+  return CANT_OPEN;
 }
 
 // Readable copies of a list of messages (including the quoted message in each reply)
