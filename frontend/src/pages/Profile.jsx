@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { api } from '../api.js';
+import { askForPush } from '../lib/push.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
@@ -291,6 +292,16 @@ export default function Profile() {
 
   function openPeople(type, replace = false) {
     navigate(`/u/${username}/${type}`, { replace });
+  }
+
+  async function turnOnNotifications() {
+    setDrawerOpen(false);
+    try {
+      const on = await askForPush();
+      toast(on ? 'Notifications are on' : 'Notifications are off. Allow them for RimSocial in your browser or phone settings.');
+    } catch {
+      toast('Could not turn on notifications. Please try again.');
+    }
   }
 
   function openBlockedPeople() {
@@ -647,6 +658,7 @@ export default function Profile() {
               <SettingsItem icon="user-round" title="My profile" onClick={() => { setDrawerOpen(false); navigate('/u/' + profile.username); }} />
               <SettingsItem icon="image" title="Change profile or background" subtitle="Profile picture or cover image" disabled={avatarBusy || coverBusy} onClick={() => { setDrawerOpen(false); setImageChoiceOpen(true); }} />
               <SettingsItem icon="gift" title="Get coins" onClick={() => { setDrawerOpen(false); setShowCoins(true); }} />
+              <SettingsItem icon="bell" title="Notifications" subtitle="Alerts for new messages and posts" onClick={turnOnNotifications} />
               <SettingsItem icon="shield" title="Blocked accounts" onClick={openBlockedPeople} />
             </SettingsSection>
             <SettingsSection title="Create">
