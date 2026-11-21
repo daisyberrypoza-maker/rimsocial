@@ -1,5 +1,6 @@
 const { Op, Post, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
 const redis = require('../redis');
+const { rerankExploreFeed } = require('./explore-rerank');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
@@ -172,28 +173,54 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
         const score = baseScore + personalizedBoost + topicBoost + localBoost;
         // Cold start (Inject_Into_Cold_Start_Queue): a new post is seeding until SEED_POOL views or SEED_WINDOW_HOURS pass
         const seeding = (Number(p.viewCount) || 0) < SEED_POOL && ageHours < SEED_WINDOW_HOURS;
-        return { id: p.id, authorId: p.authorId, topic, score, seeding, createdAt: new Date(p.createdAt).getTime() };
+        // Explore re-ranking inputs. Save and comment counters are not stored yet, so they are 0.
+        const unit = (x) => Math.min(1, Math.max(0, x));
+        const probs = {
+          watch_complete: unit(avgWatchPct),
+          share: unit(shares / views),
+          save: 0,
+          comment: 0,
+          like: unit(likes / views),
+          not_interested: unit(Math.max(0, -preference) / 40),
+          quick_skip: unit(spot.skips / views),
+        };
+        return { id: p.id, authorId: p.authorId, topic, score, seeding, createdAt: new Date(p.createdAt).getTime(), probs, ageHours };
       })
       .sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);
 
-    // Diversity: cap repeat creators and topics in the first recommendation window.
-    const perAuthor = new Map();
-    const perTopic = new Map();
-    const head = [];
-    const tail = [];
-    for (const item of scored) {
-      const count = perAuthor.get(item.authorId) || 0;
-      const topicCount = item.topic ? (perTopic.get(item.topic) || 0) : 0;
-      if (head.length < EXPLORE_WINDOW && (count >= EXPLORE_AUTHOR_CAP || (item.topic && topicCount >= 5))) {
-        tail.push(item);
-        continue;
+    // Explore ranks with the MMR re-ranking (explore-rerank.js). Other surfaces keep the author and topic caps.
+    let ranked;
+    if (cachePrefix === 'feed:explore') {
+      const vocabulary = [...new Set(scored.map((item) => item.topic).filter(Boolean))];
+      const topicIndex = new Map(vocabulary.map((topic, i) => [topic, i]));
+      const candidates = scored.map((item) => {
+        const embedding = new Array(vocabulary.length).fill(0);
+        if (item.topic) embedding[topicIndex.get(item.topic)] = 1;
+        return { ...item, embedding };
+      });
+      const reranked = rerankExploreFeed(candidates, { topK: Math.min(candidates.length, 200) });
+      const placed = new Set(reranked.map((item) => item.id));
+      ranked = [...reranked, ...scored.filter((item) => !placed.has(item.id))];
+    } else {
+      // Diversity: cap repeat creators and topics in the first recommendation window.
+      const perAuthor = new Map();
+      const perTopic = new Map();
+      const head = [];
+      const tail = [];
+      for (const item of scored) {
+        const count = perAuthor.get(item.authorId) || 0;
+        const topicCount = item.topic ? (perTopic.get(item.topic) || 0) : 0;
+        if (head.length < EXPLORE_WINDOW && (count >= EXPLORE_AUTHOR_CAP || (item.topic && topicCount >= 5))) {
+          tail.push(item);
+          continue;
+        }
+        perAuthor.set(item.authorId, count + 1);
+        if (item.topic) perTopic.set(item.topic, topicCount + 1);
+        head.push(item);
       }
-      perAuthor.set(item.authorId, count + 1);
-      if (item.topic) perTopic.set(item.topic, topicCount + 1);
-      head.push(item);
+      // Seeding posts take one slot after every SEED_EVERY ranked posts, newest first, so new posts get early views
+        ranked = [...head, ...tail];
     }
-    // Seeding posts take one slot after every SEED_EVERY ranked posts, newest first, so new posts get early views
-    const ranked = [...head, ...tail];
     const seedQueue = ranked.filter((item) => item.seeding).sort((a, b) => b.createdAt - a.createdAt);
     const rankedOnly = ranked.filter((item) => !item.seeding);
     const merged = [];
