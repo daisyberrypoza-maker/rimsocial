@@ -90,6 +90,15 @@ export default function App() {
   useEffect(() => {
     const title = pageTitleFor(location.pathname);
     document.title = title ? `${title} · RimSocial` : 'RimSocial';
+    // Canonical and Open Graph URL follow the page, so each route can be shared and indexed on its own.
+    if (window.location.protocol.startsWith('http')) {
+      const url = `${window.location.origin}${location.pathname}`;
+      for (const [selector, make] of [['link[rel=canonical]', () => { const el = document.createElement('link'); el.rel = 'canonical'; return el; }], ['meta[property="og:url"]', () => { const el = document.createElement('meta'); el.setAttribute('property', 'og:url'); return el; }]]) {
+        let el = document.querySelector(selector);
+        if (!el) { el = make(); document.head.appendChild(el); }
+        if (el.tagName === 'LINK') el.href = url; else el.content = url;
+      }
+    }
   }, [location.pathname]);
   const meId = useAppStore((s) => s.user?.id);
   // Your avatar shows your latest story or post everywhere except the profile page
