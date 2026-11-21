@@ -15,6 +15,7 @@ function toPostDTO(post) {
     thumbUrl: p.thumbUrl || null,
     caption: p.caption || '',
     topic: p.topic || null,
+    loopVideo: p.loopVideo !== false,
     aiLabel: Boolean(p.aiLabel),
     viewCount: Number(p.viewCount) || 0,
     likeCount: Number(p.likeCount) || 0,

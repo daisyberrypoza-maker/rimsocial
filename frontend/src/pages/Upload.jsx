@@ -253,6 +253,7 @@ export default function Upload() {
   const [photoSize, setPhotoSize] = useState(null);
   const [cropRatio, setCropRatio] = useState('original');
   const [cropOpen, setCropOpen] = useState(false);
+  const [loopVideo, setLoopVideo] = useState(true);
   const [textEdit, setTextEdit] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
@@ -439,7 +440,7 @@ export default function Upload() {
         toStory, file: toStory ? (storyFile || uploadFile) : uploadFile, storyFile, files: !toStory && carousel.length > 1 ? carousel : null,
         storyFiles: toStory && carousel.length > 1 ? await Promise.all(carousel.map((f) => (String(f.type).startsWith('video/') ? trimVideo(f, STORY_MAX_SECONDS) : f))) : null,
         caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
-        sourcePostId: sourcePost?.id, sponsor, shareToStory,
+        sourcePostId: sourcePost?.id, sponsor, shareToStory, loopVideo,
         storyAudio: { musicId: storyTrack?.id || null, voice: storyVoice?.file || null },
       });
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
@@ -596,6 +597,7 @@ export default function Upload() {
     return () => {
       if (key === 'sticker') { setStickersOpen((open) => !open); setDrawMode(false); setCropOpen(false); return; }
       if (key === 'draw') { setDrawMode((on) => !on); setStickersOpen(false); setCropOpen(false); return; }
+      if (key === 'loop') { const next = !loopVideo; setLoopVideo(next); setStickersOpen(false); setDrawMode(false); setCropOpen(false); toast(isVideo ? (next ? 'Video will loop in feeds' : 'Video will play once in feeds') : 'Loop applies to videos'); return; }
       if (key === 'crop') { setCropOpen((open) => !open); setStickersOpen(false); setDrawMode(false); return; }
       soon();
     };
