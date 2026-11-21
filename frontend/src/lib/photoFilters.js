@@ -23,11 +23,18 @@ import { drawTextLayer } from './textLayers.js';
 
 // Re-encodes a photo with the chosen lens and any text layers. Videos and "original" pass through unchanged.
 // Browsers without canvas filter support keep the grade off but still apply glow and tint.
-export async function bakeFilter(file, key, layers = []) {
+// Crop ratios for the upload editor; 'original' keeps the full photo.
+export const CROP_RATIOS = { original: null, '1:1': 1, '4:5': 4 / 5, '9:16': 9 / 16 };
+// Draw strokes are stored as fractions of the photo (x and y in 0..1) with a width fraction of the photo width.
+export const STROKE_WIDTH = 0.012;
+
+export async function bakeFilter(file, key, layers = [], options = {}) {
+  const strokes = options.strokes || [];
+  const ratio = CROP_RATIOS[options.crop || 'original'] ?? null;
   const lens = FILTERS.find((x) => x.key === key);
   if (!String(file.type).startsWith('image/')) return file;
   const grade = Boolean(lens) && lens.key !== 'original';
-  if (!grade && !layers.length) return file;
+  if (!grade && !layers.length && !strokes.length && !ratio) return file;
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise((resolve, reject) => {

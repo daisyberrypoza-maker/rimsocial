@@ -212,3 +212,27 @@
 .up-page.up-editor .up-sticker-panel button {
   height: 44px; border: 0; background: transparent; font-size: 26px; line-height: 1; cursor: pointer; padding: 0;
 }
+
+/* Draw layer: transparent over the photo, catches strokes only in draw mode */
+.up-page.up-editor .up-draw-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.up-page.up-editor .up-draw-layer.is-drawing { pointer-events: auto; touch-action: none; }
+.up-page.up-editor .up-draw-bar {
+  position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 3;
+  display: flex; align-items: center; gap: 10px; background: #fff; color: #000; border-radius: 16px; padding: 8px 10px; box-sizing: border-box;
+}
+.up-page.up-editor .up-draw-bar button { height: 32px; min-width: 32px; border: 0; border-radius: 16px; background: #f0f0f0; color: #000; font-weight: 600; cursor: pointer; }
+.up-page.up-editor .up-draw-bar button:disabled { opacity: 0.4; cursor: default; }
+.up-page.up-editor .up-draw-bar .up-draw-color { width: 26px; height: 26px; min-width: 26px; border-radius: 50%; border: 2px solid #d4d4d4; padding: 0; }
+.up-page.up-editor .up-draw-bar .up-draw-color.on { border-color: #0095f6; }
+.up-page.up-editor .up-draw-bar .up-draw-done { margin-left: auto; padding: 0 14px; background: #0095f6; color: #fff; }
+.up-page.up-editor .up-crop-panel {
+  position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 3;
+  background: #fff; border-radius: 16px; padding: 10px; box-sizing: border-box; display: flex; gap: 8px; justify-content: center;
+}
+.up-page.up-editor .up-crop-panel button { height: 36px; padding: 0 14px; border: 0; border-radius: 18px; background: #f0f0f0; color: #000; font-weight: 600; cursor: pointer; }
+.up-page.up-editor .up-crop-panel button.on { background: #0095f6; color: #fff; }
+.up-page.up-editor .up-crop-frame {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; pointer-events: none;
+  box-sizing: border-box; border: 1px solid #fff;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.55);
+}
