@@ -1,5 +1,6 @@
 package com.clipverse.app;
 
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -28,6 +29,20 @@ public class MainActivity extends BridgeActivity {
   }
 
   private class StatusBridge {
+    // Sets the status bar to any hex colour (for example a profile cover), with dark or light icons to suit it
+    @JavascriptInterface
+    public void setStatusColor(final String hex) {
+      runOnUiThread(() -> {
+        int color = Color.parseColor(hex);
+        int r = Color.red(color);
+        int g = Color.green(color);
+        int b = Color.blue(color);
+        boolean light = (0.299 * r + 0.587 * g + 0.114 * b) > 160;
+        getWindow().setStatusBarColor(color);
+        new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(light);
+      });
+    }
+
     // true: white status bar with dark icons; false: black status bar with light icons.
     // The navigation bar icons follow the same choice.
     @JavascriptInterface

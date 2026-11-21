@@ -40,6 +40,7 @@ const ExploreWatch = lazy(() => import('./pages/ExploreWatch.jsx'));
 const Search = lazy(() => import('./pages/Search.jsx'));
 const EditProfile = lazy(() => import('./pages/EditProfile.jsx'));
 import { useTabSwipe } from './lib/tabSwipe.js';
+import { setPageStatusColor } from './lib/statusBar.js';
 import NotFound from './pages/NotFound.jsx';
 
 // Human-readable title per route, so browser tabs and history show what the page is.
@@ -125,9 +126,8 @@ export default function App() {
     const light = !dark;
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
-    meta.content = light ? '#ffffff' : '#000000';
-    // Android app: sets the status bar colour and icon colour together (see MainActivity)
-    window.RimStatus?.setLightBackground?.(light);
+    // Profiles take their status bar colour from their cover (see Profile).
+    if (!path.startsWith('/u/')) setPageStatusColor(light ? '#ffffff' : '#000000');
     // Full-bleed pages draw behind the status bar; every other page keeps clear of it
     const bleed = location.pathname.startsWith('/u/') || location.pathname === '/' || location.pathname === '/following' || location.pathname === '/live';
     document.documentElement.classList.toggle('bleed-top', bleed);
