@@ -43,6 +43,7 @@ const Post = sequelize.define('Post', {
   thumbUrl: DataTypes.STRING(512),
   caption: { type: DataTypes.STRING(500), defaultValue: '' },
   topic: { type: DataTypes.STRING(60), allowNull: true },
+  loopVideo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   aiLabel: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   status: { type: DataTypes.ENUM('live', 'removed'), defaultValue: 'live' },
   isStory: { type: DataTypes.BOOLEAN, defaultValue: false },

@@ -75,7 +75,7 @@ router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) 
       authorId: req.user.id, kind: cover.kind, mediaUrl: cover.url, mediaPublicId: cover.publicId, mediaItems: items.length > 1 ? items : null,
       caption: String(req.body.caption || '').slice(0, 500),
       topic: String(req.body.topic || '').trim().slice(0, 60) || null,
-      aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId,
+      aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId, loopVideo: req.body.loopVideo !== 'false',
       isSponsored, sponsorName: isSponsored ? sponsorName : null,
       sponsorDescription: isSponsored ? sponsorDescription : null,
       sponsorCta: isSponsored ? (sponsorCta || 'Shop Now') : null,

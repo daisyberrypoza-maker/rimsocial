@@ -34,7 +34,7 @@ function requestWithProgress(path, body, status, offset = 0, span = 100) {
 
 // Uploads a post or story in the background. Progress reflects actual bytes sent, not an estimated timer.
 export function startUpload(job) {
-  const { toStory, file, storyFile, storyFiles, files, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
+  const { toStory, file, storyFile, storyFiles, files, caption, topic, aiLabel, loopVideo, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
   const thumb = URL.createObjectURL(file);
   useAppStore.getState().setPendingUpload({
     kind: toStory ? 'story' : 'post',
@@ -49,6 +49,7 @@ export function startUpload(job) {
     fd.append('caption', caption || '');
     fd.append('topic', topic || '');
     fd.append('aiLabel', String(aiLabel));
+    if (!toStory) fd.append('loopVideo', String(loopVideo !== false));
     fd.append('allowRemix', String(!toStory && allowRemix));
     if (sourcePostId) fd.append('sourcePostId', sourcePostId);
     if (!toStory) fd.append('visibility', visibility);
