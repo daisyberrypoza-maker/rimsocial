@@ -1,5 +1,6 @@
 package com.clipverse.app;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -17,6 +18,10 @@ public class MainActivity extends BridgeActivity {
     WindowCompat.setDecorFitsSystemWindows(window, false);
     // Default status bar: black with light icons; the web app switches it per page
     window.setStatusBarColor(0xFF000000);
+    // Transparent navigation bar: the app draws behind it, with no bar colour or footer of its own
+    window.setNavigationBarColor(0x00000000);
+    if (Build.VERSION.SDK_INT >= 29) window.setNavigationBarContrastEnforced(false);
+    new WindowInsetsControllerCompat(window, window.getDecorView()).setAppearanceLightNavigationBars(false);
     // The web app calls window.RimStatus.setLightBackground(true|false)
     getBridge().getWebView().addJavascriptInterface(new StatusBridge(), "RimStatus");
   }

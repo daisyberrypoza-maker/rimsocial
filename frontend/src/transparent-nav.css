@@ -1,0 +1,6 @@
+/* The bottom tab bar has no background, border or shadow: the page shows through it. */
+.bottomnav {
+  background: transparent !important;
+  border-top: 0 !important;
+  box-shadow: none !important;
+}
