@@ -116,12 +116,13 @@ export default function App() {
   }, [meId]);
 
   // On a fresh load at "/", return to the last screen the user was on
-  // Status bar: one rule for web and Android. Black by default; white only on
-  // Stories, Rimlight, and the video and image viewers.
+  // Status bar: one rule for web and Android. White by default; black only on
+  // Stories, Rimlight, Profile, and the video and image viewers.
   useEffect(() => {
     const path = location.pathname;
-    const light = path === '/stories' || path === '/' || path === '/following' || path === '/live'
-      || path.startsWith('/explore/watch/') || path.startsWith('/p/');
+    const dark = path === '/stories' || path === '/' || path === '/following' || path === '/live'
+      || path.startsWith('/u/') || path.startsWith('/explore/watch/') || path.startsWith('/p/');
+    const light = !dark;
     let meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
     meta.content = light ? '#ffffff' : '#000000';

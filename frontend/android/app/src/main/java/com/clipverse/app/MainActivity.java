@@ -16,24 +16,28 @@ public class MainActivity extends BridgeActivity {
     Window window = getWindow();
     // Draw behind the status bar, so the profile background reaches the top edge
     WindowCompat.setDecorFitsSystemWindows(window, false);
-    // Default status bar: black with light icons; the web app switches it per page
-    window.setStatusBarColor(0xFF000000);
+    // Default status bar: white with dark icons; the web app switches it per page
+    window.setStatusBarColor(0xFFFFFFFF);
+    new WindowInsetsControllerCompat(window, window.getDecorView()).setAppearanceLightStatusBars(true);
     // Transparent navigation bar: the app draws behind it, with no bar colour or footer of its own
     window.setNavigationBarColor(0x00000000);
     if (Build.VERSION.SDK_INT >= 29) window.setNavigationBarContrastEnforced(false);
-    new WindowInsetsControllerCompat(window, window.getDecorView()).setAppearanceLightNavigationBars(false);
+    new WindowInsetsControllerCompat(window, window.getDecorView()).setAppearanceLightNavigationBars(true);
     // The web app calls window.RimStatus.setLightBackground(true|false)
     getBridge().getWebView().addJavascriptInterface(new StatusBridge(), "RimStatus");
   }
 
   private class StatusBridge {
-    // true: white status bar with dark icons; false: black status bar with light icons
+    // true: white status bar with dark icons; false: black status bar with light icons.
+    // The navigation bar icons follow the same choice.
     @JavascriptInterface
     public void setLightBackground(final boolean light) {
       runOnUiThread(() -> {
         View decor = getWindow().getDecorView();
         getWindow().setStatusBarColor(light ? 0xFFFFFFFF : 0xFF000000);
-        new WindowInsetsControllerCompat(getWindow(), decor).setAppearanceLightStatusBars(light);
+        WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), decor);
+        controller.setAppearanceLightStatusBars(light);
+        controller.setAppearanceLightNavigationBars(light);
       });
     }
   }
