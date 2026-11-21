@@ -4,7 +4,7 @@
   "short_name": "RimSocial",
   "description": "Connect, create and discover on RimSocial.",
   "lang": "en",
-  "start_url": "./#/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": [

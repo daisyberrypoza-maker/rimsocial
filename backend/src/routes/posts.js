@@ -363,7 +363,7 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
         email,
         amount: chargeMinor,
         currency: pricing.currency,
-        ...(config.appUrl ? { callback_url: `${config.appUrl}/#/p/${post.id}` } : {}),
+        ...(config.appUrl ? { callback_url: `${config.appUrl}/p/${post.id}` } : {}),
         metadata: {
           userId: req.user.id, purpose: 'post_boost', postId: post.id, days, currency: pricing.currency,
           dailyMinor, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl,
