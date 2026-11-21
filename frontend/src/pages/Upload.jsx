@@ -217,6 +217,9 @@ function CameraView({ onCapture, onGallery, onClose }) {
 }
 
 // Gallery (choose), then editor (preview, tools, Post or My Story)
+// Emoji stickers placed as text layers (no background), baked into photos on publish.
+const STICKERS = ['😀', '😂', '😍', '🔥', '💯', '👍', '🎉', '❤️', '😎', '🙌', '✨', '🌟'];
+
 export default function Upload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -241,6 +244,7 @@ export default function Upload() {
   const [soundOn, setSoundOn] = useState(false);
   const [filterKey, setFilterKey] = useState('original');
   const [textLayers, setTextLayers] = useState([]);
+  const [stickersOpen, setStickersOpen] = useState(false);
   const [textEdit, setTextEdit] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
@@ -599,8 +603,11 @@ export default function Upload() {
     </header>
     <nav className="up-rail" aria-label="Editing tools">
       {isVideo && <button type="button" onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? 'Mute' : 'Turn sound on'}><Icon name={soundOn ? 'volume-2' : 'volume-x'} size={24} /></button>}
-      {rail.map((tool) => <button key={tool.key} type="button" onClick={soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
+      {rail.map((tool) => <button key={tool.key} type="button" onClick={tool.key === 'sticker' ? () => setStickersOpen((open) => !open) : soon} aria-label={tool.label}><RailGlyph name={tool.glyph} /></button>)}
     </nav>
+    {stickersOpen && <div className="up-sticker-panel" role="group" aria-label="Stickers">
+      {STICKERS.map((emoji) => <button key={emoji} type="button" aria-label={`Add sticker ${emoji}`} onClick={() => { setTextLayers((list) => [...list, { text: emoji, x: 0.5, y: 0.5, color: '#ffffff', font: 'sans', align: 'center', bg: 'none' }]); setStickersOpen(false); }}>{emoji}</button>)}
+    </div>}
     {musicOpen && <div className="up-music-panel"><StoryAudioControls track={storyTrack} onTrack={setStoryTrack} voice={storyVoice} onVoice={setStoryVoice} /></div>}
     {textEdit && <TextEditor initial={textEdit.layer} onDone={saveTextLayer} onCancel={() => setTextEdit(null)} onDelete={textEdit.index >= 0 ? deleteTextLayer : undefined} />}
     <div className="up-filters">
