@@ -172,9 +172,10 @@ export async function openBody(message, meId) {
     const cached = await plainGet(message.id).catch(() => null);
     if (cached !== null) return cached;
   }
+  let parts;
+  try { parts = JSON.parse(message.body.slice(E2E_PREFIX.length)); } catch { return CANT_OPEN; }
   const identity = await ensureIdentity().catch(() => null);
   if (!identity) return CANT_OPEN;
-  const parts = JSON.parse(message.body.slice(E2E_PREFIX.length));
   const mine = String(message.senderId) === String(meId);
   // One retry for a received message: the sender's key may have changed, so fetch it again
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -197,8 +198,8 @@ export async function openBody(message, meId) {
 export async function openMessages(items, meId) {
   return Promise.all(items.map(async (message) => ({
     ...message,
-    body: await openBody(message, meId),
-    replyTo: message.replyTo ? { ...message.replyTo, body: await openBody(message.replyTo, meId) } : message.replyTo,
+    body: await openBody(message, meId).catch(() => CANT_OPEN),
+    replyTo: message.replyTo ? { ...message.replyTo, body: await openBody(message.replyTo, meId).catch(() => CANT_OPEN) } : message.replyTo,
   })));
 }
 
