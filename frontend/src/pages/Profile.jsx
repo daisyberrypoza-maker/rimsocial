@@ -110,6 +110,7 @@ export default function Profile() {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportBusy, setReportBusy] = useState(false);
+  const [profileReason, setProfileReason] = useState('Spam');
   const PROFILE_REPORT_REASONS = ['Spam', 'Harassment or hate', 'Impersonation', 'Inappropriate content', 'Something else'];
   async function reportProfile(reason) {
     if (reportBusy) return;
@@ -177,6 +178,13 @@ export default function Profile() {
 
   // Switching profiles must never leave the previous person's stories or reposts on screen
   useEffect(() => { setStories([]); setReposts([]); setViewing(false); }, [username]);
+  // Arriving from the last Rimlight of a profile run: switch to Stories and open the first one.
+  useEffect(() => { if (location.state?.openStories) setTab('stories'); }, [location.state]);
+  useEffect(() => {
+    if (!location.state?.openStories || tab !== 'stories' || !stories.length) return;
+    setViewing(0);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, tab, stories.length, navigate]);
 
   useEffect(() => {
     if (tab !== 'stories' || !profile) return undefined;
@@ -661,23 +669,38 @@ export default function Profile() {
         </section>
       </div>}
 
-      {reportOpen && <div className="sc-options-backdrop" onClick={() => setReportOpen(false)}>
-        <section className="sc-options-sheet" role="dialog" aria-label={`Report @${profile.username}`} onClick={(e) => e.stopPropagation()}>
-          <p className="sc-option"><strong>Why are you reporting @{profile.username}?</strong></p>
-          {PROFILE_REPORT_REASONS.map((reason) => <button key={reason} className="sc-option" disabled={reportBusy} onClick={() => reportProfile(reason)}>{reason}</button>)}
-        </section>
-      </div>}
-      {optionsOpen && !profile.isMe && <div className="sc-options-backdrop" onClick={() => setOptionsOpen(false)}>
-        <section className="sc-options-sheet" role="dialog" aria-label={`Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
-          <button className="sc-option danger" onClick={blockProfile}>Block</button>
-          <button className="sc-option danger" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>Report</button>
-          <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}><span>Add</span><span className={`sc-switch${profile.isFollowing ? ' on' : ''}`} aria-checked={Boolean(profile.isFollowing)} role="switch" /></button>
-          <button className="sc-option toggle-row" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}><span>Post Notifications</span><span className={`sc-switch${profile.isNotifying ? ' on' : ''}`} aria-checked={Boolean(profile.isNotifying)} role="switch" /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate(chatPath('direct', profile.id)); }}><span>Contact</span><Icon name="mail" size={18} /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigate('/recommended'); }}><span>Recommended</span><Icon name="chevron-right" size={18} /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); shareProfile(); }}><span>Send Profile to…</span><Icon name="send" size={18} /></button>
-          <button className="sc-option" onClick={() => { setOptionsOpen(false); navigator.clipboard?.writeText(window.location.href).then(() => toast('Profile URL copied')).catch(() => toast('Unable to copy profile URL')); }}>Share Profile URL</button>
-          <button className="sc-options-done" onClick={() => setOptionsOpen(false)}>Done</button>
+      {(optionsOpen || reportOpen) && !profile.isMe && <div className="pos-backdrop" onClick={() => { setOptionsOpen(false); setReportOpen(false); }}>
+        <section className="pos-sheet" role="dialog" aria-label={reportOpen ? `Report @${profile.username}` : `Options for @${profile.username}`} onClick={(e) => e.stopPropagation()}>
+          {reportOpen ? (
+            <>
+              <header className="pos-head">
+                <button type="button" className="pos-back" onClick={() => { setReportOpen(false); setOptionsOpen(true); }} aria-label="Back">‹</button>
+                <strong>Why are you reporting @{profile.username}?</strong>
+              </header>
+              <ul className="pos-list">
+                {PROFILE_REPORT_REASONS.map((reason) => (
+                  <li key={reason}>
+                    <button type="button" className={`pos-item ${profileReason === reason ? 'selected' : ''}`} onClick={() => setProfileReason(reason)}>
+                      {reason}
+                      {profileReason === reason && <span className="pos-check" aria-hidden="true">✓</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="pos-submit-wrap">
+                <button type="button" className="pos-submit" onClick={() => reportProfile(profileReason)} disabled={reportBusy}>{reportBusy ? 'Submitting…' : 'Submit report'}</button>
+              </div>
+            </>
+          ) : (
+            <ul className="pos-list">
+              <li><button type="button" className="pos-item danger" onClick={() => { setOptionsOpen(false); blockProfile(); }}>Block @{profile.username}</button></li>
+              <li><button type="button" className="pos-item danger" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>Report @{profile.username}</button></li>
+              <li><button type="button" className="pos-item" onClick={() => { setOptionsOpen(false); toggleFollow(); }} disabled={busy}>{profile.isFollowing ? 'Unfollow' : 'Follow'}</button></li>
+              <li><button type="button" className="pos-item" onClick={() => { setOptionsOpen(false); toggleNotify(); }} disabled={notifyBusy}>{profile.isNotifying ? 'Turn off post notifications' : 'Turn on post notifications'}</button></li>
+              <li><button type="button" className="pos-item" onClick={() => { setOptionsOpen(false); navigate(chatPath('direct', profile.id)); }}>Message @{profile.username}</button></li>
+              <li><button type="button" className="pos-item" onClick={() => { setOptionsOpen(false); navigate('/recommended'); }}>Recommended accounts</button></li>
+            </ul>
+          )}
         </section>
       </div>}
             {showCoins && <CoinSheet onClose={() => setShowCoins(false)} />}
@@ -748,7 +771,7 @@ export default function Profile() {
       </div>, document.body)}
 
       <nav className={`pf-tabs${profile?.isMe ? ' is-owner' : ''}`} role="tablist" aria-label="Profile content" style={{ display: 'grid', gridTemplateColumns: profile?.isMe ? 'repeat(4, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', width: '100%', minWidth: 0, alignItems: 'stretch', flexWrap: 'nowrap' }}>
-        <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Spotlight</button>
+        <button type="button" role="tab" aria-selected={tab === 'posts'} className={tab === 'posts' ? 'on' : ''} onClick={() => setTab('posts')}>Rimlight</button>
         <button type="button" role="tab" aria-selected={tab === 'stories'} className={tab === 'stories' ? 'on' : ''} onClick={() => setTab('stories')}>Stories</button>
         <button type="button" role="tab" aria-selected={tab === 'reposts'} className={tab === 'reposts' ? 'on' : ''} onClick={() => setTab('reposts')}>Reposts</button>
         {profile?.isMe && <button type="button" role="tab" aria-selected={tab === 'saved'} className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Saved</button>}
