@@ -18,17 +18,27 @@ const PEER_KEY_TTL_MS = 60 * 1000;
 
 export const isEncrypted = (body) => typeof body === 'string' && body.startsWith(E2E_PREFIX);
 
+// One shared connection for the session. Opening a new one for every read (a poll reads every
+// message) piles up connections and slows or stalls the chat.
+let dbPromise = null;
 function openDb() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-      if (!db.objectStoreNames.contains(PLAIN_STORE)) db.createObjectStore(PLAIN_STORE);
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+  if (!dbPromise) {
+    dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 2);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+        if (!db.objectStoreNames.contains(PLAIN_STORE)) db.createObjectStore(PLAIN_STORE);
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onversionchange = () => { db.close(); dbPromise = null; };
+        resolve(db);
+      };
+      request.onerror = () => reject(request.error);
+    }).catch((error) => { dbPromise = null; throw error; });
+  }
+  return dbPromise;
 }
 
 async function idbGet(key) {
