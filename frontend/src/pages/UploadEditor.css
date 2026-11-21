@@ -202,3 +202,13 @@
 /* Text layers on the editor preview: sized as a share of the photo width, like the baked photo */
 .up-page.up-editor .up-media { container-type: inline-size; }
 .up-page.up-editor .up-text-layer { position: absolute; z-index: 3; max-width: 92%; padding: 4px 10px; border: 0; border-radius: 10px; font-size: 7.5cqw; line-height: 1.2; white-space: pre-wrap; cursor: pointer; }
+
+/* Sticker picker: a white card under the top bar, like the music panel */
+.up-page.up-editor .up-sticker-panel {
+  position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 3;
+  background: #fff; border-radius: 16px; padding: 10px; box-sizing: border-box;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+}
+.up-page.up-editor .up-sticker-panel button {
+  height: 44px; border: 0; background: transparent; font-size: 26px; line-height: 1; cursor: pointer; padding: 0;
+}
