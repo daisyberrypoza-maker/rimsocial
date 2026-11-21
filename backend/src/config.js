@@ -30,7 +30,7 @@ module.exports = {
   adminApiKey: process.env.ADMIN_API_KEY || '',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   corsOrigins: [...new Set([
-    ...(process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://localhost,capacitor://localhost,ionic://localhost').split(','),
+    ...(process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://localhost,https://rimsocial.vercel.app,capacitor://localhost,ionic://localhost').split(','),
   ].map((o) => { const value = o.trim(); return value.endsWith('/') ? value.slice(0, -1) : value; }).filter(Boolean))],
   serveFrontend: !['false', '0', 'no'].includes(String(process.env.SERVE_FRONTEND || 'true').toLowerCase()),
   trustProxy: num(process.env.TRUST_PROXY, 0),
