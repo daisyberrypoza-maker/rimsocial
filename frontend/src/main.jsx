@@ -13,6 +13,8 @@ startKeyboardAvoidance();
 // Web uses normal URLs (/u/name, /p/123) so pages can be shared and indexed. The Android app
 // is served from local files, where only the hash router works, so it keeps HashRouter.
 const isNative = Capacitor.isNativePlatform();
+// Native-only styling hook: the device navigation bar is transparent, so the app adds no footer background.
+if (isNative) document.documentElement.classList.add('native-app');
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '');
 // Links from before the switch look like /#/following; move them to the normal URL first.
 if (!isNative && window.location.hash.startsWith('#/')) {
