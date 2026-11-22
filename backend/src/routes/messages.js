@@ -392,11 +392,12 @@ router.delete('/groups/:groupId/messages/:messageId', async (req, res, next) => 
 // Chat list: one row per person, newest conversation first, with unread counts.
 // Text messages are end-to-end encrypted on the sender's device when the recipient has a key;
 // the server stores ciphertext for those, and plain text when the recipient has no key yet
-const E2E_PREFIX = 'e2e:v1:';
+const E2E_PREFIXES = ['e2e:v1:', 'e2e:v2:'];
+const isEncryptedBody = (body) => E2E_PREFIXES.some((prefix) => String(body || '').startsWith(prefix));
 function textBody(raw) {
   const body = String(raw || '').trim();
   if (!body) return '';
-  if (body.length > (body.startsWith(E2E_PREFIX) ? 8000 : 2000)) throw httpError(400, 'Message is too long');
+  if (body.length > (isEncryptedBody(body) ? 8000 : 2000)) throw httpError(400, 'Message is too long');
   return body;
 }
 
@@ -409,6 +410,15 @@ router.put('/keys', async (req, res, next) => {
     if (!jwk || jwk.kty !== 'EC' || jwk.crv !== 'P-256' || typeof jwk.x !== 'string' || typeof jwk.y !== 'string' || raw.length > 1000) {
       throw httpError(400, 'Invalid encryption key');
     }
+    const deviceId = req.body?.deviceId == null ? null : String(req.body.deviceId);
+    if (deviceId !== null && !/^[A-Za-z0-9-]{8,64}$/.test(deviceId)) throw httpError(400, 'Invalid device');
+    if (deviceId) {
+      await sequelize.query(
+        'INSERT INTO user_devices (userId, deviceId, publicKey, updatedAt) VALUES (:userId, :deviceId, :publicKey, NOW()) ON DUPLICATE KEY UPDATE publicKey = VALUES(publicKey), updatedAt = NOW()',
+        { replacements: { userId: req.user.id, deviceId, publicKey: raw } },
+      );
+    }
+    // Kept for older app versions, which only know one key per person
     await sequelize.query(
       'INSERT INTO user_keys (userId, publicKey, updatedAt) VALUES (:userId, :publicKey, NOW()) ON DUPLICATE KEY UPDATE publicKey = VALUES(publicKey), updatedAt = NOW()',
       { replacements: { userId: req.user.id, publicKey: raw } },
@@ -421,7 +431,11 @@ router.get('/keys/:userId', async (req, res, next) => {
   try {
     await assertCanMessage(req.user.id, req.params.userId);
     const [rows] = await sequelize.query('SELECT publicKey FROM user_keys WHERE userId = :userId', { replacements: { userId: req.params.userId } });
-    res.json({ publicKey: rows[0]?.publicKey || null });
+    const [devices] = await sequelize.query(
+      'SELECT deviceId, publicKey FROM user_devices WHERE userId = :userId ORDER BY updatedAt DESC LIMIT 10',
+      { replacements: { userId: req.params.userId } },
+    );
+    res.json({ publicKey: rows[0]?.publicKey || null, devices });
   } catch (error) { next(error); }
 });
 
@@ -1166,7 +1180,7 @@ router.post('/message/:id/forward', async (req, res, next) => {
     const me = req.user.id;
     const row = await findVisibleMessage(me, req.params.id);
     if (row.deletedForEveryone) throw httpError(400, 'This message was deleted');
-    if (String(row.body || '').startsWith(E2E_PREFIX)) throw httpError(400, "Encrypted messages can't be forwarded yet");
+    if (isEncryptedBody(row.body)) throw httpError(400, "Encrypted messages can't be forwarded yet");
     const toUserId = String(req.body?.toUserId || '');
     await assertCanMessage(me, toUserId);
     await unhideChat(me, toUserId);
