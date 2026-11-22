@@ -572,7 +572,6 @@ export default function Upload() {
     </main>;
   }
 
-  const soon = () => toast('This tool is not available yet');
   function saveTextLayer(layer) {
     setTextLayers((list) => (textEdit?.index >= 0 ? list.map((l, i) => (i === textEdit.index ? layer : l)) : [...list, layer]));
     setTextEdit(null);
@@ -581,16 +580,12 @@ export default function Upload() {
     setTextLayers((list) => list.filter((_, i) => i !== textEdit.index));
     setTextEdit(null);
   }
+  // Only tools that work in the editor
   const rail = [
     { key: 'draw', label: 'Draw', glyph: 'pencil' },
     { key: 'sticker', label: 'Stickers', glyph: 'sticker' },
-    { key: 'effects', label: 'Effects', glyph: 'effects' },
-    { key: 'face', label: 'Face stickers', glyph: 'face' },
-    { key: 'ai', label: 'AI effects', glyph: 'sparkle' },
-    { key: 'link', label: 'Link', glyph: 'link' },
     { key: 'crop', label: 'Crop', glyph: 'crop' },
     { key: 'loop', label: 'Loop', glyph: 'infinity' },
-    { key: 'friend', label: 'Add friend', glyph: 'friend' },
   ];
 
   function railAction(key) {
@@ -599,7 +594,6 @@ export default function Upload() {
       if (key === 'draw') { setDrawMode((on) => !on); setStickersOpen(false); setCropOpen(false); return; }
       if (key === 'loop') { const next = !loopVideo; setLoopVideo(next); setStickersOpen(false); setDrawMode(false); setCropOpen(false); toast(isVideo ? (next ? 'Video will loop in feeds' : 'Video will play once in feeds') : 'Loop applies to videos'); return; }
       if (key === 'crop') { setCropOpen((open) => !open); setStickersOpen(false); setDrawMode(false); return; }
-      soon();
     };
   }
   // Pointer position in photo fractions, using the same cover-fit mapping as the preview SVG.
@@ -619,7 +613,7 @@ export default function Upload() {
         <button key={i} type="button" className="up-text-layer" onClick={() => setTextEdit({ index: i, layer })} style={{ left: `${layer.x * 100}%`, top: `${layer.y * 100}%`, transform: layer.align === 'left' ? 'translate(0,-50%)' : layer.align === 'right' ? 'translate(-100%,-50%)' : 'translate(-50%,-50%)', color: layer.color, fontFamily: TEXT_FONTS[layer.font]?.family, fontWeight: TEXT_FONTS[layer.font]?.weight, textAlign: layer.align, background: layer.bg === 'box' ? 'rgba(0,0,0,.55)' : 'transparent', textShadow: layer.bg === 'box' ? 'none' : '0 2px 6px rgba(0,0,0,.5)' }} aria-label={`Edit text: ${layer.text}`}>{layer.text}</button>
       ))}
       {carousel.length > 1 && <span className="up-carousel-count">1 / {carousel.length}</span>}
-      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img onLoad={(e) => setPhotoSize({ w: e.currentTarget.naturalWidth || 1, h: e.currentTarget.naturalHeight || 1 })} src={preview} alt="Selected media" />}
+      {isVideo ? <video ref={previewRef} src={preview} loop muted={!soundOn} playsInline onClick={togglePreview} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} aria-label="Preview: tap to play or pause" /> : preview && <img onLoad={(e) => setPhotoSize({ w: e.currentTarget.naturalWidth || 1, h: e.currentTarget.naturalHeight || 1 })} src={preview} alt="Selected media" style={{ filter: cssFilterFor(filterKey) }} />}
       {photoSize && !isVideo && (strokes.length > 0 || liveStroke || drawMode) && <svg className={`up-draw-layer${drawMode ? ' is-drawing' : ''}`} viewBox={`0 0 1 ${photoSize.h / photoSize.w}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true"
         onPointerDown={drawMode ? (e) => { e.currentTarget.setPointerCapture(e.pointerId); setLiveStroke({ color: drawColor, points: [photoPoint(e, e.currentTarget)] }); } : undefined}
         onPointerMove={drawMode && liveStroke ? (e) => setLiveStroke((st) => ({ ...st, points: [...st.points, photoPoint(e, e.currentTarget)] })) : undefined}
@@ -664,14 +658,13 @@ export default function Upload() {
           <span className="up-filter-name">{f.label}</span>
         </span>
       ))}
-      <button type="button" className="up-hd" onClick={soon} aria-label="HD">HD</button>
     </div>
-    <div className="up-timeline-wrap">
+    {isVideo && preview && <div className="up-timeline-wrap">
       <div className="up-timeline" aria-hidden="true">
-        {preview && (isVideo ? <video src={preview} muted playsInline preload="metadata" /> : <img src={preview} alt="" style={{ filter: cssFilterFor(filterKey) }} />)}
+        <video src={preview} muted playsInline preload="metadata" />
         {durLabel && <span>{durLabel}</span>}
       </div>
-    </div>
+    </div>}
     <footer className="up-bottom">
       <button type="button" className="up-round" onClick={saveToDevice} aria-label="Save to your phone"><DownloadGlyph /></button>
       <button type="button" className="up-next" onClick={() => (asStory ? publish(true) : setDetailsOpen(true))} disabled={trimming}>Next <Icon name="arrow-right" size={22} /></button>

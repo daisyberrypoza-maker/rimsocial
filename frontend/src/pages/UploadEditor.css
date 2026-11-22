@@ -47,10 +47,6 @@
 .up-page.up-editor .up-filter-thumb { flex: none; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; box-sizing: border-box; background: #222; }
 .up-page.up-editor .up-filter-thumb img,
 .up-page.up-editor .up-filter-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.up-page.up-editor .up-hd {
-  flex: none; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: #000;
-  font: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer;
-}
 
 /* Timeline thumbnail with duration, bottom-left */
 .up-page.up-editor .up-timeline-wrap { position: absolute; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 2; }
@@ -63,15 +59,15 @@
   position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Bottom bar: grey download circle and a wide white Next pill */
+/* Bottom bar: translucent download circle and a blue Next pill (no black buttons) */
 .up-page.up-editor .up-bottom {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
   display: flex; align-items: center; gap: 12px; box-sizing: border-box;
   padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 18px);
 }
-.up-page.up-editor .up-round { width: 58px; height: 58px; flex: none; padding: 0; border: 0; border-radius: 50%; background: rgba(110, 110, 110, 0.7); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.up-page.up-editor .up-round { width: 58px; height: 58px; flex: none; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.22); color: #fff; display: grid; place-items: center; cursor: pointer; }
 .up-page.up-editor .up-next {
-  flex: 1; height: 58px; border: 0; border-radius: 999px; background: #fff; color: #000;
+  flex: 1; height: 58px; border: 0; border-radius: 999px; background: #0095f6; color: #fff;
   display: flex; align-items: center; justify-content: center; gap: 12px;
   font: inherit; font-size: 18px; font-weight: 600; cursor: pointer;
 }
