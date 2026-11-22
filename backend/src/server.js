@@ -176,6 +176,10 @@ async function start() {
   await PushSubscription.sync();
   // App-library music table (migration 029). Creates it only when missing.
   await AudioTrack.sync();
+  // Duplicate sound check (migration 043): adds the hash column to an existing audio_tracks table
+  const audioQi = sequelize.getQueryInterface();
+  const audioColumns = await audioQi.describeTable('audio_tracks');
+  if (!audioColumns.contentHash) await audioQi.addColumn('audio_tracks', 'contentHash', { type: DataTypes.STRING(64), allowNull: true });
   await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
