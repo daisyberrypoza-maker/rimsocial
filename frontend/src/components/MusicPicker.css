@@ -26,3 +26,15 @@
 .mp-empty { padding: 32px 16px; text-align: center; color: #65676b; font-size: 15px; }
 .mp-fab { position: fixed; right: 18px; bottom: 24px; width: 60px; height: 60px; display: grid; place-items: center; border: 0; border-radius: 50%; background: #ffd400; color: #000; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
 .mp-fab:disabled { opacity: .6; }
+
+/* Global button defaults (white text, near-black background) must not reach the picker.
+   Light surfaces get dark text, and only the active tab and the yellow button use colour. */
+.mp-page button { background-color: transparent !important; color: #000 !important; }
+.mp-page .mp-create,
+.mp-page .mp-play { background-color: #eef0f3 !important; }
+.mp-page .mp-art { background-color: #f0f2f5 !important; }
+.mp-page .mp-fab { background-color: #ffd400 !important; padding: 0 !important; }
+.mp-page .mp-tab { color: #8e8e8e !important; }
+.mp-page .mp-tab.on { color: #000 !important; }
+.mp-page .mp-info span { color: #65676b !important; }
+.mp-page .mp-search input { color: #000 !important; }
