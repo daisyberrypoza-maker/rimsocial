@@ -110,10 +110,17 @@ function OptionsSheet({ username, isOwn, reporting, onClose, onRemix, onShare, o
 
 // Comments for a Rimlight post, opened from the comment button. Replies sit under their top-level comment.
 function CommentsSheet({ post, me, onClose }) {
+  const setOverlayOpen = useAppStore((s) => s.setOverlayOpen);
   const [items, setItems] = useState([]);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
+
+  // Hide the tab bar while the sheet is open, so the reply box is never under it
+  useEffect(() => {
+    setOverlayOpen(true);
+    return () => setOverlayOpen(false);
+  }, [setOverlayOpen]);
 
   useEffect(() => {
     let alive = true;
