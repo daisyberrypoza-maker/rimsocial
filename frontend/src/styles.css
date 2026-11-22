@@ -7715,7 +7715,8 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 /* Camera uses the same dark tab bar as Rimlight (bottomnav-dark) */
 body:has(.cam-page) .bottomnav { z-index: 60; background: #111214 !important; border-top-color: #252629 !important; filter: none; }
 body:has(.cam-page) .bottomnav a { color: #9a9aa1 !important; filter: none; }
-body:has(.cam-page) .bottomnav a.active { color: #fff !important; }
+body:has(.cam-page) .bottomnav a.active,
+body:has(.cam-page) .bottomnav a.active svg { color: #fff !important; stroke: #fff !important; }
 
 /* Rimlight: full-bleed square content, nothing clipped with rounded corners */
 .profile-watch-page, .profile-watch-page .feed, .profile-watch-page .post, .profile-watch-page .post video, .profile-watch-page .post img, .rv-page .rv-media { border-radius: 0 !important; }
