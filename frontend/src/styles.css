@@ -7704,3 +7704,13 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .cam-close, .cam-side button, .cam-side-btn { background: transparent; backdrop-filter: none; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
 .cam-side-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .cam-side-label { color: #fff; font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+
+/* Camera header, rail and navbar layout (Snapchat-style reference). White icons, no black buttons. */
+.cam-top { position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 2; display: flex; align-items: center; justify-content: space-between; }
+.cam-avatar { border: 0; padding: 0; background: transparent; border-radius: 50%; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+.cam-top-actions { display: flex; align-items: center; gap: 18px; }
+.cam-top-actions button { width: 40px; height: 40px; border: 0; padding: 0; background: transparent; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+.cam-side { top: calc(env(safe-area-inset-top, 0px) + 72px); }
+.cam-bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); }
+body:has(.cam-page) .bottomnav { z-index: 60; background: transparent; border-top: 0; }
+body:has(.cam-page) .bottomnav a { color: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }

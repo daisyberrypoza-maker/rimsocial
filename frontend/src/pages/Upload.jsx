@@ -8,6 +8,7 @@ import TextEditor from '../components/TextEditor.jsx';
 import { cameraZoom } from '../lib/cameraZoom.js';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
+import Avatar from '../components/Avatar.jsx';
 import { toast, logError } from '../toast.js';
 import StoryAudioControls from '../components/StoryAudioControls.jsx';
 import Icon from '../components/Icon.jsx';
@@ -34,7 +35,9 @@ function DownloadGlyph() {
 
 // Camera first, as in Snapchat: a live viewfinder opens when you tap Add.
 // Flip, flash-free photo capture; the gallery icon opens the older picker. Photos go to the same editor.
-function CameraView({ onCapture, onGallery, onClose }) {
+function CameraView({ onCapture, onGallery }) {
+  const navigate = useNavigate();
+  const me = useAppStore((s) => s.user);
   const videoRef = useRef(null);
   const [facing, setFacing] = useState("user");
   const [error, setError] = useState("");
@@ -205,9 +208,15 @@ function CameraView({ onCapture, onGallery, onClose }) {
         style={zoomState.current.hardware || zoom === 1 ? undefined : { transform: facing === "user" ? `scaleX(-${zoom}) scaleY(${zoom})` : `scale(${zoom})` }}
         onPointerDown={onZoomDown} onPointerMove={onZoomMove} onPointerUp={onZoomUp} onPointerCancel={onZoomUp} />
       {error && <p className="cam-error">{error}</p>}
-      <button type="button" className="cam-close" onClick={onClose} aria-label="Close"><Icon name="x" size={26} /></button>
+      <header className="cam-top">
+        <button type="button" className="cam-avatar" onClick={() => me?.username && navigate('/u/' + me.username)} aria-label="Your profile"><Avatar user={me || {}} size={40} noRing /></button>
+        <div className="cam-top-actions">
+          <button type="button" onClick={() => navigate('/search')} aria-label="Search"><Icon name="search" size={24} /></button>
+          <button type="button" onClick={() => navigate('/friends')} aria-label="Find friends"><Icon name="user-plus" size={24} /></button>
+          <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} aria-label="Flip camera"><Icon name="refresh" size={24} /></button>
+        </div>
+      </header>
       <div className="cam-side">
-        <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} aria-label="Flip camera"><Icon name="refresh" size={26} /></button>
         <button type="button" onClick={toggleTorch} aria-label={torch ? 'Turn flash off' : 'Turn flash on'} aria-pressed={torch}><Icon name={torch ? 'zap' : 'zap-off'} size={24} /></button>
       </div>
       <div className="cam-bottom">
@@ -476,7 +485,7 @@ export default function Upload() {
     }
   }
 
-  if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} onClose={() => goBack(navigate)} />;
+  if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} />;
 
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
