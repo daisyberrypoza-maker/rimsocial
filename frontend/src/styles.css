@@ -7732,3 +7732,37 @@ body:has(.cam-page) .bottomnav a { color: #fff; filter: drop-shadow(0 1px 3px rg
 .sv-music-wrap .sv-music { position: static; min-width: 0; }
 .sv-eq { display: flex; align-items: flex-end; gap: 3px; height: 18px; flex: none; }
 .sv-eq span { width: 3px; height: 100%; border-radius: 2px; background: #fff; transform: scaleY(.15); transform-origin: bottom; will-change: transform; }
+
+/* Rimlight/Spotlight viewer refinement — keeps the profile grid, Stories and Reposts untouched. */
+.post .rail {
+  right: 12px;
+  bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+  gap: 20px;
+}
+.post .rail-btn {
+  min-width: 42px;
+  min-height: 42px;
+  justify-content: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+.post .rail-btn svg { width: 30px; height: 30px; }
+.post .rail-btn span { font-size: 12px; line-height: 1; font-weight: 600; }
+.post .snap-avatar { position: relative; margin-bottom: 2px; }
+.post .rail-avatar { display: grid; place-items: center; }
+.post .snap-follow { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #fffc00; color: #111; font-weight: 800; border: 2px solid #000; }
+.post .snap-disc { margin-top: 2px; }
+.post .info {
+  left: 16px;
+  right: 88px;
+  bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+}
+.post .snap-title { font-size: 18px; font-weight: 700; line-height: 1.2; gap: 5px; }
+.post .snap-sound { font-size: 13px; font-weight: 400; margin: 7px 0 9px; line-height: 1.25; }
+.post .info p { font-size: 14px; line-height: 1.35; }
+.post .post-seek { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+@media (max-height: 720px) {
+  .post .rail { bottom: calc(126px + env(safe-area-inset-bottom, 0px)); gap: 15px; }
+  .post .info { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .post .post-seek { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+}
