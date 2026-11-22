@@ -10,6 +10,7 @@ const { requireAuth } = require('../middleware/auth');
 const httpError = require('../utils/httpError');
 const config = require('../config');
 const cloudinary = require('../services/cloudinary');
+const audius = require('../services/audius');
 
 const AUDIO_TYPES = new Set([
   'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'audio/aac',
@@ -60,6 +61,31 @@ router.get('/search', async (req, res, next) => {
       }),
     })).sort((a, b) => b.score - a.score || new Date(b.row.createdAt) - new Date(a.row.createdAt));
     res.json({ items: ranked.slice(0, 40).map((item) => toDTO(item.row)) });
+  } catch (e) { next(e); }
+});
+
+// Audius catalogue (streamed through the server; stream links are signed and short-lived, so they are never stored)
+// GET /v1/audio/audius/trending?limit=20
+router.get('/audius/trending', async (req, res, next) => {
+  try {
+    res.json({ items: await audius.trending(req.query.limit) });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/audio/audius/search?q=...&limit=20
+router.get('/audius/search', async (req, res, next) => {
+  try {
+    const q = String(req.query.q || '').trim().slice(0, 80);
+    if (!q) return res.json({ items: [] });
+    res.json({ items: await audius.search(q, req.query.limit) });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/audio/audius/:id/stream  -> { url } fresh signed link for playback only
+router.get('/audius/:id/stream', async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ url: await audius.streamLink(req.params.id) });
   } catch (e) { next(e); }
 });
 
