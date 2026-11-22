@@ -5,7 +5,7 @@ const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
 const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack } = require('./db');
-const { Op } = require('sequelize');
+const { Op, DataTypes } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
 
@@ -289,8 +289,6 @@ async function start() {
   }
   // Additive paid-partnership fields for existing posts tables.
   const currentPostColumns = await qi.describeTable('posts');
-  // DataTypes must be declared before the first migration below uses it (a use before the const threw at startup)
-  const DataTypes = require('sequelize').DataTypes;
   // Disappearing messages (direct_messages.ephemeral), added only when the table exists and the column is missing
   const dmColumns = await qi.describeTable('direct_messages').catch(() => ({}));
   if (dmColumns.senderId && !dmColumns.ephemeral) await qi.addColumn('direct_messages', 'ephemeral', { type: DataTypes.STRING(20), allowNull: true });
