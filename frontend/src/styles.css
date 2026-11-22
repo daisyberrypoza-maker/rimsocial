@@ -7717,3 +7717,7 @@ body:has(.cam-page) .bottomnav a { color: #fff; filter: drop-shadow(0 1px 3px rg
 
 /* Rimlight: full-bleed square content, nothing clipped with rounded corners */
 .profile-watch-page, .profile-watch-page .feed, .profile-watch-page .post, .profile-watch-page .post video, .profile-watch-page .post img, .rv-page .rv-media { border-radius: 0 !important; }
+
+/* Rimlight: one swipe moves exactly one Rimlight, vertically, and vertical swipes are never blocked */
+.profile-watch-feed { scroll-snap-type: y mandatory; touch-action: pan-y; }
+.profile-watch-feed .post { scroll-snap-align: start; scroll-snap-stop: always; touch-action: pan-y; }
