@@ -73,6 +73,8 @@ function isTabScreen(pathname, search = '') {
   if (!TAB_SCREENS.includes(pathname)) return false;
   // Story and reel creation share the add-post route but are not the Add post tab
   if (pathname === '/upload' && /(^|[?&])(story|reel)=1/.test(search)) return false;
+  // Search opened from Stories has no navbar
+  if (pathname === '/search' && /(^|[?&])scope=stories(&|$)/.test(search)) return false;
   return true;
 }
 
