@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription } = require('./db');
+const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack } = require('./db');
 const { Op } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -174,6 +174,8 @@ async function start() {
   await GroupMember.sync();
   await GroupMessage.sync();
   await PushSubscription.sync();
+  // App-library music table (migration 029). Creates it only when missing.
+  await AudioTrack.sync();
   await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
@@ -307,6 +309,8 @@ async function start() {
   if (!currentPostColumns.origVolume) await qi.addColumn('posts', 'origVolume', { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.3 });
   if (!currentPostColumns.musicVolume) await qi.addColumn('posts', 'musicVolume', { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.8 });
   if (!currentPostColumns.musicMixable) await qi.addColumn('posts', 'musicMixable', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
+  // Video loop setting (migration 039). Existing posts keep looping.
+  if (!currentPostColumns.loopVideo) await qi.addColumn('posts', 'loopVideo', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true });
   if (!currentPostColumns.dominantColor) await qi.addColumn('posts', 'dominantColor', { type: DataTypes.STRING(7), allowNull: true });
   if (currentPostColumns.mediaUrl && currentPostColumns.mediaUrl.allowNull === false) {
     await qi.changeColumn('posts', 'mediaUrl', { type: DataTypes.STRING(512), allowNull: true });
