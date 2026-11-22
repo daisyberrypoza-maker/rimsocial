@@ -1,5 +1,6 @@
 // Lens filters for upload. Each lens is baked into the photo when it is published,
-// so the published photo matches the preview. Pleasant is the live look on Discover,
+// so the published photo matches the preview. Most lenses are a CSS filter string, which is used for the
+// preview and the baked photo alike, so the two always match. Pleasant is the live look on Discover,
 // Stories, the story viewer and Rimlight (styles.css --pleasant-filter).
 //   css:     tone grade (CSS filter syntax, also used for the preview)
 //   bloom:   soft glow layer (blur radius, opacity)
@@ -12,6 +13,19 @@ export const FILTERS = [
   { key: 'cool', label: 'Cool', css: 'saturate(1.1) contrast(1.05) brightness(1.04) hue-rotate(-8deg)', tint: { color: '#6ab0ff', alpha: 0.14 } },
   { key: 'vivid', label: 'Vivid', css: 'saturate(1.45) contrast(1.12) brightness(1.04)' },
   { key: 'noir', label: 'Noir', css: 'grayscale(1) contrast(1.25) brightness(.95)', vignette: 0.28 },
+  { key: 'fade', label: 'Fade', css: 'contrast(.9) brightness(1.08) saturate(.85)' },
+  { key: 'crisp', label: 'Crisp', css: 'contrast(1.2) saturate(1.1) brightness(1.02)' },
+  { key: 'golden', label: 'Golden', css: 'sepia(.35) saturate(1.5) brightness(1.06) contrast(1.02)' },
+  { key: 'dusk', label: 'Dusk', css: 'hue-rotate(-12deg) saturate(1.3) brightness(.96) contrast(1.1)' },
+  { key: 'frost', label: 'Frost', css: 'saturate(.7) brightness(1.1) contrast(1.05) hue-rotate(10deg)' },
+  { key: 'sunset', label: 'Sunset', css: 'sepia(.25) hue-rotate(-8deg) saturate(1.6) contrast(1.08)' },
+  { key: 'rose', label: 'Rose', css: 'sepia(.2) hue-rotate(-20deg) saturate(1.3) brightness(1.05)' },
+  { key: 'ocean', label: 'Ocean', css: 'hue-rotate(10deg) saturate(1.35) contrast(1.08) brightness(1.02)' },
+  { key: 'retro', label: 'Retro', css: 'sepia(.45) contrast(1.15) saturate(.85) brightness(.98)' },
+  { key: 'pop', label: 'Pop', css: 'saturate(1.9) contrast(1.15) brightness(1.06)' },
+  { key: 'bright', label: 'Bright', css: 'brightness(1.18) contrast(.96) saturate(1.05)' },
+  { key: 'mono', label: 'Mono', css: 'grayscale(1) brightness(1.05) contrast(1.1)' },
+  { key: 'ink', label: 'Ink', css: 'grayscale(1) contrast(1.6) brightness(.9)' },
 ];
 
 export function cssFilterFor(key) {
