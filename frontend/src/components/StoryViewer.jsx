@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
+import MusicEqualizer from './MusicEqualizer.jsx';
 import { closeMotion, dragMotion, dragState, isDismissDrag, openMotion, shouldClose, snapMotion, visualBox } from '../lib/viewerMotion.js';
 import '../pages/StoryComposer.css';
 import './StoryOwnerSheet.css';
@@ -622,7 +623,11 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
 
       {current?.voiceUrl && <audio key={`voice-${current.id}`} ref={voiceRef} src={mediaUrl(current.voiceUrl)} preload="auto" onEnded={() => { if (!isVideo) next(); }} onError={() => { if (!isVideo) next(); }} />}
       {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
-      {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
+      {(current?.musicUrl || current?.voiceUrl) && <div className="sv-music-wrap">
+        {current?.musicUrl && <MusicEqualizer audioRef={musicRef} src={mediaUrl(current.musicUrl)} />}
+        {!current?.musicUrl && current?.voiceUrl && <MusicEqualizer audioRef={voiceRef} src={mediaUrl(current.voiceUrl)} />}
+        {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
+      </div>}
 
       <div className={`sv-stage sv-grade-${current?.filterPreset || 'discover'}`} onClick={onStageTap}>
         {loadError && !current ? (
