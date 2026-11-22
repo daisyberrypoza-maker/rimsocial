@@ -120,10 +120,11 @@ export default function App() {
 
   // On a fresh load at "/", return to the last screen the user was on
   // Status bar: one rule for web and Android. White by default; black only on
-  // Stories, Rimlight, Profile, and the video and image viewers.
+  // Rimlight, the camera, Profile, and the video and image viewers.
   useEffect(() => {
     const path = location.pathname;
-    const dark = path === '/' || path === '/following' || path === '/live'
+    // The camera (upload screen) is black, like the other full-screen dark screens
+    const dark = path === '/' || path === '/following' || path === '/live' || path === '/upload'
       || path.startsWith('/u/') || path.startsWith('/explore/watch/') || path.startsWith('/p/');
     const light = !dark;
     let meta = document.querySelector('meta[name="theme-color"]');
