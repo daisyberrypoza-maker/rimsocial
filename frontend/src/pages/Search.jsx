@@ -1,6 +1,6 @@
 import { goToPost } from '../lib/viewerMotion.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
@@ -14,6 +14,8 @@ import { useSwipeTabs } from '../lib/useSwipeTabs.js';
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
 const TABS = [['foryou', 'For you'], ['stories', 'Stories'], ['accounts', 'Accounts'], ['audio', 'Audio'], ['tags', 'Tags']];
 const TAB_KEYS = TABS.map(([key]) => key);
+// Search opened from Stories (?scope=stories): only stories and the stories discover list
+const STORY_TABS = [['stories', 'Stories'], ['discover', 'Discover']];
 
 function tagsFrom(posts, term) {
   const needle = term.replace(/^#/, '').toLowerCase();
@@ -30,9 +32,13 @@ function tagsFrom(posts, term) {
 export default function Search() {
   const navigate = useNavigate();
   const { tag: routeTag } = useParams();
+  const [searchParams] = useSearchParams();
   const tagPage = routeTag ? decodeURIComponent(routeTag).replace(/^#/, '') : '';
   const [query, setQuery] = useState(tagPage ? `#${tagPage}` : '');
-  const [tab, setTab] = useState('foryou');
+  const storiesScope = searchParams.get('scope') === 'stories' && !tagPage;
+  const tabList = storiesScope ? STORY_TABS : TABS;
+  const [tab, setTab] = useState(storiesScope ? 'stories' : 'foryou');
+  const [discover, setDiscover] = useState([]);
   const [search, setSearch] = useState(null);
   const [explore, setExplore] = useState([]);
   const [busy, setBusy] = useState({});
@@ -40,11 +46,17 @@ export default function Search() {
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const audioRef = useRef(null);
   const term = query.trim();
-  const showTabs = !tagPage && Boolean(term);
-  const swipeSurfaceRef = useSwipeTabs(tab, TABS.map(([key]) => key), setTab, showTabs);
+  const showTabs = storiesScope || (!tagPage && Boolean(term));
+  const swipeSurfaceRef = useSwipeTabs(tab, tabList.map(([key]) => key), setTab, showTabs);
+
+  // Stories discover: creators whose stories are suggested
+  useEffect(() => {
+    if (!storiesScope) return;
+    api('/v1/users/suggestions').then((data) => setDiscover(data.suggested || [])).catch(logError);
+  }, [storiesScope]);
 
   useEffect(() => {
-    if (tagPage) return;
+    if (tagPage || storiesScope) return;
     api('/v1/feed/explore').then((data) => setExplore(data.items || [])).catch(logError);
   }, [tagPage]);
 
@@ -89,17 +101,17 @@ export default function Search() {
   return (
     <main ref={swipeSurfaceRef} data-local-tab-swipe className="sr-page">
       <div className="sr-bar">
-        {tagPage && <button type="button" className="sr-back" onClick={() => navigate(-1)} aria-label="Back"><Icon name="arrow-left" size={24} /></button>}
+        {(tagPage || storiesScope) && <button type="button" className="sr-back" onClick={() => navigate(-1)} aria-label="Back"><Icon name="arrow-left" size={24} /></button>}
         <label className="sr-field">
           <Icon name="search" size={20} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" readOnly={Boolean(tagPage)} autoCapitalize="none" autoComplete="off" />
-          {!!query && !tagPage && <button type="button" className="sr-clear" onClick={() => { setQuery(''); setTab('foryou'); }} aria-label="Clear search"><Icon name="x" size={18} /></button>}
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={storiesScope ? 'Search stories' : 'Search'} readOnly={Boolean(tagPage)} autoCapitalize="none" autoComplete="off" />
+          {!!query && !tagPage && <button type="button" className="sr-clear" onClick={() => { setQuery(''); setTab(storiesScope ? 'stories' : 'foryou'); }} aria-label="Clear search"><Icon name="x" size={18} /></button>}
         </label>
       </div>
 
       {showTabs && (
         <div className="sr-tabs" role="tablist" aria-label="Search results">
-          {TABS.map(([key, label]) => (
+          {tabList.map(([key, label]) => (
             <button key={key} type="button" role="tab" aria-selected={activeTab === key} className={activeTab === key ? 'sr-tab on' : 'sr-tab'} onClick={() => setTab(key)}>{label}</button>
           ))}
         </div>
@@ -181,6 +193,19 @@ export default function Search() {
             ))}
           </div>
         ) : <p className="sr-empty">{term ? 'No posts found.' : 'Nothing to explore yet.'}</p>
+      )}
+
+      {activeTab === 'discover' && (
+        discover.length ? (
+          <div className="sr-grid sr-people">
+            {discover.map((person) => (
+              <button key={person.id} type="button" className="sr-cell sr-person" onClick={() => navigate('/stories', { state: { openUserId: person.id } })} aria-label={`Stories by ${person.username}`}>
+                <Avatar user={person} size={72} />
+                <span>@{person.username}</span>
+              </button>
+            ))}
+          </div>
+        ) : <p className="sr-empty">Nothing to discover yet.</p>
       )}
 
       {activeTab === 'stories' && (

@@ -7721,3 +7721,8 @@ body:has(.cam-page) .bottomnav a { color: #fff; filter: drop-shadow(0 1px 3px rg
 /* Rimlight: one swipe moves exactly one Rimlight, vertically, and vertical swipes are never blocked */
 .profile-watch-feed { scroll-snap-type: y mandatory; touch-action: pan-y; }
 .profile-watch-feed .post { scroll-snap-align: start; scroll-snap-stop: always; touch-action: pan-y; }
+
+/* Stories search: creators in the stories discover list */
+.sr-people { grid-template-columns: repeat(3, 1fr); }
+.sr-person { aspect-ratio: auto !important; padding: 14px 6px !important; display: flex !important; flex-direction: column; align-items: center; gap: 8px; background: transparent !important; }
+.sr-person span { font-size: 13px; font-weight: 600; color: inherit; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
