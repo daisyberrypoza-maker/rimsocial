@@ -39,6 +39,7 @@ export default function Rimlight() {
   // Opening a tab shows saved posts at once and refreshes only when they are old
   useEffect(() => {
     const current = useAppStore.getState().feeds[tab];
+    setLoading(isStale(current));
     if (isStale(current)) { setActive(0); run(true); }
     else setActive(current?.activeIndex || 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,7 +90,6 @@ export default function Rimlight() {
         getItemLayout={(_, index) => ({ length: pageHeight, offset: pageHeight * index, index })}
         initialScrollIndex={startIndex}
         pagingEnabled
-        snapToInterval={pageHeight}
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewable}
@@ -100,14 +100,15 @@ export default function Rimlight() {
         onEndReached={() => { if (feed?.nextCursor && !loading) run(false); }}
         onEndReachedThreshold={0.6}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#fff" />}
-        ListEmptyComponent={!loading ? (
+        ListEmptyComponent={!loading && feed?.updatedAt ? (
           <View style={[styles.empty, { height: pageHeight }]}>
             <Text style={styles.emptyText}>Nothing here yet. Post something or follow creators.</Text>
           </View>
         ) : null}
-        initialNumToRender={2}
-        windowSize={3}
-        removeClippedSubviews
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={5}
+        removeClippedSubviews={false}
         style={{ backgroundColor: colors.darkBg }}
       />
     </View>

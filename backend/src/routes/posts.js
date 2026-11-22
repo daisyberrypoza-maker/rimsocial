@@ -263,7 +263,7 @@ router.get('/:id/comments', requireAuth, async (req, res, next) => {
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const items = await PostComment.findAll({ where: { postId: post.id }, include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }], order: [['createdAt', 'ASC']], limit: 200 });
-    res.json({ items: items.map((c) => ({ id: c.id, body: c.body, createdAt: c.createdAt, author: c.author ? { id: c.author.id, username: c.author.username, displayName: c.author.displayName, avatarUrl: c.author.avatarUrl } : null, isMine: c.userId === req.user.id })) });
+    res.json({ items: items.map((c) => ({ id: c.id, body: c.body, parentId: c.parentId, createdAt: c.createdAt, author: c.author ? { id: c.author.id, username: c.author.username, displayName: c.author.displayName, avatarUrl: c.author.avatarUrl } : null, isMine: c.userId === req.user.id })) });
   } catch (e) { next(e); }
 });
 
@@ -274,11 +274,18 @@ router.post('/:id/comments', requireAuth, async (req, res, next) => {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false } });
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     await assertPostAuthorNotBlocked(req.user.id, post.authorId);
-    const comment = await PostComment.create({ postId: post.id, userId: req.user.id, body });
+    // Replies go one level deep: a reply to a reply is stored under the top-level comment
+    let parentId = null;
+    if (req.body.parentId) {
+      const target = await PostComment.findOne({ where: { id: String(req.body.parentId), postId: post.id } });
+      if (!target) throw httpError(404, 'Comment not found');
+      parentId = target.parentId || target.id;
+    }
+    const comment = await PostComment.create({ postId: post.id, userId: req.user.id, body, parentId });
     await redis.hincrby(`feed:preferences:${req.user.id}`, post.id, 3).catch(() => {});
     await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
     const author = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
-    res.status(201).json({ id: comment.id, body: comment.body, createdAt: comment.createdAt, author, isMine: true });
+    res.status(201).json({ id: comment.id, body: comment.body, parentId: comment.parentId, createdAt: comment.createdAt, author, isMine: true });
   } catch (e) { next(e); }
 });
 

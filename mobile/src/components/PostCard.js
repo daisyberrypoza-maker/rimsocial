@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, Image, Modal, Share, Alert, Linking, ScrollView, TextInput, PanResponder, AppState, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, Modal, Share, Alert, Linking, ScrollView, TextInput, PanResponder, AppState, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import Video from 'react-native-video';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 import { BadgeCheck, MoreHorizontal, SkipBack, SkipForward } from 'lucide-react-native';
@@ -108,11 +108,12 @@ function OptionsSheet({ username, isOwn, reporting, onClose, onRemix, onShare, o
   );
 }
 
-// Comments for a Rimlight post, opened from the comment button
+// Comments for a Rimlight post, opened from the comment button. Replies sit under their top-level comment.
 function CommentsSheet({ post, me, onClose }) {
   const [items, setItems] = useState([]);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
 
   useEffect(() => {
     let alive = true;
@@ -125,9 +126,12 @@ function CommentsSheet({ post, me, onClose }) {
     if (!text || sending) return;
     setSending(true);
     try {
-      const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: { body: text } });
+      const payload = { body: text };
+      if (replyTo) payload.parentId = replyTo.id;
+      const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: payload });
       setItems((current) => [...current, comment]);
       setBody('');
+      setReplyTo(null);
     } catch (e) { logError(e); }
     finally { setSending(false); }
   }
@@ -135,42 +139,66 @@ function CommentsSheet({ post, me, onClose }) {
   async function remove(comment) {
     try {
       await api(`/v1/posts/${post.id}/comments/${comment.id}`, { method: 'DELETE' });
-      setItems((current) => current.filter((item) => item.id !== comment.id));
+      setItems((current) => current.filter((item) => item.id !== comment.id && item.parentId !== comment.id));
     } catch (e) { logError(e); }
   }
 
-  return (
-    <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.commentSheet} onStartShouldSetResponder={() => true}>
-          <View style={styles.handle} />
-          <Text style={styles.sheetTitle}>Comments</Text>
-          <ScrollView style={styles.flex} contentContainerStyle={styles.commentList}>
-            {items.map((item) => (
-              <View key={item.id} style={styles.comment}>
-                <Avatar user={item.author} size={40} />
-                <View style={styles.flex}>
-                  <Text style={styles.commentName}>{item.author?.username || 'user'} <Text style={styles.commentTime}>· {timeAgo(item.createdAt)}</Text></Text>
-                  <Text style={styles.commentBody}>{item.body}</Text>
-                  {item.isMine && <Pressable onPress={() => remove(item)}><Text style={styles.deleteText}>Delete</Text></Pressable>}
-                </View>
-              </View>
-            ))}
-            {!items.length && <Text style={styles.empty}>{'No comments yet.\nStart the conversation.'}</Text>}
-          </ScrollView>
-          <View style={styles.emojiRow}>
-            {EMOJIS.map((emoji) => (
-              <Pressable key={emoji} onPress={() => setBody((current) => current + emoji)} accessibilityLabel={`Add ${emoji}`}>
-                <Text style={styles.emoji}>{emoji}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.compose}>
-            <Avatar user={me || {}} size={36} />
-            <TextInput style={styles.composeInput} placeholder="Add a comment…" placeholderTextColor={colors.darkMuted} value={body} onChangeText={setBody} maxLength={1000} />
-            {!!body.trim() && <Pressable onPress={submit} disabled={sending}><Text style={styles.postBtn}>Post</Text></Pressable>}
+  function renderComment(item, isReply) {
+    return (
+      <View key={item.id} style={[styles.comment, isReply && styles.replyRow]}>
+        <Avatar user={item.author} size={isReply ? 28 : 40} />
+        <View style={styles.flex}>
+          <Text style={styles.commentName}>{item.author?.username || 'user'} <Text style={styles.commentTime}>· {timeAgo(item.createdAt)}</Text></Text>
+          <Text style={styles.commentBody}>{item.body}</Text>
+          <View style={styles.actionRow}>
+            <Pressable onPress={() => setReplyTo({ id: item.parentId || item.id, username: item.author?.username || 'user' })} accessibilityLabel="Reply">
+              <Text style={styles.replyText}>Reply</Text>
+            </Pressable>
+            {item.isMine && <Pressable onPress={() => remove(item)} accessibilityLabel="Delete comment"><Text style={styles.deleteText}>Delete</Text></Pressable>}
           </View>
         </View>
+      </View>
+    );
+  }
+
+  const topLevel = items.filter((c) => !c.parentId);
+
+  return (
+    <Modal transparent animationType="slide" visible onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.sheetWrap}>
+          <View style={styles.commentSheet} onStartShouldSetResponder={() => true}>
+            <View style={styles.handle} />
+            <Text style={styles.sheetTitle}>Comments</Text>
+            <ScrollView style={styles.flex} contentContainerStyle={styles.commentList}>
+              {topLevel.map((item) => (
+                <View key={item.id}>
+                  {renderComment(item, false)}
+                  {items.filter((r) => r.parentId === item.id).map((reply) => renderComment(reply, true))}
+                </View>
+              ))}
+              {!items.length && <Text style={styles.empty}>{'No comments yet.\nStart the conversation.'}</Text>}
+            </ScrollView>
+            <View style={styles.emojiRow}>
+              {EMOJIS.map((emoji) => (
+                <Pressable key={emoji} onPress={() => setBody((current) => current + emoji)} accessibilityLabel={`Add ${emoji}`}>
+                  <Text style={styles.emoji}>{emoji}</Text>
+                </Pressable>
+              ))}
+            </View>
+            {replyTo && (
+              <View style={styles.replyBanner}>
+                <Text style={styles.replyBannerText}>Replying to @{replyTo.username}</Text>
+                <Pressable onPress={() => setReplyTo(null)} accessibilityLabel="Cancel reply"><Text style={styles.replyText}>Cancel</Text></Pressable>
+              </View>
+            )}
+            <View style={styles.compose}>
+              <Avatar user={me || {}} size={36} />
+              <TextInput style={styles.composeInput} placeholder={replyTo ? 'Write a reply…' : 'Add a comment…'} placeholderTextColor={colors.darkMuted} value={body} onChangeText={setBody} maxLength={1000} />
+              {!!body.trim() && <Pressable onPress={submit} disabled={sending}><Text style={styles.postBtn}>Post</Text></Pressable>}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
@@ -604,7 +632,13 @@ const styles = StyleSheet.create({
   check: { color: '#111', fontSize: 16, fontWeight: '700' },
   submit: { margin: 16, height: 46, borderRadius: 12, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
   submitText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  commentSheet: { height: '62%', backgroundColor: colors.darkBg, borderTopLeftRadius: 22, borderTopRightRadius: 22 },
+  sheetWrap: { flex: 1, justifyContent: 'flex-end' },
+  commentSheet: { height: '80%', backgroundColor: colors.darkBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingBottom: 24 },
+  replyRow: { marginLeft: 36 },
+  actionRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  replyText: { color: colors.darkMuted, fontSize: 13, fontWeight: '700' },
+  replyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.darkLine },
+  replyBannerText: { color: '#fff', fontSize: 13 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)', alignSelf: 'center', marginTop: 10, marginBottom: 6 },
   sheetTitle: { color: '#fff', fontSize: 18, fontWeight: '800', textAlign: 'center', paddingVertical: 8 },
   flex: { flex: 1 },
