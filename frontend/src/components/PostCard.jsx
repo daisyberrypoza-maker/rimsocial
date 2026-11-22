@@ -73,6 +73,7 @@ function CommentsSheet({ post, onClose }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/comments`).then((r) => { if (alive) setItems(r.items || []); })
@@ -84,9 +85,12 @@ function CommentsSheet({ post, onClose }) {
     if (!body.trim() || sending) return;
     setSending(true);
     try {
-      const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: { body: body.trim() } });
+      const payload = { body: body.trim() };
+      if (replyTo) payload.parentId = replyTo.id;
+      const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: payload });
       setItems((current) => [...current, comment]);
       setBody('');
+      setReplyTo(null);
     } catch (e) { logError(e); }
     finally { setSending(false); }
   }
@@ -96,6 +100,19 @@ function CommentsSheet({ post, onClose }) {
       setItems((current) => current.filter((item) => item.id !== comment.id));
     } catch (e) { logError(e); }
   }
+  function renderComment(item, isReply) {
+    return <div className={`rv-comment${isReply ? ' rv-reply' : ''}`} key={item.id}>
+      <Avatar user={item.author} size={isReply ? 28 : 40} />
+      <div className="rv-comment-body">
+        <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {formatRelativeTime(item.createdAt)}</span></div>
+        <p>{item.body}</p>
+        <div className="rv-actions">
+          <button type="button" className="rv-reply-btn" onClick={() => setReplyTo({ id: item.parentId || item.id, username: item.author?.username || 'user' })}>Reply</button>
+          {item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}
+        </div>
+      </div>
+    </div>;
+  }
   const username = post.author?.username || 'creator';
   const emojis = ['❤️', '😍', '😂', '😭', '🔥', '🙏', '😊'];
   return <div className="rv-sheet-backdrop" onClick={onClose}>
@@ -103,21 +120,18 @@ function CommentsSheet({ post, onClose }) {
       <div className="rv-handle" aria-hidden="true" />
       <header className="rv-sheet-head"><strong>Comments</strong></header>
       <div className="rv-comments">
-        {loading ? <p className="rv-empty"></p> : items.length ? items.map((item) => <div className="rv-comment" key={item.id}>
-          <Avatar user={item.author} size={40} />
-          <div className="rv-comment-body">
-            <div className="rv-name-line"><strong className="rv-name">{item.author?.username || 'user'}</strong><span className="rv-time">· {formatRelativeTime(item.createdAt)}</span></div>
-            <p>{item.body}</p>
-            {item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}
-          </div>
+        {loading ? <p className="rv-empty"></p> : items.length ? items.filter((c) => !c.parentId).map((item) => <div key={item.id}>
+          {renderComment(item, false)}
+          {items.filter((r) => r.parentId === item.id).map((reply) => renderComment(reply, true))}
         </div>) : <p className="rv-empty">No comments yet.<br />Start the conversation.</p>}
       </div>
       <div className="rv-emojis" role="group" aria-label="Quick reactions">
         {emojis.map((emoji) => <button type="button" key={emoji} onClick={() => setBody((current) => current + emoji)} aria-label={`Add ${emoji}`}>{emoji}</button>)}
       </div>
+      {replyTo && <div className="rv-reply-banner"><span>Replying to @{replyTo.username}</span><button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div>}
       <form className="rv-compose" onSubmit={submit}>
         <Avatar user={me || {}} size={36} />
-        <input aria-label="Add a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder="Add a comment…" />
+        <input aria-label="Add a comment" value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} placeholder={replyTo ? 'Write a reply…' : 'Add a comment…'} />
         {body.trim() && <button type="submit" disabled={sending}>{sending ? '…' : 'Post'}</button>}
       </form>
     </section>
