@@ -121,7 +121,7 @@ export default function App() {
   // Stories, Rimlight, Profile, and the video and image viewers.
   useEffect(() => {
     const path = location.pathname;
-    const dark = path === '/stories' || path === '/' || path === '/following' || path === '/live'
+    const dark = path === '/' || path === '/following' || path === '/live'
       || path.startsWith('/u/') || path.startsWith('/explore/watch/') || path.startsWith('/p/');
     const light = !dark;
     let meta = document.querySelector('meta[name="theme-color"]');

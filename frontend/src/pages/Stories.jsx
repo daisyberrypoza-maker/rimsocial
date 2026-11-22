@@ -14,6 +14,7 @@ import { backgroundCss } from '../lib/storyBackgrounds.js';
 import Avatar from '../components/Avatar.jsx';
 import { logError } from '../toast.js';
 import { formatCount } from '../lib/format.js';
+import { setPageStatusColor } from '../lib/statusBar.js';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
@@ -129,6 +130,13 @@ export default function Stories() {
     navigate('/friends');
   }
   const [openAt, setOpenAt] = useState(null);
+  // The Stories screen has a white status bar; the story viewer over it has a black one
+  const viewerOpen = openAt !== null;
+  useEffect(() => {
+    if (!viewerOpen) return undefined;
+    setPageStatusColor('#000000');
+    return () => setPageStatusColor('#ffffff');
+  }, [viewerOpen]);
   const [openOrigin, setOpenOrigin] = useState(null);   // tapped tile box: the viewer grows out of it
   const [popOrigin, setPopOrigin] = useState(null);
   const [suggested, setSuggested] = useState(() => storedDiscover?.suggested || []);
