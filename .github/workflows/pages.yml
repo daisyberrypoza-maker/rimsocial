@@ -2,6 +2,7 @@ name: Deploy RimSocial website to GitHub Pages
 # Redeploy the latest main-branch frontend whenever this workflow changes.
 # Deployment refresh requested 2026-11-06: rebuild and publish the current frontend.
 # Manual republish requested 2026-11-09: rebuild and publish the latest main frontend.
+# Rimlight viewer deployment: publish this targeted viewer refinement.
 
 on:
   push:
