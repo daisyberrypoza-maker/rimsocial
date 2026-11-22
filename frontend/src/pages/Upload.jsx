@@ -39,6 +39,7 @@ function CameraView({ onCapture, onGallery, onClose }) {
   const [facing, setFacing] = useState("user");
   const [error, setError] = useState("");
   const [streamKey, setStreamKey] = useState(0);
+  const [torch, setTorch] = useState(false);
   // Zoom: hardware zoom when the camera reports it, otherwise a digital zoom that is cropped on capture
   const [zoom, setZoom] = useState(1);
   const zoomState = useRef({ active: false, startY: 0, startZoom: 1, hardware: false, max: 1, track: null });
@@ -53,6 +54,7 @@ function CameraView({ onCapture, onGallery, onClose }) {
   useEffect(() => {
     let stream = null;
     let alive = true;
+    setTorch(false);
     if (!navigator.mediaDevices?.getUserMedia) { setError("The camera is not available in this browser."); return undefined; }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false })
       .then((s) => {
@@ -187,6 +189,16 @@ function CameraView({ onCapture, onGallery, onClose }) {
     }, "image/jpeg", 0.92);
   }
 
+  // Flash: the torch of the camera, where the device has one
+  async function toggleTorch() {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track?.getCapabilities?.().torch) { toast('Flash is not available on this camera'); return; }
+    try {
+      await track.applyConstraints({ advanced: [{ torch: !torch }] });
+      setTorch(!torch);
+    } catch { toast('Flash is not available on this camera'); }
+  }
+
   return (
     <main className="cam-page">
       <video ref={videoRef} className={facing === "user" ? "cam-video mirror" : "cam-video"} autoPlay playsInline muted
@@ -196,10 +208,10 @@ function CameraView({ onCapture, onGallery, onClose }) {
       <button type="button" className="cam-close" onClick={onClose} aria-label="Close"><Icon name="x" size={26} /></button>
       <div className="cam-side">
         <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} aria-label="Flip camera"><Icon name="refresh" size={26} /></button>
-        <button type="button" onClick={() => setStreamKey((k) => k + 1)} aria-label="Restart camera"><Icon name="chevron-down" size={24} /></button>
+        <button type="button" onClick={toggleTorch} aria-label={torch ? 'Turn flash off' : 'Turn flash on'} aria-pressed={torch}><Icon name={torch ? 'zap' : 'zap-off'} size={24} /></button>
       </div>
       <div className="cam-bottom">
-        <button type="button" className="cam-side-btn" onClick={onGallery} aria-label="Choose from gallery"><Icon name="image" size={28} /></button>
+        <span className="cam-side-wrap"><button type="button" className="cam-side-btn" onClick={onGallery} aria-label="Choose from gallery"><Icon name="image" size={28} /></button><span className="cam-side-label">Gallery</span></span>
         <button type="button" className={`cam-shutter ${recording ? 'recording' : ''}`} onPointerDown={onShutterDown} onPointerUp={onShutterUp} onPointerCancel={onShutterCancel} onPointerLeave={(e) => { if (e.pointerType !== 'mouse') onShutterCancel(); }} onContextMenu={(e) => e.preventDefault()} aria-label="Take photo, or hold to record video">
           <span />
           {recording && (
