@@ -115,8 +115,12 @@ export default function Stories() {
   useEffect(() => {
     let seen = 0;
     try { seen = Number(localStorage.getItem('rimsocial-follow-seen-at') || 0); } catch { /* storage unavailable */ }
-    api('/v1/activity')
-      .then((d) => setNewFollows((d.items || []).filter((i) => i.type === 'follow' && new Date(i.createdAt).getTime() > seen).length))
+    // Count only new followers you have not followed back yet, so the badge never points at nobody
+    Promise.all([api('/v1/activity'), api('/v1/users/suggestions')])
+      .then(([activity, suggestions]) => {
+        const canAdd = new Set((suggestions.followBack || []).map((person) => String(person.id)));
+        setNewFollows((activity.items || []).filter((i) => i.type === 'follow' && canAdd.has(String(i.actor?.id)) && new Date(i.createdAt).getTime() > seen).length);
+      })
       .catch(() => {});
   }, []);
   function openFriends() {
@@ -190,7 +194,7 @@ export default function Stories() {
     let current = true;
     (async () => {
       try {
-        const items = (await api('/v1/users/suggestions')).items || [];
+        const items = (await api('/v1/users/suggestions')).suggested || [];
         let ranked = saved?.ranking || { friends: {}, discoverOrder: [] };
         const ids = items.map((u) => u.id).slice(0, 60).join(',');
         if (ids) {
