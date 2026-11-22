@@ -10,12 +10,8 @@ const { requireAuth } = require('../middleware/auth');
 const httpError = require('../utils/httpError');
 const config = require('../config');
 const cloudinary = require('../services/cloudinary');
+const { isAudioFile } = require('../utils/audioFile');
 const audius = require('../services/audius');
-
-const AUDIO_TYPES = new Set([
-  'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'audio/aac',
-  'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/webm',
-]);
 
 const audioUpload = multer({
   storage: multer.diskStorage({
@@ -23,7 +19,7 @@ const audioUpload = multer({
     filename: (req, file, cb) => cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase()),
   }),
   limits: { fileSize: config.maxUploadBytes, files: 1 },
-  fileFilter: (req, file, cb) => cb(null, AUDIO_TYPES.has(file.mimetype)),
+  fileFilter: (req, file, cb) => cb(null, isAudioFile(file)),
 });
 
 const toDTO = (track) => ({

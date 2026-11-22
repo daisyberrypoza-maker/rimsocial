@@ -84,7 +84,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
       onSelect(track);
     } catch (error) {
       logError(error);
-      toast('Could not add this sound. Use an MP3, M4A, AAC, WAV or OGG file');
+      toast(error?.message || 'Could not add this sound. Use an MP3, M4A, AAC, WAV or OGG file');
     } finally {
       setUploading(false);
     }
