@@ -17,6 +17,7 @@ export const useAppStore = create(
       feeds: {},          // { discover, following, 'u:<username>': { items, nextCursor, activeIndex, updatedAt } }
       profiles: {},       // { [username | 'me']: { user, updatedAt } }
       offline: false,     // not saved
+      overlayOpen: false, // true while a full-screen sheet (comments) is open; hides the tab bar. Not saved
       storyRail: EMPTY_RAIL,
       storyRailAt: 0,
       storyDiscover: EMPTY_DISCOVER,
@@ -31,7 +32,8 @@ export const useAppStore = create(
       }),
       setGifts: (gifts) => set({ gifts }),
       setCoins: (coinBalance) => set({ coinBalance }),
-      setFeed: (key, data) => set((s) => ({ feeds: { ...s.feeds, [key]: { ...s.feeds[key], ...data } } })),
+      setOverlayOpen: (overlayOpen) => set({ overlayOpen }),
+  setFeed: (key, data) => set((s) => ({ feeds: { ...s.feeds, [key]: { ...s.feeds[key], ...data } } })),
       setProfile: (key, data) => set((s) => ({ profiles: { ...s.profiles, [key]: { ...s.profiles[key], ...data } } })),
       setStoryRail: (storyRail) => set({ storyRail, storyRailAt: Date.now() }),
       setStoryDiscover: (storyDiscover) => set({ storyDiscover }),

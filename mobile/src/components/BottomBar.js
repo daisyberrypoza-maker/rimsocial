@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import Icon from './Icon';
 import { api } from '../api';
+import { useAppStore } from '../store';
 import { playChime } from '../lib/chime';
 import { colors } from '../theme';
 
@@ -18,6 +19,7 @@ const TABS = [
 export default function BottomBar({ activeTab, onPress }) {
   const [unread, setUnread] = useState(0);
   const dark = activeTab === 'Rimlight';
+  const overlayOpen = useAppStore((s) => s.overlayOpen);
 
   // Unread chat count: badge on Chat, and a chime when it goes up
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function BottomBar({ activeTab, onPress }) {
   const tint = (focused) => (dark ? (focused ? '#fff' : colors.darkMuted) : (focused ? colors.activeTab : colors.muted));
 
   return (
-    <View style={[styles.bar, dark && styles.barDark]}>
+    <View style={[styles.bar, dark && styles.barDark, overlayOpen && styles.hidden]} pointerEvents={overlayOpen ? 'none' : 'auto'}>
       {TABS.map((tab) => {
         const focused = activeTab === tab.name;
         return (
@@ -57,6 +59,7 @@ export default function BottomBar({ activeTab, onPress }) {
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', height: 60, backgroundColor: colors.bg, borderTopColor: colors.line, borderTopWidth: 1, alignItems: 'center', justifyContent: 'space-around' },
   barDark: { backgroundColor: colors.darkBg, borderTopColor: colors.darkLine },
+  hidden: { opacity: 0 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 8, left: '58%', minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.heart, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
