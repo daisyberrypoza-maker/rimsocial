@@ -462,7 +462,7 @@ export default function Upload() {
         storyFiles: toStory && carousel.length > 1 ? await Promise.all(carousel.map((f) => (String(f.type).startsWith('video/') ? trimVideo(f, STORY_MAX_SECONDS) : f))) : null,
         caption: draft.caption || '', topic: topic.trim(), aiLabel, allowRemix, visibility,
         sourcePostId: sourcePost?.id, sponsor, shareToStory, loopVideo,
-        storyAudio: { musicId: storyTrack?.id || null, voice: storyVoice?.file || null },
+        storyAudio: { music: storyTrack, voice: storyVoice?.file || null },
       });
       setDraft({ caption: '', topic: '', aiLabel: false, shareToStory: false });
       setTopic(''); setAiLabel(false); setShareToStory(false);

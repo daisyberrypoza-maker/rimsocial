@@ -298,6 +298,15 @@ async function start() {
   if (!currentPostColumns.voiceUrl) await qi.addColumn('posts', 'voiceUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicUrl) await qi.addColumn('posts', 'musicUrl', { type: DataTypes.STRING(512), allowNull: true });
   if (!currentPostColumns.musicTitle) await qi.addColumn('posts', 'musicTitle', { type: DataTypes.STRING(120), allowNull: true });
+  // Audius story music and mix settings (migration 042). Each column is added only when missing.
+  if (!currentPostColumns.musicSource) await qi.addColumn('posts', 'musicSource', { type: DataTypes.STRING(10), allowNull: true });
+  if (!currentPostColumns.audiusTrackId) await qi.addColumn('posts', 'audiusTrackId', { type: DataTypes.STRING(20), allowNull: true });
+  if (!currentPostColumns.artistName) await qi.addColumn('posts', 'artistName', { type: DataTypes.STRING(80), allowNull: true });
+  if (!currentPostColumns.artworkUrl) await qi.addColumn('posts', 'artworkUrl', { type: DataTypes.STRING(512), allowNull: true });
+  if (!currentPostColumns.musicOffsetSec) await qi.addColumn('posts', 'musicOffsetSec', { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 });
+  if (!currentPostColumns.origVolume) await qi.addColumn('posts', 'origVolume', { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.3 });
+  if (!currentPostColumns.musicVolume) await qi.addColumn('posts', 'musicVolume', { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.8 });
+  if (!currentPostColumns.musicMixable) await qi.addColumn('posts', 'musicMixable', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.dominantColor) await qi.addColumn('posts', 'dominantColor', { type: DataTypes.STRING(7), allowNull: true });
   if (currentPostColumns.mediaUrl && currentPostColumns.mediaUrl.allowNull === false) {
     await qi.changeColumn('posts', 'mediaUrl', { type: DataTypes.STRING(512), allowNull: true });
