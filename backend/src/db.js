@@ -88,7 +88,8 @@ const PostComment = sequelize.define('PostComment', {
   postId: { type: DataTypes.UUID, allowNull: false },
   userId: { type: DataTypes.UUID, allowNull: false },
   body: { type: DataTypes.STRING(1000), allowNull: false },
-}, { tableName: 'post_comments', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['userId', 'createdAt'] }] });
+  parentId: { type: DataTypes.UUID, allowNull: true },
+}, { tableName: 'post_comments', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['userId', 'createdAt'] }, { fields: ['parentId'] }] });
 
 const Repost = sequelize.define('Repost', {
   postId: { type: DataTypes.UUID, primaryKey: true },

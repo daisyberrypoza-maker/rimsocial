@@ -39,6 +39,7 @@ export default function Rimlight() {
   // Opening a tab shows saved posts at once and refreshes only when they are old
   useEffect(() => {
     const current = useAppStore.getState().feeds[tab];
+    setLoading(isStale(current));
     if (isStale(current)) { setActive(0); run(true); }
     else setActive(current?.activeIndex || 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,7 +90,6 @@ export default function Rimlight() {
         getItemLayout={(_, index) => ({ length: pageHeight, offset: pageHeight * index, index })}
         initialScrollIndex={startIndex}
         pagingEnabled
-        snapToInterval={pageHeight}
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewable}
@@ -100,16 +100,17 @@ export default function Rimlight() {
         onEndReached={() => { if (feed?.nextCursor && !loading) run(false); }}
         onEndReachedThreshold={0.6}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#fff" />}
-        ListEmptyComponent={!loading ? (
-          <View style={[styles.empty, { height: pageHeight }]}>
-            <Text style={styles.emptyText}>Nothing here yet. Post something or follow creators.</Text>
-          </View>
-        ) : null}
-        initialNumToRender={2}
-        windowSize={3}
-        removeClippedSubviews
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={5}
+        removeClippedSubviews={false}
         style={{ backgroundColor: colors.darkBg }}
       />
+      {!items.length && !loading && feed?.updatedAt && (
+        <View style={styles.emptyOverlay} pointerEvents="none">
+          <Text style={styles.emptyText}>Nothing here yet. Post something or follow creators.</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -123,6 +124,6 @@ const styles = StyleSheet.create({
   tabLine: { alignSelf: 'stretch', height: 3, marginTop: 4, borderRadius: 2, backgroundColor: SNAP_YELLOW },
   upload: { position: 'absolute', top: 72, right: 14, zIndex: 6, width: 46, height: 46, borderRadius: 23, padding: 3, backgroundColor: 'rgba(255,255,255,0.28)', overflow: 'hidden' },
   uploadThumb: { width: '100%', height: '100%', borderRadius: 20 },
-  empty: { alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.darkBg },
+  emptyOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: { color: 'rgba(255,255,255,0.8)', fontSize: 15, textAlign: 'center' },
 });

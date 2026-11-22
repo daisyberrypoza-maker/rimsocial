@@ -180,6 +180,8 @@ async function start() {
   const audioQi = sequelize.getQueryInterface();
   const audioColumns = await audioQi.describeTable('audio_tracks');
   if (!audioColumns.contentHash) await audioQi.addColumn('audio_tracks', 'contentHash', { type: DataTypes.STRING(64), allowNull: true });
+  const commentColumns = await audioQi.describeTable('post_comments');
+  if (!commentColumns.parentId) await audioQi.addColumn('post_comments', 'parentId', { type: DataTypes.UUID, allowNull: true });
   await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
