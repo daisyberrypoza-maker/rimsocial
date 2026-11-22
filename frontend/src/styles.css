@@ -7769,3 +7769,10 @@ body:has(.cam-page) .bottomnav a.active svg { color: #fff !important; stroke: #f
   .post .info { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .post .post-seek { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* Comment replies: one level under the top-level comment */
+.rv-comment.rv-reply { margin-left:38px; }
+.rv-actions { display:flex; align-items:center; gap:16px; margin-top:4px; }
+.rv-reply-btn { font:inherit; font-size:13px; font-weight:700; color:#8e8e93 !important; background:transparent !important; border:0 !important; padding:0 !important; cursor:pointer; }
+.rv-reply-banner { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-top:1px solid #2a2b30; font-size:13px; color:#fff; }
+.rv-reply-banner button { font:inherit; color:#8e8e93 !important; background:transparent !important; border:0 !important; cursor:pointer; }

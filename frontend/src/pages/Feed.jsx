@@ -50,7 +50,8 @@ export default function Feed({ tab }) {
 
   const items = cached?.items || [];
   // Popular stories appear among the posts: two of them, at the 3rd and 10th places, when not already listed
-  const shown = mixPopular(items, popular);
+  // Popular stories are mixed in only when the feed has posts, so an empty feed shows the empty message
+  const shown = items.length ? mixPopular(items, popular) : items;
   const nextCursor = cached?.nextCursor ?? null;
   const [active, setActive] = useState(Math.min(cached?.activeIndex || 0, Math.max(items.length - 1, 0)));
   const path = `/v1/feed/${tab}`;
@@ -172,7 +173,7 @@ export default function Feed({ tab }) {
             ? <PostCard key={p.id} post={p} active={i === active} />
             : <div key={p.id} className="slot" />
         )}
-        {!items.length && !loading && (
+        {!shown.length && !loading && (
           <div className="slot"><p className="muted">Nothing here yet. Post something or follow creators.</p></div>
         )}
       </div>
