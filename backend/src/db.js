@@ -34,6 +34,16 @@ const Post = sequelize.define('Post', {
   voiceUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicUrl: { type: DataTypes.STRING(512), allowNull: true },
   musicTitle: { type: DataTypes.STRING(120), allowNull: true },
+  // Story music source: 'local' (app library, musicUrl) or 'audius' (audiusTrackId, streamed on view)
+  musicSource: { type: DataTypes.STRING(10), allowNull: true },
+  audiusTrackId: { type: DataTypes.STRING(20), allowNull: true },
+  artistName: { type: DataTypes.STRING(80), allowNull: true },
+  artworkUrl: { type: DataTypes.STRING(512), allowNull: true },
+  musicOffsetSec: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
+  origVolume: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.3 },
+  musicVolume: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0.8 },
+  // Eligible for server-side video mixing (downloadable and licensed); not used by playback
+  musicMixable: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   // Dominant colour of the cover, computed on the uploader's device, so the card shows its colour before the image loads
   dominantColor: { type: DataTypes.STRING(7), allowNull: true },
   mediaPublicId: { type: DataTypes.STRING(255), allowNull: true },

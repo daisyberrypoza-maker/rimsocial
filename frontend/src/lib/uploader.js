@@ -6,6 +6,7 @@ import { refreshMyThumb } from './myThumb.js';
 import { useAppStore } from '../store.js';
 import { loadPage } from './paged.js';
 import { toast, logError } from '../toast.js';
+import { appendStoryMusic } from './storyMusic.js';
 
 // Large files use resumable chunks; smaller files remain in the multipart request.
 async function attachMedia(fd, media, onProgress) {
@@ -77,7 +78,7 @@ export function startUpload(job) {
           setUploadProgress(base + (total ? loaded / total * span : 0), 'Uploading stories');
         });
         sfd.append('caption', caption || '');
-        if (storyAudio?.musicId) sfd.append('musicId', storyAudio.musicId);
+        appendStoryMusic(sfd, storyAudio?.music);
         if (storyAudio?.voice) sfd.append('voice', storyAudio.voice);
         if (!wasChunked) await requestWithProgress('/v1/stories', sfd, 'Uploading stories', base, span);
         else await api('/v1/stories', { method: 'POST', body: sfd });
@@ -89,7 +90,7 @@ export function startUpload(job) {
       });
       const dominant = String(storyMedia.type).startsWith('image/') ? await dominantColorOf(storyMedia) : null;
       if (dominant) fd.append('dominantColor', dominant);
-      if (storyAudio?.musicId) fd.append('musicId', storyAudio.musicId);
+      appendStoryMusic(fd, storyAudio?.music);
       if (storyAudio?.voice) fd.append('voice', storyAudio.voice);
       if (!isChunked) await requestWithProgress('/v1/stories', fd, 'Uploading story', 0, 90);
       else await api('/v1/stories', { method: 'POST', body: fd });
@@ -118,7 +119,7 @@ export function startUpload(job) {
       const isChunked = await attachMedia(storyFd, storyMedia, (loaded, total) => {
         setUploadProgress(total ? 90 + loaded / total * 8 : 90, 'Sharing to Story');
       });
-      if (storyAudio?.musicId) storyFd.append('musicId', storyAudio.musicId);
+      appendStoryMusic(storyFd, storyAudio?.music);
       if (storyAudio?.voice) storyFd.append('voice', storyAudio.voice);
       storyFd.append('caption', (caption || '').slice(0, 200));
       try {

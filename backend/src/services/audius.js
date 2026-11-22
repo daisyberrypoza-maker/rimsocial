@@ -49,4 +49,11 @@ async function streamLink(id) {
   return url;
 }
 
-module.exports = { toTrack, trending, search, streamLink, API_BASE, APP_NAME };
+// Metadata for one track, used when a story is posted so the server stores verified values
+async function trackInfo(id) {
+  const body = await audiusGet(`/tracks/${encodeURIComponent(id)}`);
+  if (!body.data) throw Object.assign(new Error('Track is not available'), { status: 404 });
+  return toTrack(body.data);
+}
+
+module.exports = { toTrack, trending, search, streamLink, trackInfo, API_BASE, APP_NAME };

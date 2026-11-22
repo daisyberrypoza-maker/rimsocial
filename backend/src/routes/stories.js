@@ -13,18 +13,14 @@ const { User: UserModel } = require('../db');
 const { assertNotBlocked } = require('../lib/blocks');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup, cleanupRemovedPostMedia, cleanupStoryVoice } = require('../services/mediaCleanup');
+const { resolveMusic, storyMusicFields } = require('../services/storyMusic');
 
-// Music is picked from the shared library; the story keeps a copy of the track's link and title
-async function musicFor(musicId) {
-  if (!musicId) return null;
-  const track = await require('../db').AudioTrack.findByPk(String(musicId));
-  if (!track) throw httpError(404, 'Music track not found');
-  return track;
-}
-const musicFields = (track) => ({
-  musicUrl: track ? track.mediaUrl : null,
-  musicTitle: track ? `${track.title} · ${track.artist}`.slice(0, 120) : null,
-});
+// Music comes from the app library (musicId) or Audius (audiusTrackId). See services/storyMusic.js
+const musicFor = (body) => resolveMusic(body, { AudioTrack: require('../db').AudioTrack });
+const musicFields = (music, body) => storyMusicFields(music, body);
+// A reshared story keeps the same music, including Audius source and mix settings
+const COPIED_MUSIC = ['musicUrl', 'musicTitle', 'musicSource', 'audiusTrackId', 'artistName', 'artworkUrl', 'musicOffsetSec', 'origVolume', 'musicVolume', 'musicMixable'];
+const copyMusic = (story) => Object.fromEntries(COPIED_MUSIC.map((key) => [key, story[key]]));
 
 // GET /v1/stories/rail  -> creators with active stories, unseen first
 router.get('/rail', requireAuth, async (req, res, next) => {
@@ -62,7 +58,7 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
     const voice = req.files?.voice?.[0] || null;
     if (!media || !kindFor(media.mimetype)) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
     if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
-    const track = await musicFor(req.body.musicId);
+    const music = await musicFor(req.body);
     const asset = await cloudinary.uploadFile(media, 'rimsocial/stories', { maxSeconds: 60 });
     uploadedAssets.push({ ...asset, mimetype: media.mimetype });
     const storyKind = kindFor(media.mimetype);
@@ -83,7 +79,7 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
       thumbUrl,
       mediaPublicId: asset.publicId,
       voiceUrl,
-      ...musicFields(track),
+      ...musicFields(music, req.body),
       caption: String(req.body.caption || '').slice(0, 200),
       dominantColor: /^#[0-9a-fA-F]{6}$/.test(String(req.body.dominantColor || '')) ? String(req.body.dominantColor) : null,
       isStory: true,
@@ -116,7 +112,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
     const voice = req.file || null;
     if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
     if (!text && !voice) throw httpError(400, 'Write some text or record a voice note');
-    const track = await musicFor(req.body.musicId);
+    const music = await musicFor(req.body);
     let voiceUrl = null;
     if (voice) {
       const asset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });
@@ -130,7 +126,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
       storyText: text || null,
       storyBackground: background,
       voiceUrl,
-      ...musicFields(track),
+      ...musicFields(music, req.body),
       isStory: true,
       expiresAt: new Date(Date.now() + config.storyTtlHours * 3600 * 1000),
     });
@@ -165,8 +161,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
       storyText: original.storyText,
       storyBackground: original.storyBackground,
       voiceUrl: original.voiceUrl,
-      musicUrl: original.musicUrl,
-      musicTitle: original.musicTitle,
+      ...copyMusic(original),
       caption: `Shared from @${original.author?.username || 'creator'}: ${original.caption || ''}`.slice(0, 200),
       isStory: true,
       visibility: 'public',

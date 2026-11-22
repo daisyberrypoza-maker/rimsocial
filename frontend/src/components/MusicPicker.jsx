@@ -6,8 +6,7 @@ import { toast, logError } from '../toast.js';
 import './MusicPicker.css';
 
 // Full-screen sound picker: Featured (app library), Saved, Trending (Audius catalogue).
-// Only app-library sounds can be attached to a story for now; Audius sounds preview only.
-// Audius previews use a fresh signed link from the server for each play.
+// Any sound can be attached to a story. Audius sounds are checked and streamed by the server.
 const TABS = [['featured', 'Featured'], ['saved', 'Saved'], ['trending', 'Trending']];
 
 function formatDuration(seconds) {
@@ -122,14 +121,13 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
         {tab === 'saved' && <li className="mp-empty">Saved sounds will appear here.</li>}
         {tab !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
-          const attachable = item.source !== 'audius';
           const selected = selectedId === item.id;
           return (
             <li key={item.id} className={selected ? 'mp-row on' : 'mp-row'}>
               <button type="button" className="mp-art" aria-label={`Preview ${item.title}`} onClick={() => togglePreview(item)}>
                 {item.artwork ? <img src={item.artwork} alt="" loading="lazy" /> : <span className="mp-art-empty"><Icon name="music" size={22} /></span>}
               </button>
-              <button type="button" className="mp-info" disabled={!attachable} onClick={() => attachable && onSelect(item)} aria-label={attachable ? `Use ${item.title}` : `${item.title} (preview only)`}>
+              <button type="button" className="mp-info" onClick={() => onSelect(item)} aria-label={`Use ${item.title}`}>
                 <strong>{item.title}</strong>
                 <span>{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
               </button>

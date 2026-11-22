@@ -9,6 +9,7 @@ import { STORY_BACKGROUNDS, backgroundCss } from '../lib/storyBackgrounds.js';
 import { refreshMyThumb } from '../lib/myThumb.js';
 import { useAppStore } from '../store.js';
 import { toast, logError } from '../toast.js';
+import { appendStoryMusic } from '../lib/storyMusic.js';
 import './StoryComposer.css';
 
 // Text story: type on a background, add a music track and/or a voice note, then share.
@@ -49,7 +50,7 @@ export default function StoryComposer() {
       const form = new FormData();
       form.append('text', text.trim());
       form.append('background', bgKey);
-      if (track) form.append('musicId', track.id);
+      appendStoryMusic(form, track);
       if (voice) form.append('voice', voice.file);
       await api('/v1/stories/composed', { method: 'POST', body: form });
       api('/v1/stories/rail').then((rail) => useAppStore.getState().setStoryRail(rail.items || [])).catch(() => {});

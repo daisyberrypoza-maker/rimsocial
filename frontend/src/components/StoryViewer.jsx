@@ -31,6 +31,13 @@ const REPORT_REASONS = ['Spam', 'Harassment or bullying', 'Nudity or sexual cont
 // Tap the left or right third for the previous or next story; tap the middle to pause or play.
 // Double-tap anywhere likes the story. Swipe up opens the share sheet, swipe down closes.
 // Videos play with sound; photos advance after PHOTO_MS.
+// 0..1 level from a stored value; null or missing uses the fallback
+function unitLevel(value, fallback) {
+  if (value == null || value === '') return fallback;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : fallback;
+}
+
 export default function StoryViewer({ groups, startIndex, startStory = 0, startStoryId = null, onClose, onStoryViewed, origin = null }) {
   const [gi, setGi] = useState(startIndex);
   // Which story of the group opens first (used once, on the first load of that group)
@@ -86,6 +93,27 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   const groupStories = storiesOwnerId === group.user?.id ? stories : null;
   const current = groupStories?.[si];
   const isVideo = current?.kind === 'video';
+  // Audius stories get a fresh signed stream link each time they open. Library stories use their stored file.
+  const [audiusStream, setAudiusStream] = useState({ id: null, url: null });
+  useEffect(() => {
+    const id = current?.audiusTrackId;
+    if (!id) return undefined;
+    let alive = true;
+    api(`/v1/audio/audius/${encodeURIComponent(id)}/stream`)
+      .then((data) => { if (alive) setAudiusStream({ id, url: data.url }); })
+      .catch((error) => { logError(error); if (alive) setAudiusStream({ id, url: null }); });
+    return () => { alive = false; };
+  }, [current?.id, current?.audiusTrackId]);
+  const musicSrc = current?.musicUrl
+    ? mediaUrl(current.musicUrl)
+    : (current?.audiusTrackId && audiusStream.id === current.audiusTrackId ? audiusStream.url : null);
+  const musicLevel = unitLevel(current?.musicVolume, 0.8);
+  const origLevel = unitLevel(current?.origVolume, 0.3);
+  // With music, the story's own sound plays at its mix level; without music it plays at full volume
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) video.volume = musicSrc ? origLevel : 1;
+  }, [current?.id, musicSrc, origLevel]);
   const isText = current?.kind === 'text';
   const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
@@ -150,7 +178,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       else media.play().catch(() => {});
     });
     return undefined;
-  }, [current?.id, frozen]);
+  }, [current?.id, frozen, musicSrc]);
 
   // Behind the scenes: warm the next story (and the one after) while this one plays
   // Waits a moment so it never competes with the story on screen.
@@ -622,11 +650,11 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       </div>
 
       {current?.voiceUrl && <audio key={`voice-${current.id}`} ref={voiceRef} src={mediaUrl(current.voiceUrl)} preload="auto" onEnded={() => { if (!isVideo) next(); }} onError={() => { if (!isVideo) next(); }} />}
-      {current?.musicUrl && <audio key={`music-${current.id}`} ref={musicRef} src={mediaUrl(current.musicUrl)} loop preload="auto" />}
-      {(current?.musicUrl || current?.voiceUrl) && <div className="sv-music-wrap">
-        {current?.musicUrl && <MusicEqualizer audioRef={musicRef} src={mediaUrl(current.musicUrl)} />}
-        {!current?.musicUrl && current?.voiceUrl && <MusicEqualizer audioRef={voiceRef} src={mediaUrl(current.voiceUrl)} />}
-        {current?.musicTitle && <div className="sv-music">♪ {current.musicTitle}</div>}
+      {musicSrc && <audio key={`music-${current.id}`} ref={musicRef} src={musicSrc} loop preload="auto" onLoadedMetadata={(event) => { event.currentTarget.currentTime = Number(current.musicOffsetSec) || 0; event.currentTarget.volume = musicLevel; }} />}
+      {(musicSrc || current?.voiceUrl) && <div className="sv-music-wrap">
+        {musicSrc && <MusicEqualizer audioRef={musicRef} src={musicSrc} />}
+        {!musicSrc && current?.voiceUrl && <MusicEqualizer audioRef={voiceRef} src={mediaUrl(current.voiceUrl)} />}
+        {current?.musicTitle && <div className="sv-music">{current.artworkUrl && <img className="sv-music-art" src={current.artworkUrl} alt="" />}<span>♪ {current.musicTitle}{current.artistName ? ` · ${current.artistName}` : ''}</span></div>}
       </div>}
 
       <div className={`sv-stage sv-grade-${current?.filterPreset || 'discover'}`} onClick={onStageTap}>
@@ -651,7 +679,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
               src={videoStreamUrl(mediaUrl(current.mediaUrl))}
               poster={current.thumbUrl ? mediaUrl(current.thumbUrl) : undefined}
               playsInline
-              muted={muted || Boolean(current.musicUrl)}
+              muted={muted}
               preload="auto"
               onEnded={next}
               onError={() => setMediaError(true)}

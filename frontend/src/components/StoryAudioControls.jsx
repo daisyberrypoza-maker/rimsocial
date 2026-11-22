@@ -66,7 +66,7 @@ export default function StoryAudioControls({ track, onTrack, voice, onVoice, dis
   const MUSIC_SHEET = (
     <MusicPicker
       selectedId={track?.id || null}
-      onSelect={(item) => { onTrack({ id: item.id, title: item.title, artist: item.artist }); setMusicOpen(false); }}
+      onSelect={(item) => { onTrack({ ...item }); setMusicOpen(false); }}
       onClose={() => setMusicOpen(false)}
     />
   );
