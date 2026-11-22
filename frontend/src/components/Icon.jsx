@@ -6,6 +6,7 @@ import {
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
   File as FileIcon, LogOut, Ban, BellOff, Copy, Reply, Music, Mic, Download, Flag, Smile, BookmarkCheck, Pin, PinOff, Store,
+  Zap, ZapOff,
 } from 'lucide-react';
 
 const ICONS = {
@@ -53,6 +54,8 @@ const ICONS = {
   play: Play,
   sort: ArrowDownUp,
   'chevron-down': ChevronDown,
+  'zap': Zap,
+  'zap-off': ZapOff,
   refresh: RefreshCw,
   send: Send,
   'at-sign': AtSign,
