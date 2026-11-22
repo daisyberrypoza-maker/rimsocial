@@ -159,6 +159,14 @@ async function start() {
     publicKey TEXT NOT NULL,
     updatedAt DATETIME NOT NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  // Idempotent application of migration 041: one public key per device.
+  await sequelize.query(`CREATE TABLE IF NOT EXISTS user_devices (
+    userId CHAR(36) NOT NULL,
+    deviceId VARCHAR(64) NOT NULL,
+    publicKey TEXT NOT NULL,
+    updatedAt DATETIME NOT NULL,
+    PRIMARY KEY (userId, deviceId)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
   // Creates only the direct messages table when it is missing; safe to run in production.
   await DirectMessage.sync();
   // Additive group-chat tables; existing direct messages and user data are untouched.
