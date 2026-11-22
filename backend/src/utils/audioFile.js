@@ -15,4 +15,15 @@ function isAudioFile({ mimetype = '', originalname = '' } = {}) {
   return AUDIO_EXTENSIONS.has(ext);
 }
 
-module.exports = { isAudioFile, AUDIO_TYPES };
+// SHA-256 of a file on disk, streamed so large uploads are not held in memory
+function fileSha256(filePath) {
+  return new Promise((resolve, reject) => {
+    const hash = require('crypto').createHash('sha256');
+    require('fs').createReadStream(filePath)
+      .on('data', (chunk) => hash.update(chunk))
+      .on('end', () => resolve(hash.digest('hex')))
+      .on('error', reject);
+  });
+}
+
+module.exports = { isAudioFile, AUDIO_TYPES, fileSha256 };

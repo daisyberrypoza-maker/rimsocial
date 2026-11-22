@@ -10,7 +10,8 @@ const { requireAuth } = require('../middleware/auth');
 const httpError = require('../utils/httpError');
 const config = require('../config');
 const cloudinary = require('../services/cloudinary');
-const { isAudioFile } = require('../utils/audioFile');
+const { isAudioFile, fileSha256 } = require('../utils/audioFile');
+const fs = require('fs');
 const audius = require('../services/audius');
 
 const audioUpload = multer({
@@ -106,9 +107,16 @@ router.post('/', audioUpload.single('media'), async (req, res, next) => {
       const user = await User.findByPk(req.user.id, { attributes: ['displayName', 'username'] });
       artist = user?.displayName || user?.username || 'Unknown artist';
     }
+    // The same file is never stored twice: return the sound that already exists
+    const contentHash = await fileSha256(req.file.path);
+    const existing = await AudioTrack.findOne({ where: { contentHash } });
+    if (existing) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      return res.status(200).json(toDTO(existing));
+    }
     // Tracks are kept to 60 seconds: Cloudinary keeps only the first 60 seconds of the file
     const asset = await cloudinary.uploadFile(req.file, 'rimsocial/audio', { maxSeconds: 60 });
-    const track = await AudioTrack.create({ uploadedById: req.user.id, title, artist, mediaUrl: asset.url });
+    const track = await AudioTrack.create({ uploadedById: req.user.id, title, artist, mediaUrl: asset.url, contentHash });
     res.status(201).json(toDTO(track));
   } catch (e) { next(e); }
 });

@@ -108,6 +108,8 @@ const AudioTrack = sequelize.define('AudioTrack', {
   title: { type: DataTypes.STRING(80), allowNull: false },
   artist: { type: DataTypes.STRING(80), allowNull: false },
   mediaUrl: { type: DataTypes.STRING(512), allowNull: false },
+  // SHA-256 of the uploaded file. The same file is never stored twice (migration 043).
+  contentHash: { type: DataTypes.STRING(64), allowNull: true },
 }, { tableName: 'audio_tracks' });
 
 // One row per viewer per story, so story view counts are not inflated
