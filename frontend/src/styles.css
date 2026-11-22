@@ -7712,8 +7712,10 @@ textarea:focus, textarea:focus-visible, select:focus, select:focus-visible {
 .cam-top-actions button { width: 40px; height: 40px; border: 0; padding: 0; background: transparent; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
 .cam-side { top: calc(env(safe-area-inset-top, 0px) + 72px); }
 .cam-bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); }
-body:has(.cam-page) .bottomnav { z-index: 60; background: transparent; border-top: 0; }
-body:has(.cam-page) .bottomnav a { color: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+/* Camera uses the same dark tab bar as Rimlight (bottomnav-dark) */
+body:has(.cam-page) .bottomnav { z-index: 60; background: #111214 !important; border-top-color: #252629 !important; filter: none; }
+body:has(.cam-page) .bottomnav a { color: #9a9aa1 !important; filter: none; }
+body:has(.cam-page) .bottomnav a.active { color: #fff !important; }
 
 /* Rimlight: full-bleed square content, nothing clipped with rounded corners */
 .profile-watch-page, .profile-watch-page .feed, .profile-watch-page .post, .profile-watch-page .post video, .profile-watch-page .post img, .rv-page .rv-media { border-radius: 0 !important; }
