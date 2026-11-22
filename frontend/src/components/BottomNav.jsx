@@ -32,9 +32,9 @@ export default function BottomNav() {
 
   // Rimlight, Following and LIVE are one section and share the Rimlight tab state.
   const rimlightSection = ['/', '/following', '/live'].includes(pathname);
-  const dark = rimlightSection && pathname !== '/live';
+  // One bar style on every tab screen: the dark Rimlight bar. LIVE keeps its light bar.
   const light = pathname === '/live';
-  const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
+  const className = light ? 'bottomnav bottomnav-live' : 'bottomnav bottomnav-dark';
   return (
     <nav className={className} aria-label="Main navigation">
       <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
