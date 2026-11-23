@@ -75,6 +75,8 @@ function CommentsSheet({ post, onClose }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
+  const [openThreads, setOpenThreads] = useState({}); // top-level comment id -> replies shown
+  function toggleThread(id) { setOpenThreads((current) => ({ ...current, [id]: !current[id] })); }
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/comments`).then((r) => { if (alive) setItems(r.items || []); })
@@ -121,10 +123,15 @@ function CommentsSheet({ post, onClose }) {
       <div className="rv-handle" aria-hidden="true" />
       <header className="rv-sheet-head"><strong>Comments</strong></header>
       <div className="rv-comments">
-        {loading ? <p className="rv-empty"></p> : items.length ? items.filter((c) => !c.parentId).map((item) => <div key={item.id}>
-          {renderComment(item, false)}
-          {items.filter((r) => r.parentId === item.id).map((reply) => renderComment(reply, true))}
-        </div>) : <p className="rv-empty">No comments yet.<br />Start the conversation.</p>}
+        {loading ? <p className="rv-empty"></p> : items.length ? items.filter((c) => !c.parentId).map((item) => {
+          const replies = items.filter((r) => r.parentId === item.id);
+          const open = Boolean(openThreads[item.id]);
+          return <div key={item.id}>
+            {renderComment(item, false)}
+            {replies.length > 0 && <button type="button" className="rv-thread-toggle" onClick={() => toggleThread(item.id)}>{open ? 'Hide replies' : `Show ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}</button>}
+            {open && replies.map((reply) => renderComment(reply, true))}
+          </div>;
+        }) : <p className="rv-empty">No comments yet.<br />Start the conversation.</p>}
       </div>
       <div className="rv-emojis" role="group" aria-label="Quick reactions">
         {emojis.map((emoji) => <button type="button" key={emoji} onClick={() => setBody((current) => current + emoji)} aria-label={`Add ${emoji}`}>{emoji}</button>)}

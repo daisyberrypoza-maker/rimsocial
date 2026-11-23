@@ -7786,3 +7786,28 @@ body:has(.cam-page) .bottomnav a.active svg { color: #fff !important; stroke: #f
 
 /* While the comments sheet is open, the bottom tab bar is hidden so the reply box is never under it */
 body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
+
+/* Comments sheet: white, as on the reference (Snapchat-style comments) */
+.rv-sheet-backdrop .rv-sheet { background:#fff !important; color:#111 !important; }
+.rv-sheet-backdrop .rv-sheet .rv-handle { background:#c7c7cc !important; }
+.rv-sheet-backdrop .rv-sheet .rv-sheet-head { border-bottom:0 !important; padding:8px 16px 14px !important; text-align:left; }
+.rv-sheet-backdrop .rv-sheet .rv-sheet-head strong { color:#111 !important; font-size:18px; font-weight:700; }
+.rv-sheet-backdrop .rv-sheet .rv-comments { color:#111 !important; }
+.rv-sheet-backdrop .rv-sheet .rv-comment { padding:10px 16px !important; gap:12px !important; }
+.rv-sheet-backdrop .rv-sheet .rv-comment-body p { color:#111 !important; font-size:15px; line-height:20px; margin:2px 0 0; }
+.rv-sheet-backdrop .rv-sheet .rv-name { color:#111 !important; font-weight:700; font-size:14px; }
+.rv-sheet-backdrop .rv-sheet .rv-time { color:#8e8e93 !important; font-size:14px; }
+.rv-sheet-backdrop .rv-sheet .rv-comment.rv-reply { margin-left:40px; padding-top:6px !important; }
+.rv-sheet-backdrop .rv-sheet .rv-actions { margin-top:6px; gap:14px; }
+.rv-sheet-backdrop .rv-sheet button.rv-reply-btn { color:#8e8e93 !important; font-size:13px; font-weight:600; }
+.rv-sheet-backdrop .rv-sheet button.rv-delete { color:#8e8e93 !important; font-size:13px; font-weight:600; margin-left:0; }
+.rv-sheet-backdrop .rv-sheet button.rv-thread-toggle { display:block; margin:0 0 4px 52px; color:#0095f6 !important; font-size:13px; font-weight:600; background:transparent !important; border:0 !important; padding:4px 0 !important; cursor:pointer; }
+.rv-sheet-backdrop .rv-sheet .rv-emojis { border-top:1px solid #efefef; background:#fff; }
+.rv-sheet-backdrop .rv-sheet .rv-emojis button { font-size:26px; }
+.rv-sheet-backdrop .rv-sheet .rv-compose { border-top:0 !important; background:#fff; padding:8px 12px calc(12px + env(safe-area-inset-bottom,0px)) !important; }
+.rv-sheet-backdrop .rv-sheet .rv-compose input { flex:1; height:40px; border-radius:999px; border:0 !important; background:#f0f2f5 !important; color:#111 !important; padding:0 16px; font-size:15px; }
+.rv-sheet-backdrop .rv-sheet .rv-compose input::placeholder { color:#8e8e93; }
+.rv-sheet-backdrop .rv-sheet button.rv-post-btn, .rv-sheet-backdrop .rv-sheet .rv-compose > button[type="submit"] { color:#0095f6 !important; font-weight:700; }
+.rv-sheet-backdrop .rv-sheet .rv-reply-banner { background:#f0f2f5; color:#111; border:0 !important; }
+.rv-sheet-backdrop .rv-sheet .rv-reply-banner button { color:#0095f6 !important; }
+.rv-sheet-backdrop .rv-sheet .rv-empty { color:#8e8e93 !important; }
