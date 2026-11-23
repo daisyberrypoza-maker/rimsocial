@@ -7776,3 +7776,10 @@ body:has(.cam-page) .bottomnav a.active svg { color: #fff !important; stroke: #f
 .rv-reply-btn { font:inherit; font-size:13px; font-weight:700; color:#8e8e93 !important; background:transparent !important; border:0 !important; padding:0 !important; cursor:pointer; }
 .rv-reply-banner { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-top:1px solid #2a2b30; font-size:13px; color:#fff; }
 .rv-reply-banner button { font:inherit; color:#8e8e93 !important; background:transparent !important; border:0 !important; cursor:pointer; }
+
+/* Profile grids (Rimlight, Stories, Reposts, Saved): square corners on every tile */
+.sc-profile .sc-grid .sc-tile,
+.sc-profile .sc-grid .sc-tile img,
+.sc-profile .sc-grid .sc-tile video,
+.sc-profile .sc-grid button.sc-tile,
+.sc-grid .sc-tile { border-radius:0 !important; }
