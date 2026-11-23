@@ -7811,3 +7811,8 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 .rv-sheet-backdrop .rv-sheet .rv-reply-banner { background:#f0f2f5; color:#111; border:0 !important; }
 .rv-sheet-backdrop .rv-sheet .rv-reply-banner button { color:#0095f6 !important; }
 .rv-sheet-backdrop .rv-sheet .rv-empty { color:#8e8e93 !important; }
+
+/* Bottom tab bar: 3px more space on the left and right edges on phones */
+@media (max-width: 480px) {
+  .bottomnav { padding-left: 3px !important; padding-right: 3px !important; }
+}
