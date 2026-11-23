@@ -68,7 +68,7 @@ function GiftSheet({ post, onClose }) {
   </div></div>;
 }
 
-function CommentsSheet({ post, onClose }) {
+function CommentsSheet({ post, onClose, onCountChange = () => {} }) {
   const me = useAppStore((st) => st.user);
   const [items, setItems] = useState([]);
   const [body, setBody] = useState('');
@@ -105,6 +105,7 @@ function CommentsSheet({ post, onClose }) {
       if (replyTo) payload.parentId = replyTo.id;
       const comment = await api(`/v1/posts/${post.id}/comments`, { method: 'POST', body: payload });
       setItems((current) => [...current, comment]);
+      onCountChange(1);
       setBody('');
       setReplyTo(null);
     } catch (e) { logError(e); }
@@ -113,7 +114,9 @@ function CommentsSheet({ post, onClose }) {
   async function remove(comment) {
     try {
       await api(`/v1/posts/${post.id}/comments/${comment.id}`, { method: 'DELETE' });
-      setItems((current) => current.filter((item) => item.id !== comment.id));
+      const removed = items.filter((item) => item.id === comment.id || item.parentId === comment.id).length;
+      setItems((current) => current.filter((item) => item.id !== comment.id && item.parentId !== comment.id));
+      onCountChange(-removed);
     } catch (e) { logError(e); }
   }
   function renderComment(item, isReply) {
@@ -140,7 +143,7 @@ function CommentsSheet({ post, onClose }) {
   return <div className="rv-sheet-backdrop" onClick={onClose}>
     <section className="rv-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
       <div className="rv-handle" aria-hidden="true" />
-      <header className="rv-sheet-head"><strong>Comments</strong>{items.length > 0 && <span className="rv-sheet-count">{formatCount(items.length)}</span>}</header>
+      <header className="rv-sheet-head"><strong>Comments</strong></header>
       <div className="rv-comments">
         {loading ? <p className="rv-empty"></p> : items.length ? items.filter((c) => !c.parentId).map((item) => {
           const replies = items.filter((r) => r.parentId === item.id);
@@ -189,6 +192,8 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
   const [reposted, setReposted] = useState(false);
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
+  const [commentTotal, setCommentTotal] = useState(post.commentCount || 0);
+  const [saveTotal, setSaveTotal] = useState(post.saveCount || 0);
   const [showGifts, setShowGifts] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showSend, setShowSend] = useState(false);
@@ -379,6 +384,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     try {
       const r = await api(`/v1/posts/${post.id}/save`, { method: saved ? 'DELETE' : 'POST' });
       setSaved(Boolean(r.saved));
+      setSaveTotal((t) => Math.max(0, t + (r.saved ? 1 : -1)));
       if (r.saved) api('/v1/feed/feedback', { method: 'POST', body: { postId: post.id, event: 'saved' } }).catch(() => {});
       toast(r.saved ? 'Saved to your profile' : 'Removed from saved');
     } catch (e) { toast(e.message || 'Could not save this post'); }
@@ -484,15 +490,15 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
       </button>
-      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" />{post.commentCount > 0 && <span>{formatCount(post.commentCount)}</span>}</button>
+      <button className="rail-btn" onClick={() => setShowComments(true)} aria-label="Open comments"><Icon name="message-circle" />{commentTotal > 0 && <span>{formatCount(commentTotal)}</span>}</button>
       <button className={`rail-btn repost-btn ${reposted ? 'reposted' : ''}`} onClick={repost} disabled={repostBusy} aria-pressed={reposted} aria-label={reposted ? 'Undo repost' : 'Repost'}>
         <Icon name="repeat" />{repostCount > 0 && <span>{formatCount(repostCount)}</span>}
       </button>
       <button className={`rail-btn save-btn ${saved ? 'saved' : ''}`} onClick={toggleSave} disabled={saveBusy} aria-pressed={saved} aria-label={saved ? 'Remove from saved' : 'Save post'}>
-        <Icon name={saved ? 'bookmark-check' : 'bookmark'} />
+        <Icon name={saved ? 'bookmark-check' : 'bookmark'} />{saveTotal > 0 && <span>{formatCount(saveTotal)}</span>}
       </button>
       {!isOwnPost && !post.isSponsored && <button className="rail-btn" onClick={() => setShowGifts(true)} aria-label="Send a gift"><Icon name="gift" /></button>}
-      <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" /></button>
+      <button className="rail-btn" onClick={() => setShowSend(true)} aria-label="Share post"><Icon name="send" />{(post.shareCount || 0) > 0 && <span>{formatCount(post.shareCount)}</span>}</button>
       <button className="rail-btn" onClick={() => setShowMenu(true)} aria-label="More post controls"><Icon name="ellipsis" size={26} /></button>
       <div className={`snap-disc ${active ? 'is-active' : ''}`} aria-hidden="true"><Avatar user={post.author} size={32} /></div>
     </aside>
@@ -527,7 +533,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
-    {showComments && createPortal(<CommentsSheet post={post} onClose={() => setShowComments(false)} />, document.body)}
+    {showComments && createPortal(<CommentsSheet post={post} onClose={() => setShowComments(false)} onCountChange={(delta) => setCommentTotal((t) => Math.max(0, t + delta))} />, document.body)}
     {showSend && <ShareSheet url={postShareUrl(post.id)} caption={post.caption} onClose={() => setShowSend(false)} onCopy={() => { copyPostLink(); setShowSend(false); }} onMore={() => { setShowSend(false); sharePost(); }} />}
   </article>;
 }
