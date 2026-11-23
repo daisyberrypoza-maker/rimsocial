@@ -140,7 +140,7 @@ function CommentsSheet({ post, onClose }) {
   return <div className="rv-sheet-backdrop" onClick={onClose}>
     <section className="rv-sheet" role="dialog" aria-label="Comments" onClick={(e) => e.stopPropagation()}>
       <div className="rv-handle" aria-hidden="true" />
-      <header className="rv-sheet-head"><strong>Comments</strong></header>
+      <header className="rv-sheet-head"><strong>Comments</strong>{items.length > 0 && <span className="rv-sheet-count">{formatCount(items.length)}</span>}</header>
       <div className="rv-comments">
         {loading ? <p className="rv-empty"></p> : items.length ? items.filter((c) => !c.parentId).map((item) => {
           const replies = items.filter((r) => r.parentId === item.id);

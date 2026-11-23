@@ -7823,3 +7823,6 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 .rv-sheet-backdrop .rv-sheet button.rv-like-btn { color:#8e8e93 !important; background:transparent !important; border:0 !important; padding:0 !important; cursor:pointer; line-height:0; }
 .rv-sheet-backdrop .rv-sheet button.rv-like-btn.on { color:#ed4956 !important; }
 .rv-like-count { font-size:12px; color:#8e8e93; }
+
+/* Total comment count next to the Comments title */
+.rv-sheet-backdrop .rv-sheet .rv-sheet-count { color:#8e8e93 !important; font-size:16px; font-weight:600; margin-left:6px; }
