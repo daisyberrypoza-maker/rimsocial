@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 
-// Bottom-tab order, left to right: Stories, Chat, Upload, Search, Rimlight. Only these pages swipe between tabs.
+// Bottom-tab order, left to right: Search (Explore), Chat, Upload, Stories, Rimlight. Only these pages swipe between tabs.
 // Upload is intentionally included even though it has no visible bottom bar.
-export const TAB_PATHS = ['/stories', '/chat', '/upload', '/search', '/'];
+export const TAB_PATHS = ['/search', '/chat', '/upload', '/stories', '/'];
 const IGNORE = 'input, textarea, select, audio, [contenteditable="true"], [data-no-swipe], .story-rail, .sv-root, .rv-sheet, .rv-sheet-backdrop, .as-backdrop, .sv-share-backdrop, [role="dialog"], [role="listbox"]';
 const LOCK_PX = 10;
 const SETTLE_MS = 220;

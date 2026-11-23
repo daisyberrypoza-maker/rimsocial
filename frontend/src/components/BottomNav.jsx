@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { playChime } from '../lib/notify.js';
 import Icon from './Icon.jsx';
 
-// Bottom bar, in this order: Stories, Chat (Instagram direct icon), Upload (+), Search, Rimlight. Swipe between these pages follows the same order (see lib/tabSwipe.js).
+// Bottom bar, in this order: Search (Explore), Chat (Instagram direct icon), Upload (+), Stories, Rimlight. Swipe between these pages follows the same order (see lib/tabSwipe.js).
 // No text labels. The active icon is filled. Profile opens from the Stories header avatar.
 export default function BottomNav() {
   const { pathname } = useLocation();
@@ -37,13 +37,13 @@ export default function BottomNav() {
   const className = dark ? 'bottomnav bottomnav-dark' : light ? 'bottomnav bottomnav-live' : 'bottomnav';
   return (
     <nav className={className} aria-label="Main navigation">
-      <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
+      <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
       <NavLink to="/chat" replace aria-label={unread ? `Chat, ${unread} unread` : 'Chat'}>
         <Icon name="send" />
         {unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}
       </NavLink>
       <NavLink to="/upload" replace aria-label="Create post"><Icon name="plus" size={28} /></NavLink>
-      <NavLink to="/search" replace aria-label="Search"><Icon name="search" /></NavLink>
+      <NavLink to="/stories" replace aria-label="Stories"><Icon name="users" /></NavLink>
       <NavLink to="/" end replace aria-label="Rimlight" className={rimlightSection ? "active" : undefined}><Icon name="play" /></NavLink>
     </nav>
   );
