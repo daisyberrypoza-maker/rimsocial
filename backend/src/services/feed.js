@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
+const { Op, Post, PostComment, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
 const redis = require('../redis');
 const { rerankExploreFeed } = require('./explore-rerank');
 const config = require('../config');
@@ -59,7 +59,7 @@ async function attachUniqueViewers(items) {
 // Rimlight Discover is the Spotlight-style recommendation feed. It shares the
 // same ranking engine as Explore; Following remains strictly chronological.
 async function getDiscoverPage({ userId, cursor, limit }) {
-  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:discover' });
+  return getRimlightPage({ userId, cursor, limit });
 }
 
 // Explore: what someone is likely to want to see from accounts they do not follow.
@@ -233,6 +233,97 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     });
     merged.push(...seedQueue.slice(next));
     ids = merged.map((item) => item.id);
+    await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
+  }
+
+  const pageIds = ids.slice(offset, offset + n + 1);
+  const hasMore = pageIds.length > n;
+  const page = await hydrate(pageIds.slice(0, n));
+  return {
+    items: page.map(toPostDTO),
+    nextCursor: hasMore ? `rank:${offset + n}` : null,
+  };
+}
+
+// Rimlight Discover: TikTok-style ranking. Driven by watch time, completion and loops,
+// shares, comments, likes, topic interest and fast skips, with no creator follower count.
+// Explore keeps the Spotlight engine above. Own posts are included.
+async function getRimlightPage({ userId, cursor, limit }) {
+  const n = clampLimit(limit);
+  const offset = parseRankCursor(cursor);
+  // Same key as before, so the existing cache invalidation on posts, reports and feedback still applies
+  const cacheKey = `feed:discover:ranked:${userId}`;
+  let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
+
+  if (!ids) {
+    const [candidates, blocks] = await Promise.all([
+      Post.findAll({
+        where: { status: 'live', isStory: false, visibility: 'public' },
+        attributes: ['id', 'authorId', 'createdAt', 'viewCount', 'likeCount', 'repostCount', 'topic'],
+        order: [['createdAt', 'DESC']], limit: 500, raw: true,
+      }),
+      UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+    ]);
+    const blocked = new Set(blocks.map((b) => b.blockerId === userId ? b.blockedUserId : b.blockerId));
+    const topicList = [...new Set(candidates.map((p) => String(p.topic || '').trim().toLowerCase()).filter(Boolean))];
+    const topicPipe = redis.pipeline();
+    for (const topic of topicList) topicPipe.hget(`feed:topic-preferences:${userId}`, topic);
+    const topicRows = await topicPipe.exec().catch(() => []);
+    const topicPrefOf = new Map(topicList.map((topic, i) => [topic, Number(topicRows[i]?.[1]) || 0]));
+    const spotPipe = redis.pipeline();
+    for (const p of candidates) spotPipe.hmget(`spot:${p.id}`, 'watchPct', 'watches', 'skips', 'completions', 'rewatches');
+    const spotRows = await spotPipe.exec().catch(() => []);
+    const commentRows = candidates.length
+      ? await PostComment.findAll({
+        where: { postId: candidates.map((p) => p.id) },
+        attributes: ['postId', [sequelize.fn('COUNT', sequelize.col('id')), 'n']],
+        group: ['postId'], raw: true,
+      }).catch(() => [])
+      : [];
+    const commentsOf = new Map(commentRows.map((r) => [String(r.postId), Number(r.n) || 0]));
+
+    const now = Date.now();
+    const scored = candidates
+      .map((p, i) => ({ p, spot: (spotRows[i] && spotRows[i][1]) || [] }))
+      .filter(({ p }) => !blocked.has(p.authorId))
+      .map(({ p, spot }) => {
+        const views = Math.max(1, Number(p.viewCount) || 0);
+        const [watchPct, watches, skips, completions, rewatches] = spot;
+        const watchCount = Number(watches) || 0;
+        // Average share of the video watched (watchPct is stored as a percentage sum)
+        const avgWatchRatio = watchCount > 0 ? Math.min(1, (Number(watchPct) || 0) / watchCount / 100) : 0;
+        const completionRate = (Number(completions) || 0) / views;
+        const rewatchRate = (Number(rewatches) || 0) / views;
+        const shareRate = (Number(p.repostCount) || 0) / views;
+        const commentRate = (commentsOf.get(String(p.id)) || 0) / views;
+        const likeRate = (Number(p.likeCount) || 0) / views;
+        const fastSkipRate = (Number(skips) || 0) / views;
+        const topic = String(p.topic || '').trim().toLowerCase();
+        // Topic interest from this viewer's feedback, scaled to 0–1
+        const longTermInterest = Math.max(0, Math.min(1, (topicPrefOf.get(topic) || 0) / 10));
+        const ageHours = Math.max(0, (now - new Date(p.createdAt).getTime()) / 3600000);
+        const freshness = 1 / Math.pow(ageHours + 2, 1.15);
+        const rawScore =
+          avgWatchRatio * 4.0 +
+          completionRate * 4.5 +
+          rewatchRate * 5.0 +
+          shareRate * 3.5 +
+          commentRate * 2.5 +
+          likeRate * 1.5 +
+          longTermInterest * 2.5 -
+          fastSkipRate * 5.5;
+        return { id: p.id, score: rawScore * freshness };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    // Exploration: from 60% down the ranking, one more post is inserted after every 6 ranked posts
+    const ordered = [];
+    let exploreIndex = Math.floor(scored.length * 0.6);
+    for (let i = 0; i < scored.length; i++) {
+      if (i > 0 && i % 6 === 0 && exploreIndex < scored.length) ordered.push(scored[exploreIndex++].id);
+      ordered.push(scored[i].id);
+    }
+    ids = [...new Set(ordered)];
     await redis.set(cacheKey, JSON.stringify(ids), 'EX', 45);
   }
 
