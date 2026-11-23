@@ -76,6 +76,7 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
   const n = clampLimit(limit);
   const offset = parseRankCursor(cursor);
   const cacheKey = `${cachePrefix}:ranked:${userId}`;
+  const includeOwn = cachePrefix === 'feed:discover';
   let ids = await redis.get(cacheKey).then((value) => value ? JSON.parse(value) : null);
 
   if (!ids) {
@@ -131,7 +132,8 @@ async function getSpotlightPage({ userId, cursor, limit, cachePrefix = 'feed:exp
     }));
     const now = Date.now();
     const scored = candidates
-      .filter((p) => p.authorId !== userId && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
+      // Rimlight Discover includes the viewer's own posts; Explore leaves them out
+      .filter((p) => (includeOwn || p.authorId !== userId) && !followed.has(p.authorId) && !blocked.has(p.authorId) && !muted.has(String(p.authorId)))
       .map((p) => {
         // Rimlight uses the same Spotlight ranking engine as Explore. Likes/reposts
         // are durable post counters; watch, completion, rewatch and fast-skip signals
