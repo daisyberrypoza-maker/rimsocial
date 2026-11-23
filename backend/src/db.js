@@ -89,7 +89,14 @@ const PostComment = sequelize.define('PostComment', {
   userId: { type: DataTypes.UUID, allowNull: false },
   body: { type: DataTypes.STRING(1000), allowNull: false },
   parentId: { type: DataTypes.UUID, allowNull: true },
+  likeCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, { tableName: 'post_comments', indexes: [{ fields: ['postId', 'createdAt'] }, { fields: ['userId', 'createdAt'] }, { fields: ['parentId'] }] });
+
+// A like on a comment (one row per viewer and comment)
+const CommentLike = sequelize.define('CommentLike', {
+  commentId: { type: DataTypes.UUID, primaryKey: true },
+  userId: { type: DataTypes.UUID, primaryKey: true },
+}, { tableName: 'comment_likes', indexes: [{ fields: ['userId', 'commentId'] }] });
 
 const Repost = sequelize.define('Repost', {
   postId: { type: DataTypes.UUID, primaryKey: true },
@@ -505,7 +512,7 @@ module.exports = {
   DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost, ProfileView, QuickAddDismissal,
   MediaCleanupJob,
   BusinessFinancialRecord,
-  sequelize, Op, User, Post, PostLike, PostComment, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, PostLike, PostComment, CommentLike, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport, UserReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };

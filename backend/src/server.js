@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack } = require('./db');
+const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack, CommentLike } = require('./db');
 const { Op, DataTypes } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -176,12 +176,14 @@ async function start() {
   await PushSubscription.sync();
   // App-library music table (migration 029). Creates it only when missing.
   await AudioTrack.sync();
+  await CommentLike.sync();
   // Duplicate sound check (migration 043): adds the hash column to an existing audio_tracks table
   const audioQi = sequelize.getQueryInterface();
   const audioColumns = await audioQi.describeTable('audio_tracks');
   if (!audioColumns.contentHash) await audioQi.addColumn('audio_tracks', 'contentHash', { type: DataTypes.STRING(64), allowNull: true });
   const commentColumns = await audioQi.describeTable('post_comments');
   if (!commentColumns.parentId) await audioQi.addColumn('post_comments', 'parentId', { type: DataTypes.UUID, allowNull: true });
+  if (!commentColumns.likeCount) await audioQi.addColumn('post_comments', 'likeCount', { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 });
   await GroupMessageView.sync();
   // Group media columns (photos, videos, voice notes); added only when missing
   {
