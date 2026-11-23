@@ -1,5 +1,6 @@
 import AppLink from './AppLink.jsx';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
@@ -500,7 +501,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     />}
     {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
-    {showComments && <CommentsSheet post={post} onClose={() => setShowComments(false)} />}
+    {showComments && createPortal(<CommentsSheet post={post} onClose={() => setShowComments(false)} />, document.body)}
     {showSend && <ShareSheet url={postShareUrl(post.id)} caption={post.caption} onClose={() => setShowSend(false)} onCopy={() => { copyPostLink(); setShowSend(false); }} onMore={() => { setShowSend(false); sharePost(); }} />}
   </article>;
 }
