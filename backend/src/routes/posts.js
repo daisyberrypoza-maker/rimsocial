@@ -14,7 +14,7 @@ async function assertPostAuthorNotBlocked(viewerId, authorId) {
   if (relation) throw httpError(404, 'Post not found');
 }
 const { Op } = require('sequelize');
-const { Post, PostLike, PostComment, PostReport, Repost, Follow, User, UserBlock, SavedPost, LedgerEntry, sequelize } = require('../db');
+const { Post, PostLike, PostComment, CommentLike, PostReport, Repost, Follow, User, UserBlock, SavedPost, LedgerEntry, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
@@ -263,7 +263,9 @@ router.get('/:id/comments', requireAuth, async (req, res, next) => {
     if (!post || (post.visibility === 'private' && post.authorId !== req.user.id)) throw httpError(404, 'Post not found');
     await assertPostAuthorNotBlocked(req.user.id, post.authorId);
     const items = await PostComment.findAll({ where: { postId: post.id }, include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }], order: [['createdAt', 'ASC']], limit: 200 });
-    res.json({ items: items.map((c) => ({ id: c.id, body: c.body, parentId: c.parentId, createdAt: c.createdAt, author: c.author ? { id: c.author.id, username: c.author.username, displayName: c.author.displayName, avatarUrl: c.author.avatarUrl } : null, isMine: c.userId === req.user.id })) });
+    const likedRows = items.length ? await CommentLike.findAll({ where: { commentId: items.map((c) => c.id), userId: req.user.id }, attributes: ['commentId'], raw: true }) : [];
+    const liked = new Set(likedRows.map((r) => String(r.commentId)));
+    res.json({ items: items.map((c) => ({ id: c.id, body: c.body, parentId: c.parentId, likeCount: c.likeCount || 0, liked: liked.has(String(c.id)), createdAt: c.createdAt, author: c.author ? { id: c.author.id, username: c.author.username, displayName: c.author.displayName, avatarUrl: c.author.avatarUrl } : null, isMine: c.userId === req.user.id })) });
   } catch (e) { next(e); }
 });
 
@@ -286,6 +288,27 @@ router.post('/:id/comments', requireAuth, async (req, res, next) => {
     await redis.expire(`feed:preferences:${req.user.id}`, 60 * 60 * 24 * 90).catch(() => {});
     const author = await User.findByPk(req.user.id, { attributes: ['id', 'username', 'displayName', 'avatarUrl'] });
     res.status(201).json({ id: comment.id, body: comment.body, parentId: comment.parentId, createdAt: comment.createdAt, author, isMine: true });
+  } catch (e) { next(e); }
+});
+
+// Like or unlike a comment (toggle). The count changes in the same transaction as the like row.
+router.post('/:id/comments/:commentId/like', requireAuth, async (req, res, next) => {
+  try {
+    const comment = await PostComment.findOne({ where: { id: req.params.commentId, postId: req.params.id } });
+    if (!comment) throw httpError(404, 'Comment not found');
+    const result = await sequelize.transaction(async (t) => {
+      const existing = await CommentLike.findOne({ where: { commentId: comment.id, userId: req.user.id }, transaction: t });
+      if (existing) {
+        await existing.destroy({ transaction: t });
+        await PostComment.decrement('likeCount', { by: 1, where: { id: comment.id, likeCount: { [Op.gt]: 0 } }, transaction: t });
+      } else {
+        await CommentLike.create({ commentId: comment.id, userId: req.user.id }, { transaction: t });
+        await PostComment.increment('likeCount', { by: 1, where: { id: comment.id }, transaction: t });
+      }
+      const fresh = await PostComment.findByPk(comment.id, { attributes: ['likeCount'], transaction: t });
+      return { liked: !existing, likeCount: Math.max(0, Number(fresh.likeCount) || 0) };
+    });
+    res.json(result);
   } catch (e) { next(e); }
 });
 

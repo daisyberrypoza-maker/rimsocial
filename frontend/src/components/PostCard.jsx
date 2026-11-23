@@ -77,6 +77,19 @@ function CommentsSheet({ post, onClose }) {
   const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
   const [openThreads, setOpenThreads] = useState({}); // top-level comment id -> replies shown
   function toggleThread(id) { setOpenThreads((current) => ({ ...current, [id]: !current[id] })); }
+  // Like a comment: shows at once, then takes the server's count (and undoes it if the request fails)
+  async function toggleLike(item) {
+    const before = { liked: Boolean(item.liked), likeCount: Number(item.likeCount) || 0 };
+    const apply = (value) => setItems((current) => current.map((c) => (c.id === item.id ? { ...c, ...value } : c)));
+    apply({ liked: !before.liked, likeCount: Math.max(0, before.likeCount + (before.liked ? -1 : 1)) });
+    try {
+      const result = await api(`/v1/posts/${post.id}/comments/${item.id}/like`, { method: 'POST' });
+      apply({ liked: Boolean(result.liked), likeCount: Number(result.likeCount) || 0 });
+    } catch (e) {
+      logError(e);
+      apply(before);
+    }
+  }
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/comments`).then((r) => { if (alive) setItems(r.items || []); })
@@ -113,6 +126,12 @@ function CommentsSheet({ post, onClose }) {
           <button type="button" className="rv-reply-btn" onClick={() => setReplyTo({ id: item.parentId || item.id, username: item.author?.username || 'user' })}>Reply</button>
           {item.isMine && <button type="button" className="rv-delete" onClick={() => remove(item)}>Delete</button>}
         </div>
+      </div>
+      <div className="rv-like-col">
+        <button type="button" className={`rv-like-btn${item.liked ? ' on' : ''}`} aria-pressed={Boolean(item.liked)} aria-label={item.liked ? 'Unlike comment' : 'Like comment'} onClick={() => toggleLike(item)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={item.liked ? '#ed4956' : 'none'} stroke={item.liked ? '#ed4956' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+        </button>
+        {(Number(item.likeCount) || 0) > 0 && <span className="rv-like-count">{formatCount(item.likeCount)}</span>}
       </div>
     </div>;
   }
