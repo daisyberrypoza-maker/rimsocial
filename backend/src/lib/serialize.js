@@ -3,6 +3,9 @@ function toPostDTO(post) {
   const p = post.toJSON ? post.toJSON() : post;
   return {
     id: p.id,
+    commentCount: Number(p.commentCount) || 0,
+    saveCount: Number(p.saveCount) || 0,
+    shareCount: Number(p.shareCount) || 0,
     kind: p.kind,
     mediaUrl: p.mediaUrl,
     storyText: p.storyText || null,

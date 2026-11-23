@@ -1,4 +1,4 @@
-const { Op, Post, PostComment, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
+const { Op, Post, PostComment, SavedPost, User, Follow, UserBlock, UserMute, sequelize } = require('../db');
 const redis = require('../redis');
 const { rerankExploreFeed } = require('./explore-rerank');
 const config = require('../config');
@@ -393,12 +393,32 @@ async function getFollowingPage({ userId, cursor, limit }) {
   };
 }
 
+// Counts shown on the Rimlight rail: comments, saves and shares, for a page of posts
+async function attachEngagement(rows) {
+  if (!rows.length) return rows;
+  const ids = rows.map((r) => r.id);
+  const [commentRows, saveRows, shareValues] = await Promise.all([
+    PostComment.findAll({ where: { postId: ids }, attributes: ['postId', [sequelize.fn('COUNT', sequelize.col('id')), 'n']], group: ['postId'], raw: true }).catch(() => []),
+    SavedPost.findAll({ where: { postId: ids }, attributes: ['postId', [sequelize.fn('COUNT', sequelize.col('postId')), 'n']], group: ['postId'], raw: true }).catch(() => []),
+    redis.mget(ids.map((id) => `post:shares:${id}`)).catch(() => []),
+  ]);
+  const comments = new Map(commentRows.map((r) => [String(r.postId), Number(r.n) || 0]));
+  const saves = new Map(saveRows.map((r) => [String(r.postId), Number(r.n) || 0]));
+  rows.forEach((row, i) => {
+    row.setDataValue('commentCount', comments.get(String(row.id)) || 0);
+    row.setDataValue('saveCount', saves.get(String(row.id)) || 0);
+    row.setDataValue('shareCount', Number(shareValues[i]) || 0);
+  });
+  return rows;
+}
+
 async function hydrate(ids) {
   if (!ids.length) return [];
   const rows = await Post.findAll({
     where: { id: ids, status: 'live', isStory: false, visibility: 'public' },
     include: [authorInclude()],
   });
+  await attachEngagement(rows);
   const byId = new Map(rows.map((r) => [r.id, r]));
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
