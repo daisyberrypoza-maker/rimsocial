@@ -7783,3 +7783,6 @@ body:has(.cam-page) .bottomnav a.active svg { color: #fff !important; stroke: #f
 .sc-profile .sc-grid .sc-tile video,
 .sc-profile .sc-grid button.sc-tile,
 .sc-grid .sc-tile { border-radius:0 !important; }
+
+/* While the comments sheet is open, the bottom tab bar is hidden so the reply box is never under it */
+body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
