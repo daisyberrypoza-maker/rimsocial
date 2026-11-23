@@ -11,7 +11,7 @@ These rules describe how each screen must behave. They apply to the web app, the
 - Do not change the design unless asked. Match the reference screenshots.
 
 ## Bottom bar
-- Five tabs in this order: Stories, Chat, Add (no label, yellow plus), Rimlight, Profile.
+- Five tabs in this order: Explore, Chat, Add (no label, yellow plus), Stories, Rimlight. Matches the reference; see "Bottom bar (matches the reference)" below.
 - Labels are 10px, weight 400. The Add button has no label.
 - Active tab: icon filled in the tab's text colour. Inactive: outline icon.
 - Hidden on the Add screen, on profile, on chat conversations and on full-screen viewers.
