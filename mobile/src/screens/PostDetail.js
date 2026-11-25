@@ -41,6 +41,8 @@ export default function PostDetail() {
   const [showMenu, setShowMenu] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  const [replyTo, setReplyTo] = useState(null); // { id: top-level comment id, username }
+  const [openThreads, setOpenThreads] = useState({});
   const [sending, setSending] = useState(false);
   const [playing, setPlaying] = useState(false);
   const playingRef = useRef(false);
@@ -147,16 +149,57 @@ export default function PostDetail() {
     Share.share({ message: post?.caption || 'View this post on RimSocial' }).catch(logError);
   }
 
+  // One comment row. Replies are indented under their top-level comment.
+  function renderComment(item, isReply) {
+    const username = item.author?.username || 'user';
+    return (
+      <View key={item.id} style={[styles.comment, isReply && styles.replyIndent]}>
+        <Avatar user={item.author} size={isReply ? 26 : 34} />
+        <View style={styles.flex}>
+          <Text style={styles.commentName}>@{username}</Text>
+          <Text style={styles.commentBody}>{item.body}</Text>
+          <View style={styles.commentActions}>
+            <Pressable onPress={() => setReplyTo({ id: item.parentId || item.id, username })} accessibilityRole="button">
+              <Text style={styles.commentAction}>Reply</Text>
+            </Pressable>
+          </View>
+        </View>
+        <Pressable onPress={() => toggleCommentLike(item)} accessibilityRole="button" accessibilityLabel={item.liked ? 'Unlike comment' : 'Like comment'} hitSlop={8} style={styles.commentLikeCol}>
+          <Icon name="heart" size={16} color={item.liked ? '#ff3b5c' : 'rgba(255,255,255,0.7)'} />
+          {Number(item.likeCount) > 0 && <Text style={styles.commentLikeCount}>{Number(item.likeCount)}</Text>}
+        </Pressable>
+      </View>
+    );
+  }
+
   async function submitComment() {
     const text = draft.trim();
     if (!text || sending) return;
     setSending(true);
     try {
-      const item = await api(`/v1/posts/${postId}/comments`, { method: 'POST', body: { body: text } });
+      const payload = { body: text };
+      if (replyTo) payload.parentId = replyTo.id;
+      const item = await api(`/v1/posts/${postId}/comments`, { method: 'POST', body: payload });
       setComments((items) => [...items, item]);
+      if (replyTo) setOpenThreads((open) => ({ ...open, [replyTo.id]: true }));
+      setReplyTo(null);
       setDraft('');
     } catch (e) { logError(e); }
     finally { setSending(false); }
+  }
+
+  // Like a comment: shows the change at once, then the server's count; reverts if the request fails
+  async function toggleCommentLike(item) {
+    const before = { liked: Boolean(item.liked), likeCount: Number(item.likeCount) || 0 };
+    const apply = (value) => setComments((list) => list.map((c) => (c.id === item.id ? { ...c, ...value } : c)));
+    apply({ liked: !before.liked, likeCount: Math.max(0, before.likeCount + (before.liked ? -1 : 1)) });
+    try {
+      const result = await api(`/v1/posts/${postId}/comments/${item.id}/like`, { method: 'POST' });
+      apply({ liked: Boolean(result.liked), likeCount: Number(result.likeCount) || 0 });
+    } catch (e) {
+      logError(e);
+      apply(before);
+    }
   }
 
   async function deletePost() {
@@ -295,22 +338,36 @@ export default function PostDetail() {
             </Pressable>
           </View>
           <ScrollView style={styles.flex} contentContainerStyle={styles.commentList}>
-            {comments.map((item) => (
-              <View key={item.id} style={styles.comment}>
-                <Avatar user={item.author} size={34} />
-                <View style={styles.flex}>
-                  <Text style={styles.commentName}>@{item.author?.username || 'user'}</Text>
-                  <Text style={styles.commentBody}>{item.body}</Text>
+            {comments.filter((c) => !c.parentId).map((item) => {
+              const replies = comments.filter((r) => r.parentId === item.id);
+              const open = Boolean(openThreads[item.id]);
+              return (
+                <View key={item.id}>
+                  {renderComment(item, false)}
+                  {replies.length > 0 && (
+                    <Pressable onPress={() => setOpenThreads((o) => ({ ...o, [item.id]: !o[item.id] }))} accessibilityRole="button">
+                      <Text style={styles.threadToggle}>{open ? 'Hide replies' : `View ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}</Text>
+                    </Pressable>
+                  )}
+                  {open && replies.map((reply) => renderComment(reply, true))}
                 </View>
-              </View>
-            ))}
+              );
+            })}
             {!comments.length && <Text style={styles.empty}>No comments yet. Start the conversation.</Text>}
           </ScrollView>
+          {replyTo && (
+            <View style={styles.replyBanner}>
+              <Text style={styles.replyBannerText}>Replying to @{replyTo.username}</Text>
+              <Pressable onPress={() => setReplyTo(null)} accessibilityLabel="Cancel reply" hitSlop={8}>
+                <Text style={styles.replyCancel}>Cancel</Text>
+              </Pressable>
+            </View>
+          )}
           <View style={styles.compose}>
             <Avatar user={me || {}} size={32} />
             <TextInput
               style={styles.composeInput}
-              placeholder={`Comment as ${me?.username || 'you'}…`}
+              placeholder={replyTo ? 'Write a reply…' : `Comment as ${me?.username || 'you'}…`}
               placeholderTextColor="rgba(255,255,255,0.55)"
               value={draft}
               onChangeText={setDraft}
@@ -375,6 +432,15 @@ const styles = StyleSheet.create({
   comment: { flexDirection: 'row', gap: 10, paddingVertical: 8 },
   commentName: { color: '#fff', fontSize: 14, fontWeight: '700' },
   commentBody: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 2 },
+  commentActions: { flexDirection: 'row', marginTop: 6 },
+  commentAction: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+  commentLikeCol: { alignItems: 'center', justifyContent: 'flex-start', minWidth: 28, paddingTop: 2 },
+  commentLikeCount: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
+  replyIndent: { marginLeft: 44 },
+  threadToggle: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', marginLeft: 44, marginBottom: 6 },
+  replyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#1c1c1e' },
+  replyBannerText: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
+  replyCancel: { color: '#3b82f6', fontSize: 13, fontWeight: '600' },
   empty: { color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', marginVertical: 24 },
   compose: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingTop: 8, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.darkLine },
   composeInput: { flex: 1, minWidth: 0, height: 44, borderRadius: 999, backgroundColor: INPUT_GREY, color: '#fff', paddingHorizontal: 16, fontSize: 15 },
