@@ -1,29 +1,31 @@
-/* "Music for you" picker, matching the reference: dark page, white text, white Add to story pill.
-   Buttons are never black: the Shuffle and Create Sound controls are dark grey with a light border. */
-.mp-page { position: fixed; inset: 0; z-index: 90; background: #0f1115; color: #fff; display: flex; flex-direction: column; font-family: inherit; }
+/* "Add to story" music screen, full screen, matching the reference: dark page, light text, grey controls.
+   Buttons are never black: the chips and search use dark grey, and the selected chip is white with dark text. */
+.mp-page { position: fixed; inset: 0; z-index: 90; background: #1f2126; color: #fff; display: flex; flex-direction: column; font-family: inherit; }
 .mp-page button { font-family: inherit; }
-.mp-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px 4px; }
-.mp-back, .mp-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border: 0; background: transparent; color: #fff; padding: 0; }
-.mp-title { flex: 1; margin: 0; font-size: 18px; font-weight: 600; color: #fff; }
-.mp-search { margin: 8px 16px 0; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 21px; background: #1f232a; color: #9aa0a6; }
+.mp-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 6px; }
+.mp-icon { width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: #fff; padding: 0; }
+.mp-icon:disabled { opacity: .6; }
+.mp-title { margin: 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center; flex: 1; }
+.mp-search { margin: 10px 16px 0; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-radius: 22px; background: #2b2f36; color: #9aa0a6; }
 .mp-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 16px; color: #fff !important; outline: none; }
-.mp-heading { margin: 28px 24px 18px; font-size: 26px; line-height: 1.22; font-weight: 500; color: #fff; text-align: center; }
-.mp-grad { background: linear-gradient(90deg, #ff9d2e 0%, #ff3b5c 50%, #e83bd0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.mp-tabs { display: flex; gap: 8px; padding: 0 16px 12px; }
-.mp-tab { height: 32px; padding: 0 14px; border-radius: 16px; border: 1px solid #3a3f47; background: transparent; color: #b5bac1; font-size: 14px; font-weight: 500; }
-.mp-tab.on { background: #fff; border-color: #fff; color: #0f1115; }
-.mp-list { list-style: none; margin: 0; padding: 0 0 120px; overflow-y: auto; flex: 1; }
-.mp-row { display: flex; align-items: center; gap: 14px; padding: 8px 20px; min-height: 80px; }
-.mp-art { position: relative; width: 56px; height: 56px; flex: none; border: 0; padding: 0; border-radius: 10px; overflow: hidden; background: #262b33; }
+.mp-chips { display: flex; gap: 8px; padding: 14px 16px 12px; overflow-x: auto; }
+.mp-chip { flex: none; height: 36px; padding: 0 18px; border-radius: 18px; border: 0; background: #2b2f36; color: #fff; font-size: 15px; font-weight: 500; }
+.mp-chip.on { background: #fff; color: #111; font-weight: 600; }
+.mp-list { list-style: none; margin: 0; padding: 4px 0 24px; overflow-y: auto; flex: 1; }
+.mp-row { display: flex; align-items: center; gap: 12px; padding: 8px 20px 8px 16px; min-height: 76px; }
+.mp-row-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; border: 0; background: transparent; padding: 0; color: inherit; text-align: left; }
+.mp-art { position: relative; width: 56px; height: 56px; flex: none; border-radius: 8px; overflow: hidden; background: #2b2f36; display: grid; place-items: center; }
 .mp-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mp-art-empty { width: 100%; height: 100%; display: grid; place-items: center; background: #262b33; color: #fff; }
-.mp-art-badge { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.28); color: #fff; }
+.mp-art-empty { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; }
+.mp-art-badge { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.35); color: #fff; }
 .mp-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.mp-info strong { font-size: 16px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mp-info span { font-size: 14px; color: #9aa0a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mp-add { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1.5px dashed #6b717b; border-radius: 50%; background: transparent; color: #fff; padding: 0; }
-.mp-add-pill { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #fff; color: #0f1115; font-size: 14px; font-weight: 600; }
+.mp-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mp-name strong { font-size: 16px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-rf { flex: none; padding: 1px 5px; border-radius: 4px; background: #5a5f68; color: #fff; font-size: 11px; font-weight: 700; }
+.mp-meta { font-size: 14px; color: #b5bac1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-save { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: #fff; padding: 0; }
+.mp-save.on { color: #fff; }
 .mp-empty { padding: 32px 16px; text-align: center; color: #9aa0a6; font-size: 15px; }
-.mp-bottom { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 10px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, #0f1115 35%); }
-.mp-shuffle, .mp-create { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 20px; border-radius: 23px; border: 1px solid #3a3f47; background: #262b33; color: #fff; font-size: 15px; font-weight: 600; }
+.mp-bottom { display: flex; gap: 10px; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid #2b2f36; }
+.mp-shuffle, .mp-create { flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 22px; background: #2b2f36; color: #fff; font-size: 15px; font-weight: 600; }
 .mp-shuffle:disabled, .mp-create:disabled { opacity: .5; }

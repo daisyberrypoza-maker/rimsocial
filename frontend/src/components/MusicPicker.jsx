@@ -5,10 +5,11 @@ import Icon from './Icon.jsx';
 import { toast, logError } from '../toast.js';
 import './MusicPicker.css';
 
-// "Music for you" sound picker for stories, matching the reference: dark page, a "Share what's on repeat"
-// heading, one row per sound with an Add to story control, and Shuffle. Sources: app library (Featured,
-// Saved) and the Audius catalogue (Trending). Audius sounds are checked and streamed by the server.
-const TABS = [['featured', 'Featured'], ['saved', 'Saved'], ['trending', 'Trending']];
+// "Add to story" music screen, full screen, matching the reference: close on the left, the title in the
+// middle, settings on the right, a search field, chips (For you, Trending, Saved), and one row per sound.
+// Tapping a row previews it; the bookmark button chooses it for the story. Sources: the app library
+// (For you) and the Audius catalogue (Trending). Audius sounds are checked and streamed by the server.
+const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved']];
 
 function formatDuration(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -25,40 +26,39 @@ function shuffled(list) {
 }
 
 export default function MusicPicker({ selectedId, onSelect, onClose }) {
-  const [tab, setTab] = useState('featured');
+  const [chip, setChip] = useState('featured');
   const [query, setQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [playingId, setPlayingId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const audioRef = useRef(null);
   const fileRef = useRef(null);
 
-  // Stop playback when leaving the picker
+  // Stop playback when leaving the screen
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
-  // Load the list for the active tab; search changes the list after a short pause
+  // Load the list for the active chip; the search text changes the list after a short pause
   useEffect(() => {
-    if (tab === 'saved') { setItems([]); return undefined; }
+    if (chip === 'saved') { setItems([]); return undefined; }
     let active = true;
     const q = query.trim();
-    const path = tab === 'trending'
+    const path = chip === 'trending'
       ? (q ? `/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=30` : '/v1/audio/audius/trending?limit=30')
       : `/v1/audio/search?q=${encodeURIComponent(q)}`;
     const timer = setTimeout(() => {
       api(path)
-        .then((data) => { if (active) setItems((data.items || []).map((item) => ({ ...item, source: tab === 'trending' ? 'audius' : 'local' }))); })
+        .then((data) => { if (active) setItems((data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }))); })
         .catch((error) => { if (active) { setItems([]); logError(error); } });
     }, 250);
     return () => { active = false; clearTimeout(timer); };
-  }, [tab, query]);
+  }, [chip, query]);
 
   function stopPreview() {
     audioRef.current?.pause();
     setPlayingId(null);
   }
 
-  // Play or pause one row. Audius rows ask the server for a fresh link first.
+  // Preview one row, or pause it. Audius rows ask the server for a fresh link first.
   async function togglePreview(item) {
     if (playingId === item.id) { stopPreview(); return; }
     try {
@@ -79,7 +79,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
     }
   }
 
-  // Create Sound: upload an audio file to the app library and select it
+  // Upload an audio file as a new sound, then choose it for the story
   async function createSound(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -90,7 +90,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
       form.append('media', file);
       form.append('title', file.name.replace(/\.[^.]+$/, '').slice(0, 80) || 'My sound');
       const track = await api('/v1/audio', { method: 'POST', body: form });
-      setTab('featured');
+      setChip('featured');
       setItems((list) => [track, ...list]);
       onSelect(track);
     } catch (error) {
@@ -101,49 +101,55 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
     }
   }
 
+  function choose(item) {
+    stopPreview();
+    onSelect(item);
+  }
+
   return (
-    <div className="mp-page" role="dialog" aria-label="Music for you">
+    <div className="mp-page" role="dialog" aria-label="Add to story">
       <header className="mp-top">
-        <button type="button" className="mp-back" aria-label="Close sound picker" onClick={() => { stopPreview(); onClose(); }}>
-          <Icon name="arrow-up-right" size={26} />
+        <button type="button" className="mp-icon" aria-label="Close sound picker" onClick={() => { stopPreview(); onClose(); }}>
+          <Icon name="x" size={28} />
         </button>
-        <h1 className="mp-title">Music for you</h1>
-        <button type="button" className="mp-icon" aria-label={searchOpen ? 'Close search' : 'Search sounds'} aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}>
-          <Icon name="search" size={22} />
+        <h1 className="mp-title">Add to story</h1>
+        <button type="button" className="mp-icon" aria-label="Sound settings" disabled>
+          <Icon name="settings" size={26} />
         </button>
       </header>
 
-      {searchOpen && <label className="mp-search">
-        <Icon name="search" size={18} />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search artists and sounds" aria-label="Search artists and sounds" />
-      </label>}
+      <label className="mp-search">
+        <Icon name="search" size={19} />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search sounds and artists" />
+      </label>
 
-      <h2 className="mp-heading">Share what’s <span className="mp-grad">on repeat</span> to your story</h2>
-
-      <nav className="mp-tabs" role="tablist" aria-label="Sound sources">
-        {TABS.map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} className={tab === key ? 'mp-tab on' : 'mp-tab'} onClick={() => setTab(key)}>{label}</button>
+      <nav className="mp-chips" role="tablist" aria-label="Sound sources">
+        {CHIPS.map(([key, label]) => (
+          <button key={key} type="button" role="tab" aria-selected={chip === key} className={chip === key ? 'mp-chip on' : 'mp-chip'} onClick={() => setChip(key)}>{label}</button>
         ))}
       </nav>
 
       <ul className="mp-list">
-        {tab === 'saved' && <li className="mp-empty">Saved sounds will appear here.</li>}
-        {tab !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
+        {chip === 'saved' && <li className="mp-empty">Saved sounds will appear here.</li>}
+        {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
           const selected = selectedId === item.id;
+          const playing = playingId === item.id;
           return (
             <li key={item.id} className={selected ? 'mp-row on' : 'mp-row'}>
-              <button type="button" className="mp-art" aria-label={playingId === item.id ? `Pause ${item.title}` : `Play ${item.title}`} onClick={() => togglePreview(item)}>
-                {item.artwork ? <img src={item.artwork} alt="" loading="lazy" /> : <span className="mp-art-empty"><Icon name="music" size={22} /></span>}
-                <span className="mp-art-badge" aria-hidden="true"><Icon name={playingId === item.id ? 'pause' : 'play'} size={14} /></span>
+              <button type="button" className="mp-row-main" onClick={() => togglePreview(item)} aria-label={playing ? `Pause ${item.title}` : `Play ${item.title}`}>
+                <span className="mp-art">
+                  {item.artwork ? <img src={item.artwork} alt="" loading="lazy" /> : <span className="mp-art-empty"><Icon name="music" size={22} /></span>}
+                  {playing && <span className="mp-art-badge" aria-hidden="true"><Icon name="pause" size={16} /></span>}
+                </span>
+                <span className="mp-info">
+                  <span className="mp-name"><strong>{item.title}</strong>{item.royaltyFree && <span className="mp-rf">RF</span>}</span>
+                  <span className="mp-meta">{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
+                </span>
               </button>
-              <div className="mp-info">
-                <strong>{item.title}</strong>
-                <span>{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
-              </div>
-              {selected
-                ? <button type="button" className="mp-add-pill" onClick={() => onSelect(item)} aria-label={`Add ${item.title} to story`}><Icon name="plus" size={16} /> Add to story</button>
-                : <button type="button" className="mp-add" onClick={() => onSelect(item)} aria-label={`Use ${item.title} for your story`}><Icon name="plus" size={20} /></button>}
+              <button type="button" className={selected ? 'mp-save on' : 'mp-save'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
+                <Icon name={selected ? 'bookmark-check' : 'bookmark'} size={26} />
+              </button>
             </li>
           );
         })}
