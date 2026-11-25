@@ -220,3 +220,7 @@
 /* Music in the gallery mode strip: shows the chosen sound's title; never a black fill */
 .ig-create-modes .ig-create-music { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8e8e8e; font-weight: 600; }
 .ig-create-modes .ig-create-music.on { color: #fff; }
+
+/* Reference gallery mode labels: Text, Story, Post, Reel (music is selected-track info, not a mode). */
+.ig-create .ig-create-modes button { text-transform: none; }
+.ig-create .ig-music-bar { bottom: max(24px, env(safe-area-inset-bottom)); z-index: 8; }
