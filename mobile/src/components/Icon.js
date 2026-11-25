@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, Camera, Check, ChevronRight, Compass, Gift,
+  ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, BookmarkCheck, Camera, Check, ChevronRight, Compass, Gift,
   Heart, Home, Link as LinkIcon, Mail, MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2,
   UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
   Pause, Volume2, VolumeX, MoreVertical, Pencil, Trash2, Image as ImageIcon, MapPin, GalleryHorizontal,
@@ -9,7 +9,7 @@ import {
 // Same names as the web Icon.jsx, so screens read the same in both apps
 const ICONS = {
   'arrow-left': ArrowLeft, 'arrow-right': ArrowRight, eye: Eye, 'eye-off': EyeOff, at: AtSign, 'at-sign': AtSign,
-  bell: Bell, bookmark: Bookmark, camera: Camera, check: Check, 'chevron-right': ChevronRight, chevron: ChevronRight,
+  bell: Bell, bookmark: Bookmark, 'bookmark-check': BookmarkCheck, camera: Camera, check: Check, 'chevron-right': ChevronRight, chevron: ChevronRight,
   compass: Compass, gift: Gift, heart: Heart, home: Home, link: LinkIcon, mail: Mail, 'message-circle': MessageCircle,
   plus: Plus, refresh: RefreshCw, search: Search, send: Send, share: Share2, 'share-2': Share2, settings: Settings,
   user: UserRound, 'user-round': UserRound, 'user-plus': UserPlus, people: Users, users: Users, video: Video,
