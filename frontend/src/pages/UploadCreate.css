@@ -216,3 +216,7 @@
 .ig-music-text strong { font-size: 15px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ig-music-text small { font-size: 13px; color: #b5bac1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ig-music-btn { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #fff; padding: 0; }
+
+/* Music in the gallery mode strip: shows the chosen sound's title; never a black fill */
+.ig-create-modes .ig-create-music { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8e8e8e; font-weight: 600; }
+.ig-create-modes .ig-create-music.on { color: #fff; }
