@@ -67,6 +67,7 @@ const Post = sequelize.define('Post', {
   sponsorDescription: { type: DataTypes.STRING(200), allowNull: true },
   sponsorCta: { type: DataTypes.STRING(30), allowNull: true },
   sponsorUrl: { type: DataTypes.STRING(1024), allowNull: true },
+  adFormat: { type: DataTypes.STRING(20), allowNull: true },
   promotedUntil: { type: DataTypes.DATE, allowNull: true },
   giftCoins: { type: DataTypes.BIGINT, defaultValue: 0 },
 }, {

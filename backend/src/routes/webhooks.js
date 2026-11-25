@@ -1,4 +1,5 @@
 const { pricingForCurrency } = require('../lib/boostPricing');
+const { normalizeAdFormat, defaultAdFormat } = require('../lib/adFormat');
 const router = require('express').Router();
 const crypto = require('crypto');
 const express = require('express');
@@ -64,6 +65,7 @@ router.post('/paystack', express.raw({ type: '*/*' }), async (req, res) => {
             sponsorDescription: String(metadata.sponsorDescription || '').slice(0, 200),
             sponsorCta: String(metadata.sponsorCta || 'Shop Now').slice(0, 30),
             sponsorUrl: String(metadata.sponsorUrl || '').slice(0, 1024),
+            adFormat: normalizeAdFormat(metadata.adFormat) || defaultAdFormat(post.kind),
           }, { transaction: t });
         });
       } catch (e) {

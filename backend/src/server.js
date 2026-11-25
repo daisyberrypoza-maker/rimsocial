@@ -335,6 +335,7 @@ async function start() {
   if (!currentPostColumns.aiLabel) await qi.addColumn('posts', 'aiLabel', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   if (!currentPostColumns.promotedUntil) await qi.addColumn('posts', 'promotedUntil', { type: DataTypes.DATE, allowNull: true });
+  if (!currentPostColumns.adFormat) await qi.addColumn('posts', 'adFormat', { type: DataTypes.STRING(20), allowNull: true });
   await seedGifts();
   const purgeExpiredStories = async () => {
     const expired = await Post.findAll({

@@ -40,6 +40,7 @@ function toPostDTO(post) {
     sponsorDescription: p.sponsorDescription || null,
     sponsorCta: p.sponsorCta || null,
     sponsorUrl: p.sponsorUrl || null,
+    sponsorFormat: p.adFormat || null,
     createdAt: p.createdAt,
     expiresAt: p.expiresAt || null,
     author: p.author
