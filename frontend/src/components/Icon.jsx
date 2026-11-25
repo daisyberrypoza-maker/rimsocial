@@ -6,10 +6,11 @@ import {
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
   File as FileIcon, LogOut, Ban, BellOff, Copy, Reply, Music, Mic, Download, Flag, Smile, BookmarkCheck, Pin, PinOff, Store,
-  Zap, ZapOff,
+  Zap, ZapOff, Shuffle,
 } from 'lucide-react';
 
 const ICONS = {
+  shuffle: Shuffle,
   'refresh-cw': RefreshCw,
   music: Music, mic: Mic,
   download: Download, flag: Flag, smile: Smile, 'bookmark-check': BookmarkCheck,
