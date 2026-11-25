@@ -7,12 +7,12 @@ const read = (file) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
 
 test('Rimlight Discover uses the TikTok-style ranking and Explore keeps the Spotlight engine', () => {
   const feed = read('src/services/feed.js');
-  assert.match(feed, /async function getDiscoverPage[\s\S]*?return getRimlightPage\(/);
+  assert.match(feed, /async function getDiscoverPage[\s\S]*?return withAds\(await getRimlightPage\(/);
   assert.match(feed, /async function getRimlightPage[\s\S]*?avgWatchRatio \* 4\.0/);
   assert.match(feed, /async function getRimlightPage[\s\S]*?rewatchRate \* 5\.0/);
   assert.match(feed, /async function getRimlightPage[\s\S]*?fastSkipRate \* 5\.5/);
   assert.doesNotMatch(feed.slice(feed.indexOf('async function getRimlightPage'), feed.indexOf('// Following: a Redis')), /followers|creatorScore/);
-  assert.match(feed, /async function getExplorePage[\s\S]*?return getSpotlightPage\([\s\S]*?cachePrefix: 'feed:explore'/);
+  assert.match(feed, /async function getExplorePage[\s\S]*?return withAds\(await getSpotlightPage\([\s\S]*?cachePrefix: 'feed:explore'/);
   assert.match(feed, /loopRate,/);
   assert.match(feed, /watches75: spot\.completions/);
   assert.match(feed, /SEED_EVERY = 4/);
