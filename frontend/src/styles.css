@@ -4276,6 +4276,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-meta { display:flex; flex-direction:column; min-width:0; }
 .sv-root .sv-name { flex:none; font-size:16px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
 .sv-time { font-size:13px; color:rgba(255,255,255,.8); text-shadow:0 1px 4px rgba(0,0,0,.6); }
+.sv-root .sv-meta { flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:8px; row-gap:2px; }
+.sv-root .sv-time { font-size:14px; color:rgba(255,255,255,.85); white-space:nowrap; }
 .sv-root .sv-icon { width:40px !important; height:40px !important; }
 .sv-root .sv-icon.on { color:var(--snap-yellow) !important; }
 .sv-root .sv-icon.on svg { fill:var(--snap-yellow); }

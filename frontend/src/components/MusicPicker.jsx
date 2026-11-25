@@ -105,7 +105,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
     <div className="mp-page" role="dialog" aria-label="Music for you">
       <header className="mp-top">
         <button type="button" className="mp-back" aria-label="Close sound picker" onClick={() => { stopPreview(); onClose(); }}>
-          <Icon name="chevron-down" size={26} />
+          <Icon name="arrow-up-right" size={26} />
         </button>
         <h1 className="mp-title">Music for you</h1>
         <button type="button" className="mp-icon" aria-label={searchOpen ? 'Close search' : 'Search sounds'} aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}>
