@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const config = require('../config');
 const httpError = require('../utils/httpError');
 const { ALLOWED } = require('../middleware/upload');
+const { detectMedia } = require('../utils/fileSignature');
 const redis = require('../redis');
 
 // Each person can start this many chunked uploads in a day. This bounds the disk a single account can fill.
@@ -137,12 +138,22 @@ async function assemble(id, userId) {
 async function consumeSession(id, userId) {
   const meta = await readMeta(id, userId);
   if (meta.status !== 'ready') throw httpError(409, 'Finish uploading the file first');
-  await writeMeta({ ...meta, status: 'consumed' });
+  const assembled = path.join(uploadRoot(), meta.filename);
+  // Check the assembled bytes, not the name or type the client sent
+  const info = await detectMedia(assembled).catch(() => null);
+  if (!info || (info.kind !== 'photo' && info.kind !== 'video')) {
+    await fs.promises.unlink(assembled).catch(() => {});
+    await releaseSession(id);
+    throw httpError(415, 'That file is not a supported photo or video');
+  }
+  const name = crypto.randomUUID() + info.ext;
+  await fs.promises.rename(assembled, path.join(uploadRoot(), name));
+  await writeMeta({ ...meta, status: 'consumed', filename: name, mimetype: info.mime });
   return {
-    path: path.join(uploadRoot(), meta.filename),
-    filename: meta.filename,
-    mimetype: meta.mimetype,
-    originalname: `upload${meta.ext}`,
+    path: path.join(uploadRoot(), name),
+    filename: name,
+    mimetype: info.mime,
+    originalname: `upload${info.ext}`,
     size: meta.size,
   };
 }

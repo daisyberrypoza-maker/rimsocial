@@ -96,7 +96,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // POST /v1/audio  multipart: media (audio file), title, artist (optional; defaults to your name)
-router.post('/', audioUpload.single('media'), async (req, res, next) => {
+router.post('/', audioUpload.single('media'), require('../middleware/verifyUpload').verifyUploads(['audio', 'video']), async (req, res, next) => {
   try {
     if (!req.file) throw httpError(400, 'Choose an MP3, M4A, AAC, WAV or OGG audio file');
     const title = String(req.body.title || '').trim();
