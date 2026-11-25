@@ -237,6 +237,9 @@ export default function PostCard({ post, active, focused, navigation, height, sc
   const [likeBusy, setLikeBusy] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
+  const [saved, setSaved] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveTotal, setSaveTotal] = useState(post.saveCount || 0);
   const [repostBusy, setRepostBusy] = useState(false);
   const [following, setFollowing] = useState(Boolean(post.author?.isFollowing));
   const [followBusy, setFollowBusy] = useState(false);
@@ -263,7 +266,7 @@ export default function PostCard({ post, active, focused, navigation, height, sc
   useEffect(() => {
     let alive = true;
     api(`/v1/posts/${post.id}/engagement`).then((r) => {
-      if (alive) { setLiked(Boolean(r.liked)); setReposted(Boolean(r.reposted)); }
+      if (alive) { setLiked(Boolean(r.liked)); setReposted(Boolean(r.reposted)); setSaved(Boolean(r.saved)); }
     }).catch(() => {});
     return () => { alive = false; };
   }, [post.id]);
@@ -393,6 +396,21 @@ export default function PostCard({ post, active, focused, navigation, height, sc
       setFollowing(Boolean(r.isFollowing ?? true));
     } catch (e) { logError(e); }
     finally { setFollowBusy(false); }
+  }
+
+  // Save or unsave the post, with the saved count updated at once (same as the web rail)
+  async function toggleSave() {
+    if (saveBusy) return;
+    setSaveBusy(true);
+    try {
+      const r = await api(`/v1/posts/${post.id}/save`, { method: saved ? 'DELETE' : 'POST' });
+      setSaved(Boolean(r.saved));
+      setSaveTotal((t) => Math.max(0, t + (r.saved ? 1 : -1)));
+    } catch (e) {
+      logError(e);
+    } finally {
+      setSaveBusy(false);
+    }
   }
 
   function share() {
@@ -528,8 +546,13 @@ export default function PostCard({ post, active, focused, navigation, height, sc
           <Icon name="repeat" size={30} color={reposted ? SNAP_YELLOW : '#fff'} filled />
           {repostCount > 0 && <Text style={styles.railCount}>{formatCount(repostCount)}</Text>}
         </Pressable>
+        <Pressable style={styles.railBtn} onPress={toggleSave} disabled={saveBusy} accessibilityLabel={saved ? 'Remove from saved' : 'Save post'}>
+          <Icon name={saved ? 'bookmark-check' : 'bookmark'} size={30} color={saved ? SNAP_YELLOW : '#fff'} filled />
+          {saveTotal > 0 && <Text style={styles.railCount}>{formatCount(saveTotal)}</Text>}
+        </Pressable>
         <Pressable style={styles.railBtn} onPress={share} accessibilityLabel="Share post">
           <Icon name="send" size={30} color="#fff" filled />
+          {Number(post.shareCount) > 0 && <Text style={styles.railCount}>{formatCount(post.shareCount)}</Text>}
         </Pressable>
         <Pressable style={styles.railBtn} onPress={() => setShowMenu(true)} accessibilityLabel="More post controls">
           <MoreHorizontal size={30} color="#fff" fill="#fff" strokeWidth={2.2} />
