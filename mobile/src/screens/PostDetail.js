@@ -17,8 +17,8 @@ import { colors } from '../theme';
 
 // Website Reels colours that the theme does not define
 const SNAP_YELLOW = '#FFFC00'; // reposted icon
-const REPLY_BLUE = '#3b82f6';  // Post button under the video
-const INPUT_GREY = '#1c1c1e';  // comment box on black
+const REPLY_BLUE = '#0095f6';  // primary blue, same as the web Post button
+const INPUT_GREY = '#f1f1f1';  // comment box on the white sheet
 const LONG_CAPTION = 90;
 
 // One post as a full-screen Reels page, like the web /p/:postId page: video, actions, caption,
@@ -165,7 +165,7 @@ export default function PostDetail() {
           </View>
         </View>
         <Pressable onPress={() => toggleCommentLike(item)} accessibilityRole="button" accessibilityLabel={item.liked ? 'Unlike comment' : 'Like comment'} hitSlop={8} style={styles.commentLikeCol}>
-          <Icon name="heart" size={16} color={item.liked ? '#ff3b5c' : 'rgba(255,255,255,0.7)'} />
+          <Icon name="heart" size={16} color={item.liked ? '#ff3b5c' : '#8e8e8e'} />
           {Number(item.likeCount) > 0 && <Text style={styles.commentLikeCount}>{Number(item.likeCount)}</Text>}
         </Pressable>
       </View>
@@ -334,7 +334,7 @@ export default function PostDetail() {
               <Text style={styles.sheetDate}>{dateText}</Text>
             </View>
             <Pressable onPress={() => setShowComments(false)} accessibilityLabel="Close comments" hitSlop={8}>
-              <Icon name="x" size={22} color="#fff" />
+              <Icon name="x" size={22} color="#111" />
             </Pressable>
           </View>
           <ScrollView style={styles.flex} contentContainerStyle={styles.commentList}>
@@ -368,7 +368,7 @@ export default function PostDetail() {
             <TextInput
               style={styles.composeInput}
               placeholder={replyTo ? 'Write a reply…' : `Comment as ${me?.username || 'you'}…`}
-              placeholderTextColor="rgba(255,255,255,0.55)"
+              placeholderTextColor="#8e8e8e"
               value={draft}
               onChangeText={setDraft}
               maxLength={1000}
@@ -423,27 +423,27 @@ const styles = StyleSheet.create({
   viewsText: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
   shareBtn: { height: 32, paddingHorizontal: 14, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   shareText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%', zIndex: 20, backgroundColor: colors.darkBg, borderTopLeftRadius: 22, borderTopRightRadius: 22 },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)', alignSelf: 'center', marginTop: 10, marginBottom: 6 },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%', zIndex: 20, backgroundColor: '#fff', borderTopLeftRadius: 22, borderTopRightRadius: 22 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.25)', alignSelf: 'center', marginTop: 10, marginBottom: 6 },
   sheetHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 8 },
-  sheetName: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  sheetDate: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 2 },
+  sheetName: { color: '#111', fontSize: 16, fontWeight: '700' },
+  sheetDate: { color: '#8e8e8e', fontSize: 13, marginTop: 2 },
   commentList: { paddingHorizontal: 14, paddingBottom: 8 },
   comment: { flexDirection: 'row', gap: 10, paddingVertical: 8 },
-  commentName: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  commentBody: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 2 },
+  commentName: { color: '#111', fontSize: 14, fontWeight: '700' },
+  commentBody: { color: '#262626', fontSize: 14, marginTop: 2 },
   commentActions: { flexDirection: 'row', marginTop: 6 },
-  commentAction: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+  commentAction: { color: '#8e8e8e', fontSize: 12, fontWeight: '600' },
   commentLikeCol: { alignItems: 'center', justifyContent: 'flex-start', minWidth: 28, paddingTop: 2 },
-  commentLikeCount: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
+  commentLikeCount: { color: '#8e8e8e', fontSize: 11, marginTop: 2 },
   replyIndent: { marginLeft: 44 },
-  threadToggle: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', marginLeft: 44, marginBottom: 6 },
-  replyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#1c1c1e' },
-  replyBannerText: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
-  replyCancel: { color: '#3b82f6', fontSize: 13, fontWeight: '600' },
-  empty: { color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', marginVertical: 24 },
-  compose: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingTop: 8, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.darkLine },
-  composeInput: { flex: 1, minWidth: 0, height: 44, borderRadius: 999, backgroundColor: INPUT_GREY, color: '#fff', paddingHorizontal: 16, fontSize: 15 },
+  threadToggle: { color: '#8e8e8e', fontSize: 12, fontWeight: '600', marginLeft: 44, marginBottom: 6 },
+  replyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#f1f1f1' },
+  replyBannerText: { color: '#262626', fontSize: 13 },
+  replyCancel: { color: '#0095f6', fontSize: 13, fontWeight: '600' },
+  empty: { color: '#8e8e8e', fontSize: 14, textAlign: 'center', marginVertical: 24 },
+  compose: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingTop: 8, paddingBottom: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#dbdbdb' },
+  composeInput: { flex: 1, minWidth: 0, height: 44, borderRadius: 999, backgroundColor: INPUT_GREY, color: '#111', paddingHorizontal: 16, fontSize: 15 },
   postBtn: { color: REPLY_BLUE, fontSize: 15, fontWeight: '700' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   menuSheet: { backgroundColor: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 8, paddingBottom: 24 },
