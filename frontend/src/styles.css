@@ -7835,3 +7835,18 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 /* Follow pill beside the author name (reference) */
 .snap-follow-pill { margin-left:8px; height:28px; padding:0 12px; border-radius:8px; border:1px solid #fff; background:transparent; color:#fff; font-size:13px; font-weight:600; }
 .snap-follow-pill:disabled { opacity:.6; }
+
+/* Share sheet, matching the reference: white sheet, light grey controls, WhatsApp green, blue picked state */
+.share-sheet { background:#fff !important; color:#111 !important; }
+.share-search { background:#f1f1f1 !important; color:#8e8e8e !important; }
+.share-search input { color:#111 !important; }
+.share-people button.share-person { color:#111 !important; }
+.share-name { color:#111 !important; }
+.share-state { color:#0095f6 !important; }
+.share-state.done { color:#8e8e8e !important; }
+.share-empty, .share-count { color:#8e8e8e !important; }
+.share-actions { border-top:1px solid #efefef !important; }
+.share-actions button { color:#111 !important; }
+.share-circle { background:#f1f1f1 !important; color:#111; }
+.share-circle.wa { background:#25d366 !important; color:#fff !important; }
+

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import ShareSheet from './ShareSheet.jsx';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import MusicEqualizer from './MusicEqualizer.jsx';
@@ -391,6 +392,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
     else sendReply(emoji);
   }
 
+  const [storyShareOpen, setStoryShareOpen] = useState(false);
   function openOptions() {
     if (isOwner) setMenuOpen(true);
     else setShareOpen(true);
@@ -726,7 +728,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
             </div>
             )}
             {!isOwner && <button type="button" className={current.liked ? 'sv-heart on' : 'sv-heart'} aria-label={current.liked ? 'Unlike story' : 'Like story'} onClick={() => onQuickReaction('❤️')}><Icon name="heart" size={26} /></button>}
-            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else openOptions(); }}>
+            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : (isOwner ? 'More options' : 'Share story')} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else if (isOwner) setMenuOpen(true); else setStoryShareOpen(true); }}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>
           </div>
@@ -763,6 +765,15 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
         title="Report story"
         actions={REPORT_REASONS.map((reason) => ({ label: reason, icon: 'shield', onClick: () => reportStory(reason) }))}
         onClose={() => setReportOpen(false)}
+      />}
+
+      {storyShareOpen && <ShareSheet
+        url={`${window.location.origin}/u/${group.user.username}`}
+        caption={current?.caption || ''}
+        onClose={() => setStoryShareOpen(false)}
+        onCopy={() => { setStoryShareOpen(false); copyProfileLink(); }}
+        onMore={() => { setStoryShareOpen(false); shareStory(); }}
+        onAddToStory={() => { setStoryShareOpen(false); reshare(); }}
       />}
 
       {shareOpen && (
