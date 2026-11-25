@@ -168,6 +168,13 @@ function CommentsSheet({ post, onClose, onCountChange = () => {} }) {
   </div>;
 }
 
+// Ad label: "Ad", plus the format the advertiser chose (video, photo, text, sound or product)
+const AD_FORMAT_NAMES = { video: 'Video', photo: 'Photo', text: 'Text', music: 'Sound', product: 'Product' };
+function adLabelText(format) {
+  const name = AD_FORMAT_NAMES[format];
+  return name ? `Ad · ${name}` : 'Ad';
+}
+
 export default function PostCard({ post, active, advanceOnEnd = false, onEnded }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -481,7 +488,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     </div>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
-    {post.isSponsored && <div className="sponsored-label">Ad</div>}
+    {post.isSponsored && <div className="sponsored-label">{adLabelText(post.sponsorFormat)}</div>}
     <aside className="rail">
       <div className="snap-avatar">
         <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={44} /></button>
