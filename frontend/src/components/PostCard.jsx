@@ -504,6 +504,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     </aside>
     <div className="info">
       {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}
+      {post.topic && <div className="topic-chip" aria-label={`Topic: ${post.topic}`}><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
       <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}</div>
       <div className="snap-sound">♫ Original sound · @{username}</div>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}

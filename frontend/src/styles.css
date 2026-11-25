@@ -7826,3 +7826,7 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 
 /* Total comment count next to the Comments title */
 .rv-sheet-backdrop .rv-sheet .rv-sheet-count { color:#8e8e93 !important; font-size:16px; font-weight:600; margin-left:6px; }
+
+/* Post topic chip, shown above the author name (reference: "From Information technology") */
+.topic-chip { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; max-width:100%; padding:6px 12px; margin-bottom:8px; border-radius:999px; background:rgba(0,0,0,.42); color:#fff; font-size:13px; line-height:1.2; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+.topic-chip strong { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
