@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   reportTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
   reasonLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   check: { color: '#111', fontSize: 16, fontWeight: '700' },
-  submit: { margin: 16, height: 46, borderRadius: 12, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
+  submit: { margin: 16, height: 46, borderRadius: 12, backgroundColor: '#0095f6', alignItems: 'center', justifyContent: 'center' },
   submitText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   commentSheet: { height: '80%', backgroundColor: colors.darkBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingBottom: 24 },

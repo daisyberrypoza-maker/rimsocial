@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 15, color: colors.text, padding: 0 },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingBottom: 10 },
   tab: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#efefef' },
-  tabOn: { backgroundColor: colors.text },
+  tabOn: { backgroundColor: '#0095f6' },
   tabText: { fontSize: 14, color: colors.text, fontWeight: '600' },
   tabTextOn: { color: '#fff' },
   section: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 8, fontSize: 16, fontWeight: '700', color: colors.text },
