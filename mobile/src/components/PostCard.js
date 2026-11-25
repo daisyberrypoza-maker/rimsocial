@@ -215,6 +215,13 @@ function CommentsSheet({ post, me, onClose }) {
 // screen loses focus (another tab or screen), when the app is minimised, or when another video starts.
 // height: the visible page height above the tab bar, passed from the Rimlight list
 // scrolling: true while the list moves, so the rail, caption and shade step aside (as on the web)
+// Ad label: "Ad", plus the format the advertiser chose (video, photo, text, sound or product)
+const AD_FORMAT_NAMES = { video: 'Video', photo: 'Photo', text: 'Text', music: 'Sound', product: 'Product' };
+function adLabelText(format) {
+  const name = AD_FORMAT_NAMES[format];
+  return name ? `Ad · ${name}` : 'Ad';
+}
+
 export default function PostCard({ post, active, focused, navigation, height, scrolling = false }) {
   const id = `post:${post.id}`;
   const isVideo = post.kind === 'video';
@@ -520,7 +527,7 @@ export default function PostCard({ post, active, focused, navigation, height, sc
       </View>
 
       {post.aiLabel && <View pointerEvents="none" style={[styles.aiLabel, overlayHidden]}><Text style={styles.labelText}>AI-generated</Text></View>}
-      {post.isSponsored && <View pointerEvents="none" style={[styles.adLabel, overlayHidden]}><Text style={styles.labelText}>Ad</Text></View>}
+      {post.isSponsored && <View pointerEvents="none" style={[styles.adLabel, overlayHidden]}><Text style={styles.labelText}>{adLabelText(post.sponsorFormat)}</Text></View>}
 
       {/* Right rail: filled icons, like the web */}
       <View style={[styles.rail, overlayHidden]} pointerEvents={overlayEvents}>
