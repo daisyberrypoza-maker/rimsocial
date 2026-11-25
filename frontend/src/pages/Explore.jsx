@@ -29,6 +29,7 @@ export default function Explore() {
   const peopleMode = location.pathname === '/friends' || searchParams.get('people') === '1';
   const searchMode = searchParams.get('search') === '1';
   const cached = useAppStore((s) => s.feeds[KEY]);
+  const me = useAppStore((s) => s.user);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState('all');
@@ -135,7 +136,10 @@ export default function Explore() {
           <input autoFocus aria-label="Search people, posts and hashtags" value={query} onFocus={() => {}} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
           {query && <button type="button" className="ig-search-clear" onClick={() => { setQuery(''); setResults(null); }} aria-label="Clear search">×</button>}
         </form>
-      </div> : !peopleMode ? <button type="button" className="rim-search-launch" onClick={() => navigate('/explore?search=1')}><Icon name="search" size={19} /><span>{query || 'Search'}</span></button> : null}
+      </div> : !peopleMode ? <div className="xp-search-row">
+        <button type="button" className="rim-search-launch" onClick={() => navigate('/explore?search=1')} aria-label="Search"><Icon name="search" size={19} /><span>{query || 'Search'}</span></button>
+        <button type="button" className="xp-saved" aria-label="Saved posts" onClick={() => navigate(`/u/${me?.username || 'me'}`, { state: { openSaved: true } })}><Icon name="bookmark" size={24} /></button>
+      </div> : null}
       {searchMode && (query.trim() || results) && <div className="ig-filters" role="tablist" aria-label="Search filters">
         {[['all', 'Top'], ['people', 'Accounts'], ['posts', 'Posts'], ['hashtags', 'Hashtags']].map(([t, label]) => <button type="button" role="tab" aria-selected={searchType === t} key={t} className={searchType === t ? 'on' : ''} onClick={() => { setSearchType(t); if (query.trim()) api(`/v1/search?q=${encodeURIComponent(query)}&type=${t}`).then(setResults).catch((e) => logError(e)); }}>{label}</button>)}
         <button type="button" role="tab" aria-selected={false} onClick={() => searchHashtag('music')}>Music</button>
@@ -180,9 +184,7 @@ export default function Explore() {
         {!peopleMode && <>
           {!searchMode && <div className="xp-title">Explore</div>}
           {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
-            <span className="xp-media">{p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="play" size={13} />{formatCount(p.viewCount)}</span></span>
-            <span className="xp-author">@{p.author?.username || 'creator'}</span>
-            <span className="xp-count"><Icon name="eye" size={12} />{formatCount(p.viewCount || 0)}</span>
+            <span className="xp-media">{p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="eye" size={13} />{formatCount(p.viewCount || 0)}</span></span>
           </button>)}</div>}
           {!searchMode && <><div ref={sentinel} className="sentinel" />{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}</>}
           {searchMode && !query.trim() && <p className="rim-search-hint">Search for people, posts or hashtags</p>}

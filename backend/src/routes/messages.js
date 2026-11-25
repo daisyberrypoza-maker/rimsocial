@@ -346,7 +346,7 @@ router.post('/groups/:groupId/messages', async (req, res, next) => {
 });
 
 // Send a photo, video, audio file or voice note to every current member of a group.
-router.post('/groups/:groupId/media', anyFileUpload.single('media'), async (req, res, next) => {
+router.post('/groups/:groupId/media', anyFileUpload.single('media'), require('../middleware/verifyUpload').verifyUploads(['photo', 'video', 'audio']), async (req, res, next) => {
   try {
     const membership = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id }, raw: true });
     if (!membership) throw httpError(404, 'Group not found');
@@ -922,7 +922,7 @@ async function claimClientId(me, raw) {
   throw httpError(409, 'This message is already being sent');
 }
 
-router.post('/with/:userId/media', anyFileUpload.single('media'), async (req, res, next) => {
+router.post('/with/:userId/media', anyFileUpload.single('media'), require('../middleware/verifyUpload').verifyUploads(['photo', 'video', 'audio']), async (req, res, next) => {
   let claimKey = null;
   try {
     const me = req.user.id;
@@ -1070,7 +1070,7 @@ router.patch('/groups/:groupId', async (req, res, next) => {
 });
 
 // Change the group photo (any member)
-router.post('/groups/:groupId/avatar', anyFileUpload.single('media'), async (req, res, next) => {
+router.post('/groups/:groupId/avatar', anyFileUpload.single('media'), require('../middleware/verifyUpload').verifyUploads(['photo', 'video', 'audio']), async (req, res, next) => {
   try {
     const member = await GroupMember.findOne({ where: { groupId: req.params.groupId, userId: req.user.id } });
     if (!member) throw httpError(404, 'Group not found');

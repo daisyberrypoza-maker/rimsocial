@@ -5,8 +5,15 @@ import { toast, logError } from './toast';
 
 // Uploads in the background: the person lands on Rimlight or Stories at once and the
 // spinner shows on that screen until the new item is saved. `file` is { uri, name, type }.
+// Story music: app-library sounds by musicId, Audius sounds by audiusTrackId (same as the web)
+function appendMusic(form, track) {
+  if (!track || !track.id) return;
+  if (track.source === 'audius') form.append('audiusTrackId', track.id);
+  else form.append('musicId', track.id);
+}
+
 export function startUpload(job) {
-  const { toStory, file, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory } = job;
+  const { toStory, file, caption, topic, aiLabel, allowRemix, visibility, sourcePostId, sponsor, shareToStory, music } = job;
   const mediaKind = String(file.type || '').startsWith('video/') ? 'video' : 'image';
   useAppStore.getState().setPendingUpload({ kind: toStory ? 'story' : 'post', thumb: file.uri, mediaKind });
 
@@ -27,11 +34,13 @@ export function startUpload(job) {
       fd.append('sponsorCta', sponsor.cta);
       fd.append('sponsorUrl', sponsor.url);
     }
+    if (toStory) appendMusic(fd, music);
     fd.append('media', mediaPart());
     await api(toStory ? '/v1/stories' : '/v1/posts', { method: 'POST', body: fd });
 
     if (!toStory && shareToStory) {
       const storyFd = new FormData();
+      appendMusic(storyFd, music);
       storyFd.append('media', mediaPart());
       storyFd.append('caption', (caption || '').slice(0, 200));
       try { await api('/v1/stories', { method: 'POST', body: storyFd }); }

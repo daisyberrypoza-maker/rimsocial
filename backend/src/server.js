@@ -90,7 +90,16 @@ app.get('/ready', async (req, res) => {
 
 // Upload file names are random UUIDs, so they can be cached for a long time.
 // Express serves byte ranges, so video starts playing before the full file loads.
-app.use('/uploads', express.static(path.resolve(config.uploadDir), { maxAge: '7d', immutable: true }));
+// Uploaded files are media only. Browsers must not sniff them as HTML or scripts, and they run nothing.
+app.use('/uploads', express.static(path.resolve(config.uploadDir), {
+  maxAge: '7d',
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  },
+}));
 if (config.serveFrontend) app.use(express.static(frontendDist));
 
 app.use('/v1/auth', require('./routes/auth'));
@@ -335,6 +344,7 @@ async function start() {
   if (!currentPostColumns.aiLabel) await qi.addColumn('posts', 'aiLabel', { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false });
   if (!currentPostColumns.sponsorUrl) await qi.addColumn('posts', 'sponsorUrl', { type: DataTypes.STRING(1024), allowNull: true });
   if (!currentPostColumns.promotedUntil) await qi.addColumn('posts', 'promotedUntil', { type: DataTypes.DATE, allowNull: true });
+  if (!currentPostColumns.adFormat) await qi.addColumn('posts', 'adFormat', { type: DataTypes.STRING(20), allowNull: true });
   await seedGifts();
   const purgeExpiredStories = async () => {
     const expired = await Post.findAll({

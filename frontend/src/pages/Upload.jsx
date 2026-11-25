@@ -11,6 +11,7 @@ import { useAppStore } from '../store.js';
 import Avatar from '../components/Avatar.jsx';
 import { toast, logError } from '../toast.js';
 import StoryAudioControls from '../components/StoryAudioControls.jsx';
+import MusicPicker from '../components/MusicPicker.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
@@ -260,6 +261,10 @@ export default function Upload() {
   const [selection, setSelection] = useState([]);
   const [carousel, setCarousel] = useState([]);
   const [storyTrack, setStoryTrack] = useState(null);
+  const [galleryMusicOpen, setGalleryMusicOpen] = useState(false);
+  const [galleryMusicPlaying, setGalleryMusicPlaying] = useState(false);
+  const galleryAudioRef = useRef(null);
+  useEffect(() => () => { galleryAudioRef.current?.pause(); }, []);
   const [storyVoice, setStoryVoice] = useState(null);
   const [preview, setPreview] = useState('');
   const [soundOn, setSoundOn] = useState(false);
@@ -485,6 +490,33 @@ export default function Upload() {
     }
   }
 
+  // Gallery music bar: preview the chosen track, or remove it
+  function clearGalleryMusic() {
+    galleryAudioRef.current?.pause();
+    setGalleryMusicPlaying(false);
+    setStoryTrack(null);
+  }
+
+  async function toggleGalleryMusic() {
+    if (galleryMusicPlaying) { galleryAudioRef.current?.pause(); setGalleryMusicPlaying(false); return; }
+    if (!storyTrack) return;
+    try {
+      if (!galleryAudioRef.current) galleryAudioRef.current = new Audio();
+      const audio = galleryAudioRef.current;
+      audio.pause();
+      audio.src = storyTrack.source === 'audius'
+        ? (await api(`/v1/audio/audius/${encodeURIComponent(storyTrack.id)}/stream`)).url
+        : mediaUrl(storyTrack.mediaUrl);
+      audio.onended = () => setGalleryMusicPlaying(false);
+      await audio.play();
+      setGalleryMusicPlaying(true);
+    } catch (error) {
+      logError(error);
+      setGalleryMusicPlaying(false);
+      toast('This sound could not be played');
+    }
+  }
+
   if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} />;
 
   if (view === 'gallery') {
@@ -520,6 +552,18 @@ export default function Upload() {
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
+      {asStory && <div className="ig-music-bar" role="group" aria-label="Story music">
+        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label={storyTrack ? `Change music: ${storyTrack.title}` : 'Add music to your story'}>
+          <span className="ig-music-disc" aria-hidden="true"><Icon name="music" size={16} /></span>
+          <span className="ig-music-text">
+            <strong>{storyTrack ? storyTrack.title : 'Add music'}</strong>
+            {storyTrack?.artist && <small>{storyTrack.artist}</small>}
+          </span>
+        </button>
+        {storyTrack && <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause music' : 'Play music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={18} /></button>}
+        {storyTrack && <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove music"><Icon name="x" size={18} /></button>}
+      </div>}
+      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); }} onClose={() => setGalleryMusicOpen(false)} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />

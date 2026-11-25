@@ -417,12 +417,19 @@ export default function StoryViewer() {
             </View>
           ))}
         </View>
+        {!!current?.musicTitle && (
+          <View style={styles.musicLine}>
+            <Text style={styles.musicText} numberOfLines={1}>♪ {current.musicTitle}{current.artistName ? ` · ${current.artistName}` : ''}</Text>
+          </View>
+        )}
         <View style={styles.headRow}>
           <Pressable style={styles.who} onPress={() => navigation.navigate('Profile', { username: group.user.username })} accessibilityLabel={`Open ${group.user.username}'s profile`}>
             <Avatar user={group.user} size={36} />
             <View style={styles.meta}>
-              <Text style={styles.name} numberOfLines={1}>{group.user.displayName || group.user.username}</Text>
-              <Text style={styles.time}>{timeAgo(current?.createdAt)}</Text>
+              <View style={styles.nameRow}>
+                <Text style={styles.name} numberOfLines={1}>{group.user.displayName || group.user.username}</Text>
+                <Text style={styles.time}>{timeAgo(current?.createdAt)}</Text>
+              </View>
             </View>
           </Pressable>
           <View style={styles.actions}>
@@ -599,6 +606,9 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 2.5, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)', overflow: 'hidden' },
   barFill: { height: '100%', backgroundColor: '#fff' },
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 8 },
+  musicLine: { paddingLeft: 46, marginTop: 4, marginBottom: 6 },
+  musicText: { color: '#fff', fontSize: 13, fontWeight: '500', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
   who: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   meta: { flex: 1 },
   name: { color: '#fff', fontWeight: '700', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 3 },

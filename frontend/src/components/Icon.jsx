@@ -2,14 +2,16 @@ import {
   ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, Briefcase, Camera, Check, CalendarDays,
   ChevronRight, Compass, Gift, Heart, Home, Link as LinkIcon, Mail, Megaphone,
   MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2, ShieldCheck,
-  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
+  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowUpRight, ArrowDownUp,
   BadgeCheck, CirclePlay, Clapperboard, Hash, Image as ImageIcon, MapPin, Pencil, Shield,
   Volume2, VolumeX, Pause, SkipBack, SkipForward, SlidersHorizontal, MoreHorizontal, MoreVertical, Trash2,
   File as FileIcon, LogOut, Ban, BellOff, Copy, Reply, Music, Mic, Download, Flag, Smile, BookmarkCheck, Pin, PinOff, Store,
-  Zap, ZapOff,
+  Zap, ZapOff, Shuffle,
 } from 'lucide-react';
 
 const ICONS = {
+  shuffle: Shuffle,
+  'arrow-up-right': ArrowUpRight,
   'refresh-cw': RefreshCw,
   music: Music, mic: Mic,
   download: Download, flag: Flag, smile: Smile, 'bookmark-check': BookmarkCheck,

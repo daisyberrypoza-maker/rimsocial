@@ -28,6 +28,7 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
   const [sponsorDescription, setSponsorDescription] = useState('');
   const [sponsorCta, setSponsorCta] = useState('Follow');
   const [sponsorUrl, setSponsorUrl] = useState('');
+  const [adFormat, setAdFormat] = useState('');  // empty means the post's own kind
   const [busy, setBusy] = useState(false);
   const currency = offer?.currency || 'NGN';
   const fmt = (minor) => money(minor, currency);
@@ -71,7 +72,7 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
     try {
       const data = await api(`/v1/posts/${postId}/boost`, {
         method: 'POST',
-        body: { days, dailyMinor, sponsorName: sponsorName.trim(), sponsorDescription: sponsorDescription.trim(), sponsorCta, sponsorUrl: sponsorUrl.trim() },
+        body: { days, dailyMinor, sponsorName: sponsorName.trim(), sponsorDescription: sponsorDescription.trim(), sponsorCta, sponsorUrl: sponsorUrl.trim(), ...(adFormat ? { adFormat } : {}) },
       });
       if (data.free) {
         toast('Your post is now promoted with your first-boost credit');
@@ -153,6 +154,16 @@ export default function BoostSheet({ postId, defaultName, onClose }) {
           </label>
           <label className="bs-field">Link people go to
             <input type="url" value={sponsorUrl} onChange={(e) => setSponsorUrl(e.target.value)} maxLength={1024} placeholder="https://example.com" />
+          </label>
+          <label className="bs-field">Ad format
+            <select value={adFormat} onChange={(e) => setAdFormat(e.target.value)}>
+              <option value="">Same as my post</option>
+              <option value="video">Video</option>
+              <option value="photo">Picture</option>
+              <option value="text">Text</option>
+              <option value="music">Sound</option>
+              <option value="product">Product</option>
+            </select>
           </label>
         </div>
         <div className="bs-block bs-summary">

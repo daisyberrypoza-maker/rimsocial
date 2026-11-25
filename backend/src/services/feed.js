@@ -4,6 +4,7 @@ const { rerankExploreFeed } = require('./explore-rerank');
 const config = require('../config');
 const { encodeCursor, decodeCursor, parseRankCursor } = require('../lib/cursor');
 const { toPostDTO } = require('../lib/serialize');
+const { interleaveAds } = require('../lib/adSlots');
 const { spotlightScore, promotedToNextTier, creatorScore } = require('./formulas');
 
 const authorInclude = (extra = {}) => ({
@@ -59,7 +60,7 @@ async function attachUniqueViewers(items) {
 // Rimlight Discover is the Spotlight-style recommendation feed. It shares the
 // same ranking engine as Explore; Following remains strictly chronological.
 async function getDiscoverPage({ userId, cursor, limit }) {
-  return getRimlightPage({ userId, cursor, limit });
+  return withAds(await getRimlightPage({ userId, cursor, limit }), userId);
 }
 
 // Explore: what someone is likely to want to see from accounts they do not follow.
@@ -453,7 +454,30 @@ async function markFollowing(result, viewerId) {
 }
 
 async function getExplorePage({ userId, cursor, limit }) {
-  return getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:explore' });
+  return withAds(await getSpotlightPage({ userId, cursor, limit, cachePrefix: 'feed:explore' }), userId);
+}
+
+// Active paid ads (campaigns still running), without the viewer's own posts or accounts either side has blocked
+async function activeAdsFor(userId) {
+  const now = new Date();
+  const [rows, blocks] = await Promise.all([
+    Post.findAll({
+      where: { isSponsored: true, status: 'live', isStory: false, visibility: 'public', promotedUntil: { [Op.gt]: now } },
+      order: [['promotedUntil', 'DESC']], limit: 30,
+    }),
+    UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedUserId: userId }] }, attributes: ['blockerId', 'blockedUserId'], raw: true }),
+  ]);
+  const blocked = new Set(blocks.map((b) => (b.blockerId === userId ? b.blockedUserId : b.blockerId)));
+  const eligible = rows.filter((p) => p.authorId !== userId && !blocked.has(p.authorId)).map((p) => p.id);
+  return hydrate(eligible);
+}
+
+// Adds one paid ad after every 6 organic posts on a page. The cursor is not changed, so paging stays the same.
+async function withAds(result, userId) {
+  if (!result || !Array.isArray(result.items) || !result.items.length) return result;
+  const ads = await activeAdsFor(userId).catch(() => []);
+  if (!ads.length) return result;
+  return { ...result, items: interleaveAds(result.items, ads.map(toPostDTO), 6) };
 }
 
 module.exports = {

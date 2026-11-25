@@ -168,6 +168,13 @@ function CommentsSheet({ post, onClose, onCountChange = () => {} }) {
   </div>;
 }
 
+// Ad label: "Ad", plus the format the advertiser chose (video, photo, text, sound or product)
+const AD_FORMAT_NAMES = { video: 'Video', photo: 'Photo', text: 'Text', music: 'Sound', product: 'Product' };
+function adLabelText(format) {
+  const name = AD_FORMAT_NAMES[format];
+  return name ? `Ad · ${name}` : 'Ad';
+}
+
 export default function PostCard({ post, active, advanceOnEnd = false, onEnded }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -481,11 +488,10 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     </div>}
     <div className="shade" />
     {post.aiLabel && <div className="ai-content-label">AI-generated</div>}
-    {post.isSponsored && <div className="sponsored-label">Ad</div>}
+    {post.isSponsored && <div className="sponsored-label">{adLabelText(post.sponsorFormat)}</div>}
     <aside className="rail">
       <div className="snap-avatar">
         <button className="rail-avatar" onClick={() => navigate(`/u/${username}`)} aria-label={`Open @${username}`}><Avatar user={post.author} size={44} /></button>
-        {!isOwnPost && !post.isSponsored && !following && post.author?.id !== viewerId && <button className="snap-follow" onClick={followAuthor} disabled={followBusy} aria-label={`Follow @${username}`}>+</button>}
       </div>
       <button className={`rail-btn ${liked ? 'liked' : ''}`} onClick={like} disabled={likeBusy} aria-pressed={liked} aria-label={liked ? 'Unlike post' : 'Like post'}>
         <Icon name="heart" /><span>{formatCount(likes)}</span>
@@ -504,7 +510,8 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
     </aside>
     <div className="info">
       {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}
-      <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}</div>
+      {post.topic && <div className="topic-chip" aria-label={`Topic: ${post.topic}`}><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
+      <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}{!isOwnPost && !post.isSponsored && !following && post.author?.id !== viewerId && <button className="snap-follow-pill" onClick={followAuthor} disabled={followBusy} aria-label={`Follow @${username}`}>Follow</button>}</div>
       <div className="snap-sound">♫ Original sound · @{username}</div>
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.sourcePostId && <div className="remix-attribution" aria-label="Remix source">

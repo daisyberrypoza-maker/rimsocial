@@ -238,7 +238,7 @@ summary { cursor: pointer; padding: 6px 0; }
 .auth-form label { display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:750; color:#343434; }
 .auth-form input,.auth-form select { margin:0; width:100%; padding:13px 14px; min-height:47px; border-radius:12px; border:1px solid #dedede; background:#fff; color:#111; font-size:14px; }
 .auth-form input:focus,.auth-form select:focus { border-color:#111; outline:2px solid rgba(255,249,0,.8); outline-offset:1px; }
-.auth-primary { width:100%; min-height:48px; margin-top:5px; padding:13px 16px; display:flex; align-items:center; justify-content:center; gap:10px; background:#111; color:#fff; border-radius:13px; font-size:15px; }
+.auth-primary { width:100%; min-height:48px; margin-top:5px; padding:13px 16px; display:flex; align-items:center; justify-content:center; gap:10px; background:#0095f6; color:#fff; border-radius:13px; font-size:15px; }
 .auth-primary span { font-size:19px; line-height:12px; }
 .auth-divider { display:flex; align-items:center; gap:12px; margin:19px 0 15px; color:#888; font-size:11px; white-space:nowrap; }
 .auth-divider::before,.auth-divider::after { content:''; height:1px; background:#e7e7e7; flex:1; }
@@ -1020,7 +1020,7 @@ button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button
 .auth-form label { color:rgba(255,255,255,.88); }
 .auth-form input,.auth-form select { width:100%; min-height:48px; margin:6px 0 14px; padding:13px 14px; color:#fff; background:#171717; border:1px solid #383838; border-radius:12px; }
 .auth-form input:focus,.auth-form select:focus { border-color:#111111; outline:2px solid rgba(0,0,0,.15); }
-.auth-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:50px; margin-top:6px; border-radius:14px; background:#111111 !important; color:#080808 !important; font-weight:800; }
+.auth-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:50px; margin-top:6px; border-radius:14px; background:#0095f6 !important; color:#fff !important; font-weight:800; }
 .google-unconfigured { width:100%; min-height:48px; background:#fff !important; color:#111 !important; border-radius:14px; }
 .auth-divider { color:#a4a4a4; }
 .auth-terms,.auth-footer { color:#929292; }
@@ -1083,7 +1083,7 @@ body { overflow:hidden; }
 .auth-screen .auth-eyebrow { color:#111111 !important; }
 .auth-screen .auth-intro > p:last-child,.auth-screen .auth-step-description { color:#d0d0d0 !important; font-size:15px !important; line-height:1.6 !important; }
 .auth-screen .auth-step-description { display:block !important; visibility:visible !important; opacity:1 !important; margin:10px 0 0 !important; max-width:34rem; }
-.auth-screen .auth-primary { background:#111111 !important; color:#050505 !important; }
+.auth-screen .auth-primary { background:#0095f6 !important; color:#fff !important; }
 .auth-screen .auth-form input,.auth-screen .auth-form select { background:#171717 !important; color:#fff !important; border-color:#414141 !important; }
 .auth-screen .auth-footer { display:none !important; }
 .auth-terms { margin-top:auto; padding-top:24px; font-size:11px; line-height:1.5; text-align:center; }
@@ -1919,8 +1919,8 @@ input:focus { border-color: var(--text); box-shadow: 0 0 0 2px var(--brand); }
 /* Yellow is reserved for the main action only. Other buttons are dark. */
 button { background: #efefef; color: #111; }
 button.ghost { background: var(--surface-2); color: var(--text); }
-.pill { background: #111; color: #fff; }
-.upload-submit, .coin-checkout, .people-follow-btn:not(.following), .discover-follow:not(.following) { background: #111; color: #fff; }
+.pill { background:#efefef; color:#111; }
+.upload-submit, .coin-checkout, .people-follow-btn:not(.following), .discover-follow:not(.following) { background:#0095f6; color:#fff; }
 .ig-follow { background: #0095f6; color: #fff; }
 .profile-top .pill, .profile-actions-refresh > button:first-child { background: var(--brand); color: #000; }
 
@@ -1983,8 +1983,8 @@ button, .pill, .coin-checkout, .upload-submit, .auth-primary, .auth-screen .auth
 .profile-top .pill, .profile-actions-refresh > button:first-child, .snap-mark, .auth-screen .snap-mark { color: #ffffff !important; }
 button.ghost, .people-sheet .people-tabs button, .ptabs button, .people-sheet .people-follow-btn.following { color: #111111 !important; }
 .people-sheet .people-tabs button.active, .ptabs button.on { color: #111111 !important; }
-.profile-top .pill, .profile-actions-refresh > button:first-child { background: #111111 !important; }
-.app .bottomnav .create span.plus, .bottomnav .create span.plus { background: #111111; color: #ffffff; }
+.profile-top .pill, .profile-actions-refresh > button:first-child { background:#efefef !important; }
+.app .bottomnav .create span.plus, .bottomnav .create span.plus { background:#0095f6; color: #ffffff; }
 
 /* =====================================================================
    Yellow only on Follow buttons. Everything else is black/grey.
@@ -1992,12 +1992,12 @@ button.ghost, .people-sheet .people-tabs button, .ptabs button, .people-sheet .p
 :root { --brand: #111111; --brand-a: #111111; --brand-b: #111111; --follow: #fffc00; --on-brand: #ffffff; }
 .brand::before { background: #111; }
 input:focus { box-shadow: none; border-color: #111; }
-.bottomnav .create span.plus { background: #111; color: #fff; }
-.profile-top .pill, .profile-actions-refresh > button:first-child { background: #111; color: #fff; }
+.bottomnav .create span.plus { background:#0095f6; color:#fff; }
+.profile-top .pill, .profile-actions-refresh > button:first-child { background:#efefef; color:#111; }
 .pill:not(.ghost):not(.following) , .ig-follow:not(.following), .people-follow-btn:not(.following), .discover-follow:not(.following), .follow-result:not(.following), .profile-top .pill:not(.ghost) {
   background: var(--follow); color: #000; }
 .ig-follow.following, .people-follow-btn.following, .discover-follow.following, .follow-result.following, .pill.ghost, .profile-top .pill.ghost { background: #efefef; color: #000; }
-.profile-actions-refresh > button:first-child { background: #111; color: #fff; }
+.profile-actions-refresh > button:first-child { background:#efefef; color:#111; }
 .profile-top .pill { background: var(--follow); color: #000; }
 .activity-item.unread { background: #f5f5f5; }
 .activity-unread-dot { background: #111; }
@@ -2009,7 +2009,7 @@ input:focus { box-shadow: none; border-color: #111; }
 .coin-pack-price { color: #111; }
 
 /* Watch button is not a Follow action: keep it dark */
-.profile-watch-action .pill { background: #111; color: #fff; }
+.profile-watch-action .pill { background:#efefef; color:#111; }
 
 /* =====================================================================
    Mobile fit: native-sized text, full-screen pages, no side gaps
@@ -4276,6 +4276,8 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-meta { display:flex; flex-direction:column; min-width:0; }
 .sv-root .sv-name { flex:none; font-size:16px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
 .sv-time { font-size:13px; color:rgba(255,255,255,.8); text-shadow:0 1px 4px rgba(0,0,0,.6); }
+.sv-root .sv-meta { flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:8px; row-gap:2px; }
+.sv-root .sv-time { font-size:14px; color:rgba(255,255,255,.85); white-space:nowrap; }
 .sv-root .sv-icon { width:40px !important; height:40px !important; }
 .sv-root .sv-icon.on { color:var(--snap-yellow) !important; }
 .sv-root .sv-icon.on svg { fill:var(--snap-yellow); }
@@ -5146,7 +5148,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .st-empty-icon { width:64px; height:64px; border-radius:50%; border:1.5px solid #dbdbdb; display:grid; place-items:center; color:#111; margin-bottom:14px; }
 .st-empty strong { display:block; color:#111; font-size:17px; font-weight:700; margin-bottom:6px; }
 .st-empty p { margin:0; font-size:14px; line-height:20px; max-width:280px; }
-.st-page .st-pill { height:40px; padding:0 18px; border-radius:999px; border:0 !important; background:#111 !important; color:#fff !important; font-size:14px; font-weight:600; cursor:pointer; }
+.st-page .st-pill { height:40px; padding:0 18px; border-radius:999px; border:0 !important; background:#0095f6 !important; color:#fff !important; font-size:14px; font-weight:600; cursor:pointer; }
 
 /* Discover cards: 3px corners, as in the reference */
 .st-page .st-card, .st-page .st-big { border-radius:3px !important; }
@@ -5217,7 +5219,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .up-sheet { width:100%; max-height:88vh; overflow-y:auto; box-sizing:border-box; background:#fff; color:#111; border-radius:18px 18px 0 0; padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 18px); }
 .up-sheet-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
 .up-sheet-top h2 { margin:0; font-size:18px; font-weight:600; }
-.up-done { height:40px; padding:0 18px; border:0; border-radius:999px; background:#111; color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+.up-done { height:40px; padding:0 18px; border:0; border-radius:999px; background:#0095f6; color:#fff; font:inherit; font-weight:600; cursor:pointer; }
 .up-sheet textarea, .up-sheet input[type=text], .up-sheet input[type=url], .up-sheet input:not([type]), .up-sheet select { width:100%; box-sizing:border-box; border:1px solid #e3e3e6; border-radius:12px; padding:10px 12px; font:inherit; font-size:15px; color:#111; background:#fff; }
 .up-sheet textarea { margin-bottom:4px; }
 .up-count { text-align:right; font-size:13px; color:#8a8a8e; margin-bottom:10px; }
@@ -5226,7 +5228,7 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .up-row input[type=checkbox] { width:22px; height:22px; accent-color:#111; margin:0; }
 .up-choice { display:flex; gap:6px; }
 .up-choice button { height:34px; padding:0 12px; border:1px solid #d9d9de; border-radius:999px; background:#fff; color:#111; font:inherit; font-size:14px; cursor:pointer; }
-.up-choice button.on { background:#111; color:#fff; border-color:#111; }
+.up-choice button.on { background:#0095f6; color:#fff; border-color:#0095f6; }
 .up-sponsor { padding:8px 0 4px; }
 .up-sponsor label { display:grid; gap:6px; margin:10px 0; font-size:14px; }
 .up-sponsor p, .up-note { font-size:13px; color:#8a8a8e; margin:8px 0; }
@@ -7826,3 +7828,10 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 
 /* Total comment count next to the Comments title */
 .rv-sheet-backdrop .rv-sheet .rv-sheet-count { color:#8e8e93 !important; font-size:16px; font-weight:600; margin-left:6px; }
+
+/* Post topic chip, shown above the author name (reference: "From Information technology") */
+.topic-chip { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; max-width:100%; padding:6px 12px; margin-bottom:8px; border-radius:999px; background:rgba(0,0,0,.42); color:#fff; font-size:13px; line-height:1.2; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+.topic-chip strong { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Follow pill beside the author name (reference) */
+.snap-follow-pill { margin-left:8px; height:28px; padding:0 12px; border-radius:8px; border:1px solid #fff; background:transparent; color:#fff; font-size:13px; font-weight:600; }
+.snap-follow-pill:disabled { opacity:.6; }
