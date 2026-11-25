@@ -49,7 +49,7 @@ router.get('/users/:userId', requireAuth, async (req, res, next) => {
 });
 
 // POST /v1/stories  (multipart: media, caption). Expires after storyTtlHours.
-router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'voice', maxCount: 1 }]), async (req, res, next) => {
+router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'voice', maxCount: 1 }]), require('../middleware/verifyUpload').verifyUploads({ media: ['photo', 'video'], voice: ['audio', 'video'] }), async (req, res, next) => {
   const uploadedAssets = [];
   let storyPersisted = false;
   try {
@@ -103,7 +103,7 @@ router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields
 
 // POST /v1/stories/composed  (multipart: text, background, musicId, voice audio file)
 // A text story on a background, with an optional music track and voice note. Expires like other stories.
-router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpload.single('voice'), async (req, res, next) => {
+router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpload.single('voice'), require('../middleware/verifyUpload').verifyUploads(['audio', 'video']), async (req, res, next) => {
   let uploadedAsset = null;
   let storyPersisted = false;
   try {

@@ -72,7 +72,7 @@ async function resolveUser(req, ref, attributes) {
 }
 
 // Upload or replace the authenticated user's profile photo.
-router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, next) => {
+router.post('/me/avatar', requireAuth, upload.single('media'), require('../middleware/verifyUpload').verifyUploads(['photo']), async (req, res, next) => {
   try {
     if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP profile photo');
     const user = await User.findByPk(req.user.id);
@@ -98,7 +98,7 @@ router.post('/me/avatar', requireAuth, upload.single('media'), async (req, res, 
 });
  
 // Upload or replace the authenticated user's profile cover image.
-router.post('/me/cover', requireAuth, upload.single('media'), async (req, res, next) => {
+router.post('/me/cover', requireAuth, upload.single('media'), require('../middleware/verifyUpload').verifyUploads(['photo']), async (req, res, next) => {
   try {
     if (!req.file || kindFor(req.file.mimetype) !== 'photo') throw httpError(400, 'Choose a JPG, PNG or WebP cover image');
     const user = await User.findByPk(req.user.id);

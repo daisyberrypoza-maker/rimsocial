@@ -36,7 +36,7 @@ function parseUploadIds(raw) {
   return list.map(String);
 }
 
-router.post('/', requireAuth, upload.array('media', 10), async (req, res, next) => {
+router.post('/', requireAuth, upload.array('media', 10), require('../middleware/verifyUpload').verifyUploads(['photo', 'video']), async (req, res, next) => {
   const uploadedAssets = [];
   let postPersisted = false;
   try {
