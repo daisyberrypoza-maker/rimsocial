@@ -26,6 +26,7 @@ import CreatorStudio from '../screens/CreatorStudio';
 import AdsSponsors from '../screens/AdsSponsors';
 import LiveBroadcasts from '../screens/LiveBroadcasts';
 import LiveMatchRoom from '../screens/LiveMatchRoom';
+import MusicPicker from '../screens/MusicPicker';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,6 +43,7 @@ export default function RootNavigator({ signedIn }) {
   return (
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="MusicPicker" component={MusicPicker} options={{ presentation: 'modal' }} />
       <Stack.Screen name="Upload" component={Upload} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="MyFriends" component={MyFriends} />
       <Stack.Screen name="Camera" component={Camera} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

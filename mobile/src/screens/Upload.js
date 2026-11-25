@@ -54,6 +54,7 @@ export default function Upload() {
   const [topic, setTopic] = useState('');
   const [aiLabel, setAiLabel] = useState(false);
   const [shareToStory, setShareToStory] = useState(false);
+  const [storyMusic, setStoryMusic] = useState(null); // chosen sound for the story
   const [allowRemix, setAllowRemix] = useState(false);
   const [visibility, setVisibility] = useState('public');
   const [isSponsored, setIsSponsored] = useState(false);
@@ -188,8 +189,9 @@ export default function Upload() {
     startUpload({
       toStory: asStory, file, caption: caption.trim(), topic: topic.trim(), aiLabel, allowRemix, visibility,
       sourcePostId: sourcePost?.id, sponsor, shareToStory,
+      music: asStory || shareToStory ? storyMusic : null,
     });
-    setCaption(''); setTopic(''); setAiLabel(false); setShareToStory(false);
+    setCaption(''); setTopic(''); setAiLabel(false); setShareToStory(false); setStoryMusic(null);
     setFile(null); setSourcePost(null); setSheetOpen(false); setView('gallery');
     navigation.navigate('Main', { screen: asStory ? 'Stories' : 'Rimlight' });
   }
@@ -318,6 +320,11 @@ export default function Upload() {
                 </View>
               </Row>
               <Row label="Share to story"><Switch value={shareToStory} onValueChange={setShareToStory} /></Row>
+              {(toStory || shareToStory) && <Row label="Music">
+                <Pressable style={styles.musicPick} onPress={() => navigation.navigate('MusicPicker', { selectedId: storyMusic?.id || null, onSelect: setStoryMusic })} accessibilityRole="button" accessibilityLabel={storyMusic ? `Change music: ${storyMusic.title}` : 'Add music to your story'}>
+                  <Text style={styles.musicPickText} numberOfLines={1}>{storyMusic ? storyMusic.title : 'Add music'}</Text>
+                </Pressable>
+              </Row>}
               <Row label="Allow remixing"><Switch value={allowRemix} onValueChange={setAllowRemix} /></Row>
               <Row label="AI-generated or AI-altered"><Switch value={aiLabel} onValueChange={setAiLabel} /></Row>
               {visibility === 'public' && <Row label="Paid partnership"><Switch value={isSponsored} onValueChange={setIsSponsored} /></Row>}
@@ -394,6 +401,8 @@ const styles = StyleSheet.create({
   postText: { color: '#fff', fontSize: 17, fontWeight: '600' },
   storyPill: { backgroundColor: '#fff' },
   storyText: { color: '#000', fontSize: 17, fontWeight: '700' },
+  musicPick: { maxWidth: 180, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: '#1f232a' },
+  musicPickText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   dim: { opacity: 0.6 },
 
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
