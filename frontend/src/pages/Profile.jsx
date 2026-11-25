@@ -182,7 +182,7 @@ export default function Profile() {
   // Switching profiles must never leave the previous person's stories or reposts on screen
   useEffect(() => { setStories([]); setReposts([]); setViewing(false); }, [username]);
   // Arriving from the last Rimlight of a profile run: switch to Stories and open the first one.
-  useEffect(() => { if (location.state?.openStories) setTab('stories'); }, [location.state]);
+  useEffect(() => { if (location.state?.openStories) setTab('stories'); if (location.state?.openSaved) setTab('saved'); }, [location.state]);
   useEffect(() => {
     if (!location.state?.openStories || tab !== 'stories' || !stories.length) return;
     setViewing(0);

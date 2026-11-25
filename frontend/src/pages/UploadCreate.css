@@ -207,3 +207,12 @@
   font-weight: 600;
   pointer-events: none;
 }
+
+/* Story gallery music bar (reference: "Music for you" row at the foot of Add to story) */
+.ig-music-bar { position: fixed; left: 16px; right: 16px; bottom: 24px; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 12px; border-radius: 28px; background: rgba(28,30,36,.96); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.ig-music-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0; color: #fff; text-align: left; }
+.ig-music-disc { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; background: #2f343c; color: #fff; }
+.ig-music-text { min-width: 0; display: flex; flex-direction: column; }
+.ig-music-text strong { font-size: 15px; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ig-music-text small { font-size: 13px; color: #b5bac1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ig-music-btn { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #fff; padding: 0; }

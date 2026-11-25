@@ -47,3 +47,14 @@
   object-fit: cover;
   object-position: center;
 }
+
+/* Explore grid and search row, matching the reference: search pill with a bookmark beside it,
+   3-column square-ish grid with tight gaps, and the view count only (no author line). */
+.ig-explore .rim-search-launch { border-radius: 999px !important; }
+.ig-explore .xp-search-row { display: flex; align-items: center; gap: 8px; padding-right: 12px; }
+.ig-explore .xp-search-row .rim-search-launch { flex: 1; margin-right: 0 !important; width: auto !important; }
+.ig-explore .xp-saved { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border: 0; background: transparent; color: #111; padding: 0; }
+.ig-explore .xp-grid { grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 0 0 24px; }
+.ig-explore .xp-card { gap: 0; }
+.ig-explore .xp-media { aspect-ratio: 3 / 4; border-radius: 0; }
+.ig-explore .xp-views { left: 8px; bottom: 6px; font-size: 13px; }

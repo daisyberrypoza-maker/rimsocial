@@ -628,7 +628,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
         <button type="button" className="sv-who" aria-label={`Open ${group.user.username}'s profile`} onClick={() => navigate(`/u/${group.user.username}`)}>
           <Avatar user={group.user} size={36} />
           <span className="sv-meta">
-            <span className="sv-name">{group.user.displayName || group.user.username}</span>
+            <span className="sv-name">{group.user.username}{(group.user.verified || group.user.isCreator) && <Icon name="badge-check" size={15} className="sv-verified" />}</span>
             <span className="sv-time">{formatRelativeTime(current?.createdAt, { suffix: true })}</span>
           </span>
         </button>
@@ -704,16 +704,10 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
 
       {current && (
         <div className="sv-footer">
-          <span className="sv-sound"><span className="sv-sound-art"><Avatar user={group.user} size={22} /></span>Original sound</span>
           {!isOwner && typing && <div className="sv-reaction-row" role="group" aria-label="Quick reactions">
             {QUICK_REACTIONS.map((emoji) => <button key={emoji} type="button" className="sv-reaction-btn" aria-label={emoji === '❤️' ? (current.liked ? 'Unlike story' : 'Like story') : `React ${emoji}`} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; onQuickReaction(emoji); }}>{emoji}</button>)}
           </div>}
           <div className="sv-reply-row">
-            {!isOwner && (
-              <button type="button" className="sv-cam" aria-label="Open camera" onClick={() => navigate('/upload')}>
-                <Avatar user={me} size={46} />
-              </button>
-            )}
             {isOwner ? (
               <div className="sv-reply sv-views" role="button" tabIndex={0} onClick={() => setViewersOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter') setViewersOpen(true); }} aria-label="See who watched and liked"><Icon name="eye" size={18} /> <span>{current.viewCount || 0} views</span></div>
             ) : (
@@ -721,8 +715,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
               <input
                 type="text"
                 value={reply}
-                placeholder={`Reply to ${creatorName}...`}
-                aria-label={`Reply to ${group.user.username}`}
+                placeholder="Send message"
+                aria-label={`Send message to ${group.user.username}`}
                 onFocus={() => setTyping(true)}
                 onBlur={() => { if (!keepTypingRef.current) setTyping(false); }}
                 onChange={(e) => setReply(e.target.value)}
@@ -731,7 +725,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
               />
             </div>
             )}
-            {!isOwner && <button type="button" className="sv-sticker" aria-label="Open stickers and reactions" onClick={() => setReactionPickerOpen((open) => !open)}><Icon name="smile" size={24} /></button>}
+            {!isOwner && <button type="button" className={current.liked ? 'sv-heart on' : 'sv-heart'} aria-label={current.liked ? 'Unlike story' : 'Like story'} onClick={() => onQuickReaction('❤️')}><Icon name="heart" size={26} /></button>}
             <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else openOptions(); }}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>

@@ -1,5 +1,6 @@
 const config = require('../config');
 const { pricingFor, pricingForCurrency, PAYSTACK_MIN_MINOR } = require('../lib/boostPricing');
+const { normalizeAdFormat, defaultAdFormat } = require('../lib/adFormat');
 const router = require('express').Router();
 
 async function assertPostAuthorNotBlocked(viewerId, authorId) {
@@ -356,6 +357,8 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
     const sponsorCta = String(req.body?.sponsorCta || 'Shop Now').trim().slice(0, 30);
     const sponsorUrl = String(req.body?.sponsorUrl || '').trim().slice(0, 1024);
     if (!sponsorName) throw httpError(400, 'Enter the name to show on the ad');
+    const adFormat = normalizeAdFormat(req.body?.adFormat) || defaultAdFormat(post.kind);
+    if (req.body?.adFormat && !normalizeAdFormat(req.body.adFormat)) throw httpError(400, 'Choose an ad format: video, photo, text, music or product');
     if (!/^https?:\/\//i.test(sponsorUrl)) throw httpError(400, 'Enter a valid link starting with https://');
     const user = await User.findByPk(req.user.id, { attributes: ['id', 'email'] });
     const email = String(user?.email || '').trim();
@@ -376,7 +379,7 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
           await post.update({
             isSponsored: true,
             promotedUntil: new Date(start.getTime() + days * 86400000),
-            sponsorName, sponsorDescription, sponsorCta, sponsorUrl,
+            sponsorName, sponsorDescription, sponsorCta, sponsorUrl, adFormat,
           }, { transaction: t });
         });
       } catch (e) {
@@ -396,7 +399,7 @@ router.post('/:id/boost', requireAuth, async (req, res, next) => {
         ...(config.appUrl ? { callback_url: `${config.appUrl}/p/${post.id}` } : {}),
         metadata: {
           userId: req.user.id, purpose: 'post_boost', postId: post.id, days, currency: pricing.currency,
-          dailyMinor, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl,
+          dailyMinor, amountMinor, creditMinor, chargeMinor, sponsorName, sponsorDescription, sponsorCta, sponsorUrl, adFormat,
         },
       }),
     });
