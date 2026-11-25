@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   friendsHeading: { fontFamily: FONT, fontSize: 14, lineHeight: 18, fontWeight: '500', letterSpacing: -0.3, color: colors.text, marginBottom: 10 },
   h2: { fontFamily: FONT, fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.45, color: colors.text },
   h2Row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pill: { alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: colors.text, justifyContent: 'center' },
+  pill: { alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: '#0095f6', justifyContent: 'center' },
   pillText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   row: { paddingLeft: 2.5, paddingRight: SIDE, gap: 12, alignItems: 'flex-start' },
   friend: { width: 92, alignItems: 'center' },
