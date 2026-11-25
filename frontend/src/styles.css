@@ -7830,3 +7830,6 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 /* Post topic chip, shown above the author name (reference: "From Information technology") */
 .topic-chip { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; max-width:100%; padding:6px 12px; margin-bottom:8px; border-radius:999px; background:rgba(0,0,0,.42); color:#fff; font-size:13px; line-height:1.2; text-shadow:0 1px 3px rgba(0,0,0,.5); }
 .topic-chip strong { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Follow pill beside the author name (reference) */
+.snap-follow-pill { margin-left:8px; height:28px; padding:0 12px; border-radius:8px; border:1px solid #fff; background:transparent; color:#fff; font-size:13px; font-weight:600; }
+.snap-follow-pill:disabled { opacity:.6; }
