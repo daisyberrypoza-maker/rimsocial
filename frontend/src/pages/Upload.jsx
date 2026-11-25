@@ -503,15 +503,18 @@ export default function Upload() {
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
     const shownRecents = recents.filter((item) => !asReel || String(item.file.type).startsWith('video/'));
-    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'music', label: 'MUSIC' }, { key: 'reel', label: 'REEL', path: '/upload?reel=1' }];
+    const modes = [
+      { key: 'text', label: 'Text', path: asStory ? '/story/text' : '/post/text' },
+      { key: 'story', label: 'Story', path: '/upload?story=1' },
+      { key: 'post', label: 'Post', path: '/upload' },
+      { key: 'reel', label: 'Reel', path: '/upload?reel=1' },
+    ];
     const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
         <nav className="ig-create-modes" aria-label="Create type">
-          {modes.map((mode) => mode.key === 'music'
-            ? <button key={mode.key} type="button" className={storyTrack ? 'ig-create-music on' : 'ig-create-music'} onClick={() => setGalleryMusicOpen(true)} aria-label={storyTrack ? `Change music: ${storyTrack.title}` : 'Add music'}>{storyTrack ? storyTrack.title : 'MUSIC'}</button>
-            : <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
         </nav>
         <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
@@ -535,6 +538,13 @@ export default function Upload() {
         {memories.map((item) => <button type="button" key={item.id} className="ig-tile" onClick={() => navigate(`/p/${item.id}`)} aria-label="Open this post">
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
+      </div>}
+      {storyTrack && <div className="ig-music-bar">
+        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label="Change selected music">
+          <span className="ig-music-disc"><Icon name="music" size={20} /></span>
+          <span className="ig-music-text"><strong>{storyTrack.title || storyTrack.name || 'Selected sound'}</strong><small>{storyTrack.artist || storyTrack.artistName || 'Selected for your story'}</small></span>
+        </button>
+        <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
       </div>}
       {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); }} onClose={() => setGalleryMusicOpen(false)} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
