@@ -169,11 +169,11 @@ async function getUserStories(userId, viewerId) {
     order: [['createdAt', 'DESC']],
     limit: 100,
   });
+  stories.reverse();
   if (String(userId) !== String(viewerId)) {
     const accepted = await canViewStory({ authorId: userId, visibility: 'private' }, viewerId);
     if (!accepted) stories = stories.filter((story) => story.visibility !== 'private');
   }
-  stories.reverse();
   // Resolve reshared-story attribution in one bounded lookup, not one query per story.
   const sourceIds = [...new Set(stories.map((story) => story.sourcePostId).filter(Boolean).map(String))];
   // Attribution only shows an original that is still public and live. A private, removed or expired original shows nothing.
