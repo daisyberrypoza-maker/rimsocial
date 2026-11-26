@@ -37,7 +37,7 @@ router.use(requireAuth);
 router.get('/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 80);
-    const where = { ...(q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {}), ...(req.query.original === '1' ? { uploadedById: req.user.id } : {}) };
+    const where = q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {};
     const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: 200 });
     // Music_Track_Score: uses in the last 24 hours (story music URLs), then age since release.
     // Completion, genre affinity and featured flags are not tracked yet, so they count as 0.

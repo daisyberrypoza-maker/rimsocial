@@ -7,8 +7,6 @@ import { toast } from '../toast.js';
 import { sealFor } from '../lib/e2ee.js';
 import './ShareSheet.css';
 
-const MAX_RECIPIENTS = 15;
-
 // Full-screen share page. Friends: everyone you follow plus recent chats (pick up to 15 and send in the app).
 // Other apps: WhatsApp, Facebook, X, Telegram, Email, Text message, the device share sheet ("Other"),
 // Copy link, and Share image (the story picture or video, passed to the device share sheet).
@@ -84,7 +82,6 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   function toggle(user) {
     if (sending) return;
     if (picked.some((u) => u.id === user.id)) { setPicked(picked.filter((u) => u.id !== user.id)); return; }
-    if (picked.length >= MAX_RECIPIENTS) { toast(`You can share with up to ${MAX_RECIPIENTS} people at once`); return; }
     setPicked([...picked, user]);
   }
 
@@ -154,9 +151,9 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
               <Avatar user={user} size={52} />
               <span className="sf-name">
                 <strong>{user.displayName || user.username}</strong>
-                {user.displayName && <small>{user.username}</small>}
+                <small>@{user.username}</small>
               </span>
-              <span className={on ? 'sf-state done' : 'sf-state'}>{on ? 'Selected' : 'Select'}</span>
+              <span className={on ? 'sf-radio on' : 'sf-radio'} aria-hidden="true" />
             </button>
           );
         }) : <p className="sf-empty">{query.trim() ? 'No one found.' : 'Friends you follow and people you chat with appear here.'}</p>}
@@ -164,7 +161,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
 
       {picked.length > 0 && (
         <div className="sf-sendbar">
-          <span className="sf-count">{picked.length} of {MAX_RECIPIENTS}</span>
+          <span className="sf-count">{picked.length} selected</span>
           <button type="button" className="sf-send" onClick={sendAll} disabled={sending}>{sending ? 'Sending…' : `Send to ${picked.length}`}</button>
         </div>
       )}
