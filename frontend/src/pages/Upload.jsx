@@ -498,9 +498,9 @@ export default function Upload() {
       if (!galleryAudioRef.current) galleryAudioRef.current = new Audio();
       const audio = galleryAudioRef.current;
       audio.pause();
-      audio.src = track.source === 'audius'
+      audio.src = track.previewUrl || (track.source === 'audius'
         ? (await api(`/v1/audio/audius/${encodeURIComponent(track.id)}/stream`)).url
-        : mediaUrl(track.mediaUrl);
+        : mediaUrl(track.mediaUrl));
       audio.onended = () => setGalleryMusicPlaying(false);
       await audio.play();
       setGalleryMusicPlaying(true);
