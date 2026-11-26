@@ -66,8 +66,8 @@ export default function MusicPicker({ navigation, route }) {
       const network = await api(`/v1/audio/network-trending?offset=${offset}&limit=${PAGE_SIZE}`);
       if ((network.items || []).length) return { items: network.items, nextOffset: network.nextOffset || offset + network.items.length, hasMore: Boolean(network.hasMore) };
       if (offset > 0) return { items: [], nextOffset: offset, hasMore: false };
-      const general = await api(`/v1/audio/audius/trending?limit=${PAGE_SIZE}`);
-      return { items: (general.items || []).map((item) => ({ ...item, source: 'audius' })), nextOffset: PAGE_SIZE, hasMore: false };
+      const general = await api(`/v1/audio/audius/trending?limit=${PAGE_SIZE}&offset=${offset}`);
+      return { items: (general.items || []).map((item) => ({ ...item, source: 'audius' })), nextOffset: general.nextOffset || offset + (general.items || []).length, hasMore: Boolean(general.hasMore) };
     }
     const params = new URLSearchParams({ q, offset: String(offset), limit: String(PAGE_SIZE) });
     if (activeTab === 'original') params.set('original', '1');
