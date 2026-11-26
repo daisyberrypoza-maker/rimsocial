@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image, ScrollView } from 'react-native';
 import Video from 'react-native-video';
 import { Music } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -46,9 +46,18 @@ export default function Discover() {
   const [busy, setBusy] = useState({});
   const [playingId, setPlayingId] = useState(null);
   const [tracks, setTracks] = useState([]);
+  const [rimlightPicks, setRimlightPicks] = useState([]);
   const feed = useAppStore((s) => s.feeds[KEY]);
   const explore = feed?.items || [];
   const term = query.trim();
+
+  useEffect(() => {
+    let alive = true;
+    api('/v1/feed/discover?limit=12')
+      .then((data) => { if (alive) setRimlightPicks(Array.isArray(data.items) ? data.items.slice(0, 12) : []); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!tagPage && (!feed?.updatedAt || Date.now() - feed.updatedAt > 60 * 1000)) loadPage(KEY, PATH, true).catch(logError);
@@ -167,6 +176,38 @@ export default function Discover() {
     );
   }
 
+  const discoveryHeader = (
+    <View>
+      {header}
+      {!term && rimlightPicks.length > 0 && (
+        <View style={styles.rimlightSection}>
+          <View style={styles.rimlightHeading}>
+            <View>
+              <Text style={styles.rimlightTitle}>Rimlight picks</Text>
+              <Text style={styles.rimlightSubtitle}>Ranked by what people are watching and replaying</Text>
+            </View>
+            <Pressable onPress={() => navigation.navigate('Rimlight')} accessibilityRole="button">
+              <Text style={styles.rimlightSeeAll}>See all</Text>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rimlightRail}>
+            {rimlightPicks.map((post, index) => (
+              <Pressable key={post.id} style={styles.rimlightCard} onPress={() => openPost(post)} accessibilityLabel={`Open Rimlight pick ${index + 1}`}>
+                <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.rimlightImage} />
+                <View style={styles.rimlightShade} />
+                <View style={styles.rimlightBadge}><Text style={styles.rimlightBadgeText}>RIMLIGHT</Text></View>
+                <View style={styles.rimlightCardMeta}>
+                  <Text style={styles.rimlightCreator} numberOfLines={1}>@{post.author?.username || 'creator'}</Text>
+                  <Text style={styles.rimlightCaption} numberOfLines={2}>{post.caption || 'Watch now'}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+
   const audioHeader = header;
 
   if (activeTab === 'audio') {
@@ -227,7 +268,7 @@ export default function Discover() {
       data={posts}
       numColumns={3}
       keyExtractor={(p) => String(p.id)}
-      ListHeaderComponent={header}
+      ListHeaderComponent={discoveryHeader}
       ListEmptyComponent={<Text style={styles.empty}>{term ? 'No posts found.' : 'Nothing to explore yet.'}</Text>}
       renderItem={({ item }) => (
         <Pressable style={styles.cell} onPress={() => openPost(item)}>
@@ -249,6 +290,20 @@ const styles = StyleSheet.create({
   tabOn: { backgroundColor: 'transparent', borderBottomWidth: 2, borderBottomColor: colors.text },
   tabText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
   tabTextOn: { color: colors.text },
+  rimlightSection: { paddingTop: 8, paddingBottom: 12 },
+  rimlightHeading: { paddingHorizontal: 14, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rimlightTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  rimlightSubtitle: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  rimlightSeeAll: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  rimlightRail: { paddingHorizontal: 12, gap: 9 },
+  rimlightCard: { width: 118, height: 166, borderRadius: 10, overflow: 'hidden', backgroundColor: '#171717' },
+  rimlightImage: { width: '100%', height: '100%', position: 'absolute' },
+  rimlightShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.24)' },
+  rimlightBadge: { position: 'absolute', top: 8, left: 8, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3, backgroundColor: '#FFFC00' },
+  rimlightBadgeText: { color: '#000', fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
+  rimlightCardMeta: { position: 'absolute', left: 8, right: 8, bottom: 9 },
+  rimlightCreator: { color: '#fff', fontSize: 11, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 4 },
+  rimlightCaption: { color: 'rgba(255,255,255,0.9)', fontSize: 10, marginTop: 3, textShadowColor: '#000', textShadowRadius: 4 },
   cell: { flex: 1 / 3, aspectRatio: 1, margin: 1 },
   fill: { width: '100%', height: '100%', backgroundColor: colors.surface },
   person: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12 },
