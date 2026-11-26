@@ -7942,15 +7942,15 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
 .route-loading { background: #fff !important; color: #000 !important; }
 
 
-/* RimSocial light-only UI enforcement: no black/charcoal interface surfaces or black buttons. */
+/* Light-only surfaces: white or transparent; never replace black with grey fills. */
 :root {
   color-scheme: light !important;
-  --brand: #f2f3f5 !important;
-  --brand-a: #f2f3f5 !important;
-  --brand-b: #f2f3f5 !important;
+  --brand: transparent !important;
+  --brand-a: transparent !important;
+  --brand-b: transparent !important;
   --on-brand: #17191f !important;
 }
-html, body, #root, .app {
+html, body, #root, .app, .feed, .post, .route-loading {
   background: #fff !important;
   color: #17191f !important;
 }
@@ -7969,13 +7969,13 @@ body:has(.cam-page) .bottomnav a.active svg {
   stroke: #17191f !important;
 }
 .bottomnav .add-btn .add-face {
-  background: #f2f3f5 !important;
+  background: transparent !important;
   color: #17191f !important;
 }
+button:not(.story-bubble):not(.tap):not(.mention-inline):not(.share-target),
 .search-filters button.on, .upload-kind button.on,
-.upload-submit, .coin-checkout,
-button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button):not(.mention-inline):not(.share-target):not([class*="sn-"]):not([class*="cv-"]):not([class*="mp-"]) {
-  background-color: #f2f3f5 !important;
+.upload-submit, .coin-checkout {
+  background-color: transparent !important;
   color: #17191f !important;
   border-color: #e5e7eb !important;
 }
@@ -7991,7 +7991,7 @@ button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button
 .auth-screen .auth-intro h1,
 .auth-screen .auth-intro > p:last-child,
 .auth-screen .auth-form label { color: #17191f !important; }
-.auth-screen .auth-primary { background: #f2f3f5 !important; color: #17191f !important; }
+.auth-screen .auth-primary { background: transparent !important; color: #17191f !important; }
 .viewer, .post-detail-media, .upload-preview, .profile-watch-page,
 .remix-source-media, .story-viewer, .story-viewer-footer,
 .sc-viewer-backdrop, .sc-viewer, .sc-media, .sc-reply,
@@ -8009,6 +8009,7 @@ button:not(.ghost):not(.rail-btn):not(.story-bubble):not(.tap):not(.ptabs button
 .story-viewer-close, .sc-viewer-icon, .rv-page button,
 .rv-sheet button, .share-actions button,
 .cmp button, .up-page button, .cam-page button {
+  background-color: transparent !important;
   color: #17191f !important;
 }
 .auth-screen .auth-error { color: #c5223b !important; }
