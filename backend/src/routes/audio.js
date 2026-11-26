@@ -59,7 +59,7 @@ router.get('/search', async (req, res, next) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));
     const seed = String(req.query.seed || 'default').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'default';
     const where = { ...(q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {}), ...(original ? { uploadedById: req.user.id } : {}) };
-    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: mixed ? 1000 : 200 });
+    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: mixed ? 5000 : 200 });
 
     let ordered;
     if (mixed) {
