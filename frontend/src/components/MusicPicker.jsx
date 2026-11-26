@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { mediaUrl } from '../lib/config.js';
+import { sharedMusicAudio } from '../lib/musicPlayer.js';
 import Icon from './Icon.jsx';
 import { toast, logError } from '../toast.js';
 import './MusicPicker.css';
@@ -12,6 +13,7 @@ import './MusicPicker.css';
 // Audius stream links are signed and expire; never reuse one older than this.
 const STREAM_TTL_MS = 3 * 60 * 1000;
 const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original audio']];
+let pickerMemory = { chip: 'featured', query: '', items: [], hasMore: false, nextOffset: 0, playingId: null, scrollTop: 0 };
 
 function formatDuration(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -28,18 +30,19 @@ function shuffled(list) {
 }
 
 export default function MusicPicker({ selectedId, onSelect, onClose, onSettings }) {
-  const [chip, setChip] = useState('featured');
-  const [query, setQuery] = useState('');
-  const [items, setItems] = useState([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextOffset, setNextOffset] = useState(0);
+  const [chip, setChip] = useState(() => pickerMemory.chip);
+  const [query, setQuery] = useState(() => pickerMemory.query);
+  const [items, setItems] = useState(() => pickerMemory.items);
+  const [hasMore, setHasMore] = useState(() => pickerMemory.hasMore);
+  const [nextOffset, setNextOffset] = useState(() => pickerMemory.nextOffset);
   const [loadingMore, setLoadingMore] = useState(false);
   // One seed per open of the picker: the For You order is shuffled with it and stays stable while paging
   const seedRef = useRef(Math.random().toString(36).slice(2, 10));
-  const [playingId, setPlayingId] = useState(null);
+  const [playingId, setPlayingId] = useState(() => pickerMemory.playingId);
   const [uploading, setUploading] = useState(false);
   const [savedItems, setSavedItems] = useState(() => { try { return JSON.parse(window.localStorage.getItem('rim.savedSounds') || '[]'); } catch { return []; } });
   const audioRef = useRef(null);
+  const listRef = useRef(null);
   const fileRef = useRef(null);
   const streamUrlsRef = useRef(new Map());
   const streamRequestsRef = useRef(new Map());
@@ -49,8 +52,13 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     return hit && Date.now() - hit.at < STREAM_TTL_MS ? hit.url : null;
   }
 
-  // Stop playback when leaving the screen
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  // Picker state stays in module memory across route unmounts; the audio element is shared separately.
+  useEffect(() => {
+    pickerMemory = { ...pickerMemory, chip, query, items, hasMore, nextOffset, playingId };
+  }, [chip, query, items, hasMore, nextOffset, playingId]);
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = pickerMemory.scrollTop || 0;
+  }, []);
 
   // Library search URL for a page of For You / Original (paged, shuffled by seed)
   function searchPath(q, activeChip, offset) {
@@ -119,14 +127,16 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   function stopPreview() {
     audioRef.current?.pause();
     setPlayingId(null);
+    pickerMemory.playingId = null;
   }
 
   // Preview one row, or pause it. Audius rows ask the server for a fresh link first.
   async function togglePreview(item) {
     if (playingId === item.id) { stopPreview(); return; }
     try {
-      if (!audioRef.current) audioRef.current = new Audio();
-      const audio = audioRef.current;
+      const audio = sharedMusicAudio();
+      if (!audio) throw new Error('Audio playback is unavailable in this browser');
+      audioRef.current = audio;
       audio.pause();
       const src = item.source === 'audius'
         ? (cachedStreamUrl(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
@@ -180,15 +190,14 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
 
   // Use: choose this sound for the story (separate from saving)
   function choose(item) {
-    stopPreview();
-    // No stored link: the story player fetches a fresh one when it plays
+    // Keep preview playback alive when the picker closes; story playback resolves its own fresh link.
     onSelect(item);
   }
 
   return (
     <div className="mp-page" role="dialog" aria-label="Add to story">
       <header className="mp-top">
-        <button type="button" className="mp-icon" aria-label="Close sound picker" onClick={() => { stopPreview(); onClose(); }}>
+        <button type="button" className="mp-icon" aria-label="Close sound picker" onClick={onClose}>
           <Icon name="x" size={28} />
         </button>
         <h1 className="mp-title">Add to story</h1>
@@ -210,7 +219,8 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         ))}
       </nav>
 
-      <ul className="mp-list" onScroll={(event) => {
+      <ul ref={listRef} className="mp-list" onScroll={(event) => {
+        pickerMemory.scrollTop = event.currentTarget.scrollTop;
         const el = event.currentTarget;
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 240) loadMore();
       }}>
