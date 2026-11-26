@@ -7,7 +7,7 @@ import { sealFor } from '../lib/e2ee.js';
 const MAX_RECIPIENTS = 15;
 
 // Share sheet: pick up to 15 people you chat with (ranked), or search, then send; copy the link, or use other apps.
-export default function ShareSheet({ url, caption, onClose, onCopy, onMore }) {
+export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAddToStory }) {
   const [people, setPeople] = useState([]);
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState([]);
@@ -77,13 +77,21 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore }) {
           </div>
         )}
         <div className="share-actions">
+          {url && <button type="button" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(caption ? `${caption}\n${url}` : url)}`, '_blank', 'noopener')}>
+            <span className="share-circle wa" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z" /></svg></span>
+            WhatsApp
+          </button>}
+          {onAddToStory && <button type="button" onClick={onAddToStory}>
+            <span className="share-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" strokeDasharray="3 3" /><path d="M12 8v8M8 12h8" /></svg></span>
+            Add to story
+          </button>}
           <button type="button" onClick={onCopy}>
-            <span className="share-circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg></span>
+            <span className="share-circle" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg></span>
             Copy link
           </button>
           <button type="button" onClick={onMore}>
-            <span className="share-circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2" /><circle cx="18" cy="6" r="2" /><circle cx="18" cy="18" r="2" /><path d="M8 11l8-4M8 13l8 4" /></svg></span>
-            Other apps
+            <span className="share-circle" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg></span>
+            Share
           </button>
         </div>
       </section>

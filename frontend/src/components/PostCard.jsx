@@ -475,7 +475,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
           if (!seekingRef.current) setProgress(current / d);
         }
       }} />
-      : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}><p>{post.storyText || ''}</p></div>
+      : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText ? <p>{post.storyText}</p> : post.musicTitle ? <div className="post-music-cover">{post.artworkUrl ? <img src={post.artworkUrl} alt="" /> : <Icon name="music" size={52} />}<strong>{post.musicTitle}</strong>{post.artistName && <span>{post.artistName}</span>}</div> : null}</div>
       : <img src={src} alt="" loading="lazy" />}
     {isVideoMedia && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
     {isVideoMedia && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
@@ -512,7 +512,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
       {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}
       {post.topic && <div className="topic-chip" aria-label={`Topic: ${post.topic}`}><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
       <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}{!isOwnPost && !post.isSponsored && !following && post.author?.id !== viewerId && <button className="snap-follow-pill" onClick={followAuthor} disabled={followBusy} aria-label={`Follow @${username}`}>Follow</button>}</div>
-      <div className="snap-sound">♫ Original sound · @{username}</div>
+      {post.musicTitle ? <div className="snap-sound snap-music-credit">{post.artworkUrl && <img src={post.artworkUrl} alt="" />}<span>♫ {post.musicTitle}{post.artistName ? ` · ${post.artistName}` : ''}</span></div> : <div className="snap-sound">♫ Original sound · @{username}</div>}
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.sourcePostId && <div className="remix-attribution" aria-label="Remix source">
         Remixed from <AppLink href={`/p/${encodeURIComponent(post.sourcePostId)}`}>original post</AppLink>

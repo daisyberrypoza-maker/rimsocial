@@ -1,0 +1,18 @@
+/* Camera settings screen: white page, grouped rows with hairlines, blue switch and radio, no black controls. */
+.cs-page { position: fixed; inset: 0; z-index: 80; background: #fff; color: #111; overflow-y: auto; font-family: inherit; padding-bottom: env(safe-area-inset-bottom); }
+.cs-top { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 16px; background: #fff; border-bottom: 1px solid #efefef; }
+.cs-title { margin: 0; font-size: 17px; font-weight: 600; color: #111; }
+.cs-done { border: 0; background: transparent; color: #0095f6; font-size: 16px; font-weight: 600; padding: 8px 0; }
+.cs-spacer { width: 48px; }
+.cs-group { margin: 8px 16px 0; border-radius: 12px; background: #f5f5f5; overflow: hidden; }
+.cs-heading { margin: 22px 20px 6px; font-size: 13px; font-weight: 600; color: #737373; text-transform: uppercase; letter-spacing: .02em; }
+.cs-row { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 0; border-top: 1px solid #e6e6e6; background: transparent; color: #111; font-size: 16px; text-align: left; }
+.cs-group > :first-child { border-top: 0; }
+.cs-row:disabled { color: #8e8e8e; }
+.cs-row small { font-size: 13px; color: #8e8e8e; }
+.cs-row svg { color: #8e8e8e; flex: none; }
+.cs-row-radio input { width: 20px; height: 20px; accent-color: #0095f6; margin: 0; }
+.cs-switch { position: relative; width: 50px; height: 30px; border: 0; border-radius: 15px; background: #d4d4d4; padding: 0; flex: none; }
+.cs-switch.on { background: #0095f6; }
+.cs-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+.cs-switch.on .cs-knob { transform: translateX(20px); }

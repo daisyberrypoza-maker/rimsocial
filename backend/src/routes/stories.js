@@ -111,8 +111,8 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
     const background = String(req.body.background || 'sunset').slice(0, 40);
     const voice = req.file || null;
     if (voice && !/^audio\//.test(String(voice.mimetype || ''))) throw httpError(400, 'A voice note must be an audio recording');
-    if (!text && !voice) throw httpError(400, 'Write some text or record a voice note');
     const music = await musicFor(req.body);
+    if (!text && !voice && !music) throw httpError(400, 'Write some text, record a voice note or choose a music track');
     let voiceUrl = null;
     if (voice) {
       const asset = await cloudinary.uploadFile(voice, 'rimsocial/voice', { maxSeconds: 60 });

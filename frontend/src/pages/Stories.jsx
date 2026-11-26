@@ -86,7 +86,10 @@ export default function Stories() {
   const navigate = useNavigate();
   const location = useLocation();
   const openUserId = location.state?.openUserId ? String(location.state.openUserId) : null;
+  const sharedUserId = new URLSearchParams(location.search).get('userId');
+  const sharedStoryId = new URLSearchParams(location.search).get('storyId');
   const openedFromChatRef = useRef(null);
+  const openedSharedStoryRef = useRef(null);
   const me = useAppStore((s) => s.user);
   // Everything shows from saved data at once; the server is asked again only when that data is old
   const storedRail = useAppStore((s) => s.storyRail);
@@ -260,6 +263,16 @@ export default function Stories() {
     if (i >= 0) { setOpenOrigin(null); setOpenAt(i); }
   }, [openUserId, loaded, rail]);
 
+  // Open an individual story from a shared story URL.
+  useEffect(() => {
+    const key = sharedUserId && sharedStoryId ? `${sharedUserId}:${sharedStoryId}` : null;
+    if (!key || !loaded || openedSharedStoryRef.current === key) return;
+    const groups = rail.filter((group) => group.user);
+    const index = groups.findIndex((group) => String(group.user?.id) === sharedUserId);
+    openedSharedStoryRef.current = key;
+    if (index >= 0) { setOpenOrigin(null); setOpenAt(index); }
+  }, [sharedUserId, sharedStoryId, loaded, rail]);
+
   const myGroup = rail.find((group) => group.user?.id === me?.id);
 
   // A suggested person with stories opens the viewer; otherwise their profile opens
@@ -411,6 +424,7 @@ export default function Stories() {
           <StoryViewer
             groups={rail.filter((group) => group.user).map((group) => ({ user: group.user }))}
             startIndex={openAt}
+            startStoryId={sharedStoryId}
             origin={openOrigin}
             onClose={() => { setOpenAt(null); loadRail(); }}
           />

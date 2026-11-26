@@ -48,6 +48,7 @@ export function startUpload(job) {
   (async () => {
     const fd = new FormData();
     fd.append('caption', caption || '');
+    if (!toStory) appendStoryMusic(fd, storyAudio?.music);
     fd.append('topic', topic || '');
     fd.append('aiLabel', String(aiLabel));
     if (!toStory) fd.append('loopVideo', String(loopVideo !== false));

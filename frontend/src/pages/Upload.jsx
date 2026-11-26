@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
 import { FILTERS, cssFilterFor, bakeFilter, CROP_RATIOS, STROKE_WIDTH } from '../lib/photoFilters.js';
@@ -12,6 +12,7 @@ import Avatar from '../components/Avatar.jsx';
 import { toast, logError } from '../toast.js';
 import StoryAudioControls from '../components/StoryAudioControls.jsx';
 import MusicPicker from '../components/MusicPicker.jsx';
+import CameraSettings, { readCameraPref } from '../components/CameraSettings.jsx';
 import Icon from '../components/Icon.jsx';
 import { mediaUrl } from '../lib/config.js';
 import { goBack } from '../lib/goBack.js';
@@ -40,7 +41,7 @@ function CameraView({ onCapture, onGallery }) {
   const navigate = useNavigate();
   const me = useAppStore((s) => s.user);
   const videoRef = useRef(null);
-  const [facing, setFacing] = useState("user");
+  const [facing, setFacing] = useState(() => (readCameraPref('startFront', true) ? 'user' : 'environment'));
   const [error, setError] = useState("");
   const [streamKey, setStreamKey] = useState(0);
   const [torch, setTorch] = useState(false);
@@ -244,13 +245,14 @@ const STICKERS = ['😀', '😂', '😍', '🔥', '💯', '👍', '🎉', '❤�
 
 export default function Upload() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
   const draft = useAppStore((s) => s.uploadDraft);
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const asStory = searchParams.get('story') === '1';
   const asReel = searchParams.get('reel') === '1';
-  const [view, setView] = useState(remixId || asStory || asReel ? 'gallery' : 'camera');
+  const [view, setView] = useState('gallery');
   const [tab, setTab] = useState('Camera Roll');
   const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
@@ -260,7 +262,7 @@ export default function Upload() {
   const [selectMode, setSelectMode] = useState(false);
   const [selection, setSelection] = useState([]);
   const [carousel, setCarousel] = useState([]);
-  const [storyTrack, setStoryTrack] = useState(null);
+  const [storyTrack, setStoryTrack] = useState(() => location.state?.storyTrack || null);
   const [galleryMusicOpen, setGalleryMusicOpen] = useState(false);
   const [galleryMusicPlaying, setGalleryMusicPlaying] = useState(false);
   const galleryAudioRef = useRef(null);
@@ -490,23 +492,15 @@ export default function Upload() {
     }
   }
 
-  // Gallery music bar: preview the chosen track, or remove it
-  function clearGalleryMusic() {
-    galleryAudioRef.current?.pause();
-    setGalleryMusicPlaying(false);
-    setStoryTrack(null);
-  }
-
-  async function toggleGalleryMusic() {
-    if (galleryMusicPlaying) { galleryAudioRef.current?.pause(); setGalleryMusicPlaying(false); return; }
-    if (!storyTrack) return;
+  async function playGalleryMusic(track) {
+    if (!track) return;
     try {
       if (!galleryAudioRef.current) galleryAudioRef.current = new Audio();
       const audio = galleryAudioRef.current;
       audio.pause();
-      audio.src = storyTrack.source === 'audius'
-        ? (await api(`/v1/audio/audius/${encodeURIComponent(storyTrack.id)}/stream`)).url
-        : mediaUrl(storyTrack.mediaUrl);
+      audio.src = track.previewUrl || (track.source === 'audius'
+        ? (await api(`/v1/audio/audius/${encodeURIComponent(track.id)}/stream`)).url
+        : mediaUrl(track.mediaUrl));
       audio.onended = () => setGalleryMusicPlaying(false);
       await audio.play();
       setGalleryMusicPlaying(true);
@@ -517,24 +511,47 @@ export default function Upload() {
     }
   }
 
+  function clearGalleryMusic() {
+    galleryAudioRef.current?.pause();
+    setGalleryMusicPlaying(false);
+    setStoryTrack(null);
+  }
+
+  function toggleGalleryMusic() {
+    if (galleryMusicPlaying) {
+      galleryAudioRef.current?.pause();
+      setGalleryMusicPlaying(false);
+      return;
+    }
+    if (storyTrack) playGalleryMusic(storyTrack);
+  }
+
   if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} />;
+
+  if (view === 'settings') return <CameraSettings onDone={() => setView('gallery')} onStory={() => { setView('gallery'); navigate('/upload?story=1'); }} onReel={() => { setView('gallery'); navigate('/upload?reel=1'); }} />;
 
   if (view === 'gallery') {
     const onRecents = tab === 'Camera Roll';
     const shownRecents = recents.filter((item) => !asReel || String(item.file.type).startsWith('video/'));
-    const modes = [{ key: 'post', label: 'POST', path: '/upload' }, { key: 'story', label: 'STORY', path: '/upload?story=1' }, { key: 'reel', label: 'REEL', path: '/upload?reel=1' }];
+    const modes = [
+      { key: 'text', label: 'Text', path: asStory ? '/story/text' : '/post/text' },
+      { key: 'story', label: 'Story', path: '/upload?story=1' },
+      { key: 'music', label: 'Music' },
+      { key: 'post', label: 'Post', path: '/upload' },
+    ];
     const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
-        <nav className="ig-create-modes" aria-label="Create type">
-          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
-        </nav>
-        <button type="button" className="ig-create-gear" onClick={() => navigate('/algorithm')} aria-label="Settings"><Icon name="settings" size={28} /></button>
+        <h1 className="ig-create-heading">Add to story</h1>
+        <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
+      <nav className="ig-create-modes" aria-label="Create type">
+        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => mode.key === 'music' ? setGalleryMusicOpen(true) : navigate(mode.path, { replace: true, state: { storyTrack } })}>{mode.label}</button>)}
+      </nav>
       <div className="ig-create-sub">
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
-          {onRecents ? 'Gallery' : 'Memories'} <Icon name="chevron-down" size={18} />
+          {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
         {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="ig-create-aa">Aa</span> Text story</button>}
         {!asStory && !asReel && <button type="button" className="ig-create-pick" onClick={() => navigate('/post/text')} aria-label="Text post"><span className="ig-create-aa">Aa</span> Text post</button>}
@@ -552,18 +569,15 @@ export default function Upload() {
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
-      {asStory && <div className="ig-music-bar" role="group" aria-label="Story music">
-        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label={storyTrack ? `Change music: ${storyTrack.title}` : 'Add music to your story'}>
-          <span className="ig-music-disc" aria-hidden="true"><Icon name="music" size={16} /></span>
-          <span className="ig-music-text">
-            <strong>{storyTrack ? storyTrack.title : 'Add music'}</strong>
-            {storyTrack?.artist && <small>{storyTrack.artist}</small>}
-          </span>
+      {storyTrack && <div className="ig-music-bar">
+        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label="Change selected music">
+          <span className="ig-music-disc">{storyTrack.artwork ? <img src={storyTrack.artwork} alt="" /> : <Icon name="music" size={20} />}</span>
+          <span className="ig-music-text"><strong>{storyTrack.title || storyTrack.name || 'Selected sound'}</strong><small>{storyTrack.artist || storyTrack.artistName || 'Selected for your story'}</small></span>
         </button>
-        {storyTrack && <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause music' : 'Play music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={18} /></button>}
-        {storyTrack && <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove music"><Icon name="x" size={18} /></button>}
+        <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
+        <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
       </div>}
-      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); }} onClose={() => setGalleryMusicOpen(false)} />}
+      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); playGalleryMusic(item); }} onClose={() => setGalleryMusicOpen(false)} onSettings={() => { setGalleryMusicOpen(false); setView('settings'); }} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />

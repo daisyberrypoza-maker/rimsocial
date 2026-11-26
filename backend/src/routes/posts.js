@@ -22,6 +22,7 @@ const feed = require('../services/feed');
 const redis = require('../redis');
 const httpError = require('../utils/httpError');
 const { toPostDTO } = require('../lib/serialize');
+const { resolveMusic, storyMusicFields } = require('../services/storyMusic');
 const cloudinary = require('../services/cloudinary');
 const { requestAssetCleanup, cleanupRemovedPostMedia } = require('../services/mediaCleanup');
 const uploads = require('../services/uploadSessions');
@@ -42,6 +43,7 @@ router.post('/', requireAuth, upload.array('media', 10), require('../middleware/
   let postPersisted = false;
   try {
     const files = Array.isArray(req.files) ? [...req.files] : [];
+    const music = await resolveMusic(req.body || {}, { AudioTrack: require('../db').AudioTrack });
     const uploadIds = parseUploadIds(req.body.uploadIds);
     for (const id of uploadIds) files.push(await uploads.consumeSession(id, req.user.id));
     if (!files.length) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
@@ -75,6 +77,7 @@ router.post('/', requireAuth, upload.array('media', 10), require('../middleware/
     const post = await Post.create({
       authorId: req.user.id, kind: cover.kind, mediaUrl: cover.url, mediaPublicId: cover.publicId, mediaItems: items.length > 1 ? items : null,
       caption: String(req.body.caption || '').slice(0, 500),
+      ...storyMusicFields(music, req.body || {}),
       topic: String(req.body.topic || '').trim().slice(0, 60) || null,
       aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId, loopVideo: req.body.loopVideo !== 'false',
       isSponsored, sponsorName: isSponsored ? sponsorName : null,
@@ -440,11 +443,13 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
 router.post('/text', requireAuth, async (req, res, next) => {
   try {
     const text = String(req.body?.text || '').trim().slice(0, 500);
-    if (!text) throw httpError(400, 'Write some text for your post');
+    const music = await resolveMusic(req.body || {}, { AudioTrack: require('../db').AudioTrack });
+    if (!text && !music) throw httpError(400, 'Write some text or choose a music track');
     const background = String(req.body?.background || 'sunset').slice(0, 40);
     const visibility = req.body?.visibility === 'private' ? 'private' : 'public';
     const post = await Post.create({
-      authorId: req.user.id, kind: 'text', mediaUrl: null, storyText: text, storyBackground: background,
+      authorId: req.user.id, kind: 'text', mediaUrl: null, storyText: text || null, storyBackground: background,
+      ...storyMusicFields(music, req.body || {}),
       caption: '', visibility, allowRemix: false, isStory: false,
     });
     res.status(201).json(toPostDTO(post));

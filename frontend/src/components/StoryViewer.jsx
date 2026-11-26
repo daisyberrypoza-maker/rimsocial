@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import ShareSheet from './ShareSheet.jsx';
 import { useNavigate } from 'react-router-dom';
 import { backgroundCss } from '../lib/storyBackgrounds.js';
 import MusicEqualizer from './MusicEqualizer.jsx';
@@ -391,6 +392,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
     else sendReply(emoji);
   }
 
+  const [storyShareOpen, setStoryShareOpen] = useState(false);
   function openOptions() {
     if (isOwner) setMenuOpen(true);
     else setShareOpen(true);
@@ -568,10 +570,21 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   }
 
   // Share and save for the creator's own story (the options sheet on their own stories)
+  function storyShareUrl() {
+    return `${window.location.origin}/stories?userId=${encodeURIComponent(group.user.id)}&storyId=${encodeURIComponent(current?.id || '')}`;
+  }
+
   async function shareStory() {
-    const url = `${window.location.origin}/u/${group.user.username}`;
+    const url = storyShareUrl();
     if (navigator.share) navigator.share({ title: 'RimSocial Story', text: `View ${creatorName}'s story on RimSocial`, url }).catch(() => {});
-    else copyProfileLink();
+    else copyStoryLink();
+  }
+
+  async function copyStoryLink() {
+    try {
+      await navigator.clipboard.writeText(storyShareUrl());
+      toast('Story link copied');
+    } catch { toast('Could not copy the story link'); }
   }
 
   function saveMedia() {
@@ -687,7 +700,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
               />
             </>
           ) : isText ? (
-            <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText}</div>
+            <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText || (current.musicTitle ? <div className="sv-music-cover">{current.artworkUrl ? <img src={current.artworkUrl} alt="" /> : <Icon name="music" size={52} />}<strong>{current.musicTitle}</strong>{current.artistName && <span>{current.artistName}</span>}</div> : null)}</div>
           ) : (
             <>
               <img key={`${current.id}-${mediaReloadKey}-ambient`} className="sv-ambient" src={mediaUrl(current.mediaUrl)} alt="" aria-hidden="true" />
@@ -726,7 +739,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
             </div>
             )}
             {!isOwner && <button type="button" className={current.liked ? 'sv-heart on' : 'sv-heart'} aria-label={current.liked ? 'Unlike story' : 'Like story'} onClick={() => onQuickReaction('❤️')}><Icon name="heart" size={26} /></button>}
-            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : 'More options'} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else openOptions(); }}>
+            <button type="button" className="sv-send" aria-label={reply.trim() ? 'Send reply' : (isOwner ? 'More options' : 'Share story')} onPointerDown={() => { keepTypingRef.current = true; }} onClick={() => { keepTypingRef.current = false; if (reply.trim()) submitReply(); else if (isOwner) setMenuOpen(true); else setStoryShareOpen(true); }}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 21 12 4 20.5l2.5-8.5z" fill="currentColor" /></svg>
             </button>
           </div>
@@ -763,6 +776,15 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
         title="Report story"
         actions={REPORT_REASONS.map((reason) => ({ label: reason, icon: 'shield', onClick: () => reportStory(reason) }))}
         onClose={() => setReportOpen(false)}
+      />}
+
+      {storyShareOpen && <ShareSheet
+        url={storyShareUrl()}
+        caption={current?.caption || ''}
+        onClose={() => setStoryShareOpen(false)}
+        onCopy={() => { setStoryShareOpen(false); copyStoryLink(); }}
+        onMore={() => { setStoryShareOpen(false); shareStory(); }}
+        onAddToStory={() => { setStoryShareOpen(false); reshare(); }}
       />}
 
       {shareOpen && (
