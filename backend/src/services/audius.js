@@ -49,8 +49,10 @@ async function audiusGet(path, params = {}) {
   throw Object.assign(new Error('Audius is temporarily unavailable on all configured nodes', { cause: lastError }), { status: 502 });
 }
 
-async function trending(limit = 20) {
-  const body = await audiusGet('/tracks/trending', { limit: Math.min(Math.max(Number(limit) || 20, 1), 50) });
+async function trending(limit = 20, offset = 0) {
+  const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 50);
+  const pageOffset = Math.min(Math.max(Number(offset) || 0, 0), 10000);
+  const body = await audiusGet('/tracks/trending', { limit: pageSize, offset: pageOffset });
   return (body.data || []).map(toTrack).filter((track) => track.streamable);
 }
 
