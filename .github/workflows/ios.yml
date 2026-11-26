@@ -37,15 +37,16 @@ jobs:
           cp mobile/index.js "$RUNNER_TEMP/RimSocial/index.js"
           rm -rf "$RUNNER_TEMP/RimSocial/src"
           cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
-          node - "$RUNNER_TEMP/RimSocial/package.json" mobile/package.json <<'NODE'
+          cp mobile/package.json "$RUNNER_TEMP/RimSocial/package.json"
+          node - "$RUNNER_TEMP/RimSocial/package.json" <<'NODE'
           const fs = require('fs');
-          const [targetPath, sourcePath] = process.argv.slice(2);
-          const target = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
-          const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-          target.dependencies = Object.assign({}, target.dependencies, source.dependencies);
-          target.devDependencies = Object.assign({}, target.devDependencies, source.devDependencies);
-          target.devDependencies['@react-native-community/cli'] = target.devDependencies['@react-native-community/cli'] || '^13.6.9';
-          fs.writeFileSync(targetPath, JSON.stringify(target, null, 2) + '\n');
+          const path = process.argv[2];
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          pkg.devDependencies = Object.assign({}, pkg.devDependencies, {
+            '@react-native-community/cli': '13.6.9',
+            '@react-native-community/cli-platform-ios': '13.6.9'
+          });
+          fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
           NODE
           cd "$RUNNER_TEMP/RimSocial"
           npm install --no-audit --no-fund
@@ -63,7 +64,7 @@ jobs:
           plist.update(ios['infoPlist'])
           with plist_path.open('wb') as target:
               plistlib.dump(plist, target)
-          project = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios/RimSocial.xcodeproj/project.pbxproj'.read_text()
+          project = (pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios/RimSocial.xcodeproj/project.pbxproj').read_text()
           assert 'TARGETED_DEVICE_FAMILY = "1,2"' in project, 'Generated target must include iPhone and iPad'
           PY
       - name: Install CocoaPods
