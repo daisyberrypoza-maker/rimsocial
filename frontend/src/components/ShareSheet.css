@@ -27,3 +27,7 @@
 .sf-tg { background: #229ed9; color: #fff; }
 .sf-mail { background: #737373; color: #fff; }
 .sf-sms { background: #34c759; color: #fff; }
+
+/* Radio selector: empty ring, filled blue when chosen */
+.sf-radio { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #c7c7c7; box-sizing: border-box; display: grid; place-items: center; }
+.sf-radio.on { border-color: #0095f6; background: #0095f6; box-shadow: inset 0 0 0 4px #fff; }

@@ -542,7 +542,7 @@ export default function Upload() {
     const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
-        <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
+        <button type="button" className="ig-create-x" onClick={() => goBack(navigate, '/')} aria-label="Close"><Icon name="x" size={28} /></button>
         <h1 className="ig-create-heading">Add to story</h1>
         <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>

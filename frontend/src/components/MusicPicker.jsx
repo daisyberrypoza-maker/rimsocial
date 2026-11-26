@@ -31,6 +31,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   const [chip, setChip] = useState('featured');
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // One seed per open of the picker: the For You order is shuffled with it and stays stable while paging
+  const seedRef = useRef(Math.random().toString(36).slice(2, 10));
   const [playingId, setPlayingId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [savedItems, setSavedItems] = useState(() => { try { return JSON.parse(window.localStorage.getItem('rim.savedSounds') || '[]'); } catch { return []; } });
@@ -47,6 +52,31 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   // Stop playback when leaving the screen
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
+  // Library search URL for a page of For You / Original (paged, shuffled by seed)
+  function searchPath(q, activeChip, offset) {
+    return `/v1/audio/search?q=${encodeURIComponent(q)}${activeChip === 'original' ? '&original=1' : ''}&offset=${offset}&limit=30&seed=${seedRef.current}`;
+  }
+
+  // Load the next page when the list is scrolled near its end
+  async function loadMore() {
+    if (!hasMore || loadingMore || chip === 'trending' || chip === 'saved') return;
+    setLoadingMore(true);
+    try {
+      const data = await api(searchPath(query.trim(), chip, nextOffset));
+      const more = (data.items || []).map((item) => ({ ...item, source: 'local' }));
+      setItems((list) => {
+        const seen = new Set(list.map((item) => String(item.id)));
+        return [...list, ...more.filter((item) => !seen.has(String(item.id)))];
+      });
+      setHasMore(Boolean(data.hasMore));
+      setNextOffset(data.nextOffset || nextOffset + more.length);
+    } catch (error) {
+      logError(error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   // Load the list for the active chip; the search text changes the list after a short pause
   useEffect(() => {
     if (chip === 'saved') { setItems(savedItems); return undefined; }
@@ -54,13 +84,15 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     const q = query.trim();
     const path = chip === 'trending'
       ? (q ? `/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=30` : '/v1/audio/audius/trending?limit=30')
-      : `/v1/audio/search?q=${encodeURIComponent(q)}${chip === 'original' ? '&original=1' : ''}`;
+      : searchPath(q, chip, 0);
     const timer = setTimeout(() => {
       api(path)
         .then((data) => {
           if (!active) return;
           const nextItems = (data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }));
           setItems(nextItems);
+          setHasMore(Boolean(data.hasMore));
+          setNextOffset(data.nextOffset || nextItems.length);
           // Warm the first visible Audius rows before a user taps Play. Signed URLs are short-lived,
           // so they stay in memory only and are refreshed when a track is played if necessary.
           nextItems.filter((item) => item.source === 'audius').slice(0, 8).forEach((item) => {
@@ -171,7 +203,10 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         ))}
       </nav>
 
-      <ul className="mp-list">
+      <ul className="mp-list" onScroll={(event) => {
+        const el = event.currentTarget;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 240) loadMore();
+      }}>
         {chip === 'saved' && items.length === 0 && <li className="mp-empty">No saved sounds yet.</li>}
         {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
@@ -199,6 +234,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
             </li>
           );
         })}
+        {loadingMore && <li className="mp-empty">Loading more…</li>}
       </ul>
 
       <footer className="mp-bottom">

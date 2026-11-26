@@ -50,3 +50,10 @@
 .mp-save svg, .mp-icon svg { stroke: currentColor; }
 .mp-use { flex: none; height: 34px; min-width: 64px; padding: 0 14px; border: 0; border-radius: 17px; background: #0095f6; color: #fff; font-size: 14px; font-weight: 600; }
 .mp-use.on { background: #2b2f36; color: #fff; }
+/* Saved sound: Snapchat yellow bookmark */
+.mp-save.on { color: #FFFC00; }
+.mp-save.on svg { fill: #FFFC00; }
+
+/* Active tab: black text on a white chip. Overrides any global button colour. */
+.mp-page .mp-chip.on { background: #fff !important; color: #000 !important; }
+.mp-page .mp-chip:not(.on) { color: #fff !important; }

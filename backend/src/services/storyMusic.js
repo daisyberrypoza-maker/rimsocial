@@ -45,7 +45,8 @@ function storyMusicFields(music, body = {}) {
       musicSource: 'audius',
       audiusTrackId: music.id,
       artistName: String(music.artist).slice(0, 80),
-      artworkUrl: music.artwork ? String(music.artwork).slice(0, 512) : null,
+      // Only https artwork is stored; anything else is dropped
+      artworkUrl: /^https:\/\//i.test(String(music.artwork || '')) ? String(music.artwork).slice(0, 512) : null,
       musicMixable: Boolean(music.canMix),
       ...mix,
     };

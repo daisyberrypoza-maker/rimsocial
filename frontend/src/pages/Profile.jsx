@@ -62,7 +62,7 @@ export default function Profile() {
       navigate(returnTo, { replace: true });
       return;
     }
-    goBack(navigate);
+    goBack(navigate, `/u/${username}`);
   };
   const logout = useAppStore((s) => s.logout);
   const setProfile = useAppStore((s) => s.setProfile);

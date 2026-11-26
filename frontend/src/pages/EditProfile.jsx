@@ -74,7 +74,7 @@ export default function EditProfile() {
   return (
     <main className="ep-page" onFocusCapture={(event) => { if (event.target.matches("input, textarea, select")) requestAnimationFrame(() => event.target.scrollIntoView({ block: "nearest", behavior: "smooth" })); }}>
       <header className="ep-top">
-        <button type="button" className="ep-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={26} /></button>
+        <button type="button" className="ep-back" aria-label="Back" onClick={() => goBack(navigate, '/u/me')}><Icon name="arrow-left" size={26} /></button>
         <h1>Edit profile</h1>
       </header>
 
