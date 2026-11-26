@@ -67,7 +67,7 @@ function MenuRow({ label, danger, onPress }) {
 }
 
 // Rim options: the same items as the web menu. Report opens a reason list first.
-function OptionsSheet({ username, isOwn, reporting, onClose, onRemix, onShare, onReport, onNotInterested, onBlock, onDelete }) {
+function OptionsSheet({ username, isOwn, reporting, saved, onClose, onRemix, onShare, onSave, onReport, onNotInterested, onBlock, onDelete }) {
   const [step, setStep] = useState('menu');
   const [reason, setReason] = useState(REASONS[0]);
   return (
@@ -81,6 +81,7 @@ function OptionsSheet({ username, isOwn, reporting, onClose, onRemix, onShare, o
               {!isOwn && <MenuRow danger label="Report Rim" onPress={() => setStep('report')} />}
               {!isOwn && <MenuRow label="Not Interested" onPress={onNotInterested} />}
               <MenuRow label="Export or Send Rim" onPress={onShare} />
+              <MenuRow label={saved ? 'Remove from saved' : 'Save Rim'} onPress={onSave} />
               {isOwn && <MenuRow danger label="Delete Rim" onPress={onDelete} />}
             </>
           ) : (
@@ -544,7 +545,6 @@ export default function PostCard({ post, active, focused, navigation, height, sc
         </View>
         <Pressable style={styles.railBtn} onPress={like} disabled={likeBusy} accessibilityLabel={liked ? 'Unlike post' : 'Like post'}>
           <Icon name="heart" size={30} color={liked ? colors.heart : '#fff'} filled />
-          <Text style={styles.railCount}>{formatCount(likes)}</Text>
         </Pressable>
         <Pressable style={styles.railBtn} onPress={() => setShowComments(true)} accessibilityLabel="Open comments">
           <Icon name="message-circle" size={30} color="#fff" filled />
@@ -554,10 +554,6 @@ export default function PostCard({ post, active, focused, navigation, height, sc
           <Icon name="repeat" size={30} color={reposted ? SNAP_YELLOW : '#fff'} filled />
           {repostCount > 0 && <Text style={styles.railCount}>{formatCount(repostCount)}</Text>}
         </Pressable>
-        <Pressable style={styles.railBtn} onPress={toggleSave} disabled={saveBusy} accessibilityLabel={saved ? 'Remove from saved' : 'Save post'}>
-          <Icon name={saved ? 'bookmark-check' : 'bookmark'} size={30} color={saved ? SNAP_YELLOW : '#fff'} filled />
-          {saveTotal > 0 && <Text style={styles.railCount}>{formatCount(saveTotal)}</Text>}
-        </Pressable>
         <Pressable style={styles.railBtn} onPress={share} accessibilityLabel="Share post">
           <Icon name="send" size={30} color="#fff" filled />
           {Number(post.shareCount) > 0 && <Text style={styles.railCount}>{formatCount(post.shareCount)}</Text>}
@@ -565,6 +561,9 @@ export default function PostCard({ post, active, focused, navigation, height, sc
         <Pressable style={styles.railBtn} onPress={() => setShowMenu(true)} accessibilityLabel="More post controls">
           <MoreHorizontal size={30} color="#fff" fill="#fff" strokeWidth={2.2} />
         </Pressable>
+        <View style={styles.disc} accessibilityLabel="Original sound">
+          {post.thumbUrl ? <Image source={{ uri: mediaUrl(post.thumbUrl) }} style={styles.discImg} /> : <View style={styles.discImg} />}
+        </View>
       </View>
 
       <View style={[styles.info, overlayHidden]} pointerEvents={overlayEvents}>
@@ -578,7 +577,7 @@ export default function PostCard({ post, active, focused, navigation, height, sc
           <Text style={styles.title}>{post.author?.displayName || username}</Text>
           {post.author?.isCreator && <BadgeCheck size={16} color="#fff" />}
         </View>
-        <Text style={styles.sound}>♫ Original sound · @{username}</Text>
+        <Text style={styles.sound}>♫ Original Sound · {username}</Text>
         {!!post.caption && (
           <Caption
             text={post.caption}
@@ -611,6 +610,8 @@ export default function PostCard({ post, active, focused, navigation, height, sc
           reporting={reporting}
           onClose={() => setShowMenu(false)}
           onRemix={() => { setShowMenu(false); navigation.navigate('Upload', { remix: post.id }); }}
+          saved={saved}
+          onSave={() => { setShowMenu(false); toggleSave(); }}
           onShare={share}
           onReport={report}
           onNotInterested={notInterested}
@@ -639,6 +640,8 @@ const styles = StyleSheet.create({
   followPlus: { color: '#000', fontSize: 18, fontWeight: '800', lineHeight: 22 },
   railBtn: { alignItems: 'center', gap: 4 },
   railCount: { color: '#fff', fontSize: 14, fontWeight: '700', ...shadow },
+  disc: { width: 44, height: 44, borderRadius: 8, borderWidth: 2, borderColor: '#fff', overflow: 'hidden', backgroundColor: '#222' },
+  discImg: { width: '100%', height: '100%' },
   info: { position: 'absolute', left: 14, right: 84, bottom: 86 },
   repostPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(30,30,30,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 12 },
   pillText: { color: '#fff', fontSize: 13, fontWeight: '700' },

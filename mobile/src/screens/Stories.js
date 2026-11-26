@@ -6,6 +6,7 @@ import PageStatusBar from '../components/PageStatusBar';
 import Scrim from '../components/Scrim';
 import Icon from '../components/Icon';
 import Avatar from '../components/Avatar';
+import { RotateCcw } from 'lucide-react-native';
 import StoryRing, { railItems } from '../components/StoryRing';
 import { api } from '../api';
 import { useAppStore } from '../store';
@@ -90,6 +91,8 @@ export default function Stories() {
   const myGroup = rail.find((g) => g.user?.id === me?.id);
   const others = rail.filter((g) => g.user?.id !== me?.id)
     .sort((a, b) => (ranking.friends[b.user.id] || 0) - (ranking.friends[a.user.id] || 0));
+  // First friend whose stories were all seen: the grey "Watch Again" tile replays them
+  const seenFirst = others.find((g) => !g.unseen) || null;
   const byId = new Map(suggested.map((u) => [u.id, u]));
   const discover = (ranking.discoverOrder.length ? ranking.discoverOrder.map((id) => byId.get(id)).filter(Boolean) : suggested)
     .filter((u) => u.id !== me?.id);
@@ -176,11 +179,18 @@ export default function Stories() {
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
                 <Scrim />
+                <View style={styles.bubble}><Avatar user={person} size={28} /></View>
                 <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}{person.isCreator ? ' ★' : ''}</Text>
               </Pressable>
             ))}
           </ScrollView>
           <View style={styles.grid}>
+            {seenFirst ? (
+              <Pressable style={[styles.big, styles.watchAgain]} onPress={() => openViewer(seenFirst.user.id)} accessibilityLabel="Watch again">
+                <RotateCcw size={30} color="#fff" />
+                <Text style={styles.watchText}>Watch Again</Text>
+              </Pressable>
+            ) : null}
             {sponsored.map((post) => (
               <Pressable key={`sp-${post.id}`} style={styles.big} onPress={() => navigation.navigate('PostDetail', { postId: post.id })} accessibilityLabel={`Sponsored: ${post.sponsorName || 'ad'}`}>
                 <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.fill} />
@@ -197,6 +207,7 @@ export default function Stories() {
                   ? <Image source={{ uri: mediaUrl(person.avatarUrl) }} style={styles.fill} />
                   : <View style={[styles.fill, styles.cardFallback]}><Text style={styles.cardInitial}>{nameOf(person).slice(0, 1).toUpperCase()}</Text></View>}
                 <Scrim />
+                <View style={styles.bubble}><Avatar user={person} size={28} /></View>
                 <Text style={styles.cardName} numberOfLines={1}>{nameOf(person)}</Text>
               </Pressable>
             ))}
@@ -248,4 +259,7 @@ const styles = StyleSheet.create({
   cardInitial: { fontSize: 32, fontWeight: '700', color: colors.muted },
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.12)' },
   cardName: { position: 'absolute', left: 8, right: 8, bottom: 8, color: '#fff', fontWeight: '700' },
+  bubble: { position: 'absolute', left: 8, bottom: 40, width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: '#fff', overflow: 'hidden' },
+  watchAgain: { backgroundColor: '#5b6068', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  watchText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
