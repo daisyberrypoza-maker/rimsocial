@@ -9,6 +9,8 @@ import './MusicPicker.css';
 // middle, settings on the right, a search field, chips (For you, Trending, Saved), and one row per sound.
 // Tapping a row previews it; the bookmark button chooses it for the story. Sources: the app library
 // (For you) and the Audius catalogue (Trending). Audius sounds are checked and streamed by the server.
+// Audius stream links are signed and expire; never reuse one older than this.
+const STREAM_TTL_MS = 3 * 60 * 1000;
 const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original audio']];
 
 function formatDuration(seconds) {
@@ -37,6 +39,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   const streamUrlsRef = useRef(new Map());
   const streamRequestsRef = useRef(new Map());
 
+  function cachedStreamUrl(id) {
+    const hit = streamUrlsRef.current.get(id);
+    return hit && Date.now() - hit.at < STREAM_TTL_MS ? hit.url : null;
+  }
+
   // Stop playback when leaving the screen
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
@@ -57,9 +64,9 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
           // Warm the first visible Audius rows before a user taps Play. Signed URLs are short-lived,
           // so they stay in memory only and are refreshed when a track is played if necessary.
           nextItems.filter((item) => item.source === 'audius').slice(0, 8).forEach((item) => {
-            if (streamUrlsRef.current.has(item.id) || streamRequestsRef.current.has(item.id)) return;
+            if (cachedStreamUrl(item.id) || streamRequestsRef.current.has(item.id)) return;
             const request = api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)
-              .then((result) => { if (result.url) streamUrlsRef.current.set(item.id, result.url); return result.url; })
+              .then((result) => { if (result.url) streamUrlsRef.current.set(item.id, { url: result.url, at: Date.now() }); return result.url; })
               .catch(() => null)
               .finally(() => streamRequestsRef.current.delete(item.id));
             streamRequestsRef.current.set(item.id, request);
@@ -83,10 +90,10 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       const audio = audioRef.current;
       audio.pause();
       const src = item.source === 'audius'
-        ? (streamUrlsRef.current.get(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
+        ? (cachedStreamUrl(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
         : mediaUrl(item.mediaUrl);
       if (!src) throw new Error('No playable audio URL was returned');
-      if (item.source === 'audius') streamUrlsRef.current.set(item.id, src);
+      if (item.source === 'audius') streamUrlsRef.current.set(item.id, { url: src, at: Date.now() });
       audio.preload = 'auto';
       audio.src = src;
       audio.load();
@@ -129,7 +136,8 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
       return updated;
     });
-    onSelect(item.source === 'audius' ? { ...item, previewUrl: streamUrlsRef.current.get(item.id) || null } : item);
+    // No stored link: the story player fetches a fresh one when it plays
+    onSelect(item);
   }
 
   return (
