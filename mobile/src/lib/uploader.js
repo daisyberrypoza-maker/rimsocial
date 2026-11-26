@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { api } from '../api';
 import { useAppStore } from '../store';
 import { loadPage } from './paged';
@@ -10,6 +11,19 @@ function appendMusic(form, track) {
   if (!track || !track.id) return;
   if (track.source === 'audius') form.append('audiusTrackId', track.id);
   else form.append('musicId', track.id);
+}
+
+async function ensureTermsAccepted() {
+  const result = await api('/v1/auth/me');
+  if (result.user?.termsAcceptedAt) return;
+  const accepted = await new Promise((resolve) => Alert.alert(
+    'Terms of Service',
+    'Before publishing your first post or story, you must review and accept the RimSocial Terms of Service.',
+    [{ text: 'Not now', style: 'cancel', onPress: () => resolve(false) }, { text: 'Accept', onPress: () => resolve(true) }],
+    { cancelable: false, onDismiss: () => resolve(false) },
+  ));
+  if (!accepted) throw new Error('Accept the Terms of Service before publishing');
+  await api('/v1/auth/accept-terms', { method: 'POST' });
 }
 
 export function startUpload(job) {
