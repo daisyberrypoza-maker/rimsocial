@@ -251,7 +251,7 @@ export default function Upload() {
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const asStory = searchParams.get('story') === '1';
   const asReel = searchParams.get('reel') === '1';
-  const [view, setView] = useState(remixId || asStory || asReel ? 'gallery' : 'camera');
+  const [view, setView] = useState('gallery');
   const [tab, setTab] = useState('Camera Roll');
   const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
@@ -570,7 +570,7 @@ export default function Upload() {
       </div>}
       {storyTrack && <div className="ig-music-bar">
         <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label="Change selected music">
-          <span className="ig-music-disc"><Icon name="music" size={20} /></span>
+          <span className="ig-music-disc">{storyTrack.artwork ? <img src={storyTrack.artwork} alt="" /> : <Icon name="music" size={20} />}</span>
           <span className="ig-music-text"><strong>{storyTrack.title || storyTrack.name || 'Selected sound'}</strong><small>{storyTrack.artist || storyTrack.artistName || 'Selected for your story'}</small></span>
         </button>
         <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
