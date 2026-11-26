@@ -611,7 +611,8 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
       const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
       await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
     });
-    await Promise.all([req.user.id, followeeId].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
+    await redis.del(`stories:rail:${followeeId}`).catch(() => {});
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     if (!fresh) throw httpError(404, 'User not found');
     res.json({ isFollowing: false, followerCount: fresh.followerCount });
