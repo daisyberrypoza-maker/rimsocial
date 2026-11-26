@@ -537,7 +537,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
       onReport={(reason) => { setReportReason(reason); reportPost(reason); }}
       onDelete={async () => { setShowMenu(false); if (!(await confirmDialog('Delete this post? This cannot be undone.'))) return; try { await api(`/v1/posts/${post.id}`, { method: 'DELETE' }); setHidden(true); toast('Post deleted'); } catch (e) { logError(e); } }}
     />}
-    {showShare && <ShareSheet url={postShareUrl(post.id)} caption={post.caption || ''} onClose={() => setShowShare(false)} onCopy={() => { copyPostLink(); setShowShare(false); }} onMore={() => { setShowShare(false); sharePost(); }} />}
+    {showShare && <ShareSheet source={window.location.pathname.toLowerCase().includes('rimlight') ? 'rimlight' : 'post'} imageUrl={mediaUrl(post.thumbUrl || post.mediaUrl)} caption={post.caption || ''} url={postShareUrl(post.id)} onClose={() => setShowShare(false)} onCopy={() => { copyPostLink(); setShowShare(false); }} onMore={() => { setShowShare(false); sharePost(); }} />}
     {showGifts && !isOwnPost && <GiftSheet post={post} onClose={() => setShowGifts(false)} />}
     {showComments && createPortal(<CommentsSheet post={post} onClose={() => setShowComments(false)} onCountChange={(delta) => setCommentTotal((t) => Math.max(0, t + delta))} />, document.body)}
     {showSend && <ShareSheet url={postShareUrl(post.id)} caption={post.caption} onClose={() => setShowSend(false)} onCopy={() => { copyPostLink(); setShowSend(false); }} onMore={() => { setShowSend(false); sharePost(); }} />}
