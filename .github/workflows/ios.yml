@@ -4,11 +4,10 @@ name: Check iOS and iPad build
 # iOS and iPad settings from mobile/app.json, and compiles it for the iOS simulator with code
 # signing turned off. No Apple certificates or provisioning profiles are needed for this check.
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches: [main, 'fix/**']
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/ios.yml'
+    branches: [main]
   workflow_dispatch:
 
 permissions:
