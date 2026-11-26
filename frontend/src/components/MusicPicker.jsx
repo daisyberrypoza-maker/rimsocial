@@ -91,7 +91,8 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       api(path)
         .then(async (first) => {
           // Trending falls back to the general Audius chart when nobody you follow has used a sound yet
-          const data = chip === 'trending' && !q && !(first.items || []).length
+          // For You and Trending fall back to the general Audius chart when their own list is empty
+          const data = (chip === 'trending' || chip === 'featured') && !q && !(first.items || []).length
             ? await api('/v1/audio/audius/trending?limit=30')
             : first;
           if (!active) return;

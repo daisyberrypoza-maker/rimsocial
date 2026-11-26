@@ -121,6 +121,47 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
   const frozen = paused || holding || typing || shareOpen || storyShareOpen || reactionPickerOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
+  // Text-only story: draw it as a picture (1080 x 1920) so it can be shared as an image
+  const [textShareUrl, setTextShareUrl] = useState(null);
+  useEffect(() => {
+    if (!storyShareOpen || !current || current.mediaUrl || !current.storyText) return undefined;
+    let alive = true;
+    let objectUrl = null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+    gradient.addColorStop(0, '#f58529');
+    gradient.addColorStop(1, '#dd2a7b');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1080, 1920);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 84px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const words = String(current.storyText).split(/\s+/);
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const next = line ? `${line} ${word}` : word;
+      if (ctx.measureText(next).width > 900 && line) { lines.push(line); line = word; } else { line = next; }
+    }
+    if (line) lines.push(line);
+    const lineHeight = 104;
+    const top = 960 - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((text, index) => ctx.fillText(text, 540, top + index * lineHeight));
+    canvas.toBlob((blob) => {
+      if (!alive || !blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setTextShareUrl(objectUrl);
+    }, 'image/png');
+    return () => {
+      alive = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setTextShareUrl(null);
+    };
+  }, [storyShareOpen, current?.id]);
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
@@ -642,7 +683,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
           <Avatar user={group.user} size={36} />
           <span className="sv-meta">
             <span className="sv-name">{group.user.username}{(group.user.verified || group.user.isCreator) && <Icon name="badge-check" size={15} className="sv-verified" />}</span>
-            <span className="sv-time">{formatRelativeTime(current?.createdAt, { suffix: true })}</span>
+            <span className="sv-time">{formatRelativeTime(current?.createdAt, { suffix: true })}{current?.source?.username && <> · From @{current.source.username}</>}</span>
           </span>
         </button>
         <div className="sv-head-actions">
@@ -781,8 +822,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       {storyShareOpen && <ShareSheet
         url={storyShareUrl()}
         caption={current?.caption || ''}
-        imageUrl={current?.mediaUrl ? mediaUrl(current.mediaUrl) : null}
-        imageName={isVideo ? 'story.mp4' : 'story.jpg'}
+        imageUrl={current?.mediaUrl ? mediaUrl(current.mediaUrl) : textShareUrl}
+        imageName={current?.mediaUrl ? (isVideo ? 'story.mp4' : 'story.jpg') : 'story.png'}
         onClose={() => setStoryShareOpen(false)}
         onCopy={() => { setStoryShareOpen(false); copyStoryLink(); }}
         onMore={() => { setStoryShareOpen(false); shareStory(); }}

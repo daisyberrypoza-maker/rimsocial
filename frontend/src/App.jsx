@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import ScrollMemory from './components/ScrollMemory.jsx';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from './store.js';
 import { refreshMyThumb } from './lib/myThumb.js';
@@ -203,6 +204,7 @@ export default function App() {
     <div className="app">
       {showChrome && !location.pathname.startsWith('/p/') && !location.pathname.startsWith('/u/') && !profileWatch && !exploreWatch && location.pathname !== '/upload' && location.pathname !== '/explore' && location.pathname !== '/friends' && location.pathname !== '/my-friends' && location.pathname !== '/following-list' && location.pathname !== '/stories' && location.pathname !== '/recommended' && location.pathname !== '/activity' && location.pathname !== '/algorithm' && !location.pathname.startsWith('/search') && !location.pathname.startsWith('/chat') && <TopBar immersive={immersive} title={titleFor(location.pathname)} />}
       <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading…</div>}>
+      <ScrollMemory />
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
