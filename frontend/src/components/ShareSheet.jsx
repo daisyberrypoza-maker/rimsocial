@@ -197,7 +197,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         )}
         {!query.trim() && onAddToStory && (
           <button type="button" role="listitem" className={storySelected ? 'sf-person sf-story on' : 'sf-person sf-story'} onClick={() => setStorySelected(!storySelected)} aria-pressed={storySelected} disabled={sending}>
-            <span className="sf-story-avatar" aria-hidden="true">{imageUrl && !imageName.endsWith('mp4') ? <img src={imageUrl} alt="" /> : <Icon name="image" size={22} />}</span>
+            <span className="sf-story-avatar" aria-hidden="true">{imageUrl && !imageName.endsWith('mp4') ? <img src={imageUrl} alt="" /> : <Icon name="image" size={16} />}</span>
             <span className="sf-name">
               <strong>My Story · Public</strong>
               <small>Friends, Followers, …</small>
@@ -211,7 +211,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
           const on = picked.some((u) => u.id === user.id);
           return (
             <button type="button" role="listitem" key={user.id} className={on ? 'sf-person on' : 'sf-person'} onClick={() => toggle(user)} aria-pressed={on} disabled={sending}>
-              <Avatar user={user} size={52} />
+              <Avatar user={user} size={40} />
               <span className="sf-name">
                 <strong>{user.displayName || user.username}</strong>
                 <small>@{user.username}</small>
