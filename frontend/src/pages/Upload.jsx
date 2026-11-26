@@ -576,7 +576,7 @@ export default function Upload() {
         <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
         <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
       </div>}
-      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); playGalleryMusic(item); }} onClose={() => setGalleryMusicOpen(false)} />}
+      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); playGalleryMusic(item); }} onClose={() => setGalleryMusicOpen(false)} onSettings={() => { setGalleryMusicOpen(false); setView('settings'); }} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
