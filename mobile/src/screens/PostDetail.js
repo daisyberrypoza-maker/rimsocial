@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, Pressable, TextInput, ScrollView, Modal, Share, Alert, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Image, Pressable, TextInput, ScrollView, Modal, Alert, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
 import Video from 'react-native-video';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import PageStatusBar from '../components/PageStatusBar';
@@ -9,7 +9,7 @@ import Icon from '../components/Icon';
 import { useAppActive } from '../components/PostCard';
 import { api } from '../api';
 import { useAppStore } from '../store';
-import { mediaUrl, videoStreamUrl } from '../config';
+import { mediaUrl, videoStreamUrl, postShareUrl } from '../config';
 import { formatCount } from '../lib/format';
 import { logError, toast } from '../lib/toast';
 import { registerPlayer, claimPlayback } from '../lib/playback';
@@ -145,8 +145,11 @@ export default function PostDetail() {
     finally { setRepostBusy(false); }
   }
 
+  // Same Send To screen as the feed: friends, My Story, and the one chat box (no social-media share sheet)
   function share() {
-    Share.share({ message: post?.caption || 'View this post on RimSocial' }).catch(logError);
+    if (!post) return;
+    const thumbSrc = post.thumbUrl || (post.kind === 'video' ? null : post.mediaUrl);
+    navigation.navigate('SendTo', { url: postShareUrl(post.id), caption: post.caption || '', thumb: thumbSrc ? mediaUrl(thumbSrc) : null });
   }
 
   // One comment row. Replies are indented under their top-level comment.
