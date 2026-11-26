@@ -73,8 +73,7 @@ async function search(query, limit = 30, offset = 0) {
 // Ask each healthy discovery node for its redirected CDN URL. A one-byte range request
 // validates the redirect without downloading the track; clients retry the returned URLs in order.
 async function streamLinks(id) {
-  const urls = [];
-  for (const base of API_NODES) {
+  const results = await Promise.all(API_NODES.map(async (base) => {
     const url = new URL(`${base}/tracks/${encodeURIComponent(id)}/stream`);
     url.searchParams.set('app_name', APP_NAME);
     try {
@@ -84,12 +83,13 @@ async function streamLinks(id) {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       const finalUrl = response.url;
-      if (response.ok && finalUrl && finalUrl !== url.href && !urls.includes(finalUrl)) urls.push(finalUrl);
       await response.body?.cancel().catch(() => {});
+      return response.ok && finalUrl && finalUrl !== url.href ? finalUrl : null;
     } catch {
-      // Continue to the next Audius node; one unavailable node must not block playback.
+      return null;
     }
-  }
+  }));
+  const urls = [...new Set(results.filter(Boolean))];
   if (!urls.length) throw Object.assign(new Error('Track is not available from Audius nodes'), { status: 502 });
   return urls;
 }
