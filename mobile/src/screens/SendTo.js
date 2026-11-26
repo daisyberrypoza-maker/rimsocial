@@ -82,7 +82,7 @@ export default function SendTo({ navigation, route }) {
   // Sends the typed message (or the link) to every selected friend, then reposts to My Story when toggled
   async function send() {
     if (!canSend) return;
-    const body = message.trim() || text;
+    const body = message.trim() ? `${message.trim()}${text ? `\n${text}` : ''}` : text;
     setSending(true);
     try {
       if (picked.length) {
