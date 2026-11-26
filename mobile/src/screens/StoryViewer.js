@@ -397,7 +397,7 @@ export default function StoryViewer() {
     setSheet(null);
     const isVid = /\.(mp4|mov|m4v|webm)(\?|$)/i.test(String(current?.mediaUrl || ''));
     const thumbSrc = current?.thumbUrl || (isVid ? null : current?.mediaUrl);
-    navigation.navigate('SendTo', { storyId: current?.id || null, caption: `${creatorName}'s story on RimSocial`, thumb: thumbSrc ? mediaUrl(thumbSrc) : null });
+    navigation.navigate('SendTo', { source: 'story', storyId: current?.id || null, caption: `${creatorName}'s story on RimSocial`, thumb: thumbSrc ? mediaUrl(thumbSrc) : null });
   }
 
   function sendChat() {
