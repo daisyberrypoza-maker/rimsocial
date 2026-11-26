@@ -294,6 +294,9 @@ async function start() {
   if (!userColumns.termsAcceptedAt) {
     await qi.addColumn('users', 'termsAcceptedAt', { type: DataTypes.DATE, allowNull: true });
   }
+  if (!userColumns.storyReplySetting) {
+    await qi.addColumn('users', 'storyReplySetting', { type: DataTypes.ENUM('everyone', 'friends', 'off'), allowNull: false, defaultValue: 'everyone' });
+  }
   await sequelize.query(`CREATE TABLE IF NOT EXISTS message_reports (
     id CHAR(36) NOT NULL PRIMARY KEY,
     messageId CHAR(36) NOT NULL,
