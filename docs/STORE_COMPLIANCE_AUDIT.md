@@ -12,10 +12,10 @@ Audit baseline: 2026-11-26. This document distinguishes repository evidence from
 ## Repository audit findings — not yet compliant
 
 - **Account deletion:** No authenticated in-app account deletion endpoint or settings flow was found. Do not treat logout or deleting a conversation as account deletion.
-- **Terms/EULA:** No user-facing Terms of Service/EULA acceptance record or posting gate was found. The app must present the applicable terms and record acceptance before a user first publishes UGC.
+- **Terms/EULA:** Signup screens display a sentence saying the user agrees to Terms and Privacy Policy, but no working terms/privacy links, persisted acceptance record or pre-publication UGC gate was found. The app must present the applicable terms and record acceptance before a user first publishes UGC.
 - **Message reporting:** Post and profile reporting routes/UI exist. A dedicated report action for abusive direct messages was not verified.
 - **Moderation operations:** Reporting persistence exists, but the release tracker still calls out the moderation review queue, enforcement history and appeals as incomplete. Blocking is implemented and blocked users are excluded from multiple discovery/content paths; end-to-end regression tests are still required.
-- **Native iOS target:** The repository has no committed `ios/` project or Capacitor iOS directory. The new workflow compiles a generated temporary React Native iOS project using the checked-in JS source; it does not create a maintained native iOS project in the repository.
+- **Native iOS target:** The repository has no committed `ios/` project or Capacitor iOS directory. The new workflow compiles a generated temporary React Native iOS project using the checked-in JS source; it does not create a maintained native iOS project in the repository. Web login currently exposes Google sign-in when an OAuth client ID is configured; the native mobile login only displays a notice and does not implement Google sign-in.
 - **Tablet and safe areas:** React Native screens use safe-area insets in several places, but a full 768–1024px tablet and physical notch/home-indicator audit has not been completed.
 - **Sign in with Apple:** The mobile README says Google sign-in is not implemented in the React Native app. The web authentication providers and any iOS third-party login availability must be checked before submission; if third-party social login is offered in the iOS app, implement Sign in with Apple or document a valid Guideline 4.8 exception.
  
@@ -26,6 +26,6 @@ Audit baseline: 2026-11-26. This document distinguishes repository evidence from
 - Implement and test message reporting, moderation review, user blocking across feeds, search, stories, comments, groups and DMs, and safety escalation/contact details.
 - Complete Apple App Privacy disclosures and Google Play Data Safety declarations to match actual collection, sharing, retention, deletion and SDK behavior.
 - Complete Play Console UGC declarations, child-safety/target-audience settings, content rating, app access instructions and any required testing declarations.
-- Verify the iOS login methods and add Sign in with Apple where Guideline 4.8 requires it.
+- Verify whether Google sign-in or another third-party login is enabled in the iOS app; if so, implement Sign in with Apple unless a documented Guideline 4.8 exception applies. The current native login does not implement Google sign-in.
 - Create/maintain a real iOS project, configure signing, app capabilities, bundle registration, screenshots, age rating, export compliance and TestFlight review.
 - Run physical-device tests for camera/microphone/photo permissions, safe areas, iPad layouts, account deletion, reporting, blocking and UGC terms acceptance before submission.
