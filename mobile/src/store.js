@@ -23,6 +23,8 @@ export const useAppStore = create(
       storyDiscover: EMPTY_DISCOVER,
       storyCache: {},     // { [userId]: { items, updatedAt } } so stories open instantly
       pendingUpload: null, // not saved: { kind: 'post' | 'story', thumb, mediaKind } while an upload runs
+      // Music state is global to the app, not the picker screen. Signed stream URLs are never persisted.
+      music: { tab: 'featured', query: '', lists: {}, scrollOffset: 0, activeTrack: null, playbackUrls: [], playbackIndex: 0, playing: false },
 
       setOffline: (offline) => { if (get().offline !== offline) set({ offline }); },
       setSession: (token, user) => set({ token, user }),
@@ -41,6 +43,7 @@ export const useAppStore = create(
         storyCache: { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, 10), updatedAt: Date.now() } },
       })),
       setPendingUpload: (pendingUpload) => set({ pendingUpload }),
+      setMusic: (patch) => set((s) => ({ music: { ...s.music, ...patch } })),
     }),
     {
       name: 'rimsocial-app',
@@ -56,6 +59,7 @@ export const useAppStore = create(
         storyRailAt: s.storyRailAt,
         storyDiscover: s.storyDiscover,
         storyCache: s.storyCache,
+        music: { ...s.music, playbackUrls: [], playbackIndex: 0, playing: false },
         feeds: Object.fromEntries(
           Object.entries(s.feeds).map(([key, f]) => {
             const trimmed = (f.items || []).length > PERSIST_ITEMS;
