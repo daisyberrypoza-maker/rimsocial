@@ -1,0 +1,66 @@
+name: Verify RimSocial iOS and iPad build
+
+on:
+  push:
+    branches: [main, 'compliance/**']
+    paths:
+      - 'mobile/**'
+      - 'frontend/capacitor.config.json'
+      - 'frontend/ios/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'frontend/capacitor.config.json'
+      - 'frontend/ios/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-simulator-build:
+    name: Unsigned iOS and iPad simulator build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Generate React Native iOS project
+        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --package-name com.clipverse.app --skip-install --directory "$RUNNER_TEMP/RimSocial"
+      - name: Apply app source and dependencies
+        run: |
+          cp mobile/App.js "$RUNNER_TEMP/RimSocial/App.js"
+          cp mobile/index.js "$RUNNER_TEMP/RimSocial/index.js"
+          rm -rf "$RUNNER_TEMP/RimSocial/src"
+          cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
+          node - "$RUNNER_TEMP/RimSocial/package.json" mobile/package.json <<'NODE'
+          const fs = require('fs');
+          const [targetPath, sourcePath] = process.argv.slice(2);
+          const target = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
+          const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+          target.dependencies = Object.assign({}, target.dependencies, source.dependencies);
+          target.devDependencies = Object.assign({}, target.devDependencies, source.devDependencies);
+          target.devDependencies['@react-native-community/cli'] = target.devDependencies['@react-native-community/cli'] || '^13.6.9';
+          fs.writeFileSync(targetPath, JSON.stringify(target, null, 2) + '\n');
+          NODE
+          cd "$RUNNER_TEMP/RimSocial"
+          npm install --no-audit --no-fund
+      - name: Apply App Store permission strings and tablet support
+        run: |
+          PLIST="$RUNNER_TEMP/RimSocial/ios/RimSocial/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string RimSocial uses the camera to take photos and record videos for posts, stories and messages." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string RimSocial uses the microphone to record video sound and voice messages." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string RimSocial accesses selected photos and videos for posts, stories and messages." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string RimSocial saves media you choose to export to your photo library." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+          grep -q 'TARGETED_DEVICE_FAMILY = "1,2"' "$RUNNER_TEMP/RimSocial/ios/RimSocial.xcodeproj/project.pbxproj"
+      - name: Install CocoaPods
+        run: cd "$RUNNER_TEMP/RimSocial/ios" && pod install
+      - name: Build unsigned iOS simulator app
+        run: |
+          cd "$RUNNER_TEMP/RimSocial/ios"
+          xcodebuild -workspace RimSocial.xcworkspace -scheme RimSocial -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
