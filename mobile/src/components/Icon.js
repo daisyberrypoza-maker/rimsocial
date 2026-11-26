@@ -17,7 +17,7 @@ const ICONS = {
   sort: ArrowDownUp, pause: Pause, 'volume-2': Volume2, 'volume-x': VolumeX, 'more-vertical': MoreVertical,
   pencil: Pencil, trash: Trash2, image: ImageIcon, 'map-pin': MapPin,
   // Tab icons: Stories is a pair of cards, Rimlight a filled play shape (drawn like the web BottomNav)
-  stories: GalleryHorizontal, rimlight: Play,
+  stories: GalleryHorizontal, rimlight: Play, 'file-text': FileText,
 };
 
 // filled: solid shape (active tab, right-side controls on Rimlight); otherwise outline
