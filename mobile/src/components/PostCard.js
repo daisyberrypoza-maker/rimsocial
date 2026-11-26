@@ -424,7 +424,7 @@ export default function PostCard({ post, active, focused, navigation, height, sc
   function share() {
     setShowMenu(false);
     const thumbSrc = post.thumbUrl || (isVideo ? null : post.mediaUrl);
-    navigation.navigate('SendTo', { url: postShareUrl(post.id), caption: post.caption || '', thumb: thumbSrc ? mediaUrl(thumbSrc) : null });
+    navigation.navigate('SendTo', { source: 'rimlight', url: postShareUrl(post.id), caption: post.caption || '', thumb: thumbSrc ? mediaUrl(thumbSrc) : null });
   }
 
   async function notInterested() {
