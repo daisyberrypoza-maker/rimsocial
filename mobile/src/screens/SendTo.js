@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   sectionTitle2: { fontSize: 16, fontWeight: '600', color: '#000', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6 },
   newStory: { height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#f1f1f1', flexDirection: 'row', alignItems: 'center', gap: 4 },
   newStoryText: { fontSize: 15, fontWeight: '600', color: '#000' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, minHeight: 64, borderBottomWidth: 1, borderBottomColor: '#e8e8e8' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, minHeight: 64, width: '100%', borderRadius: 0, borderBottomWidth: 1, borderBottomColor: '#e8e8e8', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 } },
   storyAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   nameWrap: { flex: 1, minWidth: 0 },
   name: { fontSize: 16, fontWeight: '600', color: '#000' },
