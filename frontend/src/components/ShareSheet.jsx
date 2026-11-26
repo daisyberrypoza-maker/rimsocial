@@ -37,7 +37,7 @@ function SocialLogo({ kind }) {
   return <svg width="24" height="24" viewBox={logo.viewBox} fill="currentColor" aria-hidden="true"><path d={logo.d} /></svg>;
 }
 
-export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAddToStory, imageUrl, imageName = 'rimsocial.jpg' }) {
+export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAddToStory, imageUrl, imageName = 'rimsocial.jpg', source = 'post' }) {
   const me = useAppStore((s) => s.me);
   const [friends, setFriends] = useState([]);
   const [people, setPeople] = useState([]);
@@ -47,6 +47,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   const [message, setMessage] = useState('');
   // The story row ("My Story") is off by default so nothing is posted by accident; turn it on to add this to your story
   const [storySelected, setStorySelected] = useState(false);
+  const [destination, setDestination] = useState(null);
 
   // Escape: clears the search text first, then closes the page. The latest onClose is read from a ref,
   // so the listener is registered once.
@@ -189,13 +190,13 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
       </header>
 
       <div className="sf-people" role="list">
-        {!query.trim() && (
+        {!query.trim() && source !== 'story' && (
           <div className="sf-section-head">
             <h2>Post to…</h2>
             {onAddToStory && <button type="button" className="sf-new-story" onClick={onAddToStory}><Icon name="plus" size={18} /> New Story</button>}
           </div>
         )}
-        {!query.trim() && onAddToStory && (
+        {!query.trim() && onAddToStory && source !== 'story' && source !== 'rimlight' && (
           <button type="button" role="listitem" className={storySelected ? 'sf-person sf-story on' : 'sf-person sf-story'} onClick={() => setStorySelected(!storySelected)} aria-pressed={storySelected} disabled={sending}>
             <span className="sf-story-avatar" aria-hidden="true">{imageUrl && !imageName.endsWith('mp4') ? <img src={imageUrl} alt="" /> : <Icon name="image" size={16} />}</span>
             <span className="sf-name">
@@ -205,6 +206,20 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
             <span className="sf-time"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>24h</span>
             <span className={storySelected ? 'sf-radio on' : 'sf-radio'} aria-hidden="true" />
           </button>
+        )}
+        {!query.trim() && source === 'rimlight' && (
+          <>
+            <h2 className="sf-section-title">Post to…</h2>
+            <button type="button" role="listitem" className={destination === 'story-friends' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'story-friends' ? null : 'story-friends')} aria-pressed={destination === 'story-friends'}>
+              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Friends only</strong><small>Just for Friends</small></span><span className={destination === 'story-friends' ? 'sf-radio on' : 'sf-radio'} />
+            </button>
+            <button type="button" role="listitem" className={destination === 'story-public' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'story-public' ? null : 'story-public')} aria-pressed={destination === 'story-public'}>
+              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destination === 'story-public' ? 'sf-radio on' : 'sf-radio'} />
+            </button>
+            <button type="button" role="listitem" className={destination === 'spotlight' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'spotlight' ? null : 'spotlight')} aria-pressed={destination === 'spotlight'}>
+              <span className="sf-story-avatar"><Icon name="clapperboard" size={16} /></span><span className="sf-name"><strong>My Spotlight · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destination === 'spotlight' ? 'sf-radio on' : 'sf-radio'} />
+            </button>
+          </>
         )}
         {!query.trim() && <h2 className="sf-section-title">Recents &amp; Suggested</h2>}
         {shownPeople.length ? shownPeople.map((user) => {
@@ -222,7 +237,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         }) : <p className="sf-empty">{query.trim() ? 'No one found.' : 'Friends you follow and people you chat with appear here.'}</p>}
       </div>
 
-      {(picked.length > 0 || storySelected) && (
+      {(picked.length > 0 || storySelected || destination) && (
         <div className="sf-sendbar">
           <div className="sf-compose-row">
             {imageUrl && <span className="sf-thumb" aria-hidden="true"><img src={imageUrl} alt="" /></span>}
@@ -234,6 +249,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
             <button type="button" className="sf-dots" aria-label="Clear selected people" onClick={() => { setPicked([]); setStorySelected(false); }} disabled={sending}>•••</button>
             <div className="sf-chips" role="list" aria-label="Selected recipients">
               {storySelected && <span className="sf-chip" role="listitem"><Icon name="image" size={14} /> My Story</span>}
+              {destination && <span className="sf-chip" role="listitem">{destination === 'story-friends' ? 'My Story · Friends only' : destination === 'story-public' ? 'My Story · Public' : 'My Spotlight · Public'}</span>}
               {pickedNames.map((name, index) => <span className="sf-chip" role="listitem" key={`${name}-${index}`}>{name}</span>)}
             </div>
             <button type="button" className="sf-send" onClick={sendAll} disabled={!canSend} aria-label={sending ? 'Sending' : `Send to ${picked.length + (storySelected ? 1 : 0)}`}>
