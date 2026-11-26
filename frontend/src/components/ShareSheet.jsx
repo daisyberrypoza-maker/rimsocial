@@ -47,7 +47,16 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   const [message, setMessage] = useState('');
   // The story row ("My Story") is off by default so nothing is posted by accident; turn it on to add this to your story
   const [storySelected, setStorySelected] = useState(false);
-  const [destination, setDestination] = useState(null);
+  const [destinations, setDestinations] = useState([]);
+  function toggleDestination(key) {
+    setDestinations((current) => {
+      const next = current.filter((value) => value !== key);
+      if (current.includes(key)) return next;
+      if (key === 'story-friends') return [...next.filter((value) => value !== 'story-public'), key];
+      if (key === 'story-public') return [...next.filter((value) => value !== 'story-friends'), key];
+      return [...next, key];
+    });
+  }
 
   // Escape: clears the search text first, then closes the page. The latest onClose is read from a ref,
   // so the listener is registered once.
@@ -109,7 +118,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     if (sending) return;
     const body = message.trim();
     const wantsStory = storySelected && Boolean(onAddToStory);
-    if (!picked.length && !wantsStory) return;
+    if (!picked.length && !wantsStory && !destinations.length) return;
     if (picked.length && !imageUrl && !url && !body) { toast('This post has no public link yet'); return; }
     setSending(true);
     try {
@@ -137,7 +146,18 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         }
         toast(`Sent to ${picked.length}`);
       }
+      const postId = url?.match(/\/p\/([^/?#]+)/)?.[1] || null;
+      if (destinations.length) {
+        if (!postId) throw new Error('This Rimlight post cannot be published from Send To');
+        const payloads = destinations.map((key) => key === 'story-friends'
+          ? { destination: 'story', visibility: 'friends_only', expiresInHours: 24 }
+          : key === 'story-public'
+            ? { destination: 'story', visibility: 'public', expiresInHours: 24 }
+            : { destination: 'spotlight', visibility: 'public', expiresInHours: null });
+        await Promise.all(payloads.map((payload) => api(`/v1/posts/${postId}/publish`, { method: 'POST', body: payload })));
+      }
       setPicked([]);
+      setDestinations([]);
       setMessage('');
       if (wantsStory) onAddToStory();
     } catch (e) {
@@ -176,7 +196,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   }
 
   const pickedNames = picked.map((user) => user.displayName || user.username);
-  const canSend = (picked.length > 0 || (storySelected && Boolean(onAddToStory))) && !sending;
+  const canSend = (picked.length > 0 || (storySelected && Boolean(onAddToStory)) || destinations.length > 0) && !sending;
 
   return (
     <div className="sf-page" role="dialog" aria-modal="true" aria-label="Share">
@@ -209,14 +229,14 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         )}
         {!query.trim() && source === 'rimlight' && (
           <>
-            <button type="button" role="listitem" className={destination === 'story-friends' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'story-friends' ? null : 'story-friends')} aria-pressed={destination === 'story-friends'}>
-              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Friends only</strong><small>Just for Friends</small></span><span className={destination === 'story-friends' ? 'sf-radio on' : 'sf-radio'} />
+            <button type="button" role="listitem" className={destinations.includes('story-friends') ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => toggleDestination('story-friends')} aria-pressed={destinations.includes('story-friends')}>
+              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Friends Only</strong><small>Just for Friends</small></span><span className={destinations.includes('story-friends') ? 'sf-radio on' : 'sf-radio'} />
             </button>
-            <button type="button" role="listitem" className={destination === 'story-public' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'story-public' ? null : 'story-public')} aria-pressed={destination === 'story-public'}>
-              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destination === 'story-public' ? 'sf-radio on' : 'sf-radio'} />
+            <button type="button" role="listitem" className={destinations.includes('story-public') ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => toggleDestination('story-public')} aria-pressed={destinations.includes('story-public')}>
+              <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destinations.includes('story-public') ? 'sf-radio on' : 'sf-radio'} />
             </button>
-            <button type="button" role="listitem" className={destination === 'spotlight' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'spotlight' ? null : 'spotlight')} aria-pressed={destination === 'spotlight'}>
-              <span className="sf-story-avatar"><Icon name="clapperboard" size={16} /></span><span className="sf-name"><strong>My Spotlight · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destination === 'spotlight' ? 'sf-radio on' : 'sf-radio'} />
+            <button type="button" role="listitem" className={destinations.includes('spotlight') ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => toggleDestination('spotlight')} aria-pressed={destinations.includes('spotlight')}>
+              <span className="sf-story-avatar"><Icon name="clapperboard" size={16} /></span><span className="sf-name"><strong>My Spotlight · Public</strong><small>Friends, Followers and Everyone</small></span><span className={destinations.includes('spotlight') ? 'sf-radio on' : 'sf-radio'} />
             </button>
           </>
         )}
@@ -236,7 +256,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         }) : <p className="sf-empty">{query.trim() ? 'No one found.' : 'Friends you follow and people you chat with appear here.'}</p>}
       </div>
 
-      {(picked.length > 0 || storySelected || destination) && (
+      {(picked.length > 0 || storySelected || destinations.length > 0) && (
         <div className="sf-sendbar">
           <div className="sf-compose-row">
             {imageUrl && <span className="sf-thumb" aria-hidden="true"><img src={imageUrl} alt="" /></span>}
@@ -245,10 +265,10 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
             </label>
           </div>
           <div className="sf-recipient-row">
-            <button type="button" className="sf-dots" aria-label="Clear selected people" onClick={() => { setPicked([]); setStorySelected(false); }} disabled={sending}>•••</button>
+            <button type="button" className="sf-dots" aria-label="Clear selected people" onClick={() => { setPicked([]); setStorySelected(false); setDestinations([]); }} disabled={sending}>•••</button>
             <div className="sf-chips" role="list" aria-label="Selected recipients">
               {storySelected && <span className="sf-chip" role="listitem"><Icon name="image" size={14} /> My Story</span>}
-              {destination && <span className="sf-chip" role="listitem">{destination === 'story-friends' ? 'My Story · Friends only' : destination === 'story-public' ? 'My Story · Public' : 'My Spotlight · Public'}</span>}
+              {destinations.map((key) => <span className="sf-chip" role="listitem" key={key}>{key === 'story-friends' ? 'My Story · Friends Only' : key === 'story-public' ? 'My Story · Public' : 'My Spotlight · Public'}</span>)}
               {pickedNames.map((name, index) => <span className="sf-chip" role="listitem" key={`${name}-${index}`}>{name}</span>)}
             </div>
             <button type="button" className="sf-send" onClick={sendAll} disabled={!canSend} aria-label={sending ? 'Sending' : `Send to ${picked.length + (storySelected ? 1 : 0)}`}>
