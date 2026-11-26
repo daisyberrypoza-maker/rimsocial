@@ -6,7 +6,7 @@ import { mediaUrl } from '../config';
 import { logError, toast } from '../lib/toast';
 import { useAppStore } from '../store';
 
-const TABS = [['featured', 'For You'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original']];
+const TABS = [['featured', 'For You'], ['trending', 'Trending'], ['original', 'Original']];
 const PAGE_SIZE = 30;
 
 function formatDuration(seconds) {
@@ -30,7 +30,6 @@ export default function MusicPicker({ navigation, route }) {
   const [busy, setBusy] = useState(false);
   const [paging, setPaging] = useState(false);
   const listRef = useRef(null);
-  const [saved, setSaved] = useState([]);
   const tab = music?.tab || 'featured';
   const query = music?.query || '';
   const cache = music?.lists?.[tab] || { items: [], nextOffset: 0, hasMore: true };
@@ -76,7 +75,7 @@ export default function MusicPicker({ navigation, route }) {
   }
 
   async function loadMore() {
-    if (paging || busy || !cache.hasMore || tab === 'saved') return;
+    if (paging || busy || !cache.hasMore) return;
     setPaging(true);
     try {
       const next = await fetchPage(tab, query, cache.nextOffset || 0);
@@ -134,7 +133,7 @@ export default function MusicPicker({ navigation, route }) {
     );
   }
 
-  const visibleItems = tab === 'saved' ? saved : items;
+  const visibleItems = items;
   return (
     <View style={styles.page}>
       <View style={styles.top}>
