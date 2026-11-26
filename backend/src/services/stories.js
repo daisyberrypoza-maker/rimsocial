@@ -157,8 +157,9 @@ async function getUserStories(userId, viewerId) {
   stories.reverse();
   // Resolve reshared-story attribution in one bounded lookup, not one query per story.
   const sourceIds = [...new Set(stories.map((story) => story.sourcePostId).filter(Boolean).map(String))];
+  // Attribution only shows an original that is still public and live. A private, removed or expired original shows nothing.
   const sourcePosts = sourceIds.length ? await Post.findAll({
-    where: { id: sourceIds },
+    where: { id: sourceIds, visibility: 'public', status: 'live' },
     attributes: ['id', 'authorId'],
     raw: true,
   }) : [];
@@ -169,7 +170,12 @@ async function getUserStories(userId, viewerId) {
     raw: true,
   }) : [];
   const sourceAuthorById = new Map(sourceAuthors.map((author) => [String(author.id), author]));
-  const sourceByPostId = new Map(sourcePosts.map((post) => [String(post.id), sourceAuthorById.get(String(post.authorId)) || null]));
+  // Someone the viewer has blocked, or who has blocked the viewer, is not shown as the source
+  const blockedForViewer = viewerId ? await blockedUserIds(viewerId) : new Set();
+  const sourceByPostId = new Map(sourcePosts.map((post) => {
+    const author = sourceAuthorById.get(String(post.authorId)) || null;
+    return [String(post.id), author && !blockedForViewer.has(String(author.id)) ? author : null];
+  }));
   const ids = stories.map((s) => s.id);
   const viewed = await viewedSet(viewerId, ids);
   // If migration 026 has not run yet, stories still load without like state instead of failing.
