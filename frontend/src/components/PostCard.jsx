@@ -512,7 +512,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
       {reposted && <div className="snap-repost-pill"><Icon name="repeat" size={14} /> You reposted</div>}
       {post.topic && <div className="topic-chip" aria-label={`Topic: ${post.topic}`}><Icon name="pencil" size={14} /> From <strong>{post.topic}</strong></div>}
       <div className="snap-title"><strong>{post.author?.displayName || username}</strong>{post.author?.isCreator && <Icon name="badge-check" size={16} />}{!isOwnPost && !post.isSponsored && !following && post.author?.id !== viewerId && <button className="snap-follow-pill" onClick={followAuthor} disabled={followBusy} aria-label={`Follow @${username}`}>Follow</button>}</div>
-      <div className="snap-sound">♫ Original sound · @{username}</div>
+      {post.musicTitle ? <div className="snap-sound snap-music-credit">{post.artworkUrl && <img src={post.artworkUrl} alt="" />}<span>♫ {post.musicTitle}{post.artistName ? ` · ${post.artistName}` : ''}</span></div> : <div className="snap-sound">♫ Original sound · @{username}</div>}
       {post.caption && <Caption text={post.caption} onHashtag={(tag) => navigate(`/explore?q=${encodeURIComponent(`#${tag}`)}`)} onMention={(name) => navigate(`/u/${encodeURIComponent(name)}`)} />}
       {post.sourcePostId && <div className="remix-attribution" aria-label="Remix source">
         Remixed from <AppLink href={`/p/${encodeURIComponent(post.sourcePostId)}`}>original post</AppLink>
