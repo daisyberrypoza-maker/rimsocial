@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, Pressable, FlatList, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
 import { ArrowLeft, Play, Pause, Plus, Shuffle, Search, Bookmark } from 'lucide-react-native';
 import { api } from '../api';
@@ -29,11 +29,16 @@ export default function MusicPicker({ navigation, route }) {
   const setMusic = useAppStore((s) => s.setMusic);
   const [busy, setBusy] = useState(false);
   const [paging, setPaging] = useState(false);
+  const listRef = useRef(null);
   const [saved, setSaved] = useState([]);
   const tab = music?.tab || 'featured';
   const query = music?.query || '';
   const cache = music?.lists?.[tab] || { items: [], nextOffset: 0, hasMore: true };
   const items = cache.items || [];
+
+  useEffect(() => {
+    if (listRef.current && music?.scrollOffset > 0) listRef.current.scrollToOffset({ offset: music.scrollOffset, animated: false });
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -149,6 +154,7 @@ export default function MusicPicker({ navigation, route }) {
       </View>
       {busy && !visibleItems.length ? <ActivityIndicator style={styles.loading} color="#fff" /> : (
         <FlatList
+          ref={listRef}
           data={visibleItems}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderRow}
