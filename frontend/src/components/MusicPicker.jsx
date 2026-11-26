@@ -129,13 +129,19 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     }
   }
 
-  function choose(item) {
-    stopPreview();
+  // Bookmark: save or unsave the sound for the Saved tab only. It does not change the story's sound.
+  function toggleSave(item) {
     setSavedItems((current) => {
-      const updated = [item, ...current.filter((entry) => String(entry.id) !== String(item.id))];
+      const exists = current.some((entry) => String(entry.id) === String(item.id));
+      const updated = exists ? current.filter((entry) => String(entry.id) !== String(item.id)) : [item, ...current];
       try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
       return updated;
     });
+  }
+
+  // Use: choose this sound for the story (separate from saving)
+  function choose(item) {
+    stopPreview();
     // No stored link: the story player fetches a fresh one when it plays
     onSelect(item);
   }
@@ -170,6 +176,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
           const selected = selectedId === item.id;
+          const saved = savedItems.some((entry) => String(entry.id) === String(item.id));
           const playing = playingId === item.id;
           return (
             <li key={item.id} className={selected ? 'mp-row on' : 'mp-row'}>
@@ -183,8 +190,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
                   <span className="mp-meta">{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
                 </span>
               </button>
-              <button type="button" className={selected ? 'mp-save on' : 'mp-save'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
-                <Icon name={selected ? 'bookmark-check' : 'bookmark'} size={26} />
+              <button type="button" className={saved ? 'mp-save on' : 'mp-save'} onClick={() => toggleSave(item)} aria-pressed={saved} aria-label={saved ? `Remove ${item.title} from saved` : `Save ${item.title}`}>
+                <Icon name={saved ? 'bookmark-check' : 'bookmark'} size={26} />
+              </button>
+              <button type="button" className={selected ? 'mp-use on' : 'mp-use'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
+                {selected ? 'Selected' : 'Use'}
               </button>
             </li>
           );
