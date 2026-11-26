@@ -7,11 +7,11 @@ const base = process.env.GITHUB_ACTIONS === 'true' ? '/rimsocial/' : '/';
 
 // In dev, API and uploads go to the Express server on port 3000
 // Short commit id of the build, shown at the bottom of the Your algorithm page so you can tell which version a device is running.
-const build = process.env.GITHUB_SHA ? process.env.GITHUB_SHA.slice(0, 7) : 'local';
+const build = process.env.VITE_GIT_COMMIT || process.env.GITHUB_SHA || 'local';
 
 export default defineConfig({
   base,
-  define: { __APP_BUILD__: JSON.stringify(build) },
+  define: { __APP_BUILD__: JSON.stringify(build), 'import.meta.env.VITE_GIT_COMMIT': JSON.stringify(build) },
   plugins: [react()],
   server: {
     port: 5173,
