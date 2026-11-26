@@ -138,9 +138,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         </button>
       </header>
 
+      <section className="mp-panel">
+      <div className="mp-handle" aria-hidden="true"><span /></div>
       <label className="mp-search">
         <Icon name="search" size={19} />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search sounds and artists" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search..." aria-label="Search sounds and artists" />
       </label>
 
       <nav className="mp-chips" role="tablist" aria-label="Sound sources">
@@ -184,6 +186,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         </button>
         <input ref={fileRef} type="file" accept="audio/*" hidden onChange={createSound} />
       </footer>
+      </section>
     </div>
   );
 }
