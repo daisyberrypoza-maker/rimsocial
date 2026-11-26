@@ -231,3 +231,17 @@
 .ig-create .ig-create-modes button { padding-left: 9px; padding-right: 9px; font-size: 13px; white-space: nowrap; }
 .ig-create .ig-music-bar { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
 .ig-create .ig-music-btn { color: #fff !important; background: transparent !important; }
+
+/* Reference-matched Add to story gallery header and mode strip. */
+.ig-create .ig-create-top { height: 64px; min-height: 64px; padding: 0 16px; background: #000; }
+.ig-create .ig-create-heading { flex: 1; margin: 0; color: #fff; text-align: center; font-size: 19px; font-weight: 600; }
+.ig-create .ig-create-gear { width: 40px; height: 40px; display: grid; place-items: center; padding: 4px; border: 0; background: transparent !important; color: #fff !important; box-shadow: none; }
+.ig-create .ig-create-modes { flex: none; justify-content: space-around; gap: 0; padding: 4px 12px 12px; background: #000; }
+.ig-create .ig-create-modes button { flex: 1; padding: 10px 5px; border-radius: 0; color: #aeb0b5 !important; font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.ig-create .ig-create-modes button.on { color: #fff !important; background: transparent !important; box-shadow: inset 0 -2px #fff; }
+.ig-create .ig-create-sub { padding: 8px 16px; }
+.ig-create .ig-create-source { font-size: 16px; }
+.ig-create .ig-music-bar { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+.ig-create .ig-music-disc { width: 44px; height: 44px; border-radius: 7px; overflow: hidden; }
+.ig-create .ig-music-text strong { font-size: 15px; }
+.ig-create .ig-music-text small { font-size: 14px; }
