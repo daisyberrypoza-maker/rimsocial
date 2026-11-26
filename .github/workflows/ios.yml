@@ -77,7 +77,7 @@ jobs:
           if 'TARGETED_DEVICE_FAMILY = "1,2";' not in project:
               project = project.replace('PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;', 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;\n\t\t\t\tTARGETED_DEVICE_FAMILY = "1,2";')
           project_path.write_text(project)
-          plists = [p for p in ios_root.rglob('Info.plist') if 'Tests' not in p.parts]
+          plists = [p for p in ios_root.rglob('Info.plist') if not any('Tests' in part for part in p.parts)]
           assert plists, 'App Info.plist not found'
           plist_path = plists[0]
           with plist_path.open('rb') as source:
