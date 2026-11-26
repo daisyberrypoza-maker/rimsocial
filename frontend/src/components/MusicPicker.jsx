@@ -111,9 +111,15 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       form.append('media', file);
       form.append('title', file.name.replace(/\.[^.]+$/, '').slice(0, 80) || 'My sound');
       const track = await api('/v1/audio', { method: 'POST', body: form });
-      setChip('featured');
-      setItems((list) => [track, ...list]);
-      onSelect(track);
+      const createdTrack = { ...track, source: 'local', isCreated: true };
+      setSavedItems((current) => {
+        const updated = [createdTrack, ...current.filter((entry) => String(entry.id) !== String(createdTrack.id))];
+        try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      setChip('saved');
+      setItems((list) => [createdTrack, ...list.filter((entry) => String(entry.id) !== String(createdTrack.id))]);
+      onSelect(createdTrack);
     } catch (error) {
       logError(error);
       toast(error?.message || 'Could not add this sound. Use an MP3, M4A, AAC, WAV or OGG file');
@@ -122,13 +128,20 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     }
   }
 
-  function choose(item) {
-    stopPreview();
+  function toggleSaved(item) {
     setSavedItems((current) => {
-      const updated = [item, ...current.filter((entry) => String(entry.id) !== String(item.id))];
+      const exists = current.some((entry) => String(entry.id) === String(item.id));
+      const updated = exists
+        ? current.filter((entry) => String(entry.id) !== String(item.id))
+        : [{ ...item }, ...current];
       try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
+      if (chip === 'saved') setItems(updated);
       return updated;
     });
+  }
+
+  function choose(item) {
+    stopPreview();
     onSelect(item.source === 'audius' ? { ...item, previewUrl: streamUrlsRef.current.get(item.id) || null } : item);
   }
 
@@ -161,8 +174,9 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         {chip === 'saved' && items.length === 0 && <li className="mp-empty">No saved sounds yet.</li>}
         {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
-          const selected = selectedId === item.id;
-          const playing = playingId === item.id;
+          const selected = String(selectedId) === String(item.id);
+          const playing = String(playingId) === String(item.id);
+          const saved = savedItems.some((entry) => String(entry.id) === String(item.id));
           return (
             <li key={item.id} className={selected ? 'mp-row on' : 'mp-row'}>
               <button type="button" className="mp-row-main" onClick={() => togglePreview(item)} aria-label={playing ? `Pause ${item.title}` : `Play ${item.title}`}>
@@ -175,8 +189,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
                   <span className="mp-meta">{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
                 </span>
               </button>
-              <button type="button" className={selected ? 'mp-save on' : 'mp-save'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
-                <Icon name={selected ? 'bookmark-check' : 'bookmark'} size={26} />
+              <button type="button" className={saved ? 'mp-save on' : 'mp-save'} onClick={() => toggleSaved(item)} aria-pressed={saved} aria-label={saved ? `Remove ${item.title} from saved music` : `Save ${item.title}`}>
+                <Icon name={saved ? 'bookmark-check' : 'bookmark'} size={24} />
+              </button>
+              <button type="button" className="mp-use" onClick={() => choose(item)} aria-label={`Use ${item.title} for your story`}>
+                <Icon name="plus" size={22} />
               </button>
             </li>
           );
