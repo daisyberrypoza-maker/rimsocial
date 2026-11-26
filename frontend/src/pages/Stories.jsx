@@ -15,6 +15,7 @@ import Avatar from '../components/Avatar.jsx';
 import { logError } from '../toast.js';
 import { formatCount } from '../lib/format.js';
 import { setPageStatusColor } from '../lib/statusBar.js';
+import RimlightBadge from '../components/RimlightBadge.jsx';
 
 function nameOf(user) {
   return user?.displayName || user?.username || 'Creator';
@@ -398,6 +399,7 @@ export default function Stories() {
                     <img className="st-card-img st-card-foreground" src={discoverStorySrc(story)} alt="" />
                   </>}
                 <span className="st-card-shade" />
+                <RimlightBadge rating={story.rating} />
                 <span className="st-type-badge" aria-label="Rimlight"><Icon name="play" size={14} /></span>
                 {(story.viewed || viewedDiscoverIds.has(String(story.id))) && <span className="st-watch-again"><Icon name="refresh-cw" size={18} style={{ color: "#b8b8b8" }} /><strong>@{capName(story.author?.username || nameOf(story.author || {}))}</strong></span>}
                 {story.caption && <span className="st-discover-headline">{capHeadline(story.caption)}</span>}

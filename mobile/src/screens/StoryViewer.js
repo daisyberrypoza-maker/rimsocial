@@ -389,7 +389,7 @@ export default function StoryViewer() {
 
   function shareStory() {
     setSheet(null);
-    Share.share({ title: 'RimSocial Story', message: `View ${creatorName}'s story on RimSocial` }).catch(logError);
+    navigation.navigate('SendTo', { storyId: current?.id || null, caption: `${creatorName}'s story on RimSocial` });
   }
 
   function sendChat() {

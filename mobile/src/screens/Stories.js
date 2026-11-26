@@ -12,6 +12,7 @@ import { useAppStore } from '../store';
 import { mediaUrl } from '../config';
 import { logError } from '../lib/toast';
 import { colors, SIDE } from '../theme';
+import RimlightBadge from '../components/RimlightBadge';
 
 // Snapchat reference: Avenir-style type where the device has it
 const FONT = Platform.OS === 'ios' ? 'Avenir Next' : undefined;
@@ -184,6 +185,7 @@ export default function Stories() {
               <Pressable key={`sp-${post.id}`} style={styles.big} onPress={() => navigation.navigate('PostDetail', { postId: post.id })} accessibilityLabel={`Sponsored: ${post.sponsorName || 'ad'}`}>
                 <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.fill} />
                 <Scrim />
+                <RimlightBadge rating={post.rating} />
                 <View style={styles.sponsoredTag}><Text style={styles.sponsoredText}>Sponsored</Text></View>
                 <Text style={styles.cardName} numberOfLines={2}>{post.sponsorName || post.author?.username}</Text>
                 <View style={styles.cta}><Text style={styles.ctaText}>{post.sponsorCta || 'Learn more'}</Text></View>

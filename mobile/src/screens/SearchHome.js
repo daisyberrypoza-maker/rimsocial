@@ -9,6 +9,7 @@ import { logError } from '../lib/toast';
 import { formatCount } from '../lib/format';
 import { mediaUrl } from '../config';
 import { colors } from '../theme';
+import RimlightBadge from '../components/RimlightBadge';
 
 // Search tab, as in the reference: search box with Cancel, then Find Friends (with View More),
 // Follow a Snap Star (creators to add) and Watch a show (trending videos). Typing shows matching people and hashtags.
@@ -125,6 +126,7 @@ export default function SearchHome() {
                   {watch.map((post) => (
                     <Pressable key={`w-${post.id}`} style={styles.tile} onPress={() => navigation.navigate('ExploreWatch', { postId: post.id })}>
                       <Image source={{ uri: mediaUrl(post.thumbUrl || post.mediaUrl) }} style={styles.fill} />
+                      <RimlightBadge rating={post.rating} />
                     </Pressable>
                   ))}
                 </ScrollView>

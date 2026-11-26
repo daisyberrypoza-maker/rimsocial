@@ -9,6 +9,7 @@ import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { formatCount } from '../lib/format.js';
 import { logError } from '../toast.js';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
+import RimlightBadge from '../components/RimlightBadge.jsx';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
@@ -188,6 +189,7 @@ export default function Search() {
                   : post.kind === 'video'
                   ? <video src={mediaUrl(post.mediaUrl)} poster={post.thumbUrl ? mediaUrl(post.thumbUrl) : undefined} muted playsInline preload="metadata" />
                   : <img src={mediaUrl(post.thumbUrl || post.mediaUrl)} alt="" loading="lazy" />}
+                <RimlightBadge rating={post.rating} />
                 <span className="sr-count"><Icon name="eye" size={12} />{formatCount(post.viewCount || 0)}</span>
               </button>
             ))}

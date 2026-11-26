@@ -16,6 +16,7 @@ import { logError } from '../toast.js';
 import '../snap-screens.css';
 import './Explore-radius.css';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
+import RimlightBadge from '../components/RimlightBadge.jsx';
 
 const KEY = 'explore';
 const PATH = '/v1/feed/explore';
@@ -183,7 +184,7 @@ export default function Explore() {
 
         {!peopleMode && <>
           {!searchMode && <div className="xp-title">Explore</div>}
-          {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}>
+          {!searchMode && <div className="xp-grid">{items.map((p) => <button key={p.id} className="xp-card" onClick={() => navigate(`/explore/watch/${p.id}`)}><RimlightBadge rating={p.rating} />
             <span className="xp-media">{p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : p.kind === 'video' ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" /> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}<span className="xp-views"><Icon name="eye" size={13} />{formatCount(p.viewCount || 0)}</span></span>
           </button>)}</div>}
           {!searchMode && <><div ref={sentinel} className="sentinel" />{!items.length && !loading && <p className="ig-empty">Nothing to explore yet.</p>}</>}

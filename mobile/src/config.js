@@ -13,3 +13,9 @@ export function videoStreamUrl(url) {
   if (!url || !url.includes('res.cloudinary.com/') || !url.includes('/video/upload/') || url.includes('/video/upload/q_auto')) return url;
   return url.replace('/video/upload/', '/video/upload/q_auto,f_auto,w_720,c_limit/');
 }
+
+// Public web link for a post, the same /p/:id address the website shares
+export const PUBLIC_APP_URL = 'https://rimsocial.com';
+export function postShareUrl(postId) {
+  return postId ? `${PUBLIC_APP_URL}/p/${encodeURIComponent(postId)}` : null;
+}
