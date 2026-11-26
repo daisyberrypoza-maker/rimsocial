@@ -275,7 +275,7 @@ export default function StoryViewer() {
     const body = String(text || '').trim();
     if (!body || isOwner) return;
     try {
-      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body } });
+      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body, storyId: current?.id || null } });
       toast('Sent');
     } catch (e) { logError(e); }
   }
