@@ -7870,3 +7870,15 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 .post .snap-music-credit { display:flex; align-items:center; gap:8px; }
 .post .snap-music-credit img { width:26px; height:26px; border-radius:5px; object-fit:cover; flex:none; }
 .post .snap-music-credit span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+
+/* Bottom tab bar never sits over an open sheet, modal or full-screen page */
+body:has([aria-modal="true"]) .bottomnav,
+body:has(.sheet-backdrop) .bottomnav,
+body:has(.share-backdrop) .bottomnav,
+body:has(.rv-sheet-backdrop) .bottomnav,
+body:has(.sv-owner-backdrop) .bottomnav,
+body:has(.comments-backdrop) .bottomnav,
+body:has(.coin-backdrop) .bottomnav,
+body:has(.people-backdrop) .bottomnav,
+body:has(.profile-drawer-backdrop) .bottomnav { display: none !important; }
