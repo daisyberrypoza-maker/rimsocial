@@ -1,29 +1,32 @@
-/* Full-screen share page: white, black close icon, blue primary action, light grey controls */
-.sf-page { position: fixed; inset: 0; z-index: 95; background: #fff; color: #111; display: flex; flex-direction: column; font-family: inherit; }
-.sf-top { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px; border-bottom: 1px solid #efefef; flex: none; }
-.sf-icon { width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: #111; padding: 0; }
-.sf-title { margin: 0; font-size: 17px; font-weight: 600; color: #111; }
+/* Full-screen share page: light surface only, with brand-colour social logos. */
+.sf-page { position: fixed; inset: 0; z-index: 95; background: #fff !important; color: #171717; display: flex; flex-direction: column; font-family: inherit; }
+.sf-page, .sf-page * { box-sizing: border-box; }
+.sf-top { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px; border-bottom: 1px solid #efefef; background: #fff !important; flex: none; }
+.sf-icon { width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent !important; color: #171717; padding: 0; }
+.sf-title { margin: 0; font-size: 17px; font-weight: 600; color: #171717; }
 .sf-spacer { width: 40px; }
-.sf-search { margin: 12px 16px 6px; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: #f1f1f1; color: #8e8e8e; flex: none; }
-.sf-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 16px; color: #111 !important; outline: none; }
-.sf-people { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; }
-.sf-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: transparent; color: #111; text-align: left; }
+.sf-search { margin: 12px 16px 6px; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: #f1f1f1 !important; color: #8e8e8e; flex: none; }
+.sf-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 16px; color: #171717 !important; outline: none; }
+.sf-people { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; background: #fff !important; }
+.sf-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: #fff !important; color: #171717; text-align: left; }
 .sf-person:disabled { opacity: .6; }
 .sf-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.sf-name strong { font-size: 15px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-name strong { font-size: 15px; font-weight: 600; color: #171717; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sf-name small { font-size: 13px; color: #8e8e8e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sf-state { flex: none; height: 30px; padding: 0 14px; border-radius: 8px; background: #efefef; color: #111; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; }
-.sf-state.done { background: #0095f6; color: #fff; }
+.sf-radio { width: 22px; height: 22px; flex: none; display: grid; place-items: center; border: 2px solid #bdbdbd; border-radius: 50%; background: #fff !important; }
+.sf-radio.active { border-color: #0095f6; }
+.sf-radio.active span { width: 10px; height: 10px; border-radius: 50%; background: #0095f6; }
 .sf-empty { padding: 32px 16px; text-align: center; color: #8e8e8e; font-size: 15px; }
-.sf-sendbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid #efefef; flex: none; }
+.sf-sendbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid #efefef; background: #fff !important; flex: none; }
 .sf-count { font-size: 14px; color: #737373; }
-.sf-send { height: 40px; padding: 0 22px; border: 0; border-radius: 8px; background: #0095f6; color: #fff; font-size: 15px; font-weight: 600; }
+.sf-send { height: 40px; padding: 0 22px; border: 0; border-radius: 8px; background: #0095f6 !important; color: #fff !important; font-size: 15px; font-weight: 600; }
 .sf-send:disabled { opacity: .6; }
-.sf-apps { display: flex; gap: 14px; overflow-x: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #efefef; flex: none; }
-.sf-app { flex: none; width: 68px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: transparent; color: #111; font-size: 12px; padding: 0; }
-.sf-circle { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #efefef; color: #111; font-size: 20px; font-weight: 700; }
-.sf-wa { background: #25d366; color: #fff; }
-.sf-fb { background: #1877f2; color: #fff; }
-.sf-tg { background: #229ed9; color: #fff; }
-.sf-mail { background: #737373; color: #fff; }
-.sf-sms { background: #34c759; color: #fff; }
+.sf-apps { display: flex; gap: 18px; overflow-x: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #efefef; background: #fff !important; flex: none; }
+.sf-app { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border: 0; border-radius: 50%; padding: 0; background: #f1f1f1 !important; color: #171717; }
+.sf-app svg { width: 28px; height: 28px; display: block; }
+.sf-social.sf-wa { background: #e8f8ee !important; color: #25d366; }
+.sf-social.sf-fb { background: #edf4ff !important; color: #1877f2; }
+.sf-social.sf-x { background: #f1f1f1 !important; color: #111; }
+.sf-social.sf-tg { background: #eaf7fc !important; color: #229ed9; }
+.sf-utility { width: 68px; height: auto; min-height: 56px; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; border-radius: 0; background: #fff !important; font-size: 11px; color: #555; }
+.sf-utility .sf-circle { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #f1f1f1 !important; color: #171717; }
