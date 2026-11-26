@@ -119,7 +119,6 @@ export default function SendTo({ navigation, route }) {
         </Pressable>
       ) : null}
       {!query.trim() && source === 'rimlight' ? <>
-        <Text style={styles.sectionTitle2}>Post to…</Text>
         {[
           { key: 'story-friends', title: 'My Story · Friends only', sub: 'Just for Friends' },
           { key: 'story-public', title: 'My Story · Public', sub: 'Friends, Followers and Everyone' },
@@ -130,7 +129,7 @@ export default function SendTo({ navigation, route }) {
           <Radio on={destination === item.key} />
         </Pressable>)}
       </> : null}
-      {!query.trim() && source !== 'story' ? <Text style={styles.sectionTitle2}>Recents & Suggested</Text> : null}
+      {!query.trim() ? <Text style={styles.sectionTitle2}>Recents & Suggested</Text> : null}
     </View>
   );
 
