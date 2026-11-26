@@ -1,34 +1,62 @@
-/* Full-screen share page: white, black close icon, blue primary action, light grey controls */
-.sf-page { position: fixed; inset: 0; z-index: 95; background: #fff; color: #111; display: flex; flex-direction: column; font-family: inherit; }
-.sf-top { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px; border-bottom: 1px solid #efefef; flex: none; }
-.sf-icon { width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: #111; padding: 0; }
-.sf-title { margin: 0; font-size: 17px; font-weight: 600; color: #111; }
-.sf-spacer { width: 40px; }
-.sf-search { margin: 12px 16px 6px; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: #f1f1f1; color: #8e8e8e; flex: none; }
-.sf-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 16px; color: #111 !important; outline: none; }
-.sf-people { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 0; }
-.sf-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: transparent; color: #111; text-align: left; }
+/* Full-screen "Send To" share page, matching the reference: white list, grey search, blue send bar.
+   Colours: text #000, secondary #6d6d6d, rings #bdbdbd, selected blue #1ca8ff, send bar #1ca8ff. */
+.sf-page { position: fixed; inset: 0; z-index: 95; background: #fff; color: #000; display: flex; flex-direction: column; font-family: inherit; }
+.sf-top { display: flex; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px; background: #fff; flex: none; }
+.sf-icon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: #000 !important; padding: 0; }
+.sf-icon svg { color: #000 !important; stroke: #000 !important; }
+.sf-search { flex: 1; min-width: 0; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 20px; background: #f1f1f1; color: #8a8a8a; }
+.sf-search svg { color: #8a8a8a; }
+.sf-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 17px; color: #000 !important; outline: none; padding: 0; }
+.sf-search input::placeholder { color: #8a8a8a; }
+.sf-people { flex: 1; overflow-y: auto; min-height: 0; padding: 0 0 8px; }
+.sf-section-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.sf-section-head h2, .sf-section-title { margin: 0; font-size: 20px; font-weight: 700; color: #000; }
+.sf-section-title { padding: 18px 16px 8px; }
+.sf-new-story { height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: #f1f1f1; color: #000; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.sf-new-story svg { color: #000; }
+.sf-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 64px; border: 0; background: transparent; color: #000; text-align: left; }
 .sf-person:disabled { opacity: .6; }
+.sf-person.on .sf-name strong { color: #1ca8ff; }
 .sf-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.sf-name strong { font-size: 15px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sf-name small { font-size: 13px; color: #8e8e8e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sf-state { flex: none; height: 30px; padding: 0 14px; border-radius: 8px; background: #efefef; color: #111; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; }
-.sf-state.done { background: #0095f6; color: #fff; }
-.sf-empty { padding: 32px 16px; text-align: center; color: #8e8e8e; font-size: 15px; }
-.sf-sendbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid #efefef; flex: none; }
-.sf-count { font-size: 14px; color: #737373; }
-.sf-send { height: 40px; padding: 0 22px; border: 0; border-radius: 8px; background: #0095f6; color: #fff; font-size: 15px; font-weight: 600; }
-.sf-send:disabled { opacity: .6; }
+.sf-name strong { font-size: 16px; font-weight: 600; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-name small { font-size: 14px; color: #6d6d6d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-story-avatar { flex: none; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #e5e5e5; color: #555; }
+.sf-story-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sf-time { flex: none; height: 30px; padding: 0 12px; margin-right: 6px; border: 1.5px solid #bdbdbd; border-radius: 15px; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #000; }
+.sf-empty { padding: 32px 16px; text-align: center; color: #6d6d6d; font-size: 15px; }
+
+/* Radio: empty grey ring; selected = filled blue circle with a white check */
+.sf-radio { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #bdbdbd; box-sizing: border-box; position: relative; }
+.sf-radio.on { border-color: #1ca8ff; background: #1ca8ff; }
+.sf-radio.on::after { content: ''; position: absolute; left: 8px; top: 4px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+
+/* Bottom send bar (blue): thumbnail + message field, then recipients, dots and the send button */
+.sf-sendbar { flex: none; background: #1ca8ff; color: #fff; padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; flex-direction: column; gap: 8px; }
+.sf-compose-row { display: flex; align-items: center; gap: 10px; }
+.sf-thumb { flex: none; width: 44px; height: 66px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.5); background: #000; }
+.sf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sf-chat { flex: 1; min-width: 0; height: 52px; display: flex; align-items: center; padding: 0 18px; border-radius: 26px; background: rgba(255,255,255,.28); }
+.sf-chat input { flex: 1; min-width: 0; width: 100%; border: 0 !important; background: transparent !important; box-shadow: none !important; color: #fff !important; font-size: 17px; outline: none; padding: 0; }
+.sf-chat input::placeholder { color: rgba(255,255,255,.92); }
+.sf-recipient-row { display: flex; align-items: center; gap: 8px; }
+.sf-dots { flex: none; width: 34px; height: 34px; border: 0; background: transparent; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 1px; padding: 0; }
+.sf-chips { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.sf-chips::-webkit-scrollbar { display: none; }
+.sf-chip { flex: none; height: 36px; padding: 0 14px; border-radius: 18px; background: rgba(255,255,255,.28); color: #fff; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sf-send { flex: none; width: 56px; height: 56px; border: 0; border-radius: 50%; background: #fff; color: #1ca8ff; display: grid; place-items: center; padding: 0; }
+.sf-send svg { color: #1ca8ff; stroke: #1ca8ff; }
+.sf-send:disabled { opacity: .55; }
+
+/* Share targets row */
 .sf-apps { display: flex; gap: 14px; overflow-x: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #efefef; flex: none; }
-.sf-app { flex: none; width: 68px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: transparent; color: #111; font-size: 12px; padding: 0; }
-.sf-circle { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #efefef; color: #111; font-size: 20px; font-weight: 700; }
+.sf-app { flex: none; width: 68px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: transparent; color: #000; font-size: 12px; padding: 0; }
+.sf-circle { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #efefef; color: #000; font-size: 20px; font-weight: 700; }
 .sf-wa { background: #25d366; color: #fff; }
-.sf-x { background: #efefef; color: #111; }
+.sf-x { background: #efefef; color: #000; }
 .sf-fb { background: #1877f2; color: #fff; }
 .sf-tg { background: #229ed9; color: #fff; }
 .sf-mail { background: #737373; color: #fff; }
 .sf-sms { background: #34c759; color: #fff; }
 
-/* Radio selector: empty ring, filled blue when chosen */
-.sf-radio { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #c7c7c7; box-sizing: border-box; display: grid; place-items: center; }
-.sf-radio.on { border-color: #0095f6; background: #0095f6; box-shadow: inset 0 0 0 4px #fff; }
+/* Tablets: the sheet stays in the phone column */
+@media (min-width: 768px) { .sf-page { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); } }
