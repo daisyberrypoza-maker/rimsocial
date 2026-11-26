@@ -416,7 +416,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
     if (!body || isOwner) return;
     try {
       const sealed = await sealFor(group.user.id, body);
-      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body: sealed, storyId: current.id } });
+      await api(`/v1/messages/with/${group.user.id}`, { method: 'POST', body: { body: sealed, storyId: current.id, storyReply: true } });
       toast('Sent');
       setSentNote('Sent');
       clearTimeout(sentTimerRef.current);
