@@ -13,7 +13,7 @@ async function readNotify(followerId, followeeId) {
   } catch { return false; }
 }
 const { Op } = require('sequelize');
-const { sequelize, User, Post, Repost, Follow, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage, ProfileView, QuickAddDismissal, UserReport } = require('../db');
+const { sequelize, User, Post, Repost, Follow, Friendship, UserBlock, UserMute, SavedPost, GroupMember, DirectMessage, ProfileView, QuickAddDismissal, UserReport } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const feed = require('../services/feed');
 const httpError = require('../utils/httpError');
@@ -476,6 +476,8 @@ router.post('/:id/block', requireAuth, async (req, res, next) => {
       // Blocking ends any existing follow relationship in either direction.
       const removedOutgoing = await Follow.destroy({ where: { followerId: req.user.id, followeeId: req.params.id }, transaction: t });
       const removedIncoming = await Follow.destroy({ where: { followerId: req.params.id, followeeId: req.user.id }, transaction: t });
+      const [userAId, userBId] = [String(req.user.id), String(req.params.id)].sort();
+      await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
       if (removedOutgoing) await User.decrement('followerCount', { by: removedOutgoing, where: { id: req.params.id }, transaction: t });
       if (removedIncoming) await User.decrement('followerCount', { by: removedIncoming, where: { id: req.user.id }, transaction: t });
     });
@@ -527,6 +529,11 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
         where: { followerId: req.user.id, followeeId }, transaction: t,
       });
       if (created) await User.increment('followerCount', { by: 1, where: { id: followeeId }, transaction: t });
+      const reciprocal = await Follow.findOne({ where: { followerId: followeeId, followeeId: req.user.id }, transaction: t });
+      if (reciprocal) {
+        const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
+        await Friendship.findOrCreate({ where: { userAId, userBId }, defaults: { status: 'accepted' }, transaction: t });
+      }
     });
     await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
     await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
@@ -582,6 +589,8 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
         where: { followerId: req.user.id, followeeId }, transaction: t,
       });
       if (removed) await User.decrement('followerCount', { by: 1, where: { id: followeeId }, transaction: t });
+      const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
+      await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
     });
     await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
