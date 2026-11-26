@@ -65,6 +65,16 @@ export default function Profile() {
     goBack(navigate, `/u/${username}`);
   };
   const logout = useAppStore((s) => s.logout);
+  // Account deletion (App Store 5.1.1(v)): removes the profile and hides every post; the user must type DELETE
+  async function deleteAccount() {
+    const typed = window.prompt('This hides all your posts and stories and removes your profile. Type DELETE to confirm.');
+    if (typed === null) return;
+    try {
+      await api('/v1/users/me', { method: 'DELETE', body: { confirm: typed } });
+      logout();
+      navigate('/login', { replace: true });
+    } catch (e) { toast(e.message || 'Could not delete the account'); }
+  }
   const setProfile = useAppStore((s) => s.setProfile);
   const setFeed = useAppStore((s) => s.setFeed);
   const profile = useAppStore((s) => s.profiles[username]?.user);
@@ -672,6 +682,7 @@ export default function Profile() {
             </SettingsSection>
             <div className="settings-foot">
               <button type="button" className="settings-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}><Icon name="log-out" size={20} />Log out</button>
+              <button type="button" className="settings-delete-account" onClick={deleteAccount}>Delete account</button>
               <p className="settings-build" data-build="2026-11-06-f107ec4">Build 2026-11-06 · f107ec4</p>
             </div>
           </div>

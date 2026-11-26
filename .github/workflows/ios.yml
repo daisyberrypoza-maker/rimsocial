@@ -1,0 +1,126 @@
+name: Check iOS and iPad build
+
+# Generates the native iOS project for mobile/ (the same way mobile/README.md does), applies the
+# iOS and iPad settings from mobile/app.json, and compiles it for the iOS simulator with code
+# signing turned off. No Apple certificates or provisioning profiles are needed for this check.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rimsocial-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Create the native React Native project from the 0.75.4 template
+        # The template package is fetched directly. The CLI's own init aborts when CocoaPods
+        # installs fail, which leaves the project folder empty.
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          TARBALL=$(npm pack @react-native-community/template@0.75.4 --silent)
+          mkdir RimSocial
+          tar -xzf "$TARBALL" -C RimSocial --strip-components=1
+          cd RimSocial
+          # The project files sit under template/ inside the package
+          if [ -d template ]; then cp -R template/. . && rm -rf template; fi
+          # npm drops dot-files from packages, so the template keeps them as _name
+          for f in _*; do [ -e "$f" ] && mv "$f" ".${f#_}"; done
+          # Rename the template placeholder to the app name, in file contents and in file names
+          grep -rl "HelloWorld" . --exclude-dir=node_modules | xargs -r sed -i'' -e 's/HelloWorld/RimSocial/g'
+          find . -depth -name "*HelloWorld*" -not -path "./node_modules/*" -exec sh -c 'mv "$1" "$(dirname "$1")/$(basename "$1" | sed s/HelloWorld/RimSocial/)"' _ {} \;
+          ls -la ios
+
+      - name: Copy the mobile app into the native project
+        run: |
+          set -euo pipefail
+          cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
+          cp mobile/App.js mobile/index.js mobile/app.json mobile/babel.config.js mobile/metro.config.js "$RUNNER_TEMP/RimSocial/"
+          node -e '
+            const fs = require("fs");
+            const dir = process.env.RUNNER_TEMP + "/RimSocial";
+            const template = JSON.parse(fs.readFileSync(dir + "/package.json", "utf8"));
+            const mobile = JSON.parse(fs.readFileSync(process.env.GITHUB_WORKSPACE + "/mobile/package.json", "utf8"));
+            template.name = "RimSocial";
+            template.dependencies = { ...template.dependencies, ...mobile.dependencies };
+            template.devDependencies = { ...template.devDependencies, ...mobile.devDependencies };
+            fs.writeFileSync(dir + "/package.json", JSON.stringify(template, null, 2));
+          '
+
+      - name: Install JavaScript dependencies
+        working-directory: ${{ runner.temp }}/RimSocial
+        run: npm install --no-audit --no-fund
+
+      - name: Apply iOS and iPad settings from app.json
+        working-directory: ${{ runner.temp }}/RimSocial
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
+            const ios = app.ios || {};
+            const plist = "ios/RimSocial/Info.plist";
+            for (const [key, value] of Object.entries(ios.infoPlist || {})) {
+              // plutil -replace inserts the key or replaces an existing one
+              const args = typeof value === "boolean" ? ["-bool", value ? "YES" : "NO"] : ["-string", String(value)];
+              require("child_process").execFileSync("plutil", ["-replace", key, ...args, plist]);
+            }
+            const pbx = "ios/RimSocial.xcodeproj/project.pbxproj";
+            let text = fs.readFileSync(pbx, "utf8");
+            text = text.replace(/PRODUCT_BUNDLE_IDENTIFIER = [^;]*;/g, `PRODUCT_BUNDLE_IDENTIFIER = "${ios.bundleIdentifier}";`);
+            text = text.replace(/CURRENT_PROJECT_VERSION = [^;]*;/g, `CURRENT_PROJECT_VERSION = ${ios.buildNumber || "1"};`);
+            // "1,2" = iPhone and iPad. supportsTablet false would use "1" only.
+            const family = ios.supportsTablet ? "1,2" : "1";
+            // Drop any existing setting, then add it next to each PRODUCT_BUNDLE_IDENTIFIER (one per build configuration)
+            text = text.replace(/\n\t+TARGETED_DEVICE_FAMILY = [^;]*;/g, "");
+            text = text.replace(/(\t+)PRODUCT_BUNDLE_IDENTIFIER = [^;]*;/g, (m, t) => `${t}PRODUCT_BUNDLE_IDENTIFIER = "${ios.bundleIdentifier}";\n${t}TARGETED_DEVICE_FAMILY = "${family}";`);
+            fs.writeFileSync(pbx, text);
+          '
+          grep -c 'PRODUCT_BUNDLE_IDENTIFIER = "com.clipverse.app"' ios/RimSocial.xcodeproj/project.pbxproj
+          grep -q 'TARGETED_DEVICE_FAMILY = "1,2"' ios/RimSocial.xcodeproj/project.pbxproj
+          plutil -p ios/RimSocial/Info.plist | grep -q NSCameraUsageDescription
+          plutil -p ios/RimSocial/Info.plist | grep -q ITSAppUsesNonExemptEncryption
+
+      - name: Install CocoaPods dependencies
+        working-directory: ${{ runner.temp }}/RimSocial/ios
+        run: pod install --repo-update
+
+      - name: Bundle the JavaScript for release
+        working-directory: ${{ runner.temp }}/RimSocial
+        run: |
+          npx --yes @react-native-community/cli@13 bundle \
+            --platform ios --dev false \
+            --entry-file index.js \
+            --bundle-output /tmp/rimsocial.ios.bundle \
+            --assets-dest /tmp/rimsocial-ios-assets
+
+      - name: Build for the iOS simulator without code signing
+        working-directory: ${{ runner.temp }}/RimSocial/ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -workspace RimSocial.xcworkspace \
+            -scheme RimSocial \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tail -n 60

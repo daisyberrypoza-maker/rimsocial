@@ -7890,3 +7890,11 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
 /* Camera tools column follows the Left / Right setting in Camera settings */
 .cam-side.cam-side-left { left: 12px; right: auto; }
 .cam-side.cam-side-right { right: 12px; left: auto; }
+
+/* Tablets, iPad and wider screens (768px and up): keep the app in a phone-width column
+   centred on the screen instead of stretching feeds and pages edge to edge. Full-screen sheets
+   and the story viewer are position:fixed and still cover the whole screen. */
+@media (min-width: 768px) {
+  .app { max-width: 640px; margin: 0 auto; box-shadow: 0 0 0 1px var(--line); }
+  .bottomnav { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); }
+}
