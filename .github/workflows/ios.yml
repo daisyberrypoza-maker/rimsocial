@@ -19,11 +19,19 @@ concurrency:
 
 jobs:
   ios:
-    runs-on: macos-latest
-    timeout-minutes: 60
+    # macos-14 ships Xcode 16.x. Xcode 26 drops the Swift compatibility libraries that react-native-video 6.6.2 links.
+    runs-on: macos-14
+    timeout-minutes: 90
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Select an Xcode 16 toolchain
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
