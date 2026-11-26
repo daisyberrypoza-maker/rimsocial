@@ -125,7 +125,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   }, [chip, query]);
 
   function stopPreview() {
-    audioRef.current?.pause();
+    sharedMusicAudio()?.pause();
     setPlayingId(null);
     pickerMemory.playingId = null;
   }
@@ -146,7 +146,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       audio.preload = 'auto';
       audio.src = src;
       audio.load();
-      audio.onended = () => setPlayingId(null);
+      audio.onended = () => { setPlayingId(null); pickerMemory.playingId = null; };
       await audio.play();
       setPlayingId(item.id);
     } catch (error) {
