@@ -71,10 +71,29 @@ export default function StoryViewer() {
   const creatorName = group?.user?.displayName || group?.user?.username || 'Creator';
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
+  const [audiusMusic, setAudiusMusic] = useState({ id: null, url: null });
+  const musicPlayerRef = useRef(null);
+  const storyMusicUrl = current?.musicUrl
+    ? mediaUrl(current.musicUrl)
+    : (current?.audiusTrackId && audiusMusic.id === current.audiusTrackId ? audiusMusic.url : null);
+  const storyMusicVolume = Number.isFinite(Number(current?.musicVolume))
+    ? Math.max(0, Math.min(1, Number(current.musicVolume))) : 0.8;
+  const originalVideoVolume = Number.isFinite(Number(current?.origVolume))
+    ? Math.max(0, Math.min(1, Number(current.origVolume))) : 0.3;
+
+  useEffect(() => {
+    const trackId = current?.audiusTrackId;
+    if (!trackId) { setAudiusMusic({ id: null, url: null }); return undefined; }
+    let alive = true;
+    api(`/v1/audio/audius/${encodeURIComponent(trackId)}/stream`)
+      .then((result) => { if (alive) setAudiusMusic({ id: trackId, url: result.url || null }); })
+      .catch((error) => { logError(error); if (alive) setAudiusMusic({ id: trackId, url: null }); });
+    return () => { alive = false; };
+  }, [current?.id, current?.audiusTrackId]);
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group?.user?.id === me.id;
   // Stops the story while typing or while a sheet is open
-  const frozen = paused || typing || sheet !== null;
+  const frozen = paused || typing || sheet !== null || reactionsOpen || !focused || AppState.currentState !== 'active';
   const playing = focused && !frozen;
 
   const progress = useRef(new Animated.Value(0)).current;
@@ -88,6 +107,18 @@ export default function StoryViewer() {
   nextRef.current = next;
 
   useEffect(() => registerPlayer(PLAYER_ID, () => setPaused(true)), []);
+
+  // Release both native media players immediately when the viewer leaves navigation focus.
+  useEffect(() => {
+    if (!focused) {
+      setPaused(true);
+      musicPlayerRef.current?.pause?.();
+    }
+  }, [focused]);
+  useEffect(() => navigation.addListener('beforeRemove', () => {
+    setPaused(true);
+    musicPlayerRef.current?.pause?.();
+  }), [navigation]);
 
   // Stop playback as soon as the app is minimised; playback resumes only on a tap
   useEffect(() => {
@@ -389,6 +420,8 @@ export default function StoryViewer() {
               resizeMode="contain"
               paused={!playing}
               muted={muted}
+              volume={storyMusicUrl ? originalVideoVolume : 1}
+              playInBackground={false}
               onLoad={onVideoLoad}
               onProgress={onVideoProgress}
               onEnd={() => nextRef.current()}
@@ -396,6 +429,23 @@ export default function StoryViewer() {
             />
           )
           : <Image key={current.id} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onError={() => nextRef.current()} />)}
+        {!!storyMusicUrl && (
+          <Video
+            key={`story-music-${current.id}`}
+            ref={musicPlayerRef}
+            source={{ uri: storyMusicUrl }}
+            audioOnly
+            paused={!playing}
+            volume={storyMusicVolume}
+            playInBackground={false}
+            style={styles.audioOnly}
+            onLoad={() => {
+              const offset = Math.max(0, Number(current?.musicOffsetSec) || 0);
+              if (offset > 0) musicPlayerRef.current?.seek(offset);
+            }}
+            onError={(error) => logError(error)}
+          />
+        )}
 
         {/* Tapping the picture: left third back, right third forward, middle pauses or likes */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onStageTap} accessibilityLabel="Story" />
@@ -598,6 +648,7 @@ function SheetRow({ icon, label, onPress, danger = false, disabled = false }) {
 
 const styles = StyleSheet.create({
   root: { backgroundColor: '#000' },
+  audioOnly: { width: 1, height: 1, opacity: 0 },
   caption: { position: 'absolute', left: 16, right: 16, color: '#fff', fontSize: 16, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 },
   flash: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   likedMark: { position: 'absolute', left: 18 },

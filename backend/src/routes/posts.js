@@ -17,6 +17,7 @@ async function assertPostAuthorNotBlocked(viewerId, authorId) {
 const { Op } = require('sequelize');
 const { Post, PostLike, PostComment, CommentLike, PostReport, Repost, Follow, User, UserBlock, SavedPost, LedgerEntry, sequelize } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { requireTerms } = require('../middleware/requireTerms');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const feed = require('../services/feed');
 const redis = require('../redis');
@@ -38,7 +39,7 @@ function parseUploadIds(raw) {
   return list.map(String);
 }
 
-router.post('/', requireAuth, upload.array('media', 10), require('../middleware/verifyUpload').verifyUploads(['photo', 'video']), async (req, res, next) => {
+router.post('/', requireAuth, requireTerms, upload.array('media', 10), require('../middleware/verifyUpload').verifyUploads(['photo', 'video']), async (req, res, next) => {
   const uploadedAssets = [];
   let postPersisted = false;
   try {
@@ -440,7 +441,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
 });
 
 // POST /v1/posts/text  (JSON: text, background, visibility) - a text-only post shown in Rimlight
-router.post('/text', requireAuth, async (req, res, next) => {
+router.post('/text', requireAuth, requireTerms, async (req, res, next) => {
   try {
     const text = String(req.body?.text || '').trim().slice(0, 500);
     const music = await resolveMusic(req.body || {}, { AudioTrack: require('../db').AudioTrack });

@@ -9,7 +9,7 @@ const httpError = require('../utils/httpError');
 
 const sign = (u) => jwt.sign({ id: u.id, country: u.country }, config.jwtSecret, { expiresIn: '30d' });
 const publicUser = (u) => ({
-  id: u.id, username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl, coverUrl: u.coverUrl, country: u.country,
+  id: u.id, username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl, coverUrl: u.coverUrl, country: u.country, termsAcceptedAt: u.termsAcceptedAt || null,
 });
 
 router.post('/register', async (req, res, next) => {
@@ -62,6 +62,15 @@ router.get('/username-available', async (req, res, next) => {
     if (username.toLowerCase() === 'me') return res.json({ available: false, reason: 'reserved' });
     const taken = await User.findOne({ where: { username: username.toLowerCase() }, attributes: ['id'] });
     res.json({ available: !taken, reason: taken ? 'taken' : null });
+  } catch (e) { next(e); }
+});
+
+router.post('/accept-terms', requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) throw httpError(404, 'User not found');
+    if (!user.termsAcceptedAt) await user.update({ termsAcceptedAt: new Date() });
+    res.json({ termsAcceptedAt: user.termsAcceptedAt || new Date() });
   } catch (e) { next(e); }
 });
 

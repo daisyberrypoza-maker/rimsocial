@@ -232,6 +232,7 @@ export default function Discover() {
       renderItem={({ item }) => (
         <Pressable style={styles.cell} onPress={() => openPost(item)}>
           <Image source={{ uri: mediaUrl(item.thumbUrl || item.mediaUrl) }} style={styles.fill} />
+          {Number(item.rating) >= 4 && <View style={styles.rimlightBadge}><Text style={styles.rimlightBadgeText}>✦ {Number(item.rating).toFixed(1)}</Text></View>}
         </Pressable>
       )}
     />
@@ -251,6 +252,8 @@ const styles = StyleSheet.create({
   tabTextOn: { color: colors.text },
   cell: { flex: 1 / 3, aspectRatio: 1, margin: 1 },
   fill: { width: '100%', height: '100%', backgroundColor: colors.surface },
+  rimlightBadge: { position: 'absolute', top: 6, right: 6, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 3, backgroundColor: 'rgba(0,0,0,0.72)' },
+  rimlightBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   person: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12 },
   personText: { flex: 1, minWidth: 0 },
   name: { fontSize: 15, fontWeight: '600', color: colors.text },

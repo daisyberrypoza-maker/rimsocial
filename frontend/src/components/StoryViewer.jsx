@@ -223,19 +223,21 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
     return undefined;
   }, [current?.id, frozen, musicSrc]);
 
-  // Behind the scenes: warm the next story (and the one after) while this one plays
-  // Waits a moment so it never competes with the story on screen.
+  // Warm the complete active creator sequence in the service-worker media cache.
+  // This avoids a network wait between stories; playback itself remains strictly sequential.
   useEffect(() => {
-    if (!groupStories) return undefined;
-    const item = groupStories[si + 1];
-    if (!item) return undefined;
-    const timer = setTimeout(() => {
-      prefetchMedia([{
+    if (!groupStories?.length) return;
+    const queue = groupStories.slice(Math.max(0, si)).flatMap((item) => {
+      const entries = [];
+      if (item.mediaUrl) entries.push({
         url: item.kind === 'video' ? videoStreamUrl(mediaUrl(item.mediaUrl)) : mediaUrl(item.mediaUrl),
         kind: item.kind === 'video' ? 'video' : 'image',
-      }]);
-    }, 0);
-    return () => clearTimeout(timer);
+      });
+      if (item.voiceUrl) entries.push({ url: mediaUrl(item.voiceUrl), kind: 'audio' });
+      if (item.musicUrl) entries.push({ url: mediaUrl(item.musicUrl), kind: 'audio' });
+      return entries;
+    });
+    prefetchMedia(queue);
   }, [groupStories, si]);
 
   const next = useCallback(() => {
