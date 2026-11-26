@@ -9,7 +9,7 @@ import './MusicPicker.css';
 // middle, settings on the right, a search field, chips (For you, Trending, Saved), and one row per sound.
 // Tapping a row previews it; the bookmark button chooses it for the story. Sources: the app library
 // (For you) and the Audius catalogue (Trending). Audius sounds are checked and streamed by the server.
-const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved']];
+const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original audio']];
 
 function formatDuration(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -25,7 +25,7 @@ function shuffled(list) {
   return copy;
 }
 
-export default function MusicPicker({ selectedId, onSelect, onClose }) {
+export default function MusicPicker({ selectedId, onSelect, onClose, onSettings }) {
   const [chip, setChip] = useState('featured');
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
@@ -44,7 +44,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
     const q = query.trim();
     const path = chip === 'trending'
       ? (q ? `/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=30` : '/v1/audio/audius/trending?limit=30')
-      : `/v1/audio/search?q=${encodeURIComponent(q)}`;
+      : `/v1/audio/search?q=${encodeURIComponent(q)}${chip === 'original' ? '&original=1' : ''}`;
     const timer = setTimeout(() => {
       api(path)
         .then((data) => { if (active) setItems((data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }))); })
@@ -113,7 +113,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose }) {
           <Icon name="x" size={28} />
         </button>
         <h1 className="mp-title">Add to story</h1>
-        <button type="button" className="mp-icon" aria-label="Sound settings" disabled>
+        <button type="button" className="mp-icon" aria-label="Camera settings" onClick={onSettings}>
           <Icon name="settings" size={26} />
         </button>
       </header>
