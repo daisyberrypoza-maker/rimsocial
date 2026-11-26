@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config');
-const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack, CommentLike } = require('./db');
+const { ProfileView, QuickAddDismissal, sequelize, seedGifts, Post, StoryView, StoryLike, Order, DirectMessage, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserMute, SavedPost, PushSubscription, AudioTrack, CommentLike, Friendship } = require('./db');
 const { Op, DataTypes } = require('sequelize');
 const cloudinary = require('./services/cloudinary');
 const { requestAssetCleanup, cleanupLocalUpload, cleanupRemovedPostMedia, processPendingMediaCleanup } = require('./services/mediaCleanup');
@@ -162,6 +162,11 @@ async function start() {
   if (config.createDatabase) await ensureDatabaseExists();
   await sequelize.authenticate();
   if (config.syncDatabase) await sequelize.sync();
+  await Friendship.sync();
+  await sequelize.query(`INSERT IGNORE INTO friendships (userAId, userBId, status, createdAt, updatedAt)
+    SELECT f.followerId, f.followeeId, 'accepted', NOW(), NOW()
+    FROM follows f INNER JOIN follows r ON r.followerId = f.followeeId AND r.followeeId = f.followerId
+    WHERE f.followerId < f.followeeId`);
   // Additive, idempotent post rating schema upgrade (0–5; null means unrated).
   {
     const ratingColumns = await sequelize.getQueryInterface().describeTable('posts');
