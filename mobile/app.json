@@ -1,1 +1,18 @@
-{ "name": "RimSocial", "displayName": "RimSocial" }
+{
+  "name": "RimSocial",
+  "displayName": "RimSocial",
+  "ios": {
+    "bundleIdentifier": "com.clipverse.app",
+    "supportsTablet": true,
+    "infoPlist": {
+      "NSCameraUsageDescription": "RimSocial uses the camera so you can take photos and record videos to share in posts, stories and messages.",
+      "NSMicrophoneUsageDescription": "RimSocial uses the microphone so you can record video sound and voice messages.",
+      "NSPhotoLibraryUsageDescription": "RimSocial accesses selected photos and videos so you can share them in posts, stories and messages.",
+      "NSPhotoLibraryAddUsageDescription": "RimSocial saves photos and videos you choose to export to your photo library.",
+      "ITSAppUsesNonExemptEncryption": false
+    }
+  },
+  "android": {
+    "package": "com.clipverse.app"
+  }
+}

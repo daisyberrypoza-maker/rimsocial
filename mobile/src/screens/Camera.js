@@ -1,38 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { launchCamera } from 'react-native-image-picker';
 import Icon from '../components/Icon';
 import { logError } from '../lib/toast';
 
-// Add tab. Matches the Snapchat camera layout: top row and a bottom bar with the shutter and the latest photo.
+// Add tab. Matches the Snapchat camera layout: top row and a bottom bar with the shutter and a direct gallery-picker shortcut.
 // There is no live preview here (that needs a camera library); the shutter opens the phone's camera and the
 // captured photo or video goes straight into the Upload editor.
-async function requestGalleryPermission() {
-  if (Platform.OS !== 'android') return true;
-  const perms = Platform.Version >= 33
-    ? [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES, PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO]
-    : [PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE];
-  const result = await PermissionsAndroid.requestMultiple(perms);
-  return Object.values(result).every((r) => r === PermissionsAndroid.RESULTS.GRANTED);
-}
-
 export default function Camera() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [latest, setLatest] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!(await requestGalleryPermission())) return;
-        const page = await CameraRoll.getPhotos({ first: 1, assetType: 'All' });
-        setLatest(page.edges[0]?.node.image.uri || null);
-      } catch (e) { logError(e); }
-    })();
-  }, []);
 
   async function shoot() {
     const r = await launchCamera({ mediaType: 'mixed', quality: 0.9, videoQuality: 'medium' }).catch(logError);
@@ -57,7 +36,7 @@ export default function Camera() {
         <View style={styles.side} />
         <Pressable onPress={shoot} accessibilityLabel="Take a photo or video" style={styles.shutter}><View style={styles.shutterInner} /></Pressable>
         <Pressable onPress={() => navigation.navigate('Upload')} accessibilityLabel="Choose from your gallery" style={styles.side}>
-          {latest ? <Image source={{ uri: latest }} style={styles.thumb} /> : <View style={styles.thumb} />}
+          <View style={styles.thumb}><Icon name="image" size={22} color="#fff" /></View>
         </Pressable>
       </View>
     </View>

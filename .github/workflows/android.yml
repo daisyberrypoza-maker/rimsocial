@@ -8,13 +8,17 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-build
+  group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

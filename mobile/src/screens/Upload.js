@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, PermissionsAndroid, Platform, useWindowDimensions, Switch, Modal, PanResponder } from 'react-native';
+import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet, useWindowDimensions, Switch, Modal, PanResponder } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -14,16 +14,6 @@ import { toast, logError } from '../lib/toast';
 import { colors } from '../theme';
 
 const CTA_OPTIONS = ['Shop Now', 'Learn More', 'Sign Up', 'Contact Us', 'Download'];
-
-// Permission to read the phone's photos and videos (Android 13+ uses the media permissions)
-async function requestGalleryPermission() {
-  if (Platform.OS !== 'android') return true;
-  const perms = Platform.Version >= 33
-    ? [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES, PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO]
-    : [PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE];
-  const result = await PermissionsAndroid.requestMultiple(perms);
-  return Object.values(result).every((r) => r === PermissionsAndroid.RESULTS.GRANTED);
-}
 
 function fromAsset(asset) {
   return { uri: asset.uri, name: asset.fileName || asset.name || 'media', type: asset.type || 'image/jpeg' };
@@ -44,7 +34,6 @@ export default function Upload() {
 
   const [view, setView] = useState('gallery');
   const [tab, setTab] = useState('Camera Roll');
-  const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
   const [file, setFile] = useState(null);
   const [playing, setPlaying] = useState(false);
@@ -76,21 +65,6 @@ export default function Upload() {
 
   const isVideo = Boolean(file && String(file.type).startsWith('video/'));
   const sponsorValid = sponsorName.trim().length > 0 && /^https?:\/\//i.test(sponsorUrl.trim());
-
-  // Camera roll thumbnails
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!(await requestGalleryPermission())) return;
-        const page = await CameraRoll.getPhotos({ first: 90, assetType: 'All' });
-        setRecents(page.edges.map((e) => ({
-          uri: e.node.image.uri,
-          name: e.node.image.filename || 'media',
-          type: e.node.type || 'image/jpeg',
-        })));
-      } catch (e) { logError(e); }
-    })();
-  }, []);
 
   // Memories: the person's own posts
   useEffect(() => {
@@ -216,14 +190,8 @@ export default function Upload() {
             <>
               <Pressable style={[styles.tile, { width: tileSize, height: tileSize }, styles.pickTile]} onPress={pickFromLibrary} accessibilityLabel="Choose from your phone">
                 <Icon name="image" size={30} color={colors.text} />
+                <Text style={styles.pickLabel}>Choose photos or videos</Text>
               </Pressable>
-              {recents.map((item) => (
-                <Pressable key={item.uri} style={[styles.tile, { width: tileSize, height: tileSize }]} onPress={() => choose(item)} accessibilityLabel="Select this media">
-                  {String(item.type).startsWith('video/')
-                    ? <Video source={{ uri: item.uri }} style={styles.fill} resizeMode="cover" paused muted />
-                    : <Image source={{ uri: item.uri }} style={styles.fill} />}
-                </Pressable>
-              ))}
             </>
           ) : memories.map((item) => (
             <Pressable key={item.id} style={[styles.tile, { width: tileSize, height: tileSize }]} onPress={() => navigation.navigate('PostDetail', { postId: item.id })} accessibilityLabel="Open this post">
@@ -382,6 +350,7 @@ const styles = StyleSheet.create({
   tabOn: { color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
   tile: { backgroundColor: '#e9e9ee', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  pickLabel: { marginTop: 8, color: colors.text, fontSize: 12, textAlign: 'center' },
   pickTile: { backgroundColor: colors.surface },
   fill: { width: '100%', height: '100%' },
 

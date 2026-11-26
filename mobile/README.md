@@ -23,14 +23,12 @@ so expect a first-run fix or two when you build it.
    npm install
    ```
 
-5. Add these permissions to `android/app/src/main/AndroidManifest.xml`, above `<application>`:
+5. Add only the camera and microphone permissions to `android/app/src/main/AndroidManifest.xml`, above `<application>`. The app uses the Android system photo picker for selected media; do not request broad photo/video library access:
 
    ```xml
    <uses-permission android:name="android.permission.INTERNET" />
    <uses-permission android:name="android.permission.CAMERA" />
-   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+   <uses-permission android:name="android.permission.RECORD_AUDIO" />
    ```
 
 6. Run it:
