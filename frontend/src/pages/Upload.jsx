@@ -263,6 +263,7 @@ export default function Upload() {
   const [carousel, setCarousel] = useState([]);
   const [storyTrack, setStoryTrack] = useState(null);
   const [galleryMusicOpen, setGalleryMusicOpen] = useState(false);
+  const [galleryMusicPlaying, setGalleryMusicPlaying] = useState(false);
   const galleryAudioRef = useRef(null);
   useEffect(() => () => { galleryAudioRef.current?.pause(); }, []);
   const [storyVoice, setStoryVoice] = useState(null);
@@ -490,10 +491,38 @@ export default function Upload() {
     }
   }
 
-  // Remove the gallery music choice
+  async function playGalleryMusic(track) {
+    if (!track) return;
+    try {
+      if (!galleryAudioRef.current) galleryAudioRef.current = new Audio();
+      const audio = galleryAudioRef.current;
+      audio.pause();
+      audio.src = track.source === 'audius'
+        ? (await api(`/v1/audio/audius/${encodeURIComponent(track.id)}/stream`)).url
+        : mediaUrl(track.mediaUrl);
+      audio.onended = () => setGalleryMusicPlaying(false);
+      await audio.play();
+      setGalleryMusicPlaying(true);
+    } catch (error) {
+      logError(error);
+      setGalleryMusicPlaying(false);
+      toast('This sound could not be played');
+    }
+  }
+
   function clearGalleryMusic() {
     galleryAudioRef.current?.pause();
+    setGalleryMusicPlaying(false);
     setStoryTrack(null);
+  }
+
+  function toggleGalleryMusic() {
+    if (galleryMusicPlaying) {
+      galleryAudioRef.current?.pause();
+      setGalleryMusicPlaying(false);
+      return;
+    }
+    if (storyTrack) playGalleryMusic(storyTrack);
   }
 
   if (view === 'camera') return <CameraView onCapture={chooseFile} onGallery={() => setView('gallery')} />;
@@ -506,6 +535,7 @@ export default function Upload() {
     const modes = [
       { key: 'text', label: 'Text', path: asStory ? '/story/text' : '/post/text' },
       { key: 'story', label: 'Story', path: '/upload?story=1' },
+      { key: 'music', label: 'Music' },
       { key: 'post', label: 'Post', path: '/upload' },
       { key: 'reel', label: 'Reel', path: '/upload?reel=1' },
     ];
@@ -514,7 +544,7 @@ export default function Upload() {
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
         <nav className="ig-create-modes" aria-label="Create type">
-          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => navigate(mode.path, { replace: true })}>{mode.label}</button>)}
+          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => mode.key === 'music' ? setGalleryMusicOpen(true) : navigate(mode.path, { replace: true, state: { storyTrack } })}>{mode.label}</button>)}
         </nav>
         <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
@@ -543,9 +573,10 @@ export default function Upload() {
           <span className="ig-music-disc"><Icon name="music" size={20} /></span>
           <span className="ig-music-text"><strong>{storyTrack.title || storyTrack.name || 'Selected sound'}</strong><small>{storyTrack.artist || storyTrack.artistName || 'Selected for your story'}</small></span>
         </button>
+        <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
         <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
       </div>}
-      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); }} onClose={() => setGalleryMusicOpen(false)} />}
+      {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); playGalleryMusic(item); }} onClose={() => setGalleryMusicOpen(false)} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <input id="up-capture" className="hidden" type="file" accept="image/*,video/*" capture="environment" onChange={(e) => { chooseFile(e.target.files?.[0] || null); e.target.value = ''; }} />
