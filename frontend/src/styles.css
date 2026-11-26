@@ -7882,3 +7882,7 @@ body:has(.comments-backdrop) .bottomnav,
 body:has(.coin-backdrop) .bottomnav,
 body:has(.people-backdrop) .bottomnav,
 body:has(.profile-drawer-backdrop) .bottomnav { display: none !important; }
+/* Keyboard open (a text field has focus): the bottom tab bar is hidden so it never covers the typing area */
+body:has(input:focus:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"])) .bottomnav,
+body:has(textarea:focus) .bottomnav,
+body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; }
