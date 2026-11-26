@@ -535,7 +535,14 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
         await Friendship.findOrCreate({ where: { userAId, userBId }, defaults: { status: 'accepted' }, transaction: t });
       }
     });
-    await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
+    const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
+    const acceptedFriendship = await Friendship.findOne({ where: { userAId, userBId, status: 'accepted' } });
+    if (acceptedFriendship) {
+      await Promise.all([addFolloweeToTray(req.user.id, followeeId), addFolloweeToTray(followeeId, req.user.id)])
+        .catch((trayError) => console.error('Friend story tray update failed:', trayError.message));
+    } else {
+      await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
+    }
     await Promise.all([req.user.id, followeeId].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
@@ -612,6 +619,7 @@ router.delete('/me', requireAuth, async (req, res, next) => {
     await sequelize.transaction(async (transaction) => {
       await Post.update({ status: 'removed' }, { where: { authorId: me }, transaction });
       await Follow.destroy({ where: { [Op.or]: [{ followerId: me }, { followeeId: me }] }, transaction });
+      await Friendship.destroy({ where: { [Op.or]: [{ userAId: me }, { userBId: me }] }, transaction });
       await UserBlock.destroy({ where: { [Op.or]: [{ blockerId: me }, { blockedUserId: me }] }, transaction });
       const tag = me.replace(/-/g, '').slice(0, 20);
       await User.update({
