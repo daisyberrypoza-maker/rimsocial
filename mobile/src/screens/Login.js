@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Modal, FlatList } from 'react-native';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
@@ -12,6 +13,7 @@ const BLUE = '#0064e0';
 const LINE = '#dbdbdb';
 const CONTROL_H = 50;
 const RADIUS = 8;
+const SIGN_IN_WITH_APPLE_ENABLED = String(process.env.SIGN_IN_WITH_APPLE_ENABLED || global.SIGN_IN_WITH_APPLE_ENABLED || '').toLowerCase() === 'true';
 // Same logo as the web app (frontend/public/icons/rimsocial.svg)
 const LOGO_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#171717"/><path d="M116 368V144h112c77 0 126 35 126 98 0 45-25 74-68 87l80 39h-93l-67-34h-14v34zm76-95h36c34 0 51-10 51-31s-17-31-51-31h-36z" fill="#fff"/><circle cx="374" cy="362" r="44" fill="#6d7cff"/><circle cx="374" cy="362" r="14" fill="#fff"/></svg>`;
 
@@ -35,12 +37,14 @@ const COUNTRIES = (() => {
 })();
 
 export default function Login() {
+  const navigation = useNavigation();
   const setSession = useAppStore((s) => s.setSession);
   const [mode, setMode] = useState('login');
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ username: '', password: '', email: '', displayName: '', country: 'NG' });
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -55,7 +59,7 @@ export default function Login() {
     setBusy(true); setError(''); setNotice('');
     try {
       const payload = mode === 'register'
-        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase() }
+        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase(), termsAccepted }
         : { username: form.username.trim(), password: form.password };
       await finish(await api(`/v1/auth/${mode}`, { method: 'POST', body: payload }));
     } catch (err) {
@@ -80,7 +84,7 @@ export default function Login() {
     if (busy) return;
     if (mode === 'register') {
       if (step < REGISTER_STEPS.length - 1) { if (stepValid()) setStep((s) => s + 1); return; }
-      if (stepValid()) submit();
+      if (stepValid() && termsAccepted) submit();
       return;
     }
     if (form.username.trim().length < 3 || form.password.length < 8) return;
@@ -153,12 +157,9 @@ export default function Login() {
             {current.key === 'password' && form.password.length > 0 && form.password.length < 8 && (
               <Text style={styles.hintSmall}>Password must be at least 8 characters</Text>
             )}
-            <Btn label={step < REGISTER_STEPS.length - 1 ? 'Next' : busy ? 'Please wait…' : 'Sign up'} onPress={next} disabled={busy || !stepValid()} />
-            {step === 0 && (
-              <Pressable style={styles.grey} onPress={() => setNotice('Google sign-in is available on the web app.')} accessibilityRole="button">
-                <Text style={styles.greyText}>Sign up with Google</Text>
-              </Pressable>
-            )}
+            {current.key === 'country' && <Pressable style={styles.termsGate} onPress={()=>setTermsAccepted(v=>!v)} accessibilityRole="checkbox" accessibilityState={{checked:termsAccepted}}><Text style={styles.termsGateText}>{termsAccepted?'☑':'☐'}  I agree to the <Text style={styles.termsLink} onPress={()=>navigation.navigate('Terms')}>Terms of Service / EULA</Text> and acknowledge the Privacy Policy.</Text></Pressable>}
+            <Btn label={step < REGISTER_STEPS.length - 1 ? 'Next' : busy ? 'Please wait…' : 'Sign up'} onPress={next} disabled={busy || !stepValid() || (current.key === 'country' && !termsAccepted)} />
+            {step === 0 && (Platform.OS !== 'ios' || SIGN_IN_WITH_APPLE_ENABLED) && <Pressable style={styles.grey} onPress={() => setNotice('Google sign-in is available on the web app.')} accessibilityRole="button"><Text style={styles.greyText}>Sign up with Google</Text></Pressable>}
             {step === REGISTER_STEPS.length - 1 && (
               <Text style={styles.terms}>By signing up, you agree to RimSocial’s Terms and Privacy Policy.</Text>
             )}
@@ -237,6 +238,7 @@ const styles = StyleSheet.create({
   greyText: { color: '#000', fontWeight: '600', fontSize: 15 },
   hintSmall: { fontSize: 13, color: '#737373', marginLeft: 4 },
   terms: { fontSize: 13, color: '#737373', lineHeight: 19, marginTop: 8 },
+  termsGate:{marginTop:8},termsGateText:{color:'#555',fontSize:13,lineHeight:19},termsLink:{color:BLUE,fontWeight:'700'},
   notice: { fontSize: 13, color: '#4b4200', backgroundColor: '#fff9c2', padding: 12, borderRadius: 12, lineHeight: 19 },
   error: { color: '#c5223b', fontSize: 14, lineHeight: 20, marginTop: 8, backgroundColor: '#fff0f1', padding: 12, borderRadius: 12 },
   footer: { alignItems: 'center', paddingBottom: 24 },

@@ -14,6 +14,8 @@
 }
 
 * { box-sizing: border-box; }
+:where(.viewer,.post,.slot,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) svg { color:#fff !important; stroke:#fff !important; }
+:where(.viewer,.post,.slot,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) { color:#fff; }
 html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 body { overflow: hidden; }
@@ -7890,3 +7892,11 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
 /* Camera tools column follows the Left / Right setting in Camera settings */
 .cam-side.cam-side-left { left: 12px; right: auto; }
 .cam-side.cam-side-right { right: 12px; left: auto; }
+
+/* Tablets, iPad and wider screens (768px and up): keep the app in a phone-width column
+   centred on the screen instead of stretching feeds and pages edge to edge. Full-screen sheets
+   and the story viewer are position:fixed and still cover the whole screen. */
+@media (min-width: 768px) {
+  .app { max-width: 640px; margin: 0 auto; box-shadow: 0 0 0 1px var(--line); }
+  .bottomnav { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); }
+}

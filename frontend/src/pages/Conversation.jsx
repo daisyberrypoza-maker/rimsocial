@@ -1028,6 +1028,8 @@ export default function Conversation({ userId }) {
     return m && String(m.senderId) === String(me?.id) && !m.deletedForEveryone;
   }
 
+  async function reportMessage(message) { const reason=window.prompt('Why are you reporting this message?'); if(!reason||reason.trim().length<3)return; try{await api(`/v1/messages/message/${message.id}/report`,{method:'POST',body:{reason:reason.trim()}});toast('Message reported.');}catch(error){toast(error.message||'Could not report this message.');} }
+
   async function deleteMessage(m, scope) {
     setMenuFor(null);
     try {
@@ -1262,6 +1264,7 @@ export default function Conversation({ userId }) {
             ...(canEdit(menuFor) ? [{ key: 'edit', label: 'Edit', icon: 'pencil', onSelect: () => startEdit(menuFor) }] : []),
             ...(!menuFor.deletedForEveryone ? [{ key: 'delete-me', label: 'Delete for me', icon: 'trash-2', onSelect: () => deleteMessage(menuFor, 'me') }] : []),
             ...(canDeleteEveryone(menuFor) ? [{ key: 'delete-all', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteMessage(menuFor, 'everyone') }] : []),
+            ...(String(menuFor.senderId)!==String(me?.id)&&!menuFor.deletedForEveryone?[{key:'report',label:'Report message',icon:'flag',danger:true,onSelect:()=>reportMessage(menuFor)}]:[]),
           ]}
         />
       )}

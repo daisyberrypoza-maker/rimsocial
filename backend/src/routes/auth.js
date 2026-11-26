@@ -14,7 +14,8 @@ const publicUser = (u) => ({
 
 router.post('/register', async (req, res, next) => {
   try {
-    const { username = '', password = '', displayName, email = '', country = 'US' } = req.body;
+    const { username = '', password = '', displayName, email = '', country = 'US', termsAccepted = false } = req.body;
+    if (termsAccepted !== true) throw httpError(400, 'You must accept the Terms of Service before creating an account');
     if (!/^[a-z0-9_]{3,32}$/i.test(username)) throw httpError(400, 'Username: 3-32 letters, numbers or _');
     if (username.toLowerCase() === 'me') throw httpError(400, 'That username is reserved');
     if (password.length < 8) throw httpError(400, 'Password must be at least 8 characters');
@@ -27,6 +28,7 @@ router.post('/register', async (req, res, next) => {
         passwordHash: await bcrypt.hash(password, 10),
         displayName: (displayName || username).slice(0, 64),
         country: country.toUpperCase().slice(0, 2),
+        termsAcceptedAt: new Date(),
       }, { transaction: t });
       await Wallet.create({ userId: u.id }, { transaction: t });
       await EarningsWallet.create({ userId: u.id }, { transaction: t });
@@ -94,6 +96,7 @@ router.post('/google', async (req, res, next) => {
     const country = /^[A-Z]{2}$/.test(countryInput) ? countryInput : 'US';
     let user = await User.findOne({ where: { email } });
     if (!user) {
+      if (req.body?.termsAccepted !== true) throw httpError(400, 'Accept the Terms of Service before creating an account');
       const base = String(claims.name || email.split('@')[0]).toLowerCase()
         .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'creator';
       let username = base.length >= 3 ? base : 'user_' + base;
@@ -104,7 +107,7 @@ router.post('/google', async (req, res, next) => {
         const created = await User.create({
           username, email,
           passwordHash: await bcrypt.hash(String(claims.sub) + String(Date.now()), 10),
-          displayName: String(claims.name || username).slice(0, 64), country,
+          displayName: String(claims.name || username).slice(0, 64), country, termsAcceptedAt: new Date(),
         }, { transaction: t });
         await Wallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });
         await EarningsWallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });

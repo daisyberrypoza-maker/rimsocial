@@ -189,6 +189,8 @@ export default function Conversation() {
     }
   }
 
+  async function reportMessage(m) { const reasons=['Harassment or bullying','Hate or threats','Sexual content or exploitation','Spam or scam','Other']; Alert.alert('Report message','Choose the reason that best describes the issue.',[...reasons.map(reason=>({text:reason,onPress:async()=>{try{await api(`/v1/messages/message/${m.id}/report`,{method:'POST',body:{reason}});Alert.alert('Report submitted','Our team will review this message.');}catch(error){Alert.alert('Report',error.message||'Could not report this message.');}}})),{text:'Cancel',style:'cancel'}]); }
+
   // Delete for me, or for everyone (own messages only)
   async function deleteMessage(m, scope) {
     setMenuFor(null);
@@ -265,7 +267,6 @@ export default function Conversation() {
               </Pressable>
             );
           }
-          return (
           const deleted = Boolean(item.deletedForEveryone);
           const limited = !mine && item.mediaKind === 'photo' && item.viewLimit > 0;
           const openedAll = limited && (item.viewCount || 0) >= item.viewLimit;
@@ -351,6 +352,7 @@ export default function Conversation() {
             {!!menuFor && (
               <Pressable style={styles.menuOption} onPress={() => deleteMessage(menuFor, 'me')}><Text style={styles.menuDanger}>Delete for me</Text></Pressable>
             )}
+            {!!menuFor && String(menuFor.senderId)!==String(me?.id) && !menuFor.deletedForEveryone && <Pressable style={styles.menuOption} onPress={()=>{const message=menuFor;setMenuFor(null);reportMessage(message);}}><Text style={styles.menuDanger}>Report message</Text></Pressable>}
             <Pressable style={styles.menuCancel} onPress={() => setMenuFor(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
           </View>
         </View>

@@ -2,7 +2,7 @@ import React from 'react';
 import {
   ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, BookmarkCheck, Camera, Check, ChevronRight, Compass, Gift,
   Heart, Home, Link as LinkIcon, Mail, MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2,
-  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
+  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp, FileText,
   Pause, Volume2, VolumeX, MoreVertical, Pencil, Trash2, Image as ImageIcon, MapPin, GalleryHorizontal,
 } from 'lucide-react-native';
 
@@ -17,11 +17,12 @@ const ICONS = {
   sort: ArrowDownUp, pause: Pause, 'volume-2': Volume2, 'volume-x': VolumeX, 'more-vertical': MoreVertical,
   pencil: Pencil, trash: Trash2, image: ImageIcon, 'map-pin': MapPin,
   // Tab icons: Stories is a pair of cards, Rimlight a filled play shape (drawn like the web BottomNav)
-  stories: GalleryHorizontal, rimlight: Play,
+  stories: GalleryHorizontal, rimlight: Play, 'file-text': FileText,
 };
 
 // filled: solid shape (active tab, right-side controls on Rimlight); otherwise outline
-export default function Icon({ name, size = 26, color = '#111', strokeWidth = 2.2, filled = false }) {
+export default function Icon({ name, size = 26, color = '#111', strokeWidth = 2.2, filled = false, onDark = false }) {
   const Cmp = ICONS[name] || CircleHelp;
-  return <Cmp size={size} color={color} strokeWidth={strokeWidth} fill={filled ? color : 'none'} />;
+  const resolvedColor = onDark ? '#FFFFFF' : color;
+  return <Cmp size={size} color={resolvedColor} strokeWidth={strokeWidth} fill={filled ? resolvedColor : 'none'} />;
 }

@@ -42,6 +42,7 @@ export default function Login() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   // Live username feedback on sign-up, debounced so we do not query on every keystroke.
@@ -96,7 +97,7 @@ export default function Login() {
     setError(''); setNotice(''); setBusy(true);
     try {
       const payload = mode === 'register'
-        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase() }
+        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase(), termsAccepted }
         : { username: form.username.trim(), password: form.password };
       const data = await api(`/v1/auth/${mode}`, { method: 'POST', body: payload });
       await finishSession(data);
@@ -107,7 +108,7 @@ export default function Login() {
   function handleSubmit(e) {
     e.preventDefault();
     if (mode === 'login') { if (canLogin) submit(); return; }
-    if (!stepValid) return;
+    if (!stepValid || (step === STEPS.length - 1 && !termsAccepted)) return;
     if (step < STEPS.length - 1) setStep(step + 1);
     else submit();
   }
@@ -124,7 +125,7 @@ export default function Login() {
         callback: async (response) => {
           setError(''); setNotice(''); setBusy(true);
           try {
-            const data = await api('/v1/auth/google', { method: 'POST', body: { credential: response.credential, country: form.country } });
+            const data = await api('/v1/auth/google', { method: 'POST', body: { credential: response.credential, country: form.country, termsAccepted } });
             await finishSession(data);
           } catch (err) { setError(err.message || 'Google sign-in failed.'); }
           finally { setBusy(false); }
@@ -184,6 +185,7 @@ export default function Login() {
               <button className="ig-auth-primary" type="submit" disabled={busy || !canLogin}>{busy ? 'Logging in…' : 'Log in'}</button>
             </form>
             <button className="ig-auth-link" type="button" onClick={() => setNotice('Password reset is not set up yet. Please contact RimSocial support.')}>Forgot password?</button>
+            <label className="ig-auth-note" style={{display:'flex',gap:10,alignItems:'flex-start'}}><input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} style={{width:18,height:18,margin:'2px 0 0'}}/><span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service / EULA</a> (required only when creating a new account with Google).</span></label>
             <div className="ig-auth-divider"><span>OR</span></div>
             {googleBlock}
             <button className="ig-auth-outline" type="button" onClick={() => switchMode('register')}>Create new account</button>
@@ -229,9 +231,7 @@ export default function Login() {
                 {googleBlock}
               </>
             )}
-            {step === STEPS.length - 1 && (
-              <p className="ig-auth-note">By signing up, you agree to RimSocial’s Terms and Privacy Policy. We use your information to create and secure your account.</p>
-            )}
+            {step === STEPS.length - 1 && <label className="ig-auth-note" style={{display:'flex',gap:10,alignItems:'flex-start'}}><input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} style={{width:18,height:18,margin:'2px 0 0'}}/><span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service / EULA</a> and acknowledge the Privacy Policy.</span></label>}
             <button className="ig-auth-link ig-auth-link-blue" type="button" onClick={() => switchMode('login')}>I already have an account</button>
           </>
         )}

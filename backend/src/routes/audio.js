@@ -148,7 +148,10 @@ router.get('/network-trending', async (req, res, next) => {
 // GET /v1/audio/audius/trending?limit=20
 router.get('/audius/trending', async (req, res, next) => {
   try {
-    res.json({ items: await audius.trending(req.query.limit) });
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const offset = Math.min(10000, Math.max(0, parseInt(req.query.offset, 10) || 0));
+    const items = await audius.trending(limit, offset);
+    res.json({ items, hasMore: items.length === limit, nextOffset: offset + items.length });
   } catch (e) { next(e); }
 });
 
@@ -157,15 +160,25 @@ router.get('/audius/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 80);
     if (!q) return res.json({ items: [] });
-    res.json({ items: await audius.search(q, req.query.limit) });
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const offset = Math.min(10000, Math.max(0, parseInt(req.query.offset, 10) || 0));
+    const items = await audius.search(q, limit, offset);
+    res.json({ items, hasMore: items.length === limit, nextOffset: offset + items.length });
   } catch (e) { next(e); }
 });
 
 // GET /v1/audio/audius/:id/stream  -> { url } fresh signed link for playback only
 router.get('/audius/:id/stream', async (req, res, next) => {
   try {
-    res.set('Cache-Control', 'no-store');
-    res.json({ url: await audius.streamLink(req.params.id) });
+    // Playback URLs are signed and must not be cached. CORP permits cross-origin media
+    // embedding; the app's normal API CORS middleware handles browser preflight/origin policy.
+    res.set({
+      'Cache-Control': 'no-store, private',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Vary': 'Origin',
+    });
+    const urls = await audius.streamLinks(req.params.id);
+    res.json({ url: urls[0], urls });
   } catch (e) { next(e); }
 });
 

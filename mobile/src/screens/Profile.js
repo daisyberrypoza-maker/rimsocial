@@ -195,6 +195,19 @@ export default function Profile() {
 
   function confirmBlock() {
     setSheet(null);
+  // Account deletion (App Store 5.1.1(v), Google Play account deletion policy)
+  function confirmDeleteAccount() {
+    Alert.alert('Delete your account?', 'This hides all your posts and stories and removes your profile. It cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try {
+          await api('/v1/users/me', { method: 'DELETE', body: { confirm: 'DELETE' } });
+          useAppStore.getState().logout();
+        } catch (e) { toast(e.message || 'Could not delete the account'); }
+      } },
+    ]);
+  }
+
     Alert.alert(`Block @${user?.username}?`, 'They will no longer be able to interact with you.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -469,8 +482,10 @@ export default function Profile() {
         <SheetRow icon={<Shield size={22} color={colors.text} />} label="Blocked accounts" onPress={() => go('ProfileList', { username: me?.username || username, list: 'blocked' })} />
         <SheetRow icon={<Icon name="image" size={22} color={colors.text} />} label="Change profile or background image" onPress={() => setSheet('images')} />
         <SheetRow icon={<Icon name="video" size={22} color={colors.text} />} label="LIVE broadcasts" onPress={() => go('Live')} />
+        <SheetRow icon={<Icon name="file-text" size={22} color={colors.text} />} label="Terms of Service / EULA" onPress={() => go('Terms')} />
         <SheetRow icon={<Icon name="gift" size={22} color={colors.text} />} label="Get coins" onPress={() => go('Coins')} />
         <SheetRow icon={<Icon name="arrow-right" size={22} color="#e0245e" />} label="Log out" danger onPress={() => { setSheet(null); useAppStore.getState().logout(); }} />
+        <SheetRow icon={<Icon name="arrow-right" size={22} color="#e0245e" />} label="Delete account" danger onPress={() => { setSheet(null); confirmDeleteAccount(); }} />
       </Sheet>
 
       {/* Your profile: choose which picture to change (web "Choose an image") */}
