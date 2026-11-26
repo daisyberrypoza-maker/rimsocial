@@ -146,7 +146,7 @@ router.post('/composed', requireAuth, require('../middleware/upload').anyFileUpl
 router.post('/:id/repost', requireAuth, async (req, res, next) => {
   try {
     const original = await Post.findOne({
-      where: { id: req.params.id, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
+      where: { id: req.params.id, isStory: true, status: 'live', visibility: 'public', expiresAt: { [Op.gt]: new Date() } },
       include: [{ model: require('../db').User, as: 'author', attributes: ['username'] }],
     });
     if (!original) throw httpError(404, 'Story not found or expired');
@@ -154,6 +154,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
     if (original.authorId === req.user.id) throw httpError(400, 'This is your own story');
     const story = await Post.create({
       authorId: req.user.id,
+      sourcePostId: original.id,
       kind: original.kind,
       mediaUrl: original.mediaUrl,
       mediaPublicId: original.mediaPublicId,
