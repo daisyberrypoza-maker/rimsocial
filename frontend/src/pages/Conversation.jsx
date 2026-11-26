@@ -1040,6 +1040,16 @@ export default function Conversation({ userId }) {
     } catch (e) { logError(e); toast(e.message || 'Could not delete'); }
   }
 
+  async function reportMessage(m) {
+    setMenuFor(null);
+    const reason = window.prompt('Report reason: Harassment, Hate speech, Threats or violence, Sexual content, Spam or scam, Other');
+    if (!reason) return;
+    try {
+      await api(`/v1/messages/message/${m.id}/report`, { method: 'POST', body: { reason: reason.trim() } });
+      toast('Report submitted');
+    } catch (e) { toast(e.message || 'Could not submit report'); }
+  }
+
   async function openForward(m) {
     setMenuFor(null);
     setForwarding(m);
@@ -1262,6 +1272,7 @@ export default function Conversation({ userId }) {
             ...(canEdit(menuFor) ? [{ key: 'edit', label: 'Edit', icon: 'pencil', onSelect: () => startEdit(menuFor) }] : []),
             ...(!menuFor.deletedForEveryone ? [{ key: 'delete-me', label: 'Delete for me', icon: 'trash-2', onSelect: () => deleteMessage(menuFor, 'me') }] : []),
             ...(canDeleteEveryone(menuFor) ? [{ key: 'delete-all', label: 'Delete for everyone', icon: 'trash-2', danger: true, onSelect: () => deleteMessage(menuFor, 'everyone') }] : []),
+            ...(String(menuFor.senderId) !== String(me?.id) && !menuFor.deletedForEveryone ? [{ key: 'report', label: 'Report message', icon: 'flag', danger: true, onSelect: () => reportMessage(menuFor) }] : []),
           ]}
         />
       )}
