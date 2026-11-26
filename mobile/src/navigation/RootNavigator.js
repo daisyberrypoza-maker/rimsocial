@@ -45,7 +45,7 @@ export default function RootNavigator({ signedIn }) {
   return (
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
-      <Stack.Screen name="MusicPicker" component={MusicPicker} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="MusicPicker" component={MusicPicker} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', gestureEnabled: true }} />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="Upload" component={Upload} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="MyFriends" component={MyFriends} />
