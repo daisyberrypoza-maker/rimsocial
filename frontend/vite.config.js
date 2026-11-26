@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react';
 // hosts continue to use the domain root.
 const base = process.env.GITHUB_ACTIONS === 'true' ? '/rimsocial/' : '/';
 
-// In dev, API and uploads go to the Express server on port 3000
+// In dev, API and uploads go to the Express server on port 3000. Cloudflare builds
+// can provide CF_PAGES_COMMIT_SHA or CF_WORKERS_COMMIT_SHA for live version checks.
 // Short commit id of the build, shown at the bottom of the Your algorithm page so you can tell which version a device is running.
 const build = process.env.VITE_GIT_COMMIT || process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || process.env.CF_WORKERS_COMMIT_SHA || 'local';
 
