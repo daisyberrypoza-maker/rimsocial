@@ -1,6 +1,11 @@
 // Audius music catalogue, proxied through our server so the app name and fresh stream links are added here.
 // Stream links in Audius responses are signed and expire, so playback asks for a new one each time.
-const API_BASE = process.env.AUDIUS_API_BASE || 'https://api.audius.co/v1';
+const API_BASES = [...new Set([
+  process.env.AUDIUS_API_BASE,
+  'https://api.audius.co/v1',
+  'https://discoveryprovider.audius.co/v1',
+].filter(Boolean))];
+const API_BASE = API_BASES[0];
 const APP_NAME = process.env.AUDIUS_APP_NAME || 'RimSocial';
 const TIMEOUT_MS = 8000;
 
@@ -23,12 +28,25 @@ function toTrack(raw) {
 }
 
 async function audiusGet(path, params = {}) {
-  const url = new URL(`${API_BASE}${path}`);
-  url.searchParams.set('app_name', APP_NAME);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
-  const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw Object.assign(new Error(`Audius responded ${res.status}`), { status: 502 });
-  return res.json();
+  let lastError;
+  for (const base of API_BASES) {
+    const url = new URL(`${base}${path}`);
+    url.searchParams.set('app_name', APP_NAME);
+    for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS), headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        lastError = Object.assign(new Error(`Audius node responded ${res.status}`), { status: 502 });
+        continue;
+      }
+      const body = await res.json();
+      if (body?.error) throw new Error(String(body.error));
+      return body;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw Object.assign(new Error('Audius is temporarily unavailable on all configured nodes', { cause: lastError }), { status: 502 });
 }
 
 async function trending(limit = 20) {
