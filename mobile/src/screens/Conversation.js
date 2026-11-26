@@ -265,7 +265,6 @@ export default function Conversation() {
               </Pressable>
             );
           }
-          return (
           const deleted = Boolean(item.deletedForEveryone);
           const limited = !mine && item.mediaKind === 'photo' && item.viewLimit > 0;
           const openedAll = limited && (item.viewCount || 0) >= item.viewLimit;
