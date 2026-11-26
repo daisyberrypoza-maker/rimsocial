@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { Op, Post, StoryView, StoryLike, Follow, User, PostReport } = require('../db');
 const config = require('../config');
 const { requireAuth } = require('../middleware/auth');
+const { requireTerms } = require('../middleware/requireTerms');
 const redis = require('../redis');
 const { upload, kindFor, mediaPath } = require('../middleware/upload');
 const httpError = require('../utils/httpError');
@@ -49,7 +50,7 @@ router.get('/users/:userId', requireAuth, async (req, res, next) => {
 });
 
 // POST /v1/stories  (multipart: media, caption). Expires after storyTtlHours.
-router.post('/', requireAuth, require('../middleware/upload').storyUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'voice', maxCount: 1 }]), require('../middleware/verifyUpload').verifyUploads({ media: ['photo', 'video'], voice: ['audio', 'video'] }), async (req, res, next) => {
+router.post('/', requireAuth, requireTerms, require('../middleware/upload').storyUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'voice', maxCount: 1 }]), require('../middleware/verifyUpload').verifyUploads({ media: ['photo', 'video'], voice: ['audio', 'video'] }), async (req, res, next) => {
   const uploadedAssets = [];
   let storyPersisted = false;
   try {
