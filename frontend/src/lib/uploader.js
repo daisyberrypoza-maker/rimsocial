@@ -33,6 +33,14 @@ function requestWithProgress(path, body, status, offset = 0, span = 100) {
   });
 }
 
+async function ensureTermsAccepted() {
+  const result = await api('/v1/auth/me');
+  if (result.user?.termsAcceptedAt) return;
+  const accepted = window.confirm('Terms of Service\n\nBefore publishing your first post or story, review and accept the RimSocial Terms of Service. Select OK to accept and continue.');
+  if (!accepted) throw new Error('Accept the Terms of Service before publishing');
+  await api('/v1/auth/accept-terms', { method: 'POST' });
+}
+
 // Uploads a post or story in the background. Progress reflects actual bytes sent, not an estimated timer.
 export function startUpload(job) {
   const { toStory, file, storyFile, storyFiles, files, caption, topic, aiLabel, loopVideo, allowRemix, visibility, sourcePostId, sponsor, shareToStory, storyAudio } = job;
