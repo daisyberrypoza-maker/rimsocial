@@ -70,7 +70,7 @@ export default function StoryComposer() {
   return (
     <main className="sc-page" style={{ background: backgroundCss(bgKey) }}>
       <header className="sc-top">
-        <button type="button" className="sc-round" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={22} /></button>
+        <button type="button" className="sc-round" aria-label="Back" onClick={() => goBack(navigate, '/upload?story=1')}><Icon name="arrow-left" size={22} /></button>
         <div className="sc-tools">
           <StoryAudioControls compact track={track} onTrack={setTrack} voice={voice} onVoice={setVoice} disabled={posting} />
           <button type="button" className="sa-round sc-bg" aria-label="Change background" onClick={cycleBackground} disabled={posting}>

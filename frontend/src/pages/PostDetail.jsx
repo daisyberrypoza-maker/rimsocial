@@ -81,7 +81,7 @@ export default function PostDetail() {
     try {
       await api(`/v1/posts/${encodeURIComponent(postId)}`, { method: 'DELETE' });
       toast('Post deleted');
-      goBack(navigate);
+      goBack(navigate, '/');
     } catch (e) { logError(e); }
   }
 
@@ -97,7 +97,7 @@ export default function PostDetail() {
   }
 
   if (loading) return <main className="rv-page"><p className="rv-state"></p></main>;
-  if (!post) return <main className="rv-page"><button className="rv-back" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={26} /></button><p className="rv-state">This post is unavailable or has been deleted.</p></main>;
+  if (!post) return <main className="rv-page"><button className="rv-back" onClick={() => goBack(navigate, '/')} aria-label="Go back"><Icon name="arrow-left" size={26} /></button><p className="rv-state">This post is unavailable or has been deleted.</p></main>;
 
   const username = post.author?.username || 'creator';
   const src = mediaUrl(post.mediaUrl);
@@ -108,7 +108,7 @@ export default function PostDetail() {
 
   return <main className={`rv-page ${showComments ? 'sheet-open' : ''}`}>
     <header className="rv-top">
-      <button className="rv-icon rv-back-circle" onClick={() => goBack(navigate)} aria-label="Go back"><Icon name="arrow-left" size={24} /></button>
+      <button className="rv-icon rv-back-circle" onClick={() => goBack(navigate, '/')} aria-label="Go back"><Icon name="arrow-left" size={24} /></button>
       {isOwner && <div className="rv-promote-wrap">
         <button type="button" className="rv-promote" onClick={() => setShowBoost(true)}>Promote</button>
         <div className="rv-promote-tip">Get more followers and views!</div>

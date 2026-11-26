@@ -102,7 +102,7 @@ export default function LiveCreate() {
     <main className="live-create">
       <video ref={videoRef} className={facing === 'user' ? 'live-create-video mirror' : 'live-create-video'} autoPlay playsInline muted />
       <header className="live-create-top">
-        <button type="button" onClick={() => { stopCamera(); goBack(navigate); }} aria-label="Close"><Icon name="x" size={26} /></button>
+        <button type="button" onClick={() => { stopCamera(); goBack(navigate, '/live'); }} aria-label="Close"><Icon name="x" size={26} /></button>
         <button type="button" onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} aria-label="Switch camera"><Icon name="refresh-cw" size={24} /></button>
       </header>
       <form className="live-create-bottom" onSubmit={goLive}>

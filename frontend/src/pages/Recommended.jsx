@@ -69,7 +69,7 @@ export default function Recommended() {
   return (
     <main className="rec-page rec-discover-page">
       <header className="rec-top">
-        <button type="button" className="rec-back" aria-label="Back" onClick={() => goBack(navigate)}><Icon name="arrow-left" size={26} /></button>
+        <button type="button" className="rec-back" aria-label="Back" onClick={() => goBack(navigate, '/')}><Icon name="arrow-left" size={26} /></button>
         <h1>Discover people</h1>
         <span className="rec-spacer" aria-hidden="true" />
       </header>
