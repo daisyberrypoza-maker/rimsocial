@@ -266,7 +266,7 @@ export default function Upload() {
       </View>
 
       <View style={styles.bottom}>
-        <Pressable style={styles.round} onPress={saveToDevice} accessibilityLabel="Save to your phone"><Download size={24} color="#fff" /></Pressable>
+        <Pressable style={styles.round} onPress={saveToDevice} accessibilityLabel="Save to your phone"><Download size={24} color="#000" /></Pressable>
         <Pressable style={[styles.pill, styles.postPill, !canPublish(false) && styles.dim]} onPress={() => publish(false)} disabled={!canPublish(false)}>
           <Text style={styles.postText}>+ Post</Text>
         </Pressable>
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   toolBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   toolT: { color: '#fff', fontSize: 24, fontWeight: '700' },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 6, paddingBottom: 24 },
-  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#2b2b2e', alignItems: 'center', justifyContent: 'center' },
+  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#fffc00', alignItems: 'center', justifyContent: 'center' },
   pill: { flex: 1, height: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   postPill: { backgroundColor: '#fffc00' },
   postText: { color: '#000', fontSize: 17, fontWeight: '600' },
