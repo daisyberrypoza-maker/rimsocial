@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 14, color: GREY, marginTop: 2 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: '#bdbdbd' },
   timeText: { fontSize: 14, fontWeight: '600', color: '#000' },
-  radio: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: '#bdbdbd', alignItems: 'center', justifyContent: 'center' },
+  radio: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: '#bdbdbd', alignItems: 'center', justifyContent: 'center', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0 },
   radioOn: { backgroundColor: BLUE, borderColor: BLUE },
   empty: { textAlign: 'center', color: GREY, padding: 24, fontSize: 15 },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: BLUE, paddingTop: 10, paddingHorizontal: 12, gap: 8 },
@@ -234,6 +234,6 @@ const styles = StyleSheet.create({
   chips: { gap: 6, alignItems: 'center' },
   chip: { height: 36, paddingHorizontal: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.28)', flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipText: { fontSize: 15, fontWeight: '600', color: '#fff', maxWidth: 160 },
-  send: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  send: { width: 56, height: 48, borderRadius: 0, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0 },
   sendOff: { opacity: 0.55 },
 });
