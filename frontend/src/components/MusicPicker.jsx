@@ -33,6 +33,8 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   const [uploading, setUploading] = useState(false);
   const audioRef = useRef(null);
   const fileRef = useRef(null);
+  const streamUrlsRef = useRef(new Map());
+  const streamRequestsRef = useRef(new Map());
 
   // Stop playback when leaving the screen
   useEffect(() => () => { audioRef.current?.pause(); }, []);
@@ -47,7 +49,21 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       : `/v1/audio/search?q=${encodeURIComponent(q)}${chip === 'original' ? '&original=1' : ''}`;
     const timer = setTimeout(() => {
       api(path)
-        .then((data) => { if (active) setItems((data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }))); })
+        .then((data) => {
+          if (!active) return;
+          const nextItems = (data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }));
+          setItems(nextItems);
+          // Warm the first visible Audius rows before a user taps Play. Signed URLs are short-lived,
+          // so they stay in memory only and are refreshed when a track is played if necessary.
+          nextItems.filter((item) => item.source === 'audius').slice(0, 8).forEach((item) => {
+            if (streamUrlsRef.current.has(item.id) || streamRequestsRef.current.has(item.id)) return;
+            const request = api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)
+              .then((result) => { if (result.url) streamUrlsRef.current.set(item.id, result.url); return result.url; })
+              .catch(() => null)
+              .finally(() => streamRequestsRef.current.delete(item.id));
+            streamRequestsRef.current.set(item.id, request);
+          });
+        })
         .catch((error) => { if (active) { setItems([]); logError(error); } });
     }, 250);
     return () => { active = false; clearTimeout(timer); };
@@ -66,9 +82,13 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       const audio = audioRef.current;
       audio.pause();
       const src = item.source === 'audius'
-        ? (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url
+        ? (streamUrlsRef.current.get(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
         : mediaUrl(item.mediaUrl);
+      if (!src) throw new Error('No playable audio URL was returned');
+      if (item.source === 'audius') streamUrlsRef.current.set(item.id, src);
+      audio.preload = 'auto';
       audio.src = src;
+      audio.load();
       audio.onended = () => setPlayingId(null);
       await audio.play();
       setPlayingId(item.id);
@@ -103,7 +123,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
 
   function choose(item) {
     stopPreview();
-    onSelect(item);
+    onSelect(item.source === 'audius' ? { ...item, previewUrl: streamUrlsRef.current.get(item.id) || null } : item);
   }
 
   return (
