@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   addPillText: { color: '#111', fontSize: 14, fontWeight: '600' },
   empty: { color: '#9aa0a6', fontSize: 15, textAlign: 'center', padding: 32 },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingVertical: 14, paddingBottom: 30, backgroundColor: 'rgba(15,17,21,0.92)' },
-  shuffle: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingHorizontal: 20, borderRadius: 23, borderWidth: 1, borderColor: '#3a3f47', backgroundColor: '#262b33' },
-  shuffleText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  shuffle: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingHorizontal: 20, borderRadius: 23, borderWidth: 1, borderColor: '#fffc00', backgroundColor: '#fffc00' },
+  shuffleText: { color: '#000', fontSize: 15, fontWeight: '600' },
   dim: { opacity: 0.5 },
 });
