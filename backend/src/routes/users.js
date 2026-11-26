@@ -511,6 +511,16 @@ router.put('/:id/mute', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Control who can reply to public Stories. Default is everyone.
+router.put('/me/story-replies', requireAuth, async (req, res, next) => {
+  try {
+    const setting = String(req.body?.setting || '');
+    if (!['everyone', 'friends', 'off'].includes(setting)) throw httpError(400, 'Choose everyone, friends, or off');
+    await User.update({ storyReplySetting: setting }, { where: { id: req.user.id } });
+    res.json({ storyReplySetting: setting });
+  } catch (e) { next(e); }
+});
+
 // POST /v1/users/:id/follow
 router.post('/:id/follow', requireAuth, async (req, res, next) => {
   try {
