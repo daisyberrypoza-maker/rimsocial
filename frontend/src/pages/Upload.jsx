@@ -252,7 +252,7 @@ export default function Upload() {
   const setDraft = useAppStore((s) => s.setUploadDraft);
   const asStory = searchParams.get('story') === '1';
   const asReel = searchParams.get('reel') === '1';
-  const [view, setView] = useState('gallery');
+  const [view, setView] = useState('settings');
   const [tab, setTab] = useState('Camera Roll');
   const [recents, setRecents] = useState([]);
   const [memories, setMemories] = useState([]);
@@ -536,14 +536,14 @@ export default function Upload() {
     const modes = [
       { key: 'text', label: 'Text', path: asStory ? '/story/text' : '/post/text' },
       { key: 'story', label: 'Story', path: '/upload?story=1' },
-      { key: 'music', label: 'Music' },
       { key: 'post', label: 'Post', path: '/upload' },
+      { key: 'reel', label: 'Reel', path: '/upload?reel=1' },
     ];
     const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate, '/')} aria-label="Close"><Icon name="x" size={28} /></button>
-        <h1 className="ig-create-heading">Add to story</h1>
+        <h1 className="ig-create-heading">{asReel ? 'Add to reel' : asStory ? 'Add to story' : 'Create'}</h1>
         <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
       <nav className="ig-create-modes" aria-label="Create type">
@@ -569,14 +569,16 @@ export default function Upload() {
           {item.kind === 'video' ? <video src={mediaUrl(item.mediaUrl)} muted playsInline preload="metadata" /> : <img src={mediaUrl(item.mediaUrl)} alt="" />}
         </button>)}
       </div>}
-      {storyTrack && <div className="ig-music-bar">
-        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label="Change selected music">
-          <span className="ig-music-disc">{storyTrack.artwork ? <img src={storyTrack.artwork} alt="" /> : <Icon name="music" size={20} />}</span>
-          <span className="ig-music-text"><strong>{storyTrack.title || storyTrack.name || 'Selected sound'}</strong><small>{storyTrack.artist || storyTrack.artistName || 'Selected for your story'}</small></span>
+      <div className="ig-music-bar">
+        <button type="button" className="ig-music-open" onClick={() => setGalleryMusicOpen(true)} aria-label={storyTrack ? 'Change selected music' : 'Add music'}>
+          <span className="ig-music-disc">{storyTrack?.artwork ? <img src={storyTrack.artwork} alt="" /> : <Icon name="music" size={20} />}</span>
+          <span className="ig-music-text"><strong>{storyTrack?.title || storyTrack?.name || 'Add music'}</strong><small>{storyTrack?.artist || storyTrack?.artistName || 'Choose a soundtrack'}</small></span>
         </button>
-        <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
-        <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
-      </div>}
+        {storyTrack && <>
+          <button type="button" className="ig-music-btn" onClick={toggleGalleryMusic} aria-label={galleryMusicPlaying ? 'Pause selected music' : 'Play selected music'}><Icon name={galleryMusicPlaying ? 'pause' : 'play'} size={20} /></button>
+          <button type="button" className="ig-music-btn" onClick={clearGalleryMusic} aria-label="Remove selected music"><Icon name="x" size={22} /></button>
+        </>}
+      </div>
       {galleryMusicOpen && <MusicPicker selectedId={storyTrack?.id || null} onSelect={(item) => { setStoryTrack({ ...item }); setGalleryMusicOpen(false); playGalleryMusic(item); }} onClose={() => setGalleryMusicOpen(false)} onSettings={() => { setGalleryMusicOpen(false); setView('settings'); }} />}
       {selectMode && selection.length > 0 && <button type="button" className="up-select-next" onClick={openSelection}>Next ({selection.length})</button>}
       <input id="up-file" className="hidden" type="file" accept={asReel ? 'video/*' : ACCEPT} multiple={!asReel} onChange={(e) => { pickMany(Array.from(e.target.files || [])); e.target.value = ''; }} />

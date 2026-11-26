@@ -7900,3 +7900,34 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
   .app { max-width: 640px; margin: 0 auto; box-shadow: 0 0 0 1px var(--line); }
   .bottomnav { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); }
 }
+
+
+/* Rimlight reference alignment: full-screen media with no bottom tab strip. */
+.app > .feed > .post > video,
+.app > .feed > .post > img { object-fit: contain !important; }
+.app > .feed > .post > .rail {
+  top: auto !important;
+  right: 8px !important;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  gap: 16px !important;
+  justify-content: flex-start !important;
+}
+.app > .feed > .post > .rail .save-btn,
+.app > .feed > .post > .rail button[aria-label="Send a gift"] { display: none !important; }
+.app > .feed > .post > .info {
+  left: 16px !important;
+  right: 88px !important;
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.app > .feed > .post > .info .snap-title { font-size: 21px !important; line-height: 1.15 !important; }
+.app > .feed > .post > .post-seek {
+  display: block !important;
+  top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  bottom: auto !important;
+  height: 8px !important;
+  z-index: 40 !important;
+}
+.app > .feed > .post > .post-seek::-webkit-slider-runnable-track { height: 3px !important; }
+.app > .feed > .post > .post-seek::-webkit-slider-thumb {
+  width: 0 !important; height: 0 !important; margin-top: -1.5px !important;
+}
