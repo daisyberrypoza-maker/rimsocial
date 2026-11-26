@@ -247,7 +247,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
-      {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && location.pathname !== '/' && location.pathname !== '/following' && <BottomNav />}
+      {showChrome && isTabScreen(location.pathname, location.search) && !profileWatch && !exploreWatch && <BottomNav />}
       <LiveChat />
       <Toast />
       <ConfirmDialog />

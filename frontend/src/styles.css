@@ -14,8 +14,8 @@
 }
 
 * { box-sizing: border-box; }
-:where(.viewer,.post,.slot,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) svg { color:#fff !important; stroke:#fff !important; }
-:where(.viewer,.post,.slot,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) { color:#fff; }
+:where(.viewer,.post,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) svg { color:#fff !important; stroke:#fff !important; }
+:where(.viewer,.post,.rimlight,.camera-screen,.camera-view,.story-viewer,.share-overlay,.dark-overlay,[data-theme="dark"]) :where(button,[role="button"]) { color:#fff; }
 html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 body { overflow: hidden; }
@@ -54,10 +54,10 @@ input:focus { border-color: var(--brand-a); }
 
 /* ---------- feed (full screen, one post per screen) ---------- */
 .feed { flex: 1; min-height: 0; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; }
-.post { position: relative; height: 100%; min-height: 100%; scroll-snap-align: start; background: #000; overflow: hidden; }
+.post { position: relative; height: 100%; min-height: 100%; scroll-snap-align: start; background: #f1f2f4; overflow: hidden; }
 .post img, .post video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .post .shade { position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(0,0,0,.85)); pointer-events: none; }
-.slot { height: 100%; min-height: 100%; scroll-snap-align: start; display: grid; place-items: center; background: #000; padding: 24px; text-align: center; }
+.slot { height: 100%; min-height: 100%; scroll-snap-align: start; display: grid; place-items: center; background: var(--bg); color: var(--text); padding: 24px; text-align: center; }
 
 .rail { position: absolute; right: 10px; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 18px; z-index: 2; }
 .rail-avatar { background: none; padding: 0; border-radius: 0; }
@@ -4845,10 +4845,10 @@ main.live-page { background:#fff !important; color:#111 !important; padding-top:
 .sv-react { width:32px; height:32px; font-size:22px; }
 
 /* Network failure screen: centred message and an outlined RETRY button, as in the reference. */
-.conn-failed { min-height:calc(100dvh - 180px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; background:#000; color:#fff; box-sizing:border-box; }
+.conn-failed { min-height:calc(100dvh - 180px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; background:var(--bg); color:var(--text); box-sizing:border-box; }
 .conn-failed h2 { margin:0; font-size:22px; font-weight:700; }
-.conn-failed p { margin:0; font-size:16px; line-height:1.4; color:#f2f2f2; }
-.conn-failed .conn-retry { margin-top:18px; width:200px; padding:14px 0; border:1.5px solid #fff !important; border-radius:999px !important; background:transparent !important; color:#fff !important; font-size:16px; font-weight:600; letter-spacing:.6px; cursor:pointer; }
+.conn-failed p { margin:0; font-size:16px; line-height:1.4; color:var(--muted); }
+.conn-failed .conn-retry { margin-top:18px; width:200px; padding:14px 0; border:1.5px solid var(--brand) !important; border-radius:999px !important; background:transparent !important; color:var(--brand) !important; font-size:16px; font-weight:600; letter-spacing:.6px; cursor:pointer; }
 .conn-failed .conn-retry:disabled { opacity:.6; }
 
 /* Bottom tab bar: taller with larger icons and more room, as in the reference. */
