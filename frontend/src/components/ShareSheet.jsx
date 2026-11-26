@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { useAppStore } from '../store.js';
 import Avatar from './Avatar.jsx';
@@ -33,12 +33,22 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   const [picked, setPicked] = useState([]);
   const [sending, setSending] = useState(false);
 
-  // Escape closes the share page (keyboard users)
+  // Escape: clears the search text first, then closes the page. The latest onClose is read from a ref,
+  // so the listener is registered once.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const setQueryRef = useRef(setQuery);
   useEffect(() => {
-    function onKey(event) { if (event.key === 'Escape') onClose?.(); }
+    function onKey(event) {
+      if (event.key !== 'Escape') return;
+      if (queryRef.current) { setQueryRef.current(''); return; }
+      closeRef.current?.();
+    }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
 
   // All friends (people you follow) plus recent chat contacts, de-duplicated; a search replaces the list.
   useEffect(() => {
