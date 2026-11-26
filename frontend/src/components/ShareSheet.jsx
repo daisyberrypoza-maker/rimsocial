@@ -5,6 +5,7 @@ import Avatar from './Avatar.jsx';
 import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
 import { sealFor } from '../lib/e2ee.js';
+import { newClientId } from '../lib/clientId.js';
 import './ShareSheet.css';
 
 // Full-screen share page. Friends: everyone you follow plus recent chats (pick up to 15 and send in the app).
@@ -99,10 +100,28 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   }
 
   async function sendAll() {
-    if (!url) { toast('This post has no public link yet'); return; }
     if (!picked.length || sending) return;
+    if (!imageUrl && !url) { toast('This post has no public link yet'); return; }
     setSending(true);
     try {
+      if (imageUrl) {
+        // Send the picture itself as a direct message to each friend (same route the chat uses for photos)
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('Could not load this media');
+        const blob = await response.blob();
+        const type = blob.type || 'image/jpeg';
+        const failed = [];
+        for (const user of picked) {
+          const form = new FormData();
+          form.append('media', new File([blob], imageName, { type }));
+          form.append('clientId', newClientId());
+          try { await api(`/v1/messages/with/${user.id}/media`, { method: 'POST', body: form }); } catch { failed.push(user); }
+        }
+        if (failed.length) throw new Error(`Could not send to ${failed.length}`);
+        toast(`Sent to ${picked.length}`);
+        setPicked([]);
+        return;
+      }
       const messages = await Promise.all(picked.map(async (user) => ({ userId: user.id, body: await sealFor(user.id, text) })));
       const postId = url.match(/\/p\/([^/?#]+)/)?.[1] || null;
       await api('/v1/messages/share', { method: 'POST', body: { messages, postId } });
