@@ -8,13 +8,13 @@
 .sf-search svg { color: #8a8a8a; }
 .sf-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 17px; color: #000 !important; outline: none; padding: 0; }
 .sf-search input::placeholder { color: #8a8a8a; }
-.sf-people { flex: 1; overflow-y: auto; min-height: 0; padding: 0 0 8px; border-bottom: 1px solid #e8e8e8; }
+.sf-people { flex: 1; overflow-y: auto; min-height: 0; padding: 0; border-bottom: 1px solid #e8e8e8; }
 .sf-section-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
 .sf-section-head h2, .sf-section-title { margin: 0; font-size: 16px; font-weight: 600; color: #000; }
 .sf-section-title { padding: 18px 16px 8px; }
 .sf-new-story { height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: #f1f1f1; color: #000; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .sf-new-story svg { color: #000; }
-.sf-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 64px; border: 0; border-bottom: 1px solid #e8e8e8; background: transparent; color: #000; text-align: left; }
+.sf-person { width: 100%; box-sizing: border-box; margin: 0; border-radius: 0 !important; box-shadow: none !important; display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 64px; border: 0; border-bottom: 1px solid #e8e8e8; background: transparent; color: #000; text-align: left; }
 .sf-person:disabled { opacity: .6; }
 .sf-person.on .sf-name strong { color: #1ca8ff; }
 .sf-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -48,7 +48,7 @@
 .sf-send:disabled { opacity: .55; }
 
 /* Share targets row: hidden temporarily without removing its markup or handlers */
-.sf-apps { display: none;  display: flex; gap: 14px; overflow-x: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #efefef; flex: none; }
+.sf-apps { display: none !important; /* temporarily hidden; markup and handlers remain */ display: flex; gap: 14px; overflow-x: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #efefef; flex: none; }
 .sf-app { flex: none; width: 68px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: transparent; color: #000; font-size: 12px; padding: 0; }
 .sf-circle { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #efefef; color: #000; font-size: 20px; font-weight: 700; }
 .sf-wa { background: #25d366; color: #fff; }
@@ -59,4 +59,7 @@
 .sf-sms { background: #34c759; color: #fff; }
 
 /* Tablets: the sheet stays in the phone column */
+.sf-page, .sf-page * { box-shadow: none !important; }
+.sf-person, .sf-person:focus, .sf-person:active { border-radius: 0 !important; box-shadow: none !important; }
+
 @media (min-width: 768px) { .sf-page { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); } }
