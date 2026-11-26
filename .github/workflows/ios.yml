@@ -29,9 +29,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Ensure CocoaPods is installed
+        run: |
+          if ! command -v pod >/dev/null 2>&1; then sudo gem install cocoapods --no-document; fi
+          pod --version
       - name: Generate React Native iOS project
         working-directory: ${{ runner.temp }}
-        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --package-name com.clipverse.app --pm npm --install-pods=false --skip-git-init --directory RimSocial
+        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --package-name com.clipverse.app --pm npm --skip-git-init --directory RimSocial
       - name: Verify generated iOS project structure
         run: |
           find "$RUNNER_TEMP/RimSocial" -maxdepth 5 -name "*.xcodeproj" -print
