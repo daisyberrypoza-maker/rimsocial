@@ -285,6 +285,22 @@ async function start() {
   // Small additive upgrade for databases created by an earlier ClipVerse build.
   const qi = sequelize.getQueryInterface();
   const userColumns = await qi.describeTable('users');
+  // Migration 046: terms acceptance and message reports. Additive and safe to rerun.
+  if (!userColumns.termsAcceptedAt) {
+    await qi.addColumn('users', 'termsAcceptedAt', { type: DataTypes.DATE, allowNull: true });
+  }
+  await sequelize.query(`CREATE TABLE IF NOT EXISTS message_reports (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    messageId CHAR(36) NOT NULL,
+    reporterId CHAR(36) NOT NULL,
+    reportedUserId CHAR(36) NOT NULL,
+    reason VARCHAR(500) NOT NULL,
+    status ENUM('pending','reviewed','dismissed') NOT NULL DEFAULT 'pending',
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY message_reports_message_reporter (messageId, reporterId),
+    INDEX message_reports_reported_user_created (reportedUserId, createdAt)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
   if (!userColumns.bio) await qi.addColumn('users', 'bio', { type: require('sequelize').DataTypes.STRING(150), allowNull: true });
   if (!userColumns.website) await qi.addColumn('users', 'website', { type: require('sequelize').DataTypes.STRING(200), allowNull: true });
   if (!userColumns.city) await qi.addColumn('users', 'city', { type: require('sequelize').DataTypes.STRING(80), allowNull: true });
