@@ -86,7 +86,7 @@ export default function SendTo({ navigation, route }) {
     setSending(true);
     try {
       if (picked.length) {
-        const results = await Promise.allSettled(picked.map((user) => api(`/v1/messages/with/${user.id}`, { method: 'POST', body: { body } })));
+        const results = await Promise.allSettled(picked.map((user) => api(`/v1/messages/with/${user.id}`, { method: 'POST', body: { body, ...(storyId ? { storyId } : {}) } })));
         const failed = results.filter((r) => r.status === 'rejected').length;
         if (failed === picked.length) throw new Error('Could not send');
         if (failed) toast(`Sent to ${picked.length - failed}. ${failed} failed`);
