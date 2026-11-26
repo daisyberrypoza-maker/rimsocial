@@ -538,20 +538,20 @@ export default function Upload() {
       { key: 'story', label: 'Story', path: '/upload?story=1' },
       { key: 'music', label: 'Music' },
       { key: 'post', label: 'Post', path: '/upload' },
-      { key: 'reel', label: 'Reel', path: '/upload?reel=1' },
     ];
     const activeMode = asStory ? 'story' : asReel ? 'reel' : 'post';
     return <main className="up-page up-gallery ig-create">
       <header className="ig-create-top">
         <button type="button" className="ig-create-x" onClick={() => goBack(navigate)} aria-label="Close"><Icon name="x" size={28} /></button>
-        <nav className="ig-create-modes" aria-label="Create type">
-          {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => mode.key === 'music' ? setGalleryMusicOpen(true) : navigate(mode.path, { replace: true, state: { storyTrack } })}>{mode.label}</button>)}
-        </nav>
+        <h1 className="ig-create-heading">Add to story</h1>
         <button type="button" className="ig-create-gear" onClick={() => setView('settings')} aria-label="Settings"><Icon name="settings" size={28} /></button>
       </header>
+      <nav className="ig-create-modes" aria-label="Create type">
+        {modes.map((mode) => <button key={mode.key} type="button" className={mode.key === activeMode ? 'on' : ''} onClick={() => mode.key === 'music' ? setGalleryMusicOpen(true) : navigate(mode.path, { replace: true, state: { storyTrack } })}>{mode.label}</button>)}
+      </nav>
       <div className="ig-create-sub">
         <button type="button" className="ig-create-source" onClick={() => setTab(onRecents ? 'Memories' : 'Camera Roll')} aria-label="Change album">
-          {onRecents ? 'Gallery' : 'Memories'} <Icon name="chevron-down" size={18} />
+          {onRecents ? 'Recents' : 'Memories'} <Icon name="chevron-down" size={18} />
         </button>
         {asStory && <button type="button" className="ig-create-pick" onClick={() => navigate('/story/text')} aria-label="Text story"><span className="ig-create-aa">Aa</span> Text story</button>}
         {!asStory && !asReel && <button type="button" className="ig-create-pick" onClick={() => navigate('/post/text')} aria-label="Text post"><span className="ig-create-aa">Aa</span> Text post</button>}
