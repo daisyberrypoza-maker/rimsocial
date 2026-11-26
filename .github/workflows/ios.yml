@@ -41,12 +41,14 @@ jobs:
           mkdir RimSocial
           tar -xzf "$TARBALL" -C RimSocial --strip-components=1
           cd RimSocial
+          # The project files sit under template/ inside the package
+          if [ -d template ]; then cp -R template/. . && rm -rf template; fi
           # npm drops dot-files from packages, so the template keeps them as _name
           for f in _*; do [ -e "$f" ] && mv "$f" ".${f#_}"; done
           # Rename the template placeholder to the app name, in file contents and in file names
           grep -rl "HelloWorld" . --exclude-dir=node_modules | xargs -r sed -i'' -e 's/HelloWorld/RimSocial/g'
           find . -depth -name "*HelloWorld*" -not -path "./node_modules/*" -exec sh -c 'mv "$1" "$(dirname "$1")/$(basename "$1" | sed s/HelloWorld/RimSocial/)"' _ {} \;
-          ls ios
+          ls -la ios
 
       - name: Copy the mobile app into the native project
         run: |
