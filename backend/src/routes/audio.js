@@ -33,31 +33,67 @@ const toDTO = (track) => ({
 
 router.use(requireAuth);
 
-// GET /v1/audio/search?q=... : tracks whose title or artist matches (newest first); no q lists the newest tracks
+// GET /v1/audio/search?q=&offset=&limit=&seed=&original=1
+// For You (no q, not original): the newest tracks are split into this listener's country and everywhere else.
+// Each group is shuffled with a seed (stable while paging), then the two are interleaved 50/50.
+// Other modes rank by story use and age. Every mode pages with offset/limit and returns hasMore.
+const hashKey = (id, seed) => crypto.createHash('sha1').update(`${seed}:${id}`).digest('hex');
+
+function interleave(first, second) {
+  const out = [];
+  let i = 0;
+  let j = 0;
+  while (i < first.length || j < second.length) {
+    if (i < first.length) out.push(first[i++]);
+    if (j < second.length) out.push(second[j++]);
+  }
+  return out;
+}
+
 router.get('/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 80);
-    const where = { ...(q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {}), ...(req.query.original === '1' ? { uploadedById: req.user.id } : {}) };
-    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: 200 });
-    // Music_Track_Score: uses in the last 24 hours (story music URLs), then age since release.
-    // Completion, genre affinity and featured flags are not tracked yet, so they count as 0.
-    const since = new Date(Date.now() - 24 * 3600 * 1000);
-    const urls = rows.map((row) => row.mediaUrl);
-    const useRows = urls.length ? await Post.findAll({
-      attributes: ['musicUrl', [fn('COUNT', col('id')), 'n']],
-      where: { isStory: true, musicUrl: urls, createdAt: { [Op.gt]: since } },
-      group: ['musicUrl'], raw: true,
-    }) : [];
-    const uses = new Map(useRows.map((row) => [row.musicUrl, Number(row.n)]));
-    const now = Date.now();
-    const ranked = rows.map((row) => ({
-      row,
-      score: musicTrackScore({
-        uses24h: uses.get(row.mediaUrl) || 0,
-        daysSinceRelease: (now - new Date(row.createdAt).getTime()) / (24 * 3600 * 1000),
-      }),
-    })).sort((a, b) => b.score - a.score || new Date(b.row.createdAt) - new Date(a.row.createdAt));
-    res.json({ items: ranked.slice(0, 40).map((item) => toDTO(item.row)) });
+    const original = req.query.original === '1';
+    const mixed = !q && !original;
+    const offset = Math.min(10000, Math.max(0, parseInt(req.query.offset, 10) || 0));
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const seed = String(req.query.seed || 'default').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'default';
+    const where = { ...(q ? { [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { artist: { [Op.like]: `%${q}%` } }] } : {}), ...(original ? { uploadedById: req.user.id } : {}) };
+    const rows = await AudioTrack.findAll({ where, order: [['createdAt', 'DESC']], limit: mixed ? 1000 : 200 });
+
+    let ordered;
+    if (mixed) {
+      const uploaderIds = [...new Set(rows.map((row) => String(row.uploadedById)))];
+      const uploaders = uploaderIds.length ? await User.findAll({ where: { id: uploaderIds }, attributes: ['id', 'country'], raw: true }) : [];
+      const countryOf = new Map(uploaders.map((u) => [String(u.id), u.country]));
+      const me = await User.findByPk(req.user.id, { attributes: ['country'], raw: true });
+      const myCountry = me?.country || 'NG';
+      const keyed = (list) => list.map((row) => ({ row, key: hashKey(row.id, seed) })).sort((a, b) => (a.key < b.key ? -1 : 1)).map((item) => item.row);
+      const local = keyed(rows.filter((row) => countryOf.get(String(row.uploadedById)) === myCountry));
+      const elsewhere = keyed(rows.filter((row) => countryOf.get(String(row.uploadedById)) !== myCountry));
+      ordered = interleave(local, elsewhere);
+    } else {
+      // Music_Track_Score: uses in the last 24 hours (story music URLs), then age since release.
+      // Completion, genre affinity and featured flags are not tracked yet, so they count as 0.
+      const since = new Date(Date.now() - 24 * 3600 * 1000);
+      const urls = rows.map((row) => row.mediaUrl);
+      const useRows = urls.length ? await Post.findAll({
+        attributes: ['musicUrl', [fn('COUNT', col('id')), 'n']],
+        where: { isStory: true, musicUrl: urls, createdAt: { [Op.gt]: since } },
+        group: ['musicUrl'], raw: true,
+      }) : [];
+      const uses = new Map(useRows.map((row) => [row.musicUrl, Number(row.n)]));
+      const now = Date.now();
+      ordered = rows.map((row) => ({
+        row,
+        score: musicTrackScore({
+          uses24h: uses.get(row.mediaUrl) || 0,
+          daysSinceRelease: (now - new Date(row.createdAt).getTime()) / (24 * 3600 * 1000),
+        }),
+      })).sort((a, b) => b.score - a.score || new Date(b.row.createdAt) - new Date(a.row.createdAt)).map((item) => item.row);
+    }
+    const page = ordered.slice(offset, offset + limit);
+    res.json({ items: page.map((row) => toDTO(row)), hasMore: offset + limit < ordered.length, nextOffset: offset + limit });
   } catch (e) { next(e); }
 });
 
