@@ -7886,3 +7886,7 @@ body:has(.profile-drawer-backdrop) .bottomnav { display: none !important; }
 body:has(input:focus:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"])) .bottomnav,
 body:has(textarea:focus) .bottomnav,
 body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; }
+
+/* Camera tools column follows the Left / Right setting in Camera settings */
+.cam-side.cam-side-left { left: 12px; right: auto; }
+.cam-side.cam-side-right { right: 12px; left: auto; }

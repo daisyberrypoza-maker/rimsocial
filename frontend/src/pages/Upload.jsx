@@ -218,7 +218,7 @@ function CameraView({ onCapture, onGallery }) {
           <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} aria-label="Flip camera"><Icon name="refresh" size={24} /></button>
         </div>
       </header>
-      <div className="cam-side">
+      <div className={`cam-side cam-side-${readCameraPref('tools', 'left') === 'right' ? 'right' : 'left'}`}>
         <button type="button" onClick={toggleTorch} aria-label={torch ? 'Turn flash off' : 'Turn flash on'} aria-pressed={torch}><Icon name={torch ? 'zap' : 'zap-off'} size={24} /></button>
       </div>
       <div className="cam-bottom">

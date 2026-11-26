@@ -50,7 +50,6 @@ export default function CameraSettings({ onDone, onStory, onReel }) {
       <section className="cs-group">
         <button type="button" className="cs-row" onClick={onStory}><span>Story</span><Icon name="chevron-right" size={20} /></button>
         <button type="button" className="cs-row" onClick={onReel}><span>Reels</span><Icon name="chevron-right" size={20} /></button>
-        <button type="button" className="cs-row" disabled aria-disabled="true"><span>Live</span><small>Coming soon</small></button>
       </section>
 
       <h2 className="cs-heading">Controls</h2>
