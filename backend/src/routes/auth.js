@@ -95,6 +95,7 @@ router.post('/google', async (req, res, next) => {
     const countryInput = String(req.body.country || 'US').trim().toUpperCase();
     const country = /^[A-Z]{2}$/.test(countryInput) ? countryInput : 'US';
     let user = await User.findOne({ where: { email } });
+    if (!user) throw httpError(403, 'Google sign-up is unavailable until you accept the Terms of Service through email registration');
     if (!user) {
       const base = String(claims.name || email.split('@')[0]).toLowerCase()
         .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'creator';
