@@ -47,7 +47,7 @@ export default function MusicPicker({ navigation, route }) {
       setBusy(true);
       try {
         const data = await fetchPage(tab, query, 0);
-        if (live) setMusic({ lists: { ...useAppStore.getState().music.lists, [tab]: data } });
+        if (live) setMusic({ lists: { ...useAppStore.getState().music.lists, [tab]: data }, ...(tab === 'trending' ? { trendingFallback: Boolean(data.trendingFallback) } : {}) });
       } catch (error) {
         if (live) { logError(error); toast('Music could not be loaded'); }
       } finally { if (live) setBusy(false); }
@@ -58,6 +58,10 @@ export default function MusicPicker({ navigation, route }) {
   async function fetchPage(activeTab, search, offset) {
     const q = String(search || '').trim();
     if (activeTab === 'trending') {
+      if (!q && music?.trendingFallback) {
+        const general = await api(`/v1/audio/audius/trending?limit=${PAGE_SIZE}&offset=${offset}`);
+        return { items: (general.items || []).map((item) => ({ ...item, source: 'audius' })), nextOffset: general.nextOffset || offset + (general.items || []).length, hasMore: Boolean(general.hasMore), trendingFallback: true };
+      }
       if (q) {
         const result = await api(`/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=${PAGE_SIZE}`);
         return { items: result.items || [], nextOffset: PAGE_SIZE, hasMore: false };
@@ -66,7 +70,7 @@ export default function MusicPicker({ navigation, route }) {
       if ((network.items || []).length) return { items: network.items, nextOffset: network.nextOffset || offset + network.items.length, hasMore: Boolean(network.hasMore) };
       if (offset > 0) return { items: [], nextOffset: offset, hasMore: false };
       const general = await api(`/v1/audio/audius/trending?limit=${PAGE_SIZE}&offset=${offset}`);
-      return { items: (general.items || []).map((item) => ({ ...item, source: 'audius' })), nextOffset: general.nextOffset || offset + (general.items || []).length, hasMore: Boolean(general.hasMore) };
+      return { items: (general.items || []).map((item) => ({ ...item, source: 'audius' })), nextOffset: general.nextOffset || offset + (general.items || []).length, hasMore: Boolean(general.hasMore), trendingFallback: true };
     }
     const params = new URLSearchParams({ q, offset: String(offset), limit: String(PAGE_SIZE) });
     if (activeTab === 'original') params.set('original', '1');
@@ -81,7 +85,7 @@ export default function MusicPicker({ navigation, route }) {
       const next = await fetchPage(tab, query, cache.nextOffset || 0);
       const current = useAppStore.getState().music.lists?.[tab] || cache;
       const seen = new Set((current.items || []).map((item) => String(item.id)));
-      setMusic({ lists: { ...useAppStore.getState().music.lists, [tab]: { ...next, items: [...(current.items || []), ...next.items.filter((item) => !seen.has(String(item.id)))] } } });
+      setMusic({ lists: { ...useAppStore.getState().music.lists, [tab]: { ...next, items: [...(current.items || []), ...next.items.filter((item) => !seen.has(String(item.id)))] } }, ...(tab === 'trending' ? { trendingFallback: Boolean(next.trendingFallback) } : {}) });
     } catch (error) { logError(error); }
     finally { setPaging(false); }
   }
