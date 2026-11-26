@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, sequelize } = require('../db');
+const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, UserReport, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const liveChat = require('../services/liveChat');
@@ -1145,6 +1145,29 @@ router.post('/with/:userId/unread', async (req, res, next) => {
 });
 
 // ---- message actions ----------------------------------------------------------
+
+// Report a message received in this conversation. The existing user-report moderation queue
+// receives the report with the exact message ID and the sender as the reported account.
+router.post('/message/:id/report', async (req, res, next) => {
+  try {
+    const me = String(req.user.id);
+    const row = await findVisibleMessage(me, req.params.id);
+    if (String(row.senderId) === me) throw httpError(400, 'You cannot report your own message');
+    if (row.deletedForEveryone) throw httpError(404, 'Message not found');
+    const reason = String(req.body?.reason || '').trim().slice(0, 120);
+    if (!['Harassment', 'Hate speech', 'Threats or violence', 'Sexual content', 'Spam or scam', 'Other'].includes(reason)) {
+      throw httpError(400, 'Choose a valid reason for reporting this message');
+    }
+    const existing = await UserReport.findOne({ where: { reportedUserId: row.senderId, reporterId: me, status: 'pending' } });
+    if (existing) throw httpError(409, 'You have already reported this account');
+    await UserReport.create({
+      reportedUserId: row.senderId,
+      reporterId: me,
+      reason: `Direct message ${row.id}: ${reason}`,
+    });
+    res.status(201).json({ reported: true });
+  } catch (error) { next(error); }
+});
 
 // Edit my own text message within 15 minutes.
 router.patch('/message/:id', async (req, res, next) => {
