@@ -52,18 +52,18 @@ jobs:
       - name: Apply App Store metadata from mobile/app.json
         run: |
           python3 - <<'PY'
-          import json, pathlib, plistlib
+          import json, pathlib, plistlib, os
           config = json.loads(pathlib.Path('mobile/app.json').read_text())
           ios = config['ios']
           assert ios.get('supportsTablet') is True, 'iPad support must remain enabled'
           assert ios.get('bundleIdentifier') == 'com.clipverse.app', 'Unexpected iOS bundle identifier'
-          plist_path = pathlib.Path('$RUNNER_TEMP/RimSocial/ios/RimSocial/Info.plist')
+          plist_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios/RimSocial/Info.plist'
           with plist_path.open('rb') as source:
               plist = plistlib.load(source)
           plist.update(ios['infoPlist'])
           with plist_path.open('wb') as target:
               plistlib.dump(plist, target)
-          project = pathlib.Path('$RUNNER_TEMP/RimSocial/ios/RimSocial.xcodeproj/project.pbxproj').read_text()
+          project = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios/RimSocial.xcodeproj/project.pbxproj'.read_text()
           assert 'TARGETED_DEVICE_FAMILY = "1,2"' in project, 'Generated target must include iPhone and iPad'
           PY
       - name: Install CocoaPods
