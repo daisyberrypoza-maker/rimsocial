@@ -44,6 +44,8 @@ export default function Login() {
   const [countryOpen, setCountryOpen] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const set = (key) => (value) => { setError(''); setForm((f) => ({ ...f, [key]: value })); };
 
   async function finish(data) {
@@ -73,7 +75,7 @@ export default function Login() {
     if (key === 'password') return form.password.length >= 8;
     if (key === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (key === 'displayName') return value.length <= 64;
-    return true;
+    return key === 'country' ? termsAccepted : true;
   }
 
   function next() {
@@ -175,6 +177,12 @@ export default function Login() {
         <Text style={styles.meta}>∞ Meta</Text>
       </View>
 
+      <Modal visible={termsOpen} animationType="slide" transparent onRequestClose={() => setTermsOpen(false)}>
+        <View style={styles.backdrop}><View style={styles.sheet}>
+          <View style={styles.sheetTop}><Text style={styles.sheetTitle}>Terms of Service & EULA</Text><Pressable onPress={() => setTermsOpen(false)}><Text style={styles.done}>Done</Text></Pressable></View>
+          <ScrollView><Text style={styles.termsBody}>RimSocial is a social platform for sharing posts, stories, videos, messages and other user content. You must be at least the minimum age required by law to use the service. You are responsible for your account and the content you upload. Do not post illegal, abusive, threatening, hateful, sexually exploitative, deceptive, infringing or otherwise harmful content. Do not harass, impersonate, spam, scam, or violate another person’s privacy. You retain ownership of your content and grant RimSocial the limited licence needed to host, process, display and distribute it as required to operate the service. You must have all rights and permissions required for content you upload, including music and other media. We may remove content, restrict features or suspend accounts that violate these terms or applicable law. You can report content and accounts in the app. The service is provided subject to applicable law; features may change, and we may suspend service for security, legal or operational reasons. To the extent permitted by law, RimSocial disclaims implied warranties and is not liable for indirect or consequential losses. Contact RimSocial support for questions about these terms. By selecting the acceptance box, you confirm that you have read and agree to these Terms of Service and EULA.</Text></ScrollView>
+        </View></View>
+      </Modal>
       <Modal visible={countryOpen} animationType="slide" transparent onRequestClose={() => setCountryOpen(false)}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
@@ -236,7 +244,13 @@ const styles = StyleSheet.create({
   grey: { height: CONTROL_H, marginTop: 10, backgroundColor: '#f1f2f4', borderRadius: RADIUS, alignItems: 'center', justifyContent: 'center' },
   greyText: { color: '#000', fontWeight: '600', fontSize: 15 },
   hintSmall: { fontSize: 13, color: '#737373', marginLeft: 4 },
-  terms: { fontSize: 13, color: '#737373', lineHeight: 19, marginTop: 8 },
+  terms: { flex: 1, fontSize: 13, color: '#737373', lineHeight: 19 },
+  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 8 },
+  termsCheck: { width: 22, height: 22, borderWidth: 1, borderColor: '#8b8b8b', borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
+  termsCheckOn: { backgroundColor: BLUE, borderColor: BLUE },
+  termsCheckMark: { color: '#fff', fontWeight: '700' },
+  termsLink: { color: BLUE, fontWeight: '600' },
+  termsBody: { color: '#262626', fontSize: 14, lineHeight: 22, paddingBottom: 24 },
   notice: { fontSize: 13, color: '#4b4200', backgroundColor: '#fff9c2', padding: 12, borderRadius: 12, lineHeight: 19 },
   error: { color: '#c5223b', fontSize: 14, lineHeight: 20, marginTop: 8, backgroundColor: '#fff0f1', padding: 12, borderRadius: 12 },
   footer: { alignItems: 'center', paddingBottom: 24 },
