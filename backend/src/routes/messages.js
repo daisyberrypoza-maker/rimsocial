@@ -897,9 +897,9 @@ router.post('/with/:userId', async (req, res, next) => {
     if (storyId) {
       const story = await Post.findOne({
         where: { id: storyId, isStory: true, authorId: other, status: 'live', expiresAt: { [Op.gt]: new Date() } },
-        attributes: ['id'],
+        attributes: ['id', 'authorId', 'visibility'],
       });
-      if (!story) throw httpError(404, 'This story has expired');
+      if (!story || !(await require('../services/stories').canViewStory(story, me))) throw httpError(404, 'This story has expired');
       // The chat shows a card for the story (its thumbnail), with the reply or reaction under it
       media = { storyAuthorId: other, storyPostId: story.id };
     }
