@@ -676,6 +676,7 @@ export default function Profile() {
               <SettingsItem icon="wallet" title="Creator Studio" subtitle="Earnings and cashout" onClick={() => { setDrawerOpen(false); navigate('/creator'); }} />
               <SettingsItem icon="megaphone" title="Ads & sponsors" onClick={() => { setDrawerOpen(false); navigate('/ads-sponsors'); }} />
             </SettingsSection>
+            <SettingsSection title="Legal"><SettingsItem icon="file-text" title="Terms of Service / EULA" onClick={() => { setDrawerOpen(false); navigate('/terms'); }} /></SettingsSection>
             <SettingsSection title="Discover">
               <SettingsItem icon="users" title="Find friends & creators" onClick={() => { setDrawerOpen(false); navigate('/friends'); }} />
               <SettingsItem icon="video" title="LIVE broadcasts" onClick={() => { setDrawerOpen(false); navigate('/live'); }} />
