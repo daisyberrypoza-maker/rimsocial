@@ -224,3 +224,9 @@
 /* Reference gallery mode labels: Text, Story, Post, Reel (music is selected-track info, not a mode). */
 .ig-create .ig-create-modes button { text-transform: none; }
 .ig-create .ig-music-bar { bottom: max(24px, env(safe-area-inset-bottom)); z-index: 8; }
+
+/* Music is a first-class create mode. Keep the labels readable and the selected track docked above system navigation. */
+.ig-create .ig-create-modes { gap: 4px; padding-left: 8px; padding-right: 8px; }
+.ig-create .ig-create-modes button { padding-left: 9px; padding-right: 9px; font-size: 13px; white-space: nowrap; }
+.ig-create .ig-music-bar { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+.ig-create .ig-music-btn { color: #fff !important; background: transparent !important; }
