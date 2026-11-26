@@ -29,3 +29,22 @@
 .mp-bottom { display: flex; gap: 10px; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid #2b2f36; }
 .mp-shuffle, .mp-create { flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 22px; background: #2b2f36; color: #fff; font-size: 15px; font-weight: 600; }
 .mp-shuffle:disabled, .mp-create:disabled { opacity: .5; }
+
+/* Full-screen music selector: black title area and rounded charcoal library panel. */
+.mp-page { background: #000; color: #fff; padding-top: env(safe-area-inset-top, 0px); }
+.mp-top { flex: none; min-height: 108px; padding: 18px 14px 30px; background: #000; }
+.mp-title { font-size: 19px; font-weight: 600; }
+.mp-panel { min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 34px 34px 0 0; background: #212327; }
+.mp-handle { height: 44px; flex: none; display: flex; justify-content: center; align-items: center; }
+.mp-handle span { width: 36px; height: 4px; border-radius: 4px; background: #a7abb2; }
+.mp-search { flex: none; margin: 10px 16px 0; height: 48px; border-radius: 18px; background: #2d3138; }
+.mp-chips { flex: none; padding: 20px 16px 12px; gap: 8px; }
+.mp-chip { height: 38px; padding: 0 16px; border-radius: 12px; white-space: nowrap; }
+.mp-list { min-height: 0; padding-top: 8px; padding-bottom: 10px; }
+.mp-row { min-height: 78px; padding: 8px 18px 8px 16px; }
+.mp-art { width: 56px; height: 56px; border-radius: 8px; }
+.mp-name strong { font-size: 15px; }
+.mp-meta { font-size: 14px; }
+.mp-bottom { flex: none; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); background: #212327; }
+.mp-save, .mp-icon { color: #fff !important; }
+.mp-save svg, .mp-icon svg { stroke: currentColor; }
