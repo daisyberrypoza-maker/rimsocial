@@ -77,7 +77,7 @@ jobs:
                   for key, value in settings.items():
                       escaped = value.replace('\\', '\\\\').replace('"', '\\"')
                       lines.append(f'{indent}INFOPLIST_KEY_{key} = "{escaped}";' if key != 'ITSAppUsesNonExemptEncryption' else f'{indent}INFOPLIST_KEY_{key} = {value};')
-          project = '\\n'.join(lines) + '\\n'
+          project = '\n'.join(lines) + '\n'
           project = project.replace('TARGETED_DEVICE_FAMILY = "1";', 'TARGETED_DEVICE_FAMILY = "1,2";')
           assert 'TARGETED_DEVICE_FAMILY = "1,2";' in project, 'Generated target must include iPhone and iPad'
           project_path.write_text(project)
