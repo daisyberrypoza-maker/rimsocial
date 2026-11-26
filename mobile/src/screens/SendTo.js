@@ -67,7 +67,7 @@ export default function SendTo({ navigation, route }) {
     setPicked((list) => (list.some((u) => String(u.id) === String(user.id)) ? list.filter((u) => String(u.id) !== String(user.id)) : [...list, user]));
   };
   const canSend = (picked.length > 0 || (storySelected && storyId)) && !sending;
-  const barVisible = picked.length > 0 || (storySelected && Boolean(storyId));
+  const barVisible = picked.length > 0 || (storySelected && Boolean(storyId)) || Boolean(destination);
   // Recipient names in pick order: the chip shows the first, the rest read as a comma list (reference bar)
   const names = [destination === 'story-friends' ? 'My Story · Friends only' : destination === 'story-public' ? 'My Story · Public' : destination === 'spotlight' ? 'My Spotlight · Public' : null, storySelected && storyId ? 'My Story · Public' : null, ...picked.map((u) => u.displayName || u.username)].filter(Boolean);
 
@@ -155,7 +155,7 @@ export default function SendTo({ navigation, route }) {
         renderItem={({ item }) => {
           const on = isPicked(item);
           return (
-            <Pressable style={styles.row} onPress={() => toggle(item)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+            <Pressable style={[styles.row, on && styles.selectedRow]} onPress={() => toggle(item)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
               <Avatar user={item} size={40} />
               <View style={styles.nameWrap}>
                 <Text style={[styles.name, on && styles.nameOn]} numberOfLines={1}>{item.displayName || item.username}</Text>
