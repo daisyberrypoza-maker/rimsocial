@@ -33,6 +33,13 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   const [picked, setPicked] = useState([]);
   const [sending, setSending] = useState(false);
 
+  // Escape closes the share page (keyboard users)
+  useEffect(() => {
+    function onKey(event) { if (event.key === 'Escape') onClose?.(); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   // All friends (people you follow) plus recent chat contacts, de-duplicated; a search replaces the list.
   useEffect(() => {
     let alive = true;
