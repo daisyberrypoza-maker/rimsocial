@@ -76,7 +76,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     setSending(true);
     try {
       const messages = await Promise.all(picked.map(async (user) => ({ userId: user.id, body: await sealFor(user.id, text) })));
-      const postId = url.match(/\\/p\\/([^/?#]+)/)?.[1] || null;
+      const postId = url.split('/p/')[1]?.split(/[/?#]/)[0] || null;
       await api('/v1/messages/share', { method: 'POST', body: { messages, postId } });
       toast(`Sent to ${picked.length}`);
       setPicked([]);
