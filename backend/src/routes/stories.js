@@ -177,19 +177,19 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
 
 
 // The story must be live and unexpired; anything else is reported as not found.
-async function findLiveStory(id) {
+async function findLiveStory(id, viewerId) {
   const story = await Post.findOne({
     where: { id, isStory: true, status: 'live', expiresAt: { [Op.gt]: new Date() } },
-    attributes: ['id', 'authorId'],
+    attributes: ['id', 'authorId', 'visibility'],
   });
-  if (!story) throw httpError(404, 'Story not found or expired');
+  if (!story || !(await stories.canViewStory(story, viewerId))) throw httpError(404, 'Story not found or expired');
   return story;
 }
 
 // Like or unlike a story (double-tap or the heart in the viewer). Returns the new state and count.
 router.post('/:id/like', requireAuth, async (req, res, next) => {
   try {
-    const story = await findLiveStory(req.params.id);
+    const story = await findLiveStory(req.params.id, req.user.id);
     await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
     const existing = await StoryLike.findOne({ where: { postId: story.id, userId: req.user.id } });
     let liked;
@@ -203,7 +203,7 @@ router.post('/:id/like', requireAuth, async (req, res, next) => {
 // Report a story. Uses the same review queue as reported posts.
 router.post('/:id/report', requireAuth, async (req, res, next) => {
   try {
-    const story = await findLiveStory(req.params.id);
+    const story = await findLiveStory(req.params.id, req.user.id);
     await assertNotBlocked(req.user.id, story.authorId, 'Story not found or expired');
     if (story.authorId === req.user.id) throw httpError(400, 'You cannot report your own story');
     const reason = String(req.body?.reason || '').trim().slice(0, 500);
