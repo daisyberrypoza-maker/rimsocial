@@ -93,7 +93,7 @@ export default function StoryViewer() {
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group?.user?.id === me.id;
   // Stops the story while typing or while a sheet is open
-  const frozen = paused || typing || sheet !== null;
+  const frozen = paused || typing || sheet !== null || reactionsOpen || !focused || AppState.currentState !== 'active';
   const playing = focused && !frozen;
 
   const progress = useRef(new Animated.Value(0)).current;
@@ -107,6 +107,18 @@ export default function StoryViewer() {
   nextRef.current = next;
 
   useEffect(() => registerPlayer(PLAYER_ID, () => setPaused(true)), []);
+
+  // Release both native media players immediately when the viewer leaves navigation focus.
+  useEffect(() => {
+    if (!focused) {
+      setPaused(true);
+      musicPlayerRef.current?.pause?.();
+    }
+  }, [focused]);
+  useEffect(() => navigation.addListener('beforeRemove', () => {
+    setPaused(true);
+    musicPlayerRef.current?.pause?.();
+  }), [navigation]);
 
   // Stop playback as soon as the app is minimised; playback resumes only on a tap
   useEffect(() => {
