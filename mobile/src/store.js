@@ -23,7 +23,7 @@ export const useAppStore = create(
       storyDiscover: EMPTY_DISCOVER,
       storyCache: {},     // { [userId]: { items, updatedAt } } so stories open instantly
       pendingUpload: null, // not saved: { kind: 'post' | 'story', thumb, mediaKind } while an upload runs
-      music: { tab: 'featured', query: '', lists: {}, scrollOffset: 0, activeTrack: null, playbackUri: null, playing: false }, // app-lifetime player/cache
+      music: { tab: 'featured', query: '', lists: {}, scrollOffset: 0, activeTrack: null, playbackUri: null, playing: false, trendingFallback: false }, // app-lifetime player/cache
 
       setOffline: (offline) => { if (get().offline !== offline) set({ offline }); },
       setSession: (token, user) => set({ token, user }),
