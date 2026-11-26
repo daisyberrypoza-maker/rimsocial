@@ -22,6 +22,7 @@ const User = sequelize.define('User', {
   isCreator: { type: DataTypes.BOOLEAN, defaultValue: false },
   followerCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   termsAcceptedAt: { type: DataTypes.DATE, allowNull: true },
+  storyReplySetting: { type: DataTypes.ENUM('everyone', 'friends', 'off'), allowNull: false, defaultValue: 'everyone' },
 }, { tableName: 'users' });
 
 // Regular posts and stories share one table. Stories have isStory = true and expire.
