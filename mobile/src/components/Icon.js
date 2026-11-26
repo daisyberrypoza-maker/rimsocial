@@ -2,7 +2,7 @@ import React from 'react';
 import {
   ArrowLeft, ArrowRight, Eye, EyeOff, AtSign, Bell, Bookmark, BookmarkCheck, Camera, Check, ChevronRight, Compass, Gift,
   Heart, Home, Link as LinkIcon, Mail, MessageCircle, Plus, RefreshCw, Search, Send, Settings, Share2,
-  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp,
+  UserRound, UserPlus, Users, Video, Wallet, X, Repeat2, CircleHelp, Play, ChevronDown, ArrowDownUp, FileText,
   Pause, Volume2, VolumeX, MoreVertical, Pencil, Trash2, Image as ImageIcon, MapPin, GalleryHorizontal,
 } from 'lucide-react-native';
 
