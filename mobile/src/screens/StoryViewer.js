@@ -74,7 +74,7 @@ export default function StoryViewer() {
   const total = stories?.length || 0;
   const isOwner = Boolean(me?.id) && group?.user?.id === me.id;
   // Stops the story while typing or while a sheet is open
-  const frozen = paused || typing || sheet !== null;
+  const frozen = paused || typing || reactionsOpen || sheet !== null;
   const playing = focused && !frozen;
 
   const progress = useRef(new Animated.Value(0)).current;

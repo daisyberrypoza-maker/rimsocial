@@ -119,7 +119,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
-  const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
+  const frozen = paused || holding || typing || shareOpen || storyShareOpen || reactionPickerOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
