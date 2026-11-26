@@ -22,8 +22,6 @@ jobs:
   ios:
     runs-on: macos-latest
     timeout-minutes: 60
-    env:
-      NATIVE_DIR: ${{ runner.temp }}/RimSocial
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -40,11 +38,11 @@ jobs:
       - name: Copy the mobile app into the native project
         run: |
           set -euo pipefail
-          cp -R mobile/src "$NATIVE_DIR/src"
-          cp mobile/App.js mobile/index.js mobile/app.json mobile/babel.config.js mobile/metro.config.js "$NATIVE_DIR/"
+          cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
+          cp mobile/App.js mobile/index.js mobile/app.json mobile/babel.config.js mobile/metro.config.js "$RUNNER_TEMP/RimSocial/"
           node -e '
             const fs = require("fs");
-            const dir = process.env.NATIVE_DIR;
+            const dir = process.env.RUNNER_TEMP + "/RimSocial";
             const template = JSON.parse(fs.readFileSync(dir + "/package.json", "utf8"));
             const mobile = JSON.parse(fs.readFileSync(process.env.GITHUB_WORKSPACE + "/mobile/package.json", "utf8"));
             template.dependencies = { ...template.dependencies, ...mobile.dependencies };
