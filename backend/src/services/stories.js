@@ -1,4 +1,4 @@
-const { Op, Post, User, Follow, StoryView, StoryLike, UserMute } = require('../db');
+const { Op, Post, User, Follow, Friendship, StoryView, StoryLike, UserMute } = require('../db');
 const { fn, col } = require('sequelize');
 const redis = require('../redis');
 const { discoverScore, interestBoostFor, discoverFeedScore } = require('./formulas');
@@ -8,6 +8,18 @@ const { toPostDTO } = require('../lib/serialize');
 const { blockedUserIds } = require('../lib/blocks');
 
 const authorAttrs = ['id', 'username', 'displayName', 'avatarUrl', 'isCreator', 'country'];
+
+async function acceptedFriendIds(userId) {
+  const rows = await Friendship.findAll({ where: { status: 'accepted', [Op.or]: [{ userAId: userId }, { userBId: userId }] }, raw: true });
+  return new Set(rows.map((row) => String(row.userAId) === String(userId) ? String(row.userBId) : String(row.userAId)));
+}
+
+async function canViewStory(story, viewerId) {
+  if (!story || String(story.authorId) === String(viewerId) || story.visibility !== 'private') return true;
+  return Boolean(await Friendship.findOne({ where: { status: 'accepted', [Op.or]: [
+    { userAId: viewerId, userBId: story.authorId }, { userAId: story.authorId, userBId: viewerId },
+  ] }, attributes: ['userAId'] }));
+}
 
 async function viewedSet(viewerId, storyIds) {
   if (!storyIds.length) return new Set();
@@ -32,7 +44,8 @@ function trayWrite(pipe, viewerId, storyId, score) {
 // Called when a story is posted: writes it into the author's tray and each follower's tray
 async function fanOutStory(story) {
   const followers = await Follow.findAll({ where: { followeeId: story.authorId }, attributes: ['followerId'], raw: true });
-  const viewers = [story.authorId, ...followers.map((f) => f.followerId)];
+  const accepted = story.visibility === 'private' ? await acceptedFriendIds(story.authorId) : null;
+  const viewers = [story.authorId, ...followers.map((f) => f.followerId).filter((id) => !accepted || accepted.has(String(id)))];
   const score = new Date(story.createdAt || Date.now()).getTime();
   for (let i = 0; i < viewers.length; i += 500) {
     const pipe = redis.pipeline();
@@ -112,6 +125,8 @@ async function getStoryRail(viewerId) {
     });
     await rebuildTray(viewerId, stories);
   }
+  const accepted = await acceptedFriendIds(viewerId);
+  stories = stories.filter((story) => story.visibility !== 'private' || String(story.authorId) === String(viewerId) || accepted.has(String(story.authorId)));
   const viewed = await viewedSet(viewerId, stories.map((s) => s.id));
 
   const groups = new Map();
@@ -147,13 +162,17 @@ async function getUserStories(userId, viewerId) {
     const muted = await UserMute.findOne({ where: { userId: viewerId, mutedUserId: userId }, attributes: ['id'], raw: true });
     if (muted) return [];
   }
-  const stories = await Post.findAll({
+  let stories = await Post.findAll({
     where: { isStory: true, status: 'live', authorId: userId, expiresAt: { [Op.gt]: new Date() } },
     include: [{ model: User, as: 'author', attributes: authorAttrs }],
     // Keep the newest 100 active stories, then play that retained window oldest-first.
     order: [['createdAt', 'DESC']],
     limit: 100,
   });
+  if (String(userId) !== String(viewerId)) {
+    const accepted = await canViewStory({ authorId: userId, visibility: 'private' }, viewerId);
+    if (!accepted) stories = stories.filter((story) => story.visibility !== 'private');
+  }
   stories.reverse();
   // Resolve reshared-story attribution in one bounded lookup, not one query per story.
   const sourceIds = [...new Set(stories.map((story) => story.sourcePostId).filter(Boolean).map(String))];
@@ -412,4 +431,4 @@ async function getDiscoverSections(viewerId, limit = 24) {
   return { carousel, items };
 }
 
-module.exports = { getDiscoverSections, getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor, fanOutStory, addFolloweeToTray };
+module.exports = { getDiscoverSections, getPopularStories, getStoryRail, getUserStories, getSubscription, storyRingsFor, invalidateRailsFor, fanOutStory, addFolloweeToTray, canViewStory };
