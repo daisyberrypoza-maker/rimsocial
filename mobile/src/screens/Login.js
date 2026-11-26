@@ -13,7 +13,7 @@ const BLUE = '#0064e0';
 const LINE = '#dbdbdb';
 const CONTROL_H = 50;
 const RADIUS = 8;
-const SIGN_IN_WITH_APPLE_ENABLED = String(global.SIGN_IN_WITH_APPLE_ENABLED || '').toLowerCase() === 'true';
+const SIGN_IN_WITH_APPLE_ENABLED = String(process.env.SIGN_IN_WITH_APPLE_ENABLED || global.SIGN_IN_WITH_APPLE_ENABLED || '').toLowerCase() === 'true';
 // Same logo as the web app (frontend/public/icons/rimsocial.svg)
 const LOGO_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#171717"/><path d="M116 368V144h112c77 0 126 35 126 98 0 45-25 74-68 87l80 39h-93l-67-34h-14v34zm76-95h36c34 0 51-10 51-31s-17-31-51-31h-36z" fill="#fff"/><circle cx="374" cy="362" r="44" fill="#6d7cff"/><circle cx="374" cy="362" r="14" fill="#fff"/></svg>`;
 
