@@ -147,7 +147,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
   try {
     const original = await Post.findOne({
       where: { id: req.params.id, isStory: true, status: 'live', visibility: 'public', expiresAt: { [Op.gt]: new Date() } },
-      include: [{ model: require('../db').User, as: 'author', attributes: ['username'] }],
+      include: [{ model: require('../db').User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }],
     });
     if (!original) throw httpError(404, 'Story not found or expired');
     await assertNotBlocked(req.user.id, original.authorId, 'Story not found or expired');
@@ -170,7 +170,7 @@ router.post('/:id/repost', requireAuth, async (req, res, next) => {
     });
     await stories.fanOutStory(story).catch((trayError) => console.error('Story tray fan-out failed:', trayError.message));
     await stories.invalidateRailsFor(req.user.id).catch((cacheError) => console.error('Story rail cache clear failed:', cacheError.message));
-    res.status(201).json(toPostDTO(story));
+    res.status(201).json({ ...toPostDTO(story), source: original.author ? { ...original.author.get({ plain: true }) } : null });
   } catch (e) { next(e); }
 });
 
