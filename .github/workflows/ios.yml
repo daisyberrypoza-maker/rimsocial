@@ -31,14 +31,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Create the native React Native project
-        working-directory: ${{ runner.temp }}
-        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --skip-install --skip-git-init --pm npm
+      - name: Create the native React Native project from the 0.75.4 template
+        # The template package is fetched directly. The CLI's own init aborts when CocoaPods
+        # installs fail, which leaves the project folder empty.
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          TARBALL=$(npm pack @react-native-community/template@0.75.4 --silent)
+          mkdir RimSocial
+          tar -xzf "$TARBALL" -C RimSocial --strip-components=1
+          cd RimSocial
+          # npm drops dot-files from packages, so the template keeps them as _name
+          for f in _*; do [ -e "$f" ] && mv "$f" ".${f#_}"; done
+          # Rename the template placeholder to the app name, in file contents and in file names
+          grep -rl "HelloWorld" . --exclude-dir=node_modules | xargs -r sed -i'' -e 's/HelloWorld/RimSocial/g'
+          find . -depth -name "*HelloWorld*" -not -path "./node_modules/*" -exec sh -c 'mv "$1" "$(dirname "$1")/$(basename "$1" | sed s/HelloWorld/RimSocial/)"' _ {} \;
+          ls ios
 
       - name: Copy the mobile app into the native project
         run: |
           set -euo pipefail
-          echo "RUNNER_TEMP=$RUNNER_TEMP"; ls -la "$RUNNER_TEMP"; ls -la "$RUNNER_TEMP/RimSocial" || true
           cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
           cp mobile/App.js mobile/index.js mobile/app.json mobile/babel.config.js mobile/metro.config.js "$RUNNER_TEMP/RimSocial/"
           node -e '
@@ -46,6 +58,7 @@ jobs:
             const dir = process.env.RUNNER_TEMP + "/RimSocial";
             const template = JSON.parse(fs.readFileSync(dir + "/package.json", "utf8"));
             const mobile = JSON.parse(fs.readFileSync(process.env.GITHUB_WORKSPACE + "/mobile/package.json", "utf8"));
+            template.name = "RimSocial";
             template.dependencies = { ...template.dependencies, ...mobile.dependencies };
             template.devDependencies = { ...template.devDependencies, ...mobile.devDependencies };
             fs.writeFileSync(dir + "/package.json", JSON.stringify(template, null, 2));
