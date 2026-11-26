@@ -63,7 +63,7 @@ app.get('/ready', async (req, res) => {
     const userKeyColumns = await sequelize.getQueryInterface().describeTable('user_keys');
     const requiredPostColumns = [
       'id', 'authorId', 'kind', 'mediaUrl', 'status', 'isStory', 'expiresAt',
-      'storyText', 'storyBackground', 'voiceUrl', 'musicUrl', 'musicTitle',
+      'storyText', 'storyBackground', 'voiceUrl', 'musicUrl', 'musicTitle', 'rating',
     ];
     const missing = requiredPostColumns.filter((column) => !postColumns[column]);
     for (const column of ['userId', 'publicKey', 'updatedAt']) {
@@ -162,6 +162,11 @@ async function start() {
   if (config.createDatabase) await ensureDatabaseExists();
   await sequelize.authenticate();
   if (config.syncDatabase) await sequelize.sync();
+  // Additive, idempotent post rating schema upgrade (0–5; null means unrated).
+  {
+    const ratingColumns = await sequelize.getQueryInterface().describeTable('posts');
+    if (!ratingColumns.rating) await sequelize.getQueryInterface().addColumn('posts', 'rating', { type: DataTypes.DECIMAL(3, 2), allowNull: true });
+  }
   // Idempotent application of migration 037: public E2E keys only; private keys never reach the server.
   await sequelize.query(`CREATE TABLE IF NOT EXISTS user_keys (
     userId CHAR(36) NOT NULL PRIMARY KEY,
