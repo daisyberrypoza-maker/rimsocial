@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, Pressable, FlatList, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowUpRight, Play, Pause, Plus, Shuffle, Search } from 'lucide-react-native';
 import { api } from '../api';
 import { mediaUrl } from '../config';
@@ -23,6 +24,7 @@ function shuffled(list) {
 }
 
 export default function MusicPicker({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const selectedId = route.params?.selectedId || null;
   const onSelect = route.params?.onSelect;
   const music = useAppStore((state) => state.music);
@@ -168,7 +170,7 @@ export default function MusicPicker({ navigation, route }) {
 
   return (
     <View style={styles.page}>
-      <View style={styles.top}>
+      <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.back} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Close sound picker">
           <ArrowUpRight size={26} color="#fff" />
         </Pressable>
@@ -201,7 +203,7 @@ export default function MusicPicker({ navigation, route }) {
           ListFooterComponent={paging ? <ActivityIndicator color="#fff" /> : null}
         />
       )}
-      <View style={styles.bottom}>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 14 }]}>
         <Pressable style={[styles.shuffle, items.length < 2 && styles.dim]} onPress={() => setMusic({ lists: { ...useAppStore.getState().music.lists, [listKey]: { ...cache, items: shuffled(items) } } })} disabled={items.length < 2} accessibilityRole="button" accessibilityLabel="Shuffle sounds">
           <Shuffle size={20} color="#fff" /><Text style={styles.shuffleText}>Shuffle</Text>
         </Pressable>
@@ -212,7 +214,7 @@ export default function MusicPicker({ navigation, route }) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#0f1115' },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingTop: 52, paddingBottom: 4 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingBottom: 4 },
   back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   heading: { color: '#fff', fontSize: 18, fontWeight: '600' },
   lead: { color: '#fff', fontSize: 24, lineHeight: 30, fontWeight: '500', textAlign: 'center', marginVertical: 22, paddingHorizontal: 24 },
@@ -239,7 +241,7 @@ const styles = StyleSheet.create({
   addPill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#fff' },
   addPillText: { color: '#111', fontSize: 14, fontWeight: '600' },
   empty: { color: '#9aa0a6', fontSize: 15, textAlign: 'center', padding: 32 },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingVertical: 14, paddingBottom: 30, backgroundColor: 'rgba(15,17,21,0.92)' },
+  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingVertical: 14, backgroundColor: 'rgba(15,17,21,0.92)' },
   shuffle: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingHorizontal: 20, borderRadius: 23, borderWidth: 1, borderColor: '#3a3f47', backgroundColor: '#262b33' },
   shuffleText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   dim: { opacity: 0.5 },
