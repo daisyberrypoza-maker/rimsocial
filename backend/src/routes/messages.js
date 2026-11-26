@@ -902,7 +902,7 @@ router.post('/with/:userId', async (req, res, next) => {
       if (!story || !(await require('../services/stories').canViewStory(story, me))) throw httpError(404, 'This story has expired');
       const creator = await User.findByPk(other, { attributes: ['storyReplySetting'] });
       const replySetting = creator?.storyReplySetting || 'everyone';
-      if (replySetting === 'off' || (replySetting === 'friends' && !(await require('../services/stories').canViewStory({ authorId: other, visibility: 'private' }, me)))) {
+      if (req.body?.storyReply === true && (replySetting === 'off' || (replySetting === 'friends' && !(await require('../services/stories').canViewStory({ authorId: other, visibility: 'private' }, me))))) {
         throw httpError(403, 'This creator does not accept Story replies from your account');
       }
       // The chat shows a card for the story (its thumbnail), with the reply or reaction under it
