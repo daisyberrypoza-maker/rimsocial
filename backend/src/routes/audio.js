@@ -148,7 +148,10 @@ router.get('/network-trending', async (req, res, next) => {
 // GET /v1/audio/audius/trending?limit=20
 router.get('/audius/trending', async (req, res, next) => {
   try {
-    res.json({ items: await audius.trending(req.query.limit) });
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 50);
+    const offset = Math.min(Math.max(Number(req.query.offset) || 0, 0), 10000);
+    const items = await audius.trending(limit, offset);
+    res.json({ items, hasMore: items.length === limit, nextOffset: offset + items.length });
   } catch (e) { next(e); }
 });
 
