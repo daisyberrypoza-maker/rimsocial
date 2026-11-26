@@ -113,6 +113,13 @@ const Follow = sequelize.define('Follow', {
   // notifyPosts column is added by migrations/025 — the model field is enabled once it is applied (see routes/users.js)
 }, { tableName: 'follows', indexes: [{ fields: ['followeeId'] }] });
 
+// Accepted friendship is recorded when two users follow each other.
+const Friendship = sequelize.define('Friendship', {
+  userAId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  userBId: { type: DataTypes.UUID, primaryKey: true, allowNull: false },
+  status: { type: DataTypes.ENUM('accepted'), allowNull: false, defaultValue: 'accepted' },
+}, { tableName: 'friendships', indexes: [{ fields: ['userBId', 'status'] }] });
+
 // Music library: uploaded audio tracks (migrations/029)
 const AudioTrack = sequelize.define('AudioTrack', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -518,7 +525,7 @@ module.exports = {
   DirectMessage, PushSubscription, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, SavedPost, ProfileView, QuickAddDismissal,
   MediaCleanupJob,
   BusinessFinancialRecord,
-  sequelize, Op, User, Post, PostLike, PostComment, CommentLike, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
+  sequelize, Op, User, Post, PostLike, PostComment, CommentLike, Repost, Follow, Friendship, StoryView, StoryLike, Wallet, EarningsWallet,
   Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport, UserReport, MessageReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };
