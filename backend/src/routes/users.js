@@ -545,15 +545,14 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
         await Friendship.findOrCreate({ where: { userAId, userBId }, defaults: { status: 'accepted' }, transaction: t });
       }
     });
+    await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
+    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
     const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
     const acceptedFriendship = await Friendship.findOne({ where: { userAId, userBId, status: 'accepted' } });
     if (acceptedFriendship) {
-      await Promise.all([addFolloweeToTray(req.user.id, followeeId), addFolloweeToTray(followeeId, req.user.id)])
-        .catch((trayError) => console.error('Friend story tray update failed:', trayError.message));
-    } else {
-      await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
+      await addFolloweeToTray(followeeId, req.user.id).catch((trayError) => console.error('Friend story tray update failed:', trayError.message));
+      await redis.del(`stories:rail:${followeeId}`).catch(() => {});
     }
-    await Promise.all([req.user.id, followeeId].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     res.json({ isFollowing: true, followerCount: fresh.followerCount });
@@ -594,7 +593,7 @@ router.delete('/:id/follower', requireAuth, async (req, res, next) => {
       await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
       if (removed) await User.decrement('followerCount', { by: removed, where: { id: req.user.id }, transaction: t });
     });
-    await Promise.all([req.user.id, req.params.id].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
+    await redis.del(`stories:rail:${req.user.id}`, `stories:rail:${req.params.id}`).catch(() => {});
     const fresh = await User.findByPk(req.user.id, { attributes: ['followerCount'] });
     res.json({ removed: Boolean(removed), followerCount: fresh?.followerCount || 0 });
   } catch (e) { next(e); }
