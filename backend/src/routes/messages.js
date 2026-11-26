@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op, User, DirectMessage, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, sequelize } = require('../db');
+const { Op, User, DirectMessage, MessageReport, Order, Follow, Post, GroupConversation, GroupMember, GroupMessage, GroupMessageView, ChatPreference, sequelize } = require('../db');
 const redis = require('../redis');
 const { requireAuth } = require('../middleware/auth');
 const liveChat = require('../services/liveChat');
@@ -42,6 +42,18 @@ async function findVisibleMessage(me, id) {
   }
   return row;
 }
+
+router.post('/message/:id/report', async (req, res, next) => {
+  try {
+    const reporterId = String(req.user.id);
+    const message = await findVisibleMessage(reporterId, req.params.id);
+    if (String(message.senderId) === reporterId) throw httpError(400, 'You cannot report your own message');
+    const reason = String(req.body?.reason || '').trim().slice(0, 500);
+    if (reason.length < 3) throw httpError(400, 'Choose a reason for reporting this message');
+    const [report, created] = await MessageReport.findOrCreate({ where: { messageId: message.id, reporterId }, defaults: { messageId: message.id, reporterId, reportedUserId: message.senderId, reason } });
+    res.status(created ? 201 : 200).json({ reported: true, reportId: report.id });
+  } catch (error) { next(error); }
+});
 
 // If the text links to a live RimSocial post, remember it so the chat can show a preview card
 async function linkedPostId(text) {
