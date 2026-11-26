@@ -475,7 +475,7 @@ export default function PostCard({ post, active, advanceOnEnd = false, onEnded }
           if (!seekingRef.current) setProgress(current / d);
         }
       }} />
-      : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}><p>{post.storyText || ''}</p></div>
+      : post.kind === 'text' ? <div className="post-text-face" style={{ background: backgroundCss(post.storyBackground) }}>{post.storyText ? <p>{post.storyText}</p> : post.musicTitle ? <div className="post-music-cover">{post.artworkUrl ? <img src={post.artworkUrl} alt="" /> : <Icon name="music" size={52} />}<strong>{post.musicTitle}</strong>{post.artistName && <span>{post.artistName}</span>}</div> : null}</div>
       : <img src={src} alt="" loading="lazy" />}
     {isVideoMedia && <button type="button" className="post-tap-layer" aria-label="Tap the middle to play or pause. Tap the left or right side to go back or forward 10 seconds." onClick={onMediaTap} />}
     {isVideoMedia && <input type="range" className="post-seek" min="0" max="1000" step="1" value={Math.round(progress * 1000)} aria-label="Video progress" style={{ '--p': `${progress * 100}%` }}
