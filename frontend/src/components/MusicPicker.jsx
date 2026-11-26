@@ -13,7 +13,7 @@ import './MusicPicker.css';
 // Audius stream links are signed and expire; never reuse one older than this.
 const STREAM_TTL_MS = 3 * 60 * 1000;
 const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original audio']];
-let pickerMemory = { chip: 'featured', query: '', items: [], hasMore: false, nextOffset: 0, playingId: null, scrollTop: 0 };
+let pickerMemory = { chip: 'featured', query: '', items: [], hasMore: false, nextOffset: 0, playingId: null, scrollTop: 0, trendingFallback: false };
 
 function formatDuration(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -71,8 +71,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     if (chip === 'trending' && query.trim()) return;
     setLoadingMore(true);
     try {
-      const data = await api(chip === 'trending' ? `/v1/audio/network-trending?offset=${nextOffset}&limit=30` : searchPath(query.trim(), chip, nextOffset));
-      const more = (data.items || []).map((item) => ({ ...item, source: 'local' }));
+      const trendingPath = pickerMemory.trendingFallback
+        ? `/v1/audio/audius/trending?offset=${nextOffset}&limit=30`
+        : `/v1/audio/network-trending?offset=${nextOffset}&limit=30`;
+      const data = await api(chip === 'trending' ? trendingPath : searchPath(query.trim(), chip, nextOffset));
+      const more = (data.items || []).map((item) => ({ ...item, source: item.source || (chip === 'trending' && pickerMemory.trendingFallback ? 'audius' : 'local') }));
       setItems((list) => {
         const seen = new Set(list.map((item) => String(item.id)));
         return [...list, ...more.filter((item) => !seen.has(String(item.id)))];
@@ -100,9 +103,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         .then(async (first) => {
           // Trending falls back to the general Audius chart when nobody you follow has used a sound yet
           // For You and Trending fall back to the general Audius chart when their own list is empty
-          const data = (chip === 'trending' || chip === 'featured') && !q && !(first.items || []).length
-            ? await api('/v1/audio/audius/trending?limit=30')
+          const useGeneralTrending = (chip === 'trending' || chip === 'featured') && !q && !(first.items || []).length;
+          const data = useGeneralTrending
+            ? await api('/v1/audio/audius/trending?limit=30&offset=0')
             : first;
+          if (chip === 'trending') pickerMemory.trendingFallback = useGeneralTrending;
           if (!active) return;
           const nextItems = (data.items || []).map((item) => ({ ...item, source: item.source || (chip === 'trending' ? 'audius' : 'local') }));
           setItems(nextItems);
