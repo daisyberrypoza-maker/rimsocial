@@ -95,6 +95,10 @@ export default function StoryViewer() {
   // Stops the story while typing or while a sheet is open
   const frozen = paused || typing || sheet !== null || reactionsOpen || !focused || AppState.currentState !== 'active';
   const playing = focused && !frozen;
+  // Story, its music and the timer start together: nothing runs until the picture or video and the track are loaded
+  const [mediaReady, setMediaReady] = useState(false);
+  const [musicReady, setMusicReady] = useState(false);
+  const go = playing && mediaReady && (!storyMusicUrl || musicReady);
 
   const progress = useRef(new Animated.Value(0)).current;
   const durationRef = useRef(0);
@@ -162,6 +166,8 @@ export default function StoryViewer() {
   useEffect(() => {
     setPaused(false);
     setReply('');
+    setMediaReady(false);
+    setMusicReady(false);
     progress.setValue(0);
     if (!current) return;
     api(`/v1/stories/${current.id}/view`, { method: 'POST' }).catch((error) => {
@@ -195,14 +201,14 @@ export default function StoryViewer() {
   // Photos move on after PHOTO_MS. The bar fills from where it stopped, so pausing keeps the place.
   useEffect(() => {
     if (!current || isVideo) return undefined;
-    if (!playing) { progress.stopAnimation(); return undefined; }
+    if (!go) { progress.stopAnimation(); return undefined; }
     progress.stopAnimation((value) => {
       Animated.timing(progress, { toValue: 1, duration: Math.max(0, (1 - value) * PHOTO_MS), useNativeDriver: false })
         .start(({ finished }) => { if (finished) nextRef.current(); });
     });
     return () => progress.stopAnimation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.id, isVideo, playing]);
+  }, [current?.id, isVideo, go]);
 
   // Only one video plays at a time
   useEffect(() => {
@@ -311,7 +317,7 @@ export default function StoryViewer() {
     flashIcon(paused ? 'play' : 'pause');
   }
 
-  function onVideoLoad({ duration }) { durationRef.current = duration || 0; }
+  function onVideoLoad({ duration }) { durationRef.current = duration || 0; setMediaReady(true); }
   function onVideoProgress({ currentTime }) {
     const d = durationRef.current;
     if (d > 0) progress.setValue(Math.min(1, currentTime / d));
@@ -420,7 +426,7 @@ export default function StoryViewer() {
               source={{ uri: videoStreamUrl(mediaUrl(current.mediaUrl)) }}
               style={StyleSheet.absoluteFill}
               resizeMode="contain"
-              paused={!playing}
+              paused={!go}
               muted={muted}
               volume={storyMusicUrl ? originalVideoVolume : 1}
               playInBackground={false}
@@ -430,22 +436,23 @@ export default function StoryViewer() {
               onError={() => nextRef.current()}
             />
           )
-          : <Image key={current.id} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onError={() => nextRef.current()} />)}
+          : <Image key={current.id} source={{ uri: mediaUrl(current.mediaUrl) }} style={StyleSheet.absoluteFill} resizeMode="contain" onLoad={() => setMediaReady(true)} onError={() => nextRef.current()} />)}
         {!!storyMusicUrl && (
           <Video
             key={`story-music-${current.id}`}
             ref={musicPlayerRef}
             source={{ uri: storyMusicUrl }}
             audioOnly
-            paused={!playing}
+            paused={!go}
             volume={storyMusicVolume}
             playInBackground={false}
             style={styles.audioOnly}
             onLoad={() => {
               const offset = Math.max(0, Number(current?.musicOffsetSec) || 0);
               if (offset > 0) musicPlayerRef.current?.seek(offset);
+              setMusicReady(true);
             }}
-            onError={(error) => logError(error)}
+            onError={(error) => { logError(error); setMusicReady(true); }}
           />
         )}
 
