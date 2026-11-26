@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
 import MusicPicker from './MusicPicker.jsx';
 import { toast, logError } from '../toast.js';
+import { api } from '../api.js';
+import { mediaUrl } from '../lib/config.js';
 import '../pages/StoryComposer.css';
 
 export const MAX_VOICE_SECONDS = 60;
@@ -16,12 +18,33 @@ export default function StoryAudioControls({ track, onTrack, voice, onVoice, dis
   const chunksRef = useRef([]);
   const startedRef = useRef(0);
   const timerRef = useRef(null);
+  const previewRef = useRef(null);
 
   useEffect(() => () => {
+    previewRef.current?.pause();
     clearInterval(timerRef.current);
     const recorder = recorderRef.current;
     if (recorder && recorder.state !== 'inactive') recorder.stop();
   }, []);
+
+  async function selectTrack(item) {
+    onTrack({ ...item });
+    try {
+      if (!previewRef.current) previewRef.current = new Audio();
+      const audio = previewRef.current;
+      audio.pause();
+      const src = item.source === 'audius'
+        ? (item.previewUrl || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
+        : mediaUrl(item.mediaUrl);
+      if (!src) throw new Error('No playable audio URL was returned');
+      audio.src = src;
+      audio.preload = 'auto';
+      await audio.play();
+    } catch (error) {
+      logError(error);
+      toast('This sound could not be played');
+    }
+  }
 
   function stopVoice() {
     const recorder = recorderRef.current;
@@ -66,7 +89,7 @@ export default function StoryAudioControls({ track, onTrack, voice, onVoice, dis
   const MUSIC_SHEET = (
     <MusicPicker
       selectedId={track?.id || null}
-      onSelect={(item) => { onTrack({ ...item }); setMusicOpen(false); }}
+      onSelect={(item) => { selectTrack(item); setMusicOpen(false); }}
       onClose={() => setMusicOpen(false)}
     />
   );
