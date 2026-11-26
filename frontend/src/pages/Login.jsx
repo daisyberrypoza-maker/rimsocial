@@ -45,6 +45,7 @@ export default function Login() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   // Live username feedback on sign-up, debounced so we do not query on every keystroke.
@@ -74,11 +75,11 @@ export default function Login() {
     form.displayName.trim() !== '' && form.displayName.trim().length <= 64,
     usernameStatus.state === 'ok',
     form.password.length >= 8,
-    /^[A-Z]{2}$/.test(form.country),
+    /^[A-Z]{2}$/.test(form.country) && termsAccepted,
   ][step];
 
   function switchMode(next) {
-    setMode(next); setStep(0); setError(''); setNotice(''); setShowPassword(false);
+    setMode(next); setStep(0); setError(''); setNotice(''); setShowPassword(false); setTermsAccepted(false);
   }
 
   function goBack() {
@@ -99,7 +100,7 @@ export default function Login() {
     setError(''); setNotice(''); setBusy(true);
     try {
       const payload = mode === 'register'
-        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase() }
+        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase(), termsAccepted: true }
         : { username: form.username.trim(), password: form.password };
       const data = await api(`/v1/auth/${mode}`, { method: 'POST', body: payload });
       await finishSession(data);
@@ -115,7 +116,7 @@ export default function Login() {
     else submit();
   }
 
-  const showGoogle = (!IS_IOS_NATIVE || SIGN_IN_WITH_APPLE_ENABLED) && (mode === 'login' || step === 0);
+  const showGoogle = (!IS_IOS_NATIVE || SIGN_IN_WITH_APPLE_ENABLED) && mode === 'login';
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !googleButton.current || !showGoogle) return;
@@ -233,7 +234,10 @@ export default function Login() {
               </>
             )}
             {step === STEPS.length - 1 && (
-              <p className="ig-auth-note">By signing up, you agree to RimSocial’s Terms and Privacy Policy. We use your information to create and secure your account.</p>
+              <label className="ig-auth-note" style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} aria-label="Accept Terms of Service" />
+                <span>I have read and agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service and EULA</a> and Privacy Policy.</span>
+              </label>
             )}
             <button className="ig-auth-link ig-auth-link-blue" type="button" onClick={() => switchMode('login')}>I already have an account</button>
           </>
