@@ -89,7 +89,9 @@ jobs:
             text = text.replace(/CURRENT_PROJECT_VERSION = [^;]*;/g, `CURRENT_PROJECT_VERSION = ${ios.buildNumber || "1"};`);
             // "1,2" = iPhone and iPad. supportsTablet false would use "1" only.
             const family = ios.supportsTablet ? "1,2" : "1";
-            text = text.replace(/TARGETED_DEVICE_FAMILY = [^;]*;/g, `TARGETED_DEVICE_FAMILY = "${family}";`);
+            // Drop any existing setting, then add it next to each PRODUCT_BUNDLE_IDENTIFIER (one per build configuration)
+            text = text.replace(/\n\t+TARGETED_DEVICE_FAMILY = [^;]*;/g, "");
+            text = text.replace(/(\t+)PRODUCT_BUNDLE_IDENTIFIER = [^;]*;/g, (m, t) => `${t}PRODUCT_BUNDLE_IDENTIFIER = "${ios.bundleIdentifier}";\n${t}TARGETED_DEVICE_FAMILY = "${family}";`);
             fs.writeFileSync(pbx, text);
           '
           grep -c 'PRODUCT_BUNDLE_IDENTIFIER = "com.clipverse.app"' ios/RimSocial.xcodeproj/project.pbxproj
