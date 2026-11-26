@@ -30,7 +30,8 @@ jobs:
         with:
           node-version: 20
       - name: Generate React Native iOS project
-        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --package-name com.clipverse.app --skip-install --install-pods false --skip-git-init --directory "$RUNNER_TEMP/RimSocial"
+        working-directory: ${{ runner.temp }}
+        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --package-name com.clipverse.app --skip-install --install-pods false --skip-git-init --directory RimSocial
       - name: Verify generated iOS project structure
         run: |
           find "$RUNNER_TEMP/RimSocial" -maxdepth 5 -name "*.xcodeproj" -print
