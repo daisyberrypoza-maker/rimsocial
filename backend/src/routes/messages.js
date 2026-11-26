@@ -807,12 +807,16 @@ router.get('/share-targets', async (req, res, next) => {
 });
 
 // Share a post to up to 15 people at once. Each copy is sealed for its own recipient on the device.
+// Safety ceiling for one share request (spam protection). The app itself has no recipient limit.
+const MAX_SHARE_RECIPIENTS_PER_REQUEST = 500;
+
 router.post('/share', async (req, res, next) => {
   try {
     const me = req.user.id;
     const items = Array.isArray(req.body?.messages) ? req.body.messages : [];
     const postId = req.body?.postId ? String(req.body.postId) : null;
     if (!items.length) throw httpError(400, 'Choose at least one person');
+    if (items.length > MAX_SHARE_RECIPIENTS_PER_REQUEST) throw httpError(400, `You can share with up to ${MAX_SHARE_RECIPIENTS_PER_REQUEST} people at once`);
     const seen = new Set();
     for (const item of items) {
       const userId = String(item?.userId || '');
