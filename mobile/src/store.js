@@ -23,12 +23,14 @@ export const useAppStore = create(
       storyDiscover: EMPTY_DISCOVER,
       storyCache: {},     // { [userId]: { items, updatedAt } } so stories open instantly
       pendingUpload: null, // not saved: { kind: 'post' | 'story', thumb, mediaKind } while an upload runs
+      music: { tab: 'featured', query: '', lists: {}, scrollOffset: 0, activeTrack: null, playbackUri: null, playing: false }, // app-lifetime player/cache
 
       setOffline: (offline) => { if (get().offline !== offline) set({ offline }); },
       setSession: (token, user) => set({ token, user }),
       logout: () => set({
         token: null, user: null, gifts: [], coinBalance: 0, feeds: {}, profiles: {},
         storyRail: EMPTY_RAIL, storyRailAt: 0, storyDiscover: EMPTY_DISCOVER, storyCache: {},
+        music: { tab: 'featured', query: '', lists: {}, scrollOffset: 0, activeTrack: null, playbackUri: null, playing: false },
       }),
       setGifts: (gifts) => set({ gifts }),
       setCoins: (coinBalance) => set({ coinBalance }),
@@ -41,6 +43,7 @@ export const useAppStore = create(
         storyCache: { ...s.storyCache, [userId]: { ...entry, items: (entry.items || []).slice(0, 10), updatedAt: Date.now() } },
       })),
       setPendingUpload: (pendingUpload) => set({ pendingUpload }),
+      setMusic: (patch) => set((s) => ({ music: { ...s.music, ...patch } })),
     }),
     {
       name: 'rimsocial-app',
