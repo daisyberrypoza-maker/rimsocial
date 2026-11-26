@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { launchCamera } from 'react-native-image-picker';
 import Icon from '../components/Icon';
 import { logError } from '../lib/toast';
@@ -22,17 +21,6 @@ async function requestGalleryPermission() {
 export default function Camera() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [latest, setLatest] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!(await requestGalleryPermission())) return;
-        const page = await CameraRoll.getPhotos({ first: 1, assetType: 'All' });
-        setLatest(page.edges[0]?.node.image.uri || null);
-      } catch (e) { logError(e); }
-    })();
-  }, []);
 
   async function shoot() {
     const r = await launchCamera({ mediaType: 'mixed', quality: 0.9, videoQuality: 'medium' }).catch(logError);
@@ -57,7 +45,7 @@ export default function Camera() {
         <View style={styles.side} />
         <Pressable onPress={shoot} accessibilityLabel="Take a photo or video" style={styles.shutter}><View style={styles.shutterInner} /></Pressable>
         <Pressable onPress={() => navigation.navigate('Upload')} accessibilityLabel="Choose from your gallery" style={styles.side}>
-          {latest ? <Image source={{ uri: latest }} style={styles.thumb} /> : <View style={styles.thumb} />}
+          <View style={styles.thumb}><Icon name="image" size={22} color="#fff" /></View>
         </Pressable>
       </View>
     </View>
