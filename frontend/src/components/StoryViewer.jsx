@@ -64,6 +64,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [storyShareOpen, setStoryShareOpen] = useState(false);
   const [favorite, setFavorite] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [reply, setReply] = useState('');
@@ -119,7 +120,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   const total = groupStories?.length || 0;
   const isOwner = Boolean(me?.id) && group.user?.id === me.id;
   // Pauses the story while the viewer is typing or a sheet is open
-  const frozen = paused || holding || typing || shareOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
+  const frozen = paused || holding || typing || shareOpen || storyShareOpen || reactionPickerOpen || reportOpen || menuOpen || viewersOpen || loadError || mediaError || !current;
 
   // Show the saved copy at once, then refresh this creator's stories and subscription state
   useEffect(() => {
@@ -309,8 +310,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
 
   // A sheet opening hides the reply box, so typing must end with it (no blur fires when it unmounts)
   useEffect(() => {
-    if (menuOpen || shareOpen || reportOpen || viewersOpen) setTyping(false);
-  }, [menuOpen, shareOpen, reportOpen, viewersOpen]);
+    if (menuOpen || shareOpen || storyShareOpen || reactionPickerOpen || reportOpen || viewersOpen) setTyping(false);
+  }, [menuOpen, shareOpen, storyShareOpen, reactionPickerOpen, reportOpen, viewersOpen]);
 
   // Stop playback as soon as the app is minimised or closed. Coming back resumes it, unless the
   // person had paused it themselves before leaving.
@@ -392,7 +393,6 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
     else sendReply(emoji);
   }
 
-  const [storyShareOpen, setStoryShareOpen] = useState(false);
   function openOptions() {
     if (isOwner) setMenuOpen(true);
     else setShareOpen(true);
@@ -445,7 +445,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   function onPointerMove(event) {
     const start = swipeRef.current;
     if (!start || closingRef.current) return;
-    if (typing || menuOpen || shareOpen || viewersOpen || reportOpen) return;
+    if (typing || menuOpen || shareOpen || storyShareOpen || reactionPickerOpen || viewersOpen || reportOpen) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
     if (!dragRef.current) {
@@ -781,6 +781,8 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       {storyShareOpen && <ShareSheet
         url={storyShareUrl()}
         caption={current?.caption || ''}
+        imageUrl={current?.mediaUrl ? mediaUrl(current.mediaUrl) : null}
+        imageName={isVideo ? 'story.mp4' : 'story.jpg'}
         onClose={() => setStoryShareOpen(false)}
         onCopy={() => { setStoryShareOpen(false); copyStoryLink(); }}
         onMore={() => { setStoryShareOpen(false); shareStory(); }}

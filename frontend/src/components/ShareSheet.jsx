@@ -1,27 +1,68 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
+import { useAppStore } from '../store.js';
 import Avatar from './Avatar.jsx';
+import Icon from './Icon.jsx';
 import { toast } from '../toast.js';
 import { sealFor } from '../lib/e2ee.js';
+import './ShareSheet.css';
 
 const MAX_RECIPIENTS = 15;
 
-// Share sheet: pick up to 15 people you chat with (ranked), or search, then send; copy the link, or use other apps.
-export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAddToStory }) {
+// Full-screen share page. Friends: everyone you follow plus recent chats (pick up to 15 and send in the app).
+// Other apps: WhatsApp, Facebook, X, Telegram, Email, Text message, the device share sheet ("Other"),
+// Copy link, and Share image (the story picture or video, passed to the device share sheet).
+function socialLinks(text, url) {
+  const encodedText = encodeURIComponent(text);
+  const encodedUrl = encodeURIComponent(url);
+  return [
+    { key: 'wa', label: 'WhatsApp', href: `https://wa.me/?text=${encodedText}` },
+    { key: 'fb', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+    { key: 'x', label: 'X', href: `https://twitter.com/intent/tweet?text=${encodedText}` },
+    { key: 'tg', label: 'Telegram', href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}` },
+    { key: 'mail', label: 'Email', href: `mailto:?subject=RimSocial&body=${encodedText}` },
+    { key: 'sms', label: 'Text', href: `sms:?&body=${encodedText}` },
+  ];
+}
+
+export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAddToStory, imageUrl, imageName = 'rimsocial.jpg' }) {
+  const me = useAppStore((s) => s.me);
+  const [friends, setFriends] = useState([]);
   const [people, setPeople] = useState([]);
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState([]);
   const [sending, setSending] = useState(false);
 
+  // All friends (people you follow) plus recent chat contacts, de-duplicated; a search replaces the list.
+  useEffect(() => {
+    let alive = true;
+    const chats = api('/v1/messages/share-targets').then((d) => (d.items || []).map((item) => item.user)).catch(() => []);
+    const following = me?.username
+      ? api(`/v1/users/${encodeURIComponent(me.username)}/following`).then((d) => d.items || []).catch(() => [])
+      : Promise.resolve([]);
+    Promise.all([following, chats]).then(([follow, chat]) => {
+      if (!alive) return;
+      const seen = new Set();
+      const merged = [...follow, ...chat].filter((user) => user && user.id && !seen.has(String(user.id)) && seen.add(String(user.id)));
+      setFriends(merged);
+    });
+    return () => { alive = false; };
+  }, [me?.username]);
+
   useEffect(() => {
     const q = query.trim();
+    if (!q) { setPeople([]); return undefined; }
     let alive = true;
-    const load = q
-      ? api(`/v1/search?q=${encodeURIComponent(q)}&type=people`).then((d) => d.people || [])
-      : api('/v1/messages/share-targets').then((d) => (d.items || []).map((item) => item.user));
-    const timer = setTimeout(() => { load.then((list) => { if (alive) setPeople(list); }).catch(() => {}); }, q ? 250 : 0);
+    const timer = setTimeout(() => {
+      api(`/v1/search?q=${encodeURIComponent(q)}&type=people`)
+        .then((d) => { if (alive) setPeople(d.people || []); })
+        .catch(() => { if (alive) setPeople([]); });
+    }, 250);
     return () => { alive = false; clearTimeout(timer); };
   }, [query]);
+
+  const shownPeople = query.trim() ? people : friends;
+  const text = caption ? `${caption}\n${url}` : url;
 
   function toggle(user) {
     if (sending) return;
@@ -35,7 +76,6 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     if (!picked.length || sending) return;
     setSending(true);
     try {
-      const text = caption ? `${caption}\n${url}` : url;
       const messages = await Promise.all(picked.map(async (user) => ({ userId: user.id, body: await sealFor(user.id, text) })));
       const postId = url.match(/\/p\/([^/?#]+)/)?.[1] || null;
       await api('/v1/messages/share', { method: 'POST', body: { messages, postId } });
@@ -48,53 +88,90 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     }
   }
 
+  // Share the picture or video itself (the device share sheet lists every installed app); download it when sharing files is not supported
+  async function shareImage() {
+    if (!imageUrl) { toast('There is nothing to share yet'); return; }
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error('Could not load this media');
+      const blob = await response.blob();
+      const file = new File([blob], imageName, { type: blob.type || 'image/jpeg' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: caption || 'RimSocial' });
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = imageName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      toast('Saved to your downloads');
+    } catch (e) {
+      if (e?.name !== 'AbortError') toast(e?.message || 'Could not share this media');
+    }
+  }
+
+  function openApp(href) {
+    if (href.startsWith('http')) window.open(href, '_blank', 'noopener');
+    else window.location.href = href;
+  }
+
   return (
-    <div className="rv-sheet-backdrop share-backdrop" onClick={onClose}>
-      <section className="share-sheet" role="dialog" aria-label="Share" onClick={(e) => e.stopPropagation()}>
-        <div className="rv-handle" aria-hidden="true" />
-        <label className="share-search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people to share with" />
-        </label>
-        <div className="share-people">
-          {people.length ? people.map((user) => {
-            const on = picked.some((u) => u.id === user.id);
-            return (
-              <button type="button" key={user.id} className="share-person" onClick={() => toggle(user)} aria-pressed={on} disabled={sending}>
-                <Avatar user={user} size={56} />
-                <span className="share-name">{user.displayName || user.username}</span>
-                <span className={on ? 'share-state done' : 'share-state'}>{on ? 'Selected' : 'Select'}</span>
-              </button>
-            );
-          }) : <p className="share-empty">{query.trim() ? 'No one found.' : 'People you chat with appear here.'}</p>}
-        </div>
-        {picked.length > 0 && (
-          <div className="share-sendbar">
-            <span className="share-count">{picked.length} of {MAX_RECIPIENTS}</span>
-            <button type="button" className="btn-primary share-send-btn" onClick={sendAll} disabled={sending}>
-              {sending ? 'Sending…' : `Send to ${picked.length}`}
+    <div className="sf-page" role="dialog" aria-modal="true" aria-label="Share">
+      <header className="sf-top">
+        <button type="button" className="sf-icon" aria-label="Close share" onClick={onClose}><Icon name="x" size={26} /></button>
+        <h1 className="sf-title">Share</h1>
+        <span className="sf-spacer" aria-hidden="true" />
+      </header>
+
+      <label className="sf-search">
+        <Icon name="search" size={18} />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people to share with" />
+      </label>
+
+      <div className="sf-people" role="list">
+        {shownPeople.length ? shownPeople.map((user) => {
+          const on = picked.some((u) => u.id === user.id);
+          return (
+            <button type="button" role="listitem" key={user.id} className={on ? 'sf-person on' : 'sf-person'} onClick={() => toggle(user)} aria-pressed={on} disabled={sending}>
+              <Avatar user={user} size={52} />
+              <span className="sf-name">
+                <strong>{user.displayName || user.username}</strong>
+                {user.displayName && <small>{user.username}</small>}
+              </span>
+              <span className={on ? 'sf-state done' : 'sf-state'}>{on ? 'Selected' : 'Select'}</span>
             </button>
-          </div>
-        )}
-        <div className="share-actions">
-          {url && <button type="button" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(caption ? `${caption}\n${url}` : url)}`, '_blank', 'noopener')}>
-            <span className="share-circle wa" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z" /></svg></span>
-            WhatsApp
-          </button>}
-          {onAddToStory && <button type="button" onClick={onAddToStory}>
-            <span className="share-circle" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" strokeDasharray="3 3" /><path d="M12 8v8M8 12h8" /></svg></span>
-            Add to story
-          </button>}
-          <button type="button" onClick={onCopy}>
-            <span className="share-circle" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg></span>
-            Copy link
-          </button>
-          <button type="button" onClick={onMore}>
-            <span className="share-circle" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg></span>
-            Share
-          </button>
+          );
+        }) : <p className="sf-empty">{query.trim() ? 'No one found.' : 'Friends you follow and people you chat with appear here.'}</p>}
+      </div>
+
+      {picked.length > 0 && (
+        <div className="sf-sendbar">
+          <span className="sf-count">{picked.length} of {MAX_RECIPIENTS}</span>
+          <button type="button" className="sf-send" onClick={sendAll} disabled={sending}>{sending ? 'Sending…' : `Send to ${picked.length}`}</button>
         </div>
-      </section>
+      )}
+
+      <nav className="sf-apps" aria-label="Share to apps">
+        {url && socialLinks(text, url).map((app) => (
+          <button type="button" key={app.key} className="sf-app" onClick={() => openApp(app.href)}>
+            <span className={`sf-circle sf-${app.key}`} aria-hidden="true">{app.label.charAt(0)}</span>
+            <span>{app.label}</span>
+          </button>
+        ))}
+        {onAddToStory && <button type="button" className="sf-app" onClick={onAddToStory}>
+          <span className="sf-circle" aria-hidden="true"><Icon name="plus" size={22} /></span><span>Add to story</span>
+        </button>}
+        <button type="button" className="sf-app" onClick={onCopy}>
+          <span className="sf-circle" aria-hidden="true"><Icon name="link" size={22} /></span><span>Copy link</span>
+        </button>
+        {imageUrl && <button type="button" className="sf-app" onClick={shareImage}>
+          <span className="sf-circle" aria-hidden="true"><Icon name="download" size={22} /></span><span>Share image</span>
+        </button>}
+        <button type="button" className="sf-app" onClick={onMore}>
+          <span className="sf-circle" aria-hidden="true"><Icon name="share-2" size={22} /></span><span>Other</span>
+        </button>
+      </nav>
     </div>
   );
 }

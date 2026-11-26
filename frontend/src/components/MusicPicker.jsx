@@ -9,6 +9,8 @@ import './MusicPicker.css';
 // middle, settings on the right, a search field, chips (For you, Trending, Saved), and one row per sound.
 // Tapping a row previews it; the bookmark button chooses it for the story. Sources: the app library
 // (For you) and the Audius catalogue (Trending). Audius sounds are checked and streamed by the server.
+// Audius stream links are signed and expire; never reuse one older than this.
+const STREAM_TTL_MS = 3 * 60 * 1000;
 const CHIPS = [['featured', 'For you'], ['trending', 'Trending'], ['saved', 'Saved'], ['original', 'Original audio']];
 
 function formatDuration(seconds) {
@@ -37,6 +39,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   const streamUrlsRef = useRef(new Map());
   const streamRequestsRef = useRef(new Map());
 
+  function cachedStreamUrl(id) {
+    const hit = streamUrlsRef.current.get(id);
+    return hit && Date.now() - hit.at < STREAM_TTL_MS ? hit.url : null;
+  }
+
   // Stop playback when leaving the screen
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
@@ -57,9 +64,9 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
           // Warm the first visible Audius rows before a user taps Play. Signed URLs are short-lived,
           // so they stay in memory only and are refreshed when a track is played if necessary.
           nextItems.filter((item) => item.source === 'audius').slice(0, 8).forEach((item) => {
-            if (streamUrlsRef.current.has(item.id) || streamRequestsRef.current.has(item.id)) return;
+            if (cachedStreamUrl(item.id) || streamRequestsRef.current.has(item.id)) return;
             const request = api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)
-              .then((result) => { if (result.url) streamUrlsRef.current.set(item.id, result.url); return result.url; })
+              .then((result) => { if (result.url) streamUrlsRef.current.set(item.id, { url: result.url, at: Date.now() }); return result.url; })
               .catch(() => null)
               .finally(() => streamRequestsRef.current.delete(item.id));
             streamRequestsRef.current.set(item.id, request);
@@ -83,10 +90,10 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       const audio = audioRef.current;
       audio.pause();
       const src = item.source === 'audius'
-        ? (streamUrlsRef.current.get(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
+        ? (cachedStreamUrl(item.id) || await streamRequestsRef.current.get(item.id) || (await api(`/v1/audio/audius/${encodeURIComponent(item.id)}/stream`)).url)
         : mediaUrl(item.mediaUrl);
       if (!src) throw new Error('No playable audio URL was returned');
-      if (item.source === 'audius') streamUrlsRef.current.set(item.id, src);
+      if (item.source === 'audius') streamUrlsRef.current.set(item.id, { url: src, at: Date.now() });
       audio.preload = 'auto';
       audio.src = src;
       audio.load();
@@ -122,14 +129,21 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     }
   }
 
-  function choose(item) {
-    stopPreview();
+  // Bookmark: save or unsave the sound for the Saved tab only. It does not change the story's sound.
+  function toggleSave(item) {
     setSavedItems((current) => {
-      const updated = [item, ...current.filter((entry) => String(entry.id) !== String(item.id))];
+      const exists = current.some((entry) => String(entry.id) === String(item.id));
+      const updated = exists ? current.filter((entry) => String(entry.id) !== String(item.id)) : [item, ...current];
       try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
       return updated;
     });
-    onSelect(item.source === 'audius' ? { ...item, previewUrl: streamUrlsRef.current.get(item.id) || null } : item);
+  }
+
+  // Use: choose this sound for the story (separate from saving)
+  function choose(item) {
+    stopPreview();
+    // No stored link: the story player fetches a fresh one when it plays
+    onSelect(item);
   }
 
   return (
@@ -162,6 +176,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
         {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
           const selected = selectedId === item.id;
+          const saved = savedItems.some((entry) => String(entry.id) === String(item.id));
           const playing = playingId === item.id;
           return (
             <li key={item.id} className={selected ? 'mp-row on' : 'mp-row'}>
@@ -175,8 +190,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
                   <span className="mp-meta">{[item.artist, item.duration ? formatDuration(item.duration) : null].filter(Boolean).join(' · ')}</span>
                 </span>
               </button>
-              <button type="button" className={selected ? 'mp-save on' : 'mp-save'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
-                <Icon name={selected ? 'bookmark-check' : 'bookmark'} size={26} />
+              <button type="button" className={saved ? 'mp-save on' : 'mp-save'} onClick={() => toggleSave(item)} aria-pressed={saved} aria-label={saved ? `Remove ${item.title} from saved` : `Save ${item.title}`}>
+                <Icon name={saved ? 'bookmark-check' : 'bookmark'} size={26} />
+              </button>
+              <button type="button" className={selected ? 'mp-use on' : 'mp-use'} onClick={() => choose(item)} aria-pressed={selected} aria-label={selected ? `${item.title} is your story sound` : `Use ${item.title} for your story`}>
+                {selected ? 'Selected' : 'Use'}
               </button>
             </li>
           );
