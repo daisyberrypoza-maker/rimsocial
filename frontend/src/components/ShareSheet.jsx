@@ -44,6 +44,9 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState([]);
   const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState('');
+  // The story row ("My Story") is off by default so nothing is posted by accident; turn it on to add this to your story
+  const [storySelected, setStorySelected] = useState(false);
 
   // Escape: clears the search text first, then closes the page. The latest onClose is read from a ref,
   // so the listener is registered once.
@@ -91,7 +94,7 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
   }, [query]);
 
   const shownPeople = query.trim() ? people : friends;
-  const text = caption ? `${caption}\n${url}` : url;
+  const text = url ? (caption ? `${caption}\n${url}` : url) : (caption || '');
 
   function toggle(user) {
     if (sending) return;
@@ -99,34 +102,43 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     setPicked([...picked, user]);
   }
 
+  // Sends the chat message (or the link / picture when no message is typed) to every selected friend,
+  // then adds the story when the story row is on.
   async function sendAll() {
-    if (!picked.length || sending) return;
-    if (!imageUrl && !url) { toast('This post has no public link yet'); return; }
+    if (sending) return;
+    const body = message.trim();
+    const wantsStory = storySelected && Boolean(onAddToStory);
+    if (!picked.length && !wantsStory) return;
+    if (picked.length && !imageUrl && !url && !body) { toast('This post has no public link yet'); return; }
     setSending(true);
     try {
-      if (imageUrl) {
-        // Send the picture itself as a direct message to each friend (same route the chat uses for photos)
-        const response = await fetch(imageUrl);
-        if (!response.ok) throw new Error('Could not load this media');
-        const blob = await response.blob();
-        const type = blob.type || 'image/jpeg';
-        const failed = [];
-        for (const user of picked) {
-          const form = new FormData();
-          form.append('media', new File([blob], imageName, { type }));
-          form.append('clientId', newClientId());
-          try { await api(`/v1/messages/with/${user.id}/media`, { method: 'POST', body: form }); } catch { failed.push(user); }
+      if (picked.length) {
+        if (imageUrl) {
+          // Send the picture itself to each friend, with the typed message as its caption (same route the chat uses)
+          const response = await fetch(imageUrl);
+          if (!response.ok) throw new Error('Could not load this media');
+          const blob = await response.blob();
+          const type = blob.type || 'image/jpeg';
+          const failed = [];
+          for (const user of picked) {
+            const form = new FormData();
+            form.append('media', new File([blob], imageName, { type }));
+            if (body) form.append('body', body);
+            form.append('clientId', newClientId());
+            try { await api(`/v1/messages/with/${user.id}/media`, { method: 'POST', body: form }); } catch { failed.push(user); }
+          }
+          if (failed.length) throw new Error(`Could not send to ${failed.length}`);
+        } else {
+          const payload = body || text;
+          const messages = await Promise.all(picked.map(async (user) => ({ userId: user.id, body: await sealFor(user.id, payload) })));
+          const postId = url?.match(/\/p\/([^/?#]+)/)?.[1] || null;
+          await api('/v1/messages/share', { method: 'POST', body: { messages, postId } });
         }
-        if (failed.length) throw new Error(`Could not send to ${failed.length}`);
         toast(`Sent to ${picked.length}`);
-        setPicked([]);
-        return;
       }
-      const messages = await Promise.all(picked.map(async (user) => ({ userId: user.id, body: await sealFor(user.id, text) })));
-      const postId = url.match(/\/p\/([^/?#]+)/)?.[1] || null;
-      await api('/v1/messages/share', { method: 'POST', body: { messages, postId } });
-      toast(`Sent to ${picked.length}`);
       setPicked([]);
+      setMessage('');
+      if (wantsStory) onAddToStory();
     } catch (e) {
       toast(e.message || 'Could not send');
     } finally {
@@ -162,20 +174,39 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
     else window.location.href = href;
   }
 
+  const pickedNames = picked.map((user) => user.displayName || user.username);
+  const canSend = (picked.length > 0 || (storySelected && Boolean(onAddToStory))) && !sending;
+
   return (
     <div className="sf-page" role="dialog" aria-modal="true" aria-label="Share">
       <header className="sf-top">
-        <button type="button" className="sf-icon" aria-label="Close share" onClick={onClose}><Icon name="x" size={26} /></button>
-        <h1 className="sf-title">Share</h1>
-        <span className="sf-spacer" aria-hidden="true" />
+        <button type="button" className="sf-icon" aria-label="Close share" onClick={onClose}><Icon name="chevron-down" size={28} /></button>
+        <label className="sf-search">
+          <Icon name="search" size={20} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Send To…" aria-label="Search people to share with" />
+        </label>
+        <button type="button" className="sf-icon" aria-label="Add friends" onClick={() => {}}><Icon name="user-plus" size={24} /></button>
       </header>
 
-      <label className="sf-search">
-        <Icon name="search" size={18} />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search people to share with" />
-      </label>
-
       <div className="sf-people" role="list">
+        {!query.trim() && (
+          <div className="sf-section-head">
+            <h2>Post to…</h2>
+            {onAddToStory && <button type="button" className="sf-new-story" onClick={onAddToStory}><Icon name="plus" size={18} /> New Story</button>}
+          </div>
+        )}
+        {!query.trim() && onAddToStory && (
+          <button type="button" role="listitem" className={storySelected ? 'sf-person sf-story on' : 'sf-person sf-story'} onClick={() => setStorySelected(!storySelected)} aria-pressed={storySelected} disabled={sending}>
+            <span className="sf-story-avatar" aria-hidden="true">{imageUrl && !imageName.endsWith('mp4') ? <img src={imageUrl} alt="" /> : <Icon name="image" size={22} />}</span>
+            <span className="sf-name">
+              <strong>My Story · Public</strong>
+              <small>Friends, Followers, …</small>
+            </span>
+            <span className="sf-time"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>24h</span>
+            <span className={storySelected ? 'sf-radio on' : 'sf-radio'} aria-hidden="true" />
+          </button>
+        )}
+        {!query.trim() && <h2 className="sf-section-title">Recents &amp; Suggested</h2>}
         {shownPeople.length ? shownPeople.map((user) => {
           const on = picked.some((u) => u.id === user.id);
           return (
@@ -191,10 +222,24 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         }) : <p className="sf-empty">{query.trim() ? 'No one found.' : 'Friends you follow and people you chat with appear here.'}</p>}
       </div>
 
-      {picked.length > 0 && (
+      {(picked.length > 0 || storySelected) && (
         <div className="sf-sendbar">
-          <span className="sf-count">{picked.length} selected</span>
-          <button type="button" className="sf-send" onClick={sendAll} disabled={sending}>{sending ? 'Sending…' : `Send to ${picked.length}`}</button>
+          <div className="sf-compose-row">
+            {imageUrl && <span className="sf-thumb" aria-hidden="true"><img src={imageUrl} alt="" /></span>}
+            <label className="sf-chat">
+              <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Add a chat…" aria-label="Message to send to everyone selected" maxLength={2000} disabled={sending} />
+            </label>
+          </div>
+          <div className="sf-recipient-row">
+            <button type="button" className="sf-dots" aria-label="Clear selected people" onClick={() => { setPicked([]); setStorySelected(false); }} disabled={sending}>•••</button>
+            <div className="sf-chips" role="list" aria-label="Selected recipients">
+              {storySelected && <span className="sf-chip" role="listitem"><Icon name="image" size={14} /> My Story</span>}
+              {pickedNames.map((name, index) => <span className="sf-chip" role="listitem" key={`${name}-${index}`}>{name}</span>)}
+            </div>
+            <button type="button" className="sf-send" onClick={sendAll} disabled={!canSend} aria-label={sending ? 'Sending' : `Send to ${picked.length + (storySelected ? 1 : 0)}`}>
+              <Icon name="send" size={22} />
+            </button>
+          </div>
         </div>
       )}
 

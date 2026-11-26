@@ -158,7 +158,12 @@ export default function Login() {
   const usernameMessage = USERNAME_MESSAGES[usernameStatus.state];
   const current = STEPS[step];
 
-  const googleBlock = GOOGLE_CLIENT_ID
+  // App Store Guideline 4.8: an iOS app that offers Google sign-in must also offer Sign in with Apple.
+  // Until that is configured (VITE_SIGN_IN_WITH_APPLE_ENABLED=true), Google is hidden inside the iOS app only.
+  const isIosApp = typeof window !== 'undefined' && window.Capacitor?.getPlatform?.() === 'ios';
+  const appleConfigured = import.meta.env.VITE_SIGN_IN_WITH_APPLE_ENABLED === 'true';
+  const googleAllowed = !isIosApp || appleConfigured;
+  const googleBlock = GOOGLE_CLIENT_ID && googleAllowed
     ? <div className="ig-auth-google-wrap"><div ref={googleButton} className="ig-auth-google-button" /></div>
     : <button type="button" className="ig-auth-secondary" onClick={() => setNotice(GOOGLE_NOTICE)}>
         <span className="ig-auth-g">G</span><span>{mode === 'login' ? 'Log in with Google' : 'Sign up with Google'}</span>
