@@ -125,6 +125,43 @@ router.get('/boost-offer', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Publish an existing Rimlight post to a selected Send To destination.
+router.post('/:id/publish', requireAuth, requireTerms, async (req, res, next) => {
+  try {
+    const source = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false, visibility: 'public' } });
+    if (!source) throw httpError(404, 'Post not found or unavailable');
+    await assertPostAuthorNotBlocked(req.user.id, source.authorId);
+    const destination = String(req.body?.destination || '');
+    const visibility = String(req.body?.visibility || '');
+    const expiresInHours = req.body?.expiresInHours;
+    if (destination === 'story') {
+      if (!['friends_only', 'public'].includes(visibility) || expiresInHours !== 24) throw httpError(400, 'Invalid story destination');
+    } else if (destination === 'spotlight') {
+      if (visibility !== 'public' || expiresInHours !== null) throw httpError(400, 'Invalid Spotlight destination');
+    } else throw httpError(400, 'Choose a valid publishing destination');
+    const isStory = destination === 'story';
+    const post = await Post.create({
+      authorId: req.user.id, kind: source.kind, mediaUrl: source.mediaUrl, mediaPublicId: source.mediaPublicId,
+      mediaItems: source.mediaItems, thumbUrl: source.thumbUrl, caption: source.caption, topic: source.topic,
+      musicUrl: source.musicUrl, musicTitle: source.musicTitle, musicSource: source.musicSource,
+      audiusTrackId: source.audiusTrackId, artistName: source.artistName, artworkUrl: source.artworkUrl,
+      musicOffsetSec: source.musicOffsetSec, origVolume: source.origVolume, musicVolume: source.musicVolume,
+      musicMixable: source.musicMixable, loopVideo: source.loopVideo, aiLabel: source.aiLabel,
+      sourcePostId: source.id, isStory, visibility: visibility === 'friends_only' ? 'private' : 'public',
+      expiresAt: isStory ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null,
+    });
+    if (isStory) {
+      const storyService = require('../services/stories');
+      await storyService.fanOutStory(post);
+      await storyService.invalidateRailsFor(req.user.id);
+    } else {
+      const followers = await Follow.findAll({ where: { followeeId: req.user.id }, attributes: ['followerId'], raw: true });
+      await feed.fanOutPost(post, followers.map((row) => row.followerId));
+    }
+    res.status(201).json(toPostDTO(post));
+  } catch (e) { next(e); }
+});
+
 router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const post = await Post.findOne({ where: { id: req.params.id, status: 'live', isStory: false }, include: [{ model: User, as: 'author', attributes: ['id', 'username', 'displayName', 'avatarUrl'] }] });
