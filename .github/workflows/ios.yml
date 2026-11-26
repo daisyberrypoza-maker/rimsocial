@@ -58,7 +58,10 @@ jobs:
           ios = config['ios']
           assert ios.get('supportsTablet') is True, 'iPad support must remain enabled'
           assert ios.get('bundleIdentifier') == 'com.clipverse.app', 'Unexpected iOS bundle identifier'
-          project_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios/RimSocial.xcodeproj/project.pbxproj'
+          ios_root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios'
+          projects = list(ios_root.glob('*.xcodeproj'))
+          assert projects, 'Generated iOS Xcode project not found'
+          project_path = projects[0] / 'project.pbxproj'
           project = project_path.read_text()
           assert 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;' in project, 'iOS bundle identifier mismatch'
           assert 'GENERATE_INFOPLIST_FILE = YES;' in project, 'Expected Xcode-generated Info.plist settings'
