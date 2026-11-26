@@ -162,7 +162,12 @@ export default function Login() {
               </Pressable>
             )}
             {step === REGISTER_STEPS.length - 1 && (
-              <Text style={styles.terms}>By signing up, you agree to RimSocial’s Terms and Privacy Policy.</Text>
+              <View style={styles.termsRow}>
+                <Pressable style={[styles.termsCheck, termsAccepted && styles.termsCheckOn]} onPress={() => setTermsAccepted((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: termsAccepted }}>
+                  {termsAccepted ? <Text style={styles.termsCheckMark}>✓</Text> : null}
+                </Pressable>
+                <Text style={styles.terms}>I agree to RimSocial’s <Text style={styles.termsLink} onPress={() => setTermsOpen(true)}>Terms of Service and EULA</Text> and Privacy Policy.</Text>
+              </View>
             )}
             {!!notice && <Text style={styles.notice}>{notice}</Text>}
             <Pressable onPress={() => { setMode('login'); setStep(0); setError(''); }} style={styles.linkWrap}>
