@@ -107,7 +107,7 @@ export default function SendTo({ navigation, route }) {
       </View>
       {!query.trim() && storyId ? (
         <Pressable style={styles.row} onPress={() => setStorySelected((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: storySelected }}>
-          <View style={styles.storyAvatar}><ImageIcon size={22} color="#000" /></View>
+          <View style={styles.storyAvatar}><ImageIcon size={16} color="#000" /></View>
           <View style={styles.nameWrap}>
             <Text style={[styles.name, storySelected && styles.nameOn]}>My Story · Public</Text>
             <Text style={styles.sub} numberOfLines={1}>Friends, Followers, …</Text>
@@ -142,7 +142,7 @@ export default function SendTo({ navigation, route }) {
           const on = isPicked(item);
           return (
             <Pressable style={styles.row} onPress={() => toggle(item)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
-              <Avatar user={item} size={52} />
+              <Avatar user={item} size={40} />
               <View style={styles.nameWrap}>
                 <Text style={[styles.name, on && styles.nameOn]} numberOfLines={1}>{item.displayName || item.username}</Text>
               </View>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   newStory: { height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#f1f1f1', flexDirection: 'row', alignItems: 'center', gap: 4 },
   newStoryText: { fontSize: 15, fontWeight: '600', color: '#000' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, minHeight: 64, width: '100%', borderRadius: 0, borderBottomWidth: 1, borderBottomColor: '#e8e8e8', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 } },
-  storyAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
+  storyAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   nameWrap: { flex: 1, minWidth: 0 },
   name: { fontSize: 16, fontWeight: '600', color: '#000' },
   nameOn: { color: BLUE },
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: GREY, padding: 24, fontSize: 15 },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: BLUE, paddingTop: 10, paddingHorizontal: 12, gap: 8 },
   composeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  thumb: { width: 40, height: 60, borderRadius: 6, backgroundColor: '#0d3a57' },
+  thumb: { width: 28, height: 48, borderRadius: 6, backgroundColor: '#0d3a57' },
   chatInput: { flex: 1, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.28)', paddingHorizontal: 18, fontSize: 17, color: '#fff' },
   namesText: { fontSize: 16, fontWeight: '600', color: '#fff', maxWidth: 220 },
   recipientRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
