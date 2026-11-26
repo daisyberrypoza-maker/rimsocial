@@ -29,6 +29,7 @@ function toPostDTO(post) {
     loopVideo: p.loopVideo !== false,
     aiLabel: Boolean(p.aiLabel),
     viewCount: Number(p.viewCount) || 0,
+    rating: p.rating == null ? null : Number(p.rating),
     likeCount: Number(p.likeCount) || 0,
     repostCount: Number(p.repostCount) || 0,
     visibility: p.visibility || 'public',
