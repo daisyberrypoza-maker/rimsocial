@@ -689,7 +689,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
               />
             </>
           ) : isText ? (
-            <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText}</div>
+            <div key={current.id} className="sv-text" style={{ background: backgroundCss(current.storyBackground) }}>{current.storyText || (current.musicTitle ? <div className="sv-music-cover">{current.artworkUrl ? <img src={current.artworkUrl} alt="" /> : <Icon name="music" size={52} />}<strong>{current.musicTitle}</strong>{current.artistName && <span>{current.artistName}</span>}</div> : null)}</div>
           ) : (
             <>
               <img key={`${current.id}-${mediaReloadKey}-ambient`} className="sv-ambient" src={mediaUrl(current.mediaUrl)} alt="" aria-hidden="true" />
