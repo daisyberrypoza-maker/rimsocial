@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from './Icon';
 import { api } from '../api';
 import { useAppStore } from '../store';
@@ -17,6 +18,7 @@ const TABS = [
 ];
 
 export default function BottomBar({ activeTab, onPress }) {
+  const insets = useSafeAreaInsets();
   const [unread, setUnread] = useState(0);
   const dark = activeTab === 'Rimlight';
   const overlayOpen = useAppStore((s) => s.overlayOpen);
@@ -42,7 +44,7 @@ export default function BottomBar({ activeTab, onPress }) {
   const tint = (focused) => (dark ? (focused ? '#fff' : colors.darkMuted) : (focused ? colors.activeTab : colors.muted));
 
   return (
-    <View style={[styles.bar, dark && styles.barDark, overlayOpen && styles.hidden]} pointerEvents={overlayOpen ? 'none' : 'auto'}>
+    <View style={[styles.bar, dark && styles.barDark, overlayOpen && styles.hidden, { height: 60 + insets.bottom, paddingBottom: insets.bottom }]} pointerEvents={overlayOpen ? 'none' : 'auto'}>
       {TABS.map((tab) => {
         const focused = activeTab === tab.name;
         return (
