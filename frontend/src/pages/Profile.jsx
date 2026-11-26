@@ -670,6 +670,7 @@ export default function Profile() {
               <SettingsItem icon="gift" title="Get coins" onClick={() => { setDrawerOpen(false); setShowCoins(true); }} />
               <SettingsItem icon="bell" title="Notifications" subtitle="Alerts for new messages and posts" onClick={turnOnNotifications} />
               <SettingsItem icon="shield" title="Blocked accounts" onClick={openBlockedPeople} />
+              <SettingsItem icon="file" title="Terms of Service & EULA" onClick={() => { setDrawerOpen(false); navigate('/terms'); }} />
             </SettingsSection>
             <SettingsSection title="Create">
               <SettingsItem icon="plus" title="Create post or story" onClick={() => { setDrawerOpen(false); navigate('/upload'); }} />
