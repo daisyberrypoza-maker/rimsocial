@@ -21,6 +21,7 @@ const User = sequelize.define('User', {
   country: { type: DataTypes.CHAR(2), allowNull: false },
   isCreator: { type: DataTypes.BOOLEAN, defaultValue: false },
   followerCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  termsAcceptedAt: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'users' });
 
 // Regular posts and stories share one table. Stories have isStory = true and expire.
@@ -251,6 +252,8 @@ const UserReport = sequelize.define('UserReport', {
   reason: { type: DataTypes.STRING(500), allowNull: false },
   status: { type: DataTypes.ENUM('pending', 'reviewed', 'dismissed'), defaultValue: 'pending' },
 }, { tableName: 'user_reports', indexes: [{ fields: ['reportedUserId', 'createdAt'] }, { fields: ['reporterId', 'createdAt'] }] });
+
+const MessageReport = sequelize.define('MessageReport', { id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true }, messageId: { type: DataTypes.UUID, allowNull: false }, reporterId: { type: DataTypes.UUID, allowNull: false }, reportedUserId: { type: DataTypes.UUID, allowNull: false }, reason: { type: DataTypes.STRING(500), allowNull: false }, status: { type: DataTypes.ENUM('pending', 'reviewed', 'dismissed'), allowNull: false, defaultValue: 'pending' } }, { tableName: 'message_reports', indexes: [{ unique: true, fields: ['messageId', 'reporterId'] }, { fields: ['reportedUserId', 'createdAt'] }] });
 
 const ContentEarning = sequelize.define('ContentEarning', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
@@ -514,6 +517,6 @@ module.exports = {
   MediaCleanupJob,
   BusinessFinancialRecord,
   sequelize, Op, User, Post, PostLike, PostComment, CommentLike, Repost, Follow, StoryView, StoryLike, Wallet, EarningsWallet,
-  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport, UserReport,
+  Gift, GiftTransaction, LedgerEntry, Payout, PayoutProfile, LiveMatch, LiveSignal, LiveBroadcast, LiveBroadcastMessage, ContentEarning, UserBlock, UserMute, PostReport, UserReport, MessageReport,
   BusinessProfile, BusinessOpportunity, BusinessOffer, BusinessWorkUpdate, seedGifts,
 };
