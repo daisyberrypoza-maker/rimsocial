@@ -6,7 +6,7 @@ import { formatCount } from '../lib/format.js';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import { toast } from '../toast.js';
-import ShareOptions from '../components/ShareOptions.jsx';
+import ShareSheet from '../components/ShareSheet.jsx';
 import BoostSheet from '../components/BoostSheet.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 import { useAppStore } from '../store.js';
@@ -69,6 +69,25 @@ export default function PostDetail() {
       toast(r.reposted ? 'Post reposted' : 'Repost removed');
     } catch (e) { logError(e); }
     finally { setBusy(false); }
+  }
+
+  async function copyDetailLink() {
+    try {
+      await navigator.clipboard.writeText(postShareUrl(postId));
+      toast('Post link copied');
+    } catch {
+      toast('Could not copy the link');
+    }
+  }
+
+  async function shareDetail() {
+    const url = postShareUrl(postId);
+    try {
+      if (navigator.share) await navigator.share({ title: `Post by @${username} on RimSocial`, text: post?.caption || 'View this post on RimSocial', url });
+      else await copyDetailLink();
+    } catch (error) {
+      if (error?.name !== 'AbortError') toast('Could not open sharing options');
+    }
   }
 
   function shareExternally() {
@@ -171,6 +190,6 @@ export default function PostDetail() {
     />}
 
     {showBoost && <BoostSheet postId={post.id} defaultName={post.author?.displayName || username} onClose={() => setShowBoost(false)} />}
-    {showShare && <ShareOptions url={postShareUrl(post.id)} title={`Post by @${username} on RimSocial`} text={post.caption || 'View this post on RimSocial'} onClose={() => setShowShare(false)} />}
+    {showShare && <ShareSheet url={postShareUrl(post.id)} caption={post.caption || ''} onClose={() => setShowShare(false)} onCopy={() => { copyDetailLink(); setShowShare(false); }} onMore={() => { setShowShare(false); shareDetail(); }} />}
   </main>;
 }
