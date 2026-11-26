@@ -61,7 +61,7 @@ export default function Following() {
   return (
     <div className="fw-page">
       <header className="fw-head">
-        <button type="button" className="fw-iconbtn" onClick={() => goBack(navigate, '/stories')} aria-label="Back">
+        <button type="button" className="fw-iconbtn" onClick={() => goBack(navigate, '/')} aria-label="Back">
           <Icon name="chevron-down" size={26} />
         </button>
         <h1>Following</h1>

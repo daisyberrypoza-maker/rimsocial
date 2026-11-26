@@ -52,6 +52,8 @@ jobs:
         run: npm test --prefix backend -- --test-force-exit
       - name: Install frontend dependencies
         run: npm ci --prefix frontend
+      - name: Test web Back navigation
+        run: npm run test:navigation --prefix frontend
       - name: Build frontend
         run: npm run build --prefix frontend
 

@@ -9,6 +9,7 @@ import { backgroundCss } from '../lib/storyBackgrounds.js';
 import { formatCount } from '../lib/format.js';
 import { logError } from '../toast.js';
 import { useSwipeTabs } from '../lib/useSwipeTabs.js';
+import { goBack } from '../lib/goBack.js';
 
 // Search, Instagram-style: the grid of posts first; typing shows For you / Accounts / Tags.
 // A tag opens its own page (/search/tag/:tag) with the posts that use it.
@@ -101,7 +102,7 @@ export default function Search() {
   return (
     <main ref={swipeSurfaceRef} data-local-tab-swipe className="sr-page">
       <div className="sr-bar">
-        {(tagPage || storiesScope) && <button type="button" className="sr-back" onClick={() => navigate(-1)} aria-label="Back"><Icon name="arrow-left" size={24} /></button>}
+        {(tagPage || storiesScope) && <button type="button" className="sr-back" onClick={() => goBack(navigate, tagPage ? '/search' : '/stories')} aria-label="Back"><Icon name="arrow-left" size={24} /></button>}
         <label className="sr-field">
           <Icon name="search" size={20} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={storiesScope ? 'Search stories' : 'Search'} readOnly={Boolean(tagPage)} autoCapitalize="none" autoComplete="off" />
