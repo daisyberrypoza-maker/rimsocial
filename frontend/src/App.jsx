@@ -22,6 +22,7 @@ const NewMessage = lazy(() => import('./pages/NewMessage.jsx'));
 import Toast from './components/Toast.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 const Login = lazy(() => import('./pages/Login.jsx'));
+const Terms = lazy(() => import('./pages/Terms.jsx'));
 const Feed = lazy(() => import('./pages/Feed.jsx'));
 const Explore = lazy(() => import('./pages/Explore.jsx'));
 const Upload = lazy(() => import('./pages/Upload.jsx'));
@@ -207,6 +208,7 @@ export default function App() {
       <ScrollMemory />
       <Routes>
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/" element={<RequireAuth><Feed key="discover" tab="discover" /></RequireAuth>} />
         <Route path="/following" element={<RequireAuth><Feed key="following" tab="following" /></RequireAuth>} />
         <Route path="/explore" element={<RequireAuth><ExploreRedirect /></RequireAuth>} />
