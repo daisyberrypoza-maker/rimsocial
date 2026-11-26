@@ -33,11 +33,12 @@ jobs:
 
       - name: Create the native React Native project
         working-directory: ${{ runner.temp }}
-        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --skip-install --pm npm
+        run: npx --yes @react-native-community/cli@13 init RimSocial --version 0.75.4 --skip-install --skip-git-init --pm npm
 
       - name: Copy the mobile app into the native project
         run: |
           set -euo pipefail
+          echo "RUNNER_TEMP=$RUNNER_TEMP"; ls -la "$RUNNER_TEMP"; ls -la "$RUNNER_TEMP/RimSocial" || true
           cp -R mobile/src "$RUNNER_TEMP/RimSocial/src"
           cp mobile/App.js mobile/index.js mobile/app.json mobile/babel.config.js mobile/metro.config.js "$RUNNER_TEMP/RimSocial/"
           node -e '
