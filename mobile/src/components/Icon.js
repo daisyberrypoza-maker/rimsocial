@@ -21,7 +21,8 @@ const ICONS = {
 };
 
 // filled: solid shape (active tab, right-side controls on Rimlight); otherwise outline
-export default function Icon({ name, size = 26, color = '#111', strokeWidth = 2.2, filled = false }) {
+export default function Icon({ name, size = 26, color = '#111', strokeWidth = 2.2, filled = false, onDark = false }) {
   const Cmp = ICONS[name] || CircleHelp;
-  return <Cmp size={size} color={color} strokeWidth={strokeWidth} fill={filled ? color : 'none'} />;
+  const resolvedColor = onDark ? '#FFFFFF' : color;
+  return <Cmp size={size} color={resolvedColor} strokeWidth={strokeWidth} fill={filled ? resolvedColor : 'none'} />;
 }
