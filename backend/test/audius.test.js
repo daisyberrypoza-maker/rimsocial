@@ -49,7 +49,7 @@ test('trending and search call the API with app_name and filter unstreamable tra
   try {
     const trending = await audius.trending(3);
     assert.equal(trending.length, 3);
-    assert.ok(calls[0].startsWith(`${audius.API_BASE}/tracks/trending?`));
+    assert.ok(calls[0].includes("/tracks/trending?"));
     assert.ok(calls[0].includes('app_name=RimSocial'));
     const found = await audius.search('overkill', 5);
     assert.equal(found.length, 3);
@@ -60,14 +60,27 @@ test('trending and search call the API with app_name and filter unstreamable tra
   }
 });
 
-test('stream link is fetched fresh for one track', async () => {
+test('stream link follows the node redirect to the CDN URL', async () => {
   const realFetch = global.fetch;
+  const cdn = 'https://cdn.example/s1?signature=1';
   global.fetch = async (url) => {
-    assert.ok(String(url).endsWith('/tracks/V66vyPP?app_name=RimSocial'));
-    return { ok: true, json: async () => ({ data: SAMPLE[0] }) };
+    // Each node answers the stream request with a redirect; fetch reports the final CDN URL
+    assert.ok(String(url).includes('/tracks/V66vyPP/stream'));
+    assert.ok(String(url).includes('app_name=RimSocial'));
+    return { ok: true, url: cdn, body: { cancel: async () => {} } };
   };
   try {
-    assert.equal(await audius.streamLink('V66vyPP'), 'https://x/s1?signature=1');
+    assert.equal(await audius.streamLink('V66vyPP'), cdn);
+  } finally {
+    global.fetch = realFetch;
+  }
+});
+
+test('stream link fails when no node returns a CDN URL', async () => {
+  const realFetch = global.fetch;
+  global.fetch = async () => { throw new Error('offline'); };
+  try {
+    await assert.rejects(audius.streamLink('V66vyPP'), /not available/);
   } finally {
     global.fetch = realFetch;
   }
