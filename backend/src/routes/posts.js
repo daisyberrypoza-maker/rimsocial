@@ -43,6 +43,7 @@ router.post('/', requireAuth, upload.array('media', 10), require('../middleware/
   let postPersisted = false;
   try {
     const files = Array.isArray(req.files) ? [...req.files] : [];
+    const music = await resolveMusic(req.body || {}, { AudioTrack: require('../db').AudioTrack });
     const uploadIds = parseUploadIds(req.body.uploadIds);
     for (const id of uploadIds) files.push(await uploads.consumeSession(id, req.user.id));
     if (!files.length) throw httpError(400, 'Upload an mp4, webm, jpg, png or webp file');
@@ -76,6 +77,7 @@ router.post('/', requireAuth, upload.array('media', 10), require('../middleware/
     const post = await Post.create({
       authorId: req.user.id, kind: cover.kind, mediaUrl: cover.url, mediaPublicId: cover.publicId, mediaItems: items.length > 1 ? items : null,
       caption: String(req.body.caption || '').slice(0, 500),
+      ...storyMusicFields(music, req.body || {}),
       topic: String(req.body.topic || '').trim().slice(0, 60) || null,
       aiLabel: req.body.aiLabel === 'true', visibility, allowRemix, sourcePostId, loopVideo: req.body.loopVideo !== 'false',
       isSponsored, sponsorName: isSponsored ? sponsorName : null,
