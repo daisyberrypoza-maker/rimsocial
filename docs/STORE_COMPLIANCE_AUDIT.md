@@ -6,7 +6,7 @@ Audit baseline: 2026-11-26. This document distinguishes repository evidence from
 
 - Shared app metadata records the existing Android application ID, `com.clipverse.app`, as the iOS bundle identifier and enables iPad support.
 - iOS camera, microphone, photo-library read/write purpose strings and the non-exempt-encryption declaration are defined in `mobile/app.json`.
-- The Capacitor Android manifest declares camera, microphone, image/video media access, and legacy external-storage access only through API 32.
+- The Capacitor Android manifest declares camera and microphone only. Selected photo/video access is left to the platform picker instead of requesting broad media-library permissions.
 - An unsigned macOS iOS simulator workflow generates a React Native 0.75.4 native project, applies the checked-in mobile source and metadata, verifies iPhone+iPad target family, and runs `xcodebuild` with code signing disabled.
 
 ## Repository audit findings — not yet compliant
