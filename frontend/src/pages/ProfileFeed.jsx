@@ -5,6 +5,7 @@ import { loadPage } from '../lib/paged.js';
 import { toast } from '../toast.js';
 import PostCard from '../components/PostCard.jsx';
 import { logError } from '../toast.js';
+import { goBack } from '../lib/goBack.js';
 
 export default function ProfileFeed() {
   const { username } = useParams();
@@ -69,7 +70,7 @@ export default function ProfileFeed() {
   }
 
   return <main className="profile-watch-page">
-    <button className="profile-watch-back" onClick={() => navigate(`/u/${username}`)} aria-label="Back to profile">← @{username}</button>
+    <button className="profile-watch-back" onClick={() => goBack(navigate, `/u/${username}`)} aria-label="Back to profile">← @{username}</button>
     <div className="feed profile-watch-feed" ref={container} onScroll={onScroll}>
       {items.map((post, index) => <PostCard key={post.id} post={post} active={index === active} advanceOnEnd onEnded={() => goNext(index)} />)}
       {!items.length && !loading && <div className="slot"><p className="muted">This profile has no public posts yet.</p></div>}
