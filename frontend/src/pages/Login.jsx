@@ -42,6 +42,7 @@ export default function Login() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   // Live username feedback on sign-up, debounced so we do not query on every keystroke.
@@ -96,7 +97,7 @@ export default function Login() {
     setError(''); setNotice(''); setBusy(true);
     try {
       const payload = mode === 'register'
-        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase() }
+        ? { username: form.username.trim(), password: form.password, email: form.email.trim(), displayName: form.displayName.trim(), country: form.country.trim().toUpperCase(), termsAccepted }
         : { username: form.username.trim(), password: form.password };
       const data = await api(`/v1/auth/${mode}`, { method: 'POST', body: payload });
       await finishSession(data);
@@ -107,7 +108,7 @@ export default function Login() {
   function handleSubmit(e) {
     e.preventDefault();
     if (mode === 'login') { if (canLogin) submit(); return; }
-    if (!stepValid) return;
+    if (!stepValid || (step === STEPS.length - 1 && !termsAccepted)) return;
     if (step < STEPS.length - 1) setStep(step + 1);
     else submit();
   }
@@ -229,9 +230,7 @@ export default function Login() {
                 {googleBlock}
               </>
             )}
-            {step === STEPS.length - 1 && (
-              <p className="ig-auth-note">By signing up, you agree to RimSocial’s Terms and Privacy Policy. We use your information to create and secure your account.</p>
-            )}
+            {step === STEPS.length - 1 && <label className="ig-auth-note" style={{display:'flex',gap:10,alignItems:'flex-start'}}><input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} style={{width:18,height:18,margin:'2px 0 0'}}/><span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service / EULA</a> and acknowledge the Privacy Policy.</span></label>}
             <button className="ig-auth-link ig-auth-link-blue" type="button" onClick={() => switchMode('login')}>I already have an account</button>
           </>
         )}
