@@ -125,7 +125,7 @@ export default function Login() {
         callback: async (response) => {
           setError(''); setNotice(''); setBusy(true);
           try {
-            const data = await api('/v1/auth/google', { method: 'POST', body: { credential: response.credential, country: form.country } });
+            const data = await api('/v1/auth/google', { method: 'POST', body: { credential: response.credential, country: form.country, termsAccepted } });
             await finishSession(data);
           } catch (err) { setError(err.message || 'Google sign-in failed.'); }
           finally { setBusy(false); }
