@@ -19,6 +19,8 @@ export default function SendTo({ navigation, route }) {
   const url = route?.params?.url || '';
   const caption = route?.params?.caption || '';
   const storyId = route?.params?.storyId || null;
+  const source = route?.params?.source || (storyId ? 'story' : 'post');
+  const [destination, setDestination] = useState(null);
   const thumb = route?.params?.thumb || null;
   const text = [caption, url].filter(Boolean).join('\n');
 
@@ -67,7 +69,7 @@ export default function SendTo({ navigation, route }) {
   const canSend = (picked.length > 0 || (storySelected && storyId)) && !sending;
   const barVisible = picked.length > 0 || (storySelected && Boolean(storyId));
   // Recipient names in pick order: the chip shows the first, the rest read as a comma list (reference bar)
-  const names = [storySelected && storyId ? 'My Story · Public' : null, ...picked.map((u) => u.displayName || u.username)].filter(Boolean);
+  const names = [destination === 'story-friends' ? 'My Story · Friends only' : destination === 'story-public' ? 'My Story · Public' : destination === 'spotlight' ? 'My Spotlight · Public' : null, storySelected && storyId ? 'My Story · Public' : null, ...picked.map((u) => u.displayName || u.username)].filter(Boolean);
 
   // Sends the typed message (or the link) to every selected friend, then reposts to My Story when toggled
   async function send() {
@@ -99,13 +101,13 @@ export default function SendTo({ navigation, route }) {
 
   const header = (
     <View>
-      <View style={styles.postTo}>
+      {source !== 'story' ? <View style={styles.postTo}>
         <Text style={styles.sectionTitle}>Post to…</Text>
         <Pressable style={styles.newStory} onPress={() => navigation.navigate('Upload')} accessibilityLabel="New story">
           <Plus size={18} color="#000" /><Text style={styles.newStoryText}>New Story</Text>
         </Pressable>
-      </View>
-      {!query.trim() && storyId ? (
+      </View> : null}
+      {!query.trim() && storyId && source !== 'story' ? (
         <Pressable style={styles.row} onPress={() => setStorySelected((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: storySelected }}>
           <View style={styles.storyAvatar}><ImageIcon size={16} color="#000" /></View>
           <View style={styles.nameWrap}>
@@ -116,7 +118,19 @@ export default function SendTo({ navigation, route }) {
           <Radio on={storySelected} />
         </Pressable>
       ) : null}
-      {!query.trim() ? <Text style={styles.sectionTitle2}>Recents & Suggested</Text> : null}
+      {!query.trim() && source === 'rimlight' ? <>
+        <Text style={styles.sectionTitle2}>Post to…</Text>
+        {[
+          { key: 'story-friends', title: 'My Story · Friends only', sub: 'Just for Friends' },
+          { key: 'story-public', title: 'My Story · Public', sub: 'Friends, Followers and Everyone' },
+          { key: 'spotlight', title: 'My Spotlight · Public', sub: 'Friends, Followers and Everyone' },
+        ].map((item) => <Pressable key={item.key} style={[styles.row, destination === item.key && styles.selectedRow]} onPress={() => setDestination((v) => v === item.key ? null : item.key)} accessibilityRole="checkbox" accessibilityState={{ checked: destination === item.key }}>
+          <View style={styles.storyAvatar}><ImageIcon size={16} color="#000" /></View>
+          <View style={styles.nameWrap}><Text style={styles.name}>{item.title}</Text><Text style={styles.sub}>{item.sub}</Text></View>
+          <Radio on={destination === item.key} />
+        </Pressable>)}
+      </> : null}
+      {!query.trim() && source !== 'story' ? <Text style={styles.sectionTitle2}>Recents & Suggested</Text> : null}
     </View>
   );
 
@@ -212,7 +226,8 @@ const styles = StyleSheet.create({
   sectionTitle2: { fontSize: 16, fontWeight: '600', color: '#000', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6 },
   newStory: { height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: '#f1f1f1', flexDirection: 'row', alignItems: 'center', gap: 4 },
   newStoryText: { fontSize: 15, fontWeight: '600', color: '#000' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, minHeight: 64, width: '100%', borderRadius: 0, borderBottomWidth: 1, borderBottomColor: '#e8e8e8', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 } },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, minHeight: 64, width: '100%', borderRadius: 0, borderBottomWidth: 1, borderBottomColor: '#e8e8e8', backgroundColor: 'transparent', elevation: 0, shadowColor: 'transparent', shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 } },
+  selectedRow: { backgroundColor: '#e8f4ff' },
   storyAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f1f1f1', alignItems: 'center', justifyContent: 'center' },
   nameWrap: { flex: 1, minWidth: 0 },
   name: { fontSize: 16, fontWeight: '600', color: '#000' },
