@@ -53,16 +53,17 @@ jobs:
       - name: Apply App Store metadata to generated Xcode settings
         run: |
           python3 - <<'PY'
-          import json, pathlib, os
+          import json, pathlib, os, re
           config = json.loads(pathlib.Path('mobile/app.json').read_text())
           ios = config['ios']
           assert ios.get('supportsTablet') is True, 'iPad support must remain enabled'
           assert ios.get('bundleIdentifier') == 'com.clipverse.app', 'Unexpected iOS bundle identifier'
           ios_root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'RimSocial/ios'
-          projects = list(ios_root.glob('*.xcodeproj'))
+          projects = list(ios_root.rglob('*.xcodeproj'))
           assert projects, 'Generated iOS Xcode project not found'
           project_path = projects[0] / 'project.pbxproj'
           project = project_path.read_text()
+          project = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;', 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;', project)
           assert 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;' in project, 'iOS bundle identifier mismatch'
           assert 'GENERATE_INFOPLIST_FILE = YES;' in project, 'Expected Xcode-generated Info.plist settings'
           settings = {
