@@ -72,6 +72,7 @@ export default function StoryViewer() {
   const current = stories?.[si];
   const isVideo = current?.kind === 'video';
   const [audiusMusic, setAudiusMusic] = useState({ id: null, url: null });
+  const musicPlayerRef = useRef(null);
   const storyMusicUrl = current?.musicUrl
     ? mediaUrl(current.musicUrl)
     : (current?.audiusTrackId && audiusMusic.id === current.audiusTrackId ? audiusMusic.url : null);
@@ -419,15 +420,16 @@ export default function StoryViewer() {
         {!!storyMusicUrl && (
           <Video
             key={`story-music-${current.id}`}
+            ref={musicPlayerRef}
             source={{ uri: storyMusicUrl }}
             audioOnly
             paused={!playing}
             volume={storyMusicVolume}
             playInBackground={false}
             style={styles.audioOnly}
-            onLoad={({ seek }) => {
+            onLoad={() => {
               const offset = Math.max(0, Number(current?.musicOffsetSec) || 0);
-              if (offset > 0) seek(offset);
+              if (offset > 0) musicPlayerRef.current?.seek(offset);
             }}
             onError={(error) => logError(error)}
           />
