@@ -3,7 +3,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
-const { Op, AudioTrack, User, Post } = require('../db');
+const { Op, AudioTrack, User, Post, Follow } = require('../db');
 const { fn, col } = require('sequelize');
 const { musicTrackScore } = require('../services/formulas');
 const { requireAuth } = require('../middleware/auth');
@@ -94,6 +94,50 @@ router.get('/search', async (req, res, next) => {
     }
     const page = ordered.slice(offset, offset + limit);
     res.json({ items: page.map((row) => toDTO(row)), hasMore: offset + limit < ordered.length, nextOffset: offset + limit });
+  } catch (e) { next(e); }
+});
+
+// GET /v1/audio/network-trending: sounds used most in the last 7 days by the people you follow (stories and posts).
+// Library sounds keep their library id; Audius sounds are streamed by id like the Audius catalogue.
+router.get('/network-trending', async (req, res, next) => {
+  try {
+    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+    const follows = await Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true });
+    const followeeIds = follows.map((row) => row.followeeId);
+    if (!followeeIds.length) return res.json({ items: [], hasMore: false, nextOffset: 0 });
+    const posts = await Post.findAll({
+      attributes: ['musicUrl', 'musicSource', 'audiusTrackId', 'musicTitle', 'artistName', 'artworkUrl'],
+      where: {
+        authorId: followeeIds,
+        createdAt: { [Op.gt]: since },
+        [Op.or]: [{ musicUrl: { [Op.ne]: null } }, { audiusTrackId: { [Op.ne]: null } }],
+      },
+      raw: true,
+      limit: 2000,
+    });
+    const counts = new Map();
+    for (const post of posts) {
+      const isAudius = post.musicSource === 'audius' && post.audiusTrackId;
+      const key = isAudius ? `a:${post.audiusTrackId}` : (post.musicUrl ? `l:${post.musicUrl}` : null);
+      if (!key) continue;
+      const entry = counts.get(key) || { uses: 0, post };
+      entry.uses += 1;
+      counts.set(key, entry);
+    }
+    const top = [...counts.values()].sort((a, b) => b.uses - a.uses).slice(0, 30);
+    const localUrls = top.filter((entry) => !(entry.post.musicSource === 'audius' && entry.post.audiusTrackId)).map((entry) => entry.post.musicUrl);
+    const tracks = localUrls.length ? await AudioTrack.findAll({ where: { mediaUrl: localUrls } }) : [];
+    const byUrl = new Map(tracks.map((track) => [track.mediaUrl, track]));
+    const items = [];
+    for (const { post } of top) {
+      if (post.musicSource === 'audius' && post.audiusTrackId) {
+        items.push({ id: post.audiusTrackId, title: post.musicTitle || 'Sound', artist: post.artistName || '', artwork: post.artworkUrl || null, source: 'audius' });
+      } else {
+        const track = byUrl.get(post.musicUrl);
+        if (track) items.push({ ...toDTO(track), source: 'local' });
+      }
+    }
+    res.json({ items, hasMore: false, nextOffset: items.length });
   } catch (e) { next(e); }
 });
 

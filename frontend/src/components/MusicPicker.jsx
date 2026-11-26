@@ -82,14 +82,15 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
     if (chip === 'saved') { setItems(savedItems); return undefined; }
     let active = true;
     const q = query.trim();
+    // Trending: sounds the people you follow use most (stories and posts). Searching it uses Audius.
     const path = chip === 'trending'
-      ? (q ? `/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=30` : '/v1/audio/audius/trending?limit=30')
+      ? (q ? `/v1/audio/audius/search?q=${encodeURIComponent(q)}&limit=30` : '/v1/audio/network-trending')
       : searchPath(q, chip, 0);
     const timer = setTimeout(() => {
       api(path)
         .then((data) => {
           if (!active) return;
-          const nextItems = (data.items || []).map((item) => ({ ...item, source: chip === 'trending' ? 'audius' : 'local' }));
+          const nextItems = (data.items || []).map((item) => ({ ...item, source: item.source || (chip === 'trending' ? 'audius' : 'local') }));
           setItems(nextItems);
           setHasMore(Boolean(data.hasMore));
           setNextOffset(data.nextOffset || nextItems.length);
