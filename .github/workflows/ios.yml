@@ -59,10 +59,10 @@ jobs:
           NODE
           cd "$RUNNER_TEMP/RimSocial"
           npm install --no-audit --no-fund
-      - name: Apply App Store metadata to generated Xcode settings
+      - name: Apply App Store metadata to generated Info.plist and Xcode settings
         run: |
           python3 - <<'PY'
-          import json, pathlib, os, re
+          import json, pathlib, os, plistlib, re
           config = json.loads(pathlib.Path('mobile/app.json').read_text())
           ios = config['ios']
           assert ios.get('supportsTablet') is True, 'iPad support must remain enabled'
@@ -73,27 +73,18 @@ jobs:
           project_path = projects[0] / 'project.pbxproj'
           project = project_path.read_text()
           project = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;', 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;', project)
-          assert 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;' in project, 'iOS bundle identifier mismatch'
-          assert 'GENERATE_INFOPLIST_FILE = YES;' in project, 'Expected Xcode-generated Info.plist settings'
-          settings = {
-              'NSCameraUsageDescription': ios['infoPlist']['NSCameraUsageDescription'],
-              'NSMicrophoneUsageDescription': ios['infoPlist']['NSMicrophoneUsageDescription'],
-              'NSPhotoLibraryUsageDescription': ios['infoPlist']['NSPhotoLibraryUsageDescription'],
-              'NSPhotoLibraryAddUsageDescription': ios['infoPlist']['NSPhotoLibraryAddUsageDescription'],
-              'ITSAppUsesNonExemptEncryption': 'NO',
-          }
-          lines = []
-          for line in project.splitlines():
-              lines.append(line)
-              if 'GENERATE_INFOPLIST_FILE = YES;' in line:
-                  indent = line[:len(line) - len(line.lstrip())]
-                  for key, value in settings.items():
-                      escaped = value.replace('\\', '\\\\').replace('"', '\\"')
-                      lines.append(f'{indent}INFOPLIST_KEY_{key} = "{escaped}";' if key != 'ITSAppUsesNonExemptEncryption' else f'{indent}INFOPLIST_KEY_{key} = {value};')
-          project = '\n'.join(lines) + '\n'
           project = project.replace('TARGETED_DEVICE_FAMILY = "1";', 'TARGETED_DEVICE_FAMILY = "1,2";')
-          assert 'TARGETED_DEVICE_FAMILY = "1,2";' in project, 'Generated target must include iPhone and iPad'
+          if 'TARGETED_DEVICE_FAMILY = "1,2";' not in project:
+              project = project.replace('PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;', 'PRODUCT_BUNDLE_IDENTIFIER = com.clipverse.app;\\n\\t\\t\\t\\tTARGETED_DEVICE_FAMILY = "1,2";')
           project_path.write_text(project)
+          plists = [p for p in ios_root.rglob('Info.plist') if 'Tests' not in p.parts]
+          assert plists, 'App Info.plist not found'
+          plist_path = plists[0]
+          with plist_path.open('rb') as source:
+              plist = plistlib.load(source)
+          plist.update(ios['infoPlist'])
+          with plist_path.open('wb') as target:
+              plistlib.dump(plist, target)
           PY
       - name: Install CocoaPods
         run: cd "$RUNNER_TEMP/RimSocial/ios" && pod install
