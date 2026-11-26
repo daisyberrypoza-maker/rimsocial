@@ -185,6 +185,7 @@ export default function Login() {
               <button className="ig-auth-primary" type="submit" disabled={busy || !canLogin}>{busy ? 'Logging in…' : 'Log in'}</button>
             </form>
             <button className="ig-auth-link" type="button" onClick={() => setNotice('Password reset is not set up yet. Please contact RimSocial support.')}>Forgot password?</button>
+            <label className="ig-auth-note" style={{display:'flex',gap:10,alignItems:'flex-start'}}><input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} style={{width:18,height:18,margin:'2px 0 0'}}/><span>I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service / EULA</a> (required only when creating a new account with Google).</span></label>
             <div className="ig-auth-divider"><span>OR</span></div>
             {googleBlock}
             <button className="ig-auth-outline" type="button" onClick={() => switchMode('register')}>Create new account</button>
