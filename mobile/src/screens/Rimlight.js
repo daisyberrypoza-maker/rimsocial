@@ -64,6 +64,15 @@ export default function Rimlight() {
   return (
     <View style={styles.page} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
       <PageStatusBar light />
+      {!!items.length && (
+        <View pointerEvents="none" style={styles.progressRail}>
+          {items.slice(0, 30).map((item, index) => (
+            <View key={String(item.id)} style={styles.progressTrack}>
+              <View style={[styles.progressFill, index < active && styles.progressComplete, index === active && styles.progressCurrent]} />
+            </View>
+          ))}
+        </View>
+      )}
       {pending?.kind === 'post' && (
         <View style={styles.upload} pointerEvents="none">
           {pending.mediaKind === 'video'
@@ -117,6 +126,11 @@ export default function Rimlight() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.darkBg },
+  progressRail: { position: 'absolute', top: 8, left: 12, right: 12, zIndex: 7, flexDirection: 'row', gap: 3 },
+  progressTrack: { flex: 1, height: 2, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.32)' },
+  progressFill: { height: '100%', width: '0%', backgroundColor: 'rgba(255,255,255,0.9)' },
+  progressComplete: { width: '100%' },
+  progressCurrent: { width: '55%' },
   tabs: { position: 'absolute', top: 48, left: 0, right: 0, zIndex: 5, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   tab: { alignItems: 'center', paddingVertical: 4 },
   tabText: { color: 'rgba(255,255,255,0.65)', fontSize: 16, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
