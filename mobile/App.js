@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
 import Toast from './src/components/Toast';
+import GlobalMusicPlayer from './src/components/GlobalMusicPlayer';
 import { useAppStore } from './src/store';
 import { api } from './src/api';
 import { loadAccount } from './src/lib/account';
@@ -36,6 +37,7 @@ export default function App() {
       <NavigationContainer>
         <RootNavigator signedIn={Boolean(token)} />
       </NavigationContainer>
+      <GlobalMusicPlayer />
       <Toast />
     </SafeAreaProvider>
   );
