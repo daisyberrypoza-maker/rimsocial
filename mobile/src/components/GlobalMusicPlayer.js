@@ -28,8 +28,8 @@ export default function GlobalMusicPlayer() {
       source={{ uri }}
       audioOnly
       paused={!music.playing}
-      playInBackground
-      playWhenInactive
+      playInBackground={false}
+      playWhenInactive={false}
       ignoreSilentSwitch="ignore"
       onError={tryNext}
       onEnd={() => setMusic({ playing: false })}
