@@ -44,7 +44,7 @@ export function unlockMusicAudio() {
   }
 }
 
-function startCandidate() {
+async function startCandidate() {
   const audio = getAudio();
   const url = streamCandidates[streamIndex];
   if (!audio || !url) return Promise.reject(new Error('No playable stream URL'));
