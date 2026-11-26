@@ -53,3 +53,7 @@
 /* Saved sound: Snapchat yellow bookmark */
 .mp-save.on { color: #FFFC00; }
 .mp-save.on svg { fill: #FFFC00; }
+
+/* Active tab: black text on a white chip. Overrides any global button colour. */
+.mp-page .mp-chip.on { background: #fff !important; color: #000 !important; }
+.mp-page .mp-chip:not(.on) { color: #fff !important; }
