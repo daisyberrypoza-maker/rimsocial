@@ -94,29 +94,10 @@ router.post('/google', async (req, res, next) => {
     const email = String(claims.email).trim().toLowerCase();
     const countryInput = String(req.body.country || 'US').trim().toUpperCase();
     const country = /^[A-Z]{2}$/.test(countryInput) ? countryInput : 'US';
-    let user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } });
     if (!user) throw httpError(403, 'Google sign-up is unavailable until you accept the Terms of Service through email registration');
-    if (!user) {
-      const base = String(claims.name || email.split('@')[0]).toLowerCase()
-        .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'creator';
-      let username = base.length >= 3 ? base : 'user_' + base;
-      if (await User.findOne({ where: { username } })) {
-        username = (base.slice(0, 17) + '_' + Date.now().toString(36)).slice(0, 32);
-      }
-      user = await sequelize.transaction(async (t) => {
-        const created = await User.create({
-          username, email,
-          passwordHash: await bcrypt.hash(String(claims.sub) + String(Date.now()), 10),
-          displayName: String(claims.name || username).slice(0, 64), country,
-        }, { transaction: t });
-        await Wallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });
-        await EarningsWallet.findOrCreate({ where: { userId: created.id }, defaults: { userId: created.id }, transaction: t });
-        return created;
-      });
-    } else {
-      await Wallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
-      await EarningsWallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
-    }
+    await Wallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
+    await EarningsWallet.findOrCreate({ where: { userId: user.id }, defaults: { userId: user.id } });
     res.json({ token: sign(user), user: publicUser(user) });
   } catch (e) {
     if (e.name === 'SequelizeUniqueConstraintError') return next(httpError(409, 'This Google account is already being created. Please try again.'));
