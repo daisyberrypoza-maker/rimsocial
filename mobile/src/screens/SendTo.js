@@ -19,8 +19,16 @@ export default function SendTo({ navigation, route }) {
   const url = route?.params?.url || '';
   const caption = route?.params?.caption || '';
   const storyId = route?.params?.storyId || null;
+  const postId = route?.params?.postId || null;
   const source = route?.params?.source || (storyId ? 'story' : 'post');
-  const [destination, setDestination] = useState(null);
+  const [destinations, setDestinations] = useState([]);
+  const toggleDestination = (key) => setDestinations((current) => {
+    const next = current.filter((value) => value !== key);
+    if (current.includes(key)) return next;
+    if (key === 'story-friends') return [...next.filter((value) => value !== 'story-public'), key];
+    if (key === 'story-public') return [...next.filter((value) => value !== 'story-friends'), key];
+    return [...next, key];
+  });
   const thumb = route?.params?.thumb || null;
   const text = [caption, url].filter(Boolean).join('\n');
 
@@ -66,10 +74,10 @@ export default function SendTo({ navigation, route }) {
     if (sending) return;
     setPicked((list) => (list.some((u) => String(u.id) === String(user.id)) ? list.filter((u) => String(u.id) !== String(user.id)) : [...list, user]));
   };
-  const canSend = (picked.length > 0 || (storySelected && storyId)) && !sending;
-  const barVisible = picked.length > 0 || (storySelected && Boolean(storyId)) || Boolean(destination);
-  // Recipient names in pick order: the chip shows the first, the rest read as a comma list (reference bar)
-  const names = [destination === 'story-friends' ? 'My Story · Friends only' : destination === 'story-public' ? 'My Story · Public' : destination === 'spotlight' ? 'My Spotlight · Public' : null, storySelected && storyId ? 'My Story · Public' : null, ...picked.map((u) => u.displayName || u.username)].filter(Boolean);
+  const canSend = (picked.length > 0 || destinations.length > 0 || (storySelected && storyId)) && !sending;
+  const barVisible = picked.length > 0 || destinations.length > 0 || (storySelected && Boolean(storyId));
+  const destinationNames = { 'story-friends': 'My Story · Friends Only', 'story-public': 'My Story · Public', spotlight: 'My Spotlight · Public' };
+  const names = [...destinations.map((key) => destinationNames[key]), storySelected && storyId ? 'My Story · Public' : null, ...picked.map((u) => u.displayName || u.username)].filter(Boolean);
 
   // Sends the typed message (or the link) to every selected friend, then reposts to My Story when toggled
   async function send() {
@@ -83,12 +91,20 @@ export default function SendTo({ navigation, route }) {
         if (failed === picked.length) throw new Error('Could not send');
         if (failed) toast(`Sent to ${picked.length - failed}. ${failed} failed`);
       }
-      if (storySelected && storyId) {
-        await api(`/v1/stories/${storyId}/repost`, { method: 'POST' });
+      if (destinations.length) {
+        if (!postId) throw new Error('This Rimlight post cannot be published from Send To');
+        const payloads = destinations.map((key) => key === 'story-friends'
+          ? { destination: 'story', visibility: 'friends_only', expiresInHours: 24 }
+          : key === 'story-public'
+            ? { destination: 'story', visibility: 'public', expiresInHours: 24 }
+            : { destination: 'spotlight', visibility: 'public', expiresInHours: null });
+        await Promise.all(payloads.map((payload) => api(`/v1/posts/${postId}/publish`, { method: 'POST', body: payload })));
       }
-      toast(picked.length ? `Sent to ${picked.length}` : 'Added to your story');
+      if (storySelected && storyId) await api(`/v1/stories/${storyId}/repost`, { method: 'POST' });
+      toast(`Sent to ${picked.length} ${picked.length === 1 ? 'person' : 'people'}${destinations.length ? ` and published to ${destinations.length} destination${destinations.length === 1 ? '' : 's'}` : ''}`);
       setPicked([]);
       setStorySelected(false);
+      setDestinations([]);
       setMessage('');
       navigation.goBack();
     } catch (e) {
@@ -120,13 +136,13 @@ export default function SendTo({ navigation, route }) {
       ) : null}
       {!query.trim() && source === 'rimlight' ? <>
         {[
-          { key: 'story-friends', title: 'My Story · Friends only', sub: 'Just for Friends' },
+          { key: 'story-friends', title: 'My Story · Friends Only', sub: 'Just for Friends' },
           { key: 'story-public', title: 'My Story · Public', sub: 'Friends, Followers and Everyone' },
           { key: 'spotlight', title: 'My Spotlight · Public', sub: 'Friends, Followers and Everyone' },
-        ].map((item) => <Pressable key={item.key} style={[styles.row, destination === item.key && styles.selectedRow]} onPress={() => setDestination((v) => v === item.key ? null : item.key)} accessibilityRole="checkbox" accessibilityState={{ checked: destination === item.key }}>
+        ].map((item) => <Pressable key={item.key} style={[styles.row, destinations.includes(item.key) && styles.selectedRow]} onPress={() => toggleDestination(item.key)} accessibilityRole="checkbox" accessibilityState={{ checked: destinations.includes(item.key) }}>
           <View style={styles.storyAvatar}><ImageIcon size={16} color="#000" /></View>
           <View style={styles.nameWrap}><Text style={styles.name}>{item.title}</Text><Text style={styles.sub}>{item.sub}</Text></View>
-          <Radio on={destination === item.key} />
+          <Radio on={destinations.includes(item.key)} />
         </Pressable>)}
       </> : null}
       {!query.trim() ? <Text style={styles.sectionTitle2}>Recents & Suggested</Text> : null}
@@ -183,7 +199,7 @@ export default function SendTo({ navigation, route }) {
             />
           </View>
           <View style={styles.recipientRow}>
-            <Pressable onPress={() => { setPicked([]); setStorySelected(false); }} style={styles.dots} accessibilityLabel="Clear selected people">
+            <Pressable onPress={() => { setPicked([]); setStorySelected(false); setDestinations([]); }} style={styles.dots} accessibilityLabel="Clear selected people">
               <MoreHorizontal size={22} color="#fff" />
             </Pressable>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chips}>
