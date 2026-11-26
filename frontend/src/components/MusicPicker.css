@@ -48,3 +48,11 @@
 .mp-bottom { flex: none; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); background: #212327; }
 .mp-save, .mp-icon { color: #fff !important; }
 .mp-save svg, .mp-icon svg { stroke: currentColor; }
+
+/* Separate bookmark persistence from choosing a sound for the current story. */
+.mp-row { gap: 8px; }
+.mp-use { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: #353941; color: #fff; padding: 0; }
+.mp-use svg { stroke: currentColor; }
+.mp-save { width: 36px; }
+.mp-chip { text-align: center; }
+.mp-chip.on { color: #111; text-align: center; }
