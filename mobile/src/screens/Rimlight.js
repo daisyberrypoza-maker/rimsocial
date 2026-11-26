@@ -8,6 +8,7 @@ import { useAppStore } from '../store';
 import { loadPage } from '../lib/paged';
 import { logError } from '../lib/toast';
 import { colors } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STALE_AFTER_MS = 60 * 1000;
 const SNAP_YELLOW = '#FFFC00'; // active tab underline, as on the web
@@ -17,6 +18,7 @@ const isStale = (feed) => !feed?.updatedAt || Date.now() - feed.updatedAt > STAL
 // Rimlight: full-screen vertical posts. Discover and Following are two saved lists.
 export default function Rimlight() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const focused = useIsFocused();
   const [tab, setTab] = useState('discover');
   const feed = useAppStore((s) => s.feeds[tab]);
@@ -71,7 +73,16 @@ export default function Rimlight() {
             : <Image source={{ uri: pending.thumb }} style={styles.uploadThumb} />}
         </View>
       )}
-      <View style={styles.tabs} pointerEvents="box-none">
+      <View style={[styles.topHeader, { top: insets.top + 8 }]} pointerEvents="box-none">
+        <View style={styles.brandBlock}>
+          <Text style={styles.brandTitle}>Rimlight</Text>
+          <Text style={styles.brandSubtitle}>Discover what’s moving</Text>
+        </View>
+        <Pressable style={styles.createButton} onPress={() => navigation.navigate('Upload')} accessibilityLabel="Create a Rimlight post">
+          <Text style={styles.createIcon}>＋</Text>
+        </Pressable>
+      </View>
+      <View style={[styles.tabs, { top: insets.top + 66 }]} pointerEvents="box-none">
         {TABS.map(([key, label]) => (
           <Pressable key={key} onPress={() => setTab(key)} accessibilityLabel={label} style={styles.tab}>
             <Text style={[styles.tabText, tab === key && styles.tabOn]}>{label}</Text>
@@ -117,6 +128,12 @@ export default function Rimlight() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.darkBg },
+  topHeader: { position: 'absolute', left: 16, right: 16, zIndex: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brandBlock: { gap: 1 },
+  brandTitle: { color: '#fff', fontSize: 23, fontWeight: '800', letterSpacing: -0.5, textShadowColor: 'rgba(0,0,0,0.55)', textShadowRadius: 5 },
+  brandSubtitle: { color: 'rgba(255,255,255,0.78)', fontSize: 11, fontWeight: '500', textShadowColor: 'rgba(0,0,0,0.55)', textShadowRadius: 4 },
+  createButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFC00', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+  createIcon: { color: '#000', fontSize: 29, lineHeight: 32, fontWeight: '500', marginTop: -2 },
   tabs: { position: 'absolute', top: 48, left: 0, right: 0, zIndex: 5, flexDirection: 'row', justifyContent: 'center', gap: 16 },
   tab: { alignItems: 'center', paddingVertical: 4 },
   tabText: { color: 'rgba(255,255,255,0.65)', fontSize: 16, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 4 },
