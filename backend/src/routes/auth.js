@@ -19,6 +19,7 @@ router.post('/register', async (req, res, next) => {
     if (username.toLowerCase() === 'me') throw httpError(400, 'That username is reserved');
     if (password.length < 8) throw httpError(400, 'Password must be at least 8 characters');
     if (!email.includes('@')) throw httpError(400, 'A valid email is required');
+    if (req.body?.termsAccepted !== true) throw httpError(400, 'You must accept the Terms of Service to create an account');
 
     const user = await sequelize.transaction(async (t) => {
       const u = await User.create({
@@ -27,6 +28,7 @@ router.post('/register', async (req, res, next) => {
         passwordHash: await bcrypt.hash(password, 10),
         displayName: (displayName || username).slice(0, 64),
         country: country.toUpperCase().slice(0, 2),
+        termsAcceptedAt: new Date(),
       }, { transaction: t });
       await Wallet.create({ userId: u.id }, { transaction: t });
       await EarningsWallet.create({ userId: u.id }, { transaction: t });
