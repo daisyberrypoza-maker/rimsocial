@@ -350,6 +350,21 @@ export default function Conversation() {
             {!!menuFor && (
               <Pressable style={styles.menuOption} onPress={() => deleteMessage(menuFor, 'me')}><Text style={styles.menuDanger}>Delete for me</Text></Pressable>
             )}
+            {!!menuFor && String(menuFor.senderId) !== String(me?.id) && !menuFor.deletedForEveryone && (
+              <Pressable style={styles.menuOption} onPress={() => {
+                const target = menuFor;
+                setMenuFor(null);
+                Alert.alert('Report message', 'Select the reason for this report.', [
+                  { text: 'Harassment', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Harassment' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Hate speech', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Hate speech' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Threats or violence', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Threats or violence' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Sexual content', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Sexual content' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Spam or scam', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Spam or scam' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Other', onPress: () => api(`/v1/messages/message/${target.id}/report`, { method: 'POST', body: { reason: 'Other' } }).then(() => Alert.alert('Report submitted', 'Thank you.')).catch((e) => Alert.alert('Report failed', e.message || 'Try again.')) },
+                  { text: 'Cancel', style: 'cancel' },
+                ]);
+              }}><Text style={styles.menuDanger}>Report message</Text></Pressable>
+            )}
             <Pressable style={styles.menuCancel} onPress={() => setMenuFor(null)}><Text style={styles.menuText}>Cancel</Text></Pressable>
           </View>
         </View>
