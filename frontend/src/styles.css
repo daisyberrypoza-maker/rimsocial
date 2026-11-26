@@ -7850,3 +7850,23 @@ body:has(.rv-sheet-backdrop) .bottomnav { display: none !important; }
 .share-circle { background:#f1f1f1 !important; color:#111; }
 .share-circle.wa { background:#25d366 !important; color:#fff !important; }
 
+
+
+/* Music-only content cards: always show the selected track artwork and readable title. */
+.post .post-music-cover, .sv-music-cover {
+  width:min(72vw, 340px); margin:0 auto; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:12px; text-align:center; color:#fff; padding:24px;
+}
+.post .post-music-cover img, .sv-music-cover img {
+  width:min(58vw, 260px); aspect-ratio:1; object-fit:cover; border-radius:18px;
+  box-shadow:0 12px 34px rgba(0,0,0,.35);
+}
+.post .post-music-cover > svg, .sv-music-cover > svg {
+  width:min(58vw, 260px); height:auto; aspect-ratio:1; padding:28%;
+  border-radius:18px; background:rgba(0,0,0,.32); color:#fff;
+}
+.post .post-music-cover strong, .sv-music-cover strong { font-size:20px; line-height:1.2; font-weight:700; overflow-wrap:anywhere; }
+.post .post-music-cover span, .sv-music-cover span { font-size:15px; color:rgba(255,255,255,.82); }
+.post .snap-music-credit { display:flex; align-items:center; gap:8px; }
+.post .snap-music-credit img { width:26px; height:26px; border-radius:5px; object-fit:cover; flex:none; }
+.post .snap-music-credit span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
