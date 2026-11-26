@@ -31,6 +31,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
   const [items, setItems] = useState([]);
   const [playingId, setPlayingId] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [savedItems, setSavedItems] = useState(() => { try { return JSON.parse(window.localStorage.getItem('rim.savedSounds') || '[]'); } catch { return []; } });
   const audioRef = useRef(null);
   const fileRef = useRef(null);
   const streamUrlsRef = useRef(new Map());
@@ -41,7 +42,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
 
   // Load the list for the active chip; the search text changes the list after a short pause
   useEffect(() => {
-    if (chip === 'saved') { setItems([]); return undefined; }
+    if (chip === 'saved') { setItems(savedItems); return undefined; }
     let active = true;
     const q = query.trim();
     const path = chip === 'trending'
@@ -123,6 +124,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
 
   function choose(item) {
     stopPreview();
+    setSavedItems((current) => {
+      const updated = [item, ...current.filter((entry) => String(entry.id) !== String(item.id))];
+      try { window.localStorage.setItem('rim.savedSounds', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     onSelect(item.source === 'audius' ? { ...item, previewUrl: streamUrlsRef.current.get(item.id) || null } : item);
   }
 
@@ -152,7 +158,7 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
       </nav>
 
       <ul className="mp-list">
-        {chip === 'saved' && <li className="mp-empty">Saved sounds will appear here.</li>}
+        {chip === 'saved' && items.length === 0 && <li className="mp-empty">No saved sounds yet.</li>}
         {chip !== 'saved' && items.length === 0 && <li className="mp-empty">No sounds found.</li>}
         {items.map((item) => {
           const selected = selectedId === item.id;
