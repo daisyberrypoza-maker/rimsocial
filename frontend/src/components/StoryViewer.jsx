@@ -822,6 +822,7 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       />}
 
       {storyShareOpen && <ShareSheet
+        source="story"
         url={storyShareUrl()}
         caption={current?.caption || ''}
         imageUrl={current?.mediaUrl ? mediaUrl(current.mediaUrl) : textShareUrl}
