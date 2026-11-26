@@ -570,10 +570,21 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
   }
 
   // Share and save for the creator's own story (the options sheet on their own stories)
+  function storyShareUrl() {
+    return `${window.location.origin}/stories?userId=${encodeURIComponent(group.user.id)}&storyId=${encodeURIComponent(current?.id || '')}`;
+  }
+
   async function shareStory() {
-    const url = `${window.location.origin}/u/${group.user.username}`;
+    const url = storyShareUrl();
     if (navigator.share) navigator.share({ title: 'RimSocial Story', text: `View ${creatorName}'s story on RimSocial`, url }).catch(() => {});
-    else copyProfileLink();
+    else copyStoryLink();
+  }
+
+  async function copyStoryLink() {
+    try {
+      await navigator.clipboard.writeText(storyShareUrl());
+      toast('Story link copied');
+    } catch { toast('Could not copy the story link'); }
   }
 
   function saveMedia() {
@@ -768,10 +779,10 @@ export default function StoryViewer({ groups, startIndex, startStory = 0, startS
       />}
 
       {storyShareOpen && <ShareSheet
-        url={`${window.location.origin}/u/${group.user.username}`}
+        url={storyShareUrl()}
         caption={current?.caption || ''}
         onClose={() => setStoryShareOpen(false)}
-        onCopy={() => { setStoryShareOpen(false); copyProfileLink(); }}
+        onCopy={() => { setStoryShareOpen(false); copyStoryLink(); }}
         onMore={() => { setStoryShareOpen(false); shareStory(); }}
         onAddToStory={() => { setStoryShareOpen(false); reshare(); }}
       />}
