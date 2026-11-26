@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { trimVideo, POST_MAX_SECONDS, STORY_MAX_SECONDS } from '../lib/videoTrim.js';
 import { startUpload } from '../lib/uploader.js';
 import { FILTERS, cssFilterFor, bakeFilter, CROP_RATIOS, STROKE_WIDTH } from '../lib/photoFilters.js';
@@ -245,6 +245,7 @@ const STICKERS = ['😀', '😂', '😍', '🔥', '💯', '👍', '🎉', '❤�
 
 export default function Upload() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const remixId = searchParams.get('remix');
   const draft = useAppStore((s) => s.uploadDraft);
@@ -261,7 +262,7 @@ export default function Upload() {
   const [selectMode, setSelectMode] = useState(false);
   const [selection, setSelection] = useState([]);
   const [carousel, setCarousel] = useState([]);
-  const [storyTrack, setStoryTrack] = useState(null);
+  const [storyTrack, setStoryTrack] = useState(() => location.state?.storyTrack || null);
   const [galleryMusicOpen, setGalleryMusicOpen] = useState(false);
   const [galleryMusicPlaying, setGalleryMusicPlaying] = useState(false);
   const galleryAudioRef = useRef(null);
