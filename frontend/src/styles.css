@@ -7930,3 +7930,7 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
 .app > .feed > .post > .post-seek::-webkit-slider-thumb {
   width: 0 !important; height: 0 !important; margin-top: -1.5px !important;
 }
+
+/* Rimlight rating badge on grid and story tiles (rating 4.0 and above) */
+.xp-card, .sr-cell, .sc-tile, .st-discover-tile { position: relative; }
+.rim-badge { position: absolute; top: 6px; left: 6px; z-index: 3; padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font-size: 12px; font-weight: 700; line-height: 1.4; pointer-events: none; }

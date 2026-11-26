@@ -28,6 +28,7 @@ import LiveBroadcasts from '../screens/LiveBroadcasts';
 import LiveMatchRoom from '../screens/LiveMatchRoom';
 import MusicPicker from '../screens/MusicPicker';
 import Terms from '../screens/Terms';
+import SendTo from '../screens/SendTo';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,7 @@ export default function RootNavigator({ signedIn }) {
   return (
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="SendTo" component={SendTo} options={{ presentation: 'modal' }} />
       <Stack.Screen name="MusicPicker" component={MusicPicker} options={{ presentation: 'modal' }} />
       <Stack.Screen name="Terms" component={Terms} />
       <Stack.Screen name="Upload" component={Upload} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

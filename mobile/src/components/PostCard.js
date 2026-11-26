@@ -7,7 +7,7 @@ import Icon from './Icon';
 import Avatar from './Avatar';
 import { api } from '../api';
 import { useAppStore } from '../store';
-import { mediaUrl, videoStreamUrl } from '../config';
+import { mediaUrl, videoStreamUrl, postShareUrl } from '../config';
 import { formatCount, timeAgo } from '../lib/format';
 import { registerPlayer, claimPlayback } from '../lib/playback';
 import { logError, toast } from '../lib/toast';
@@ -422,7 +422,7 @@ export default function PostCard({ post, active, focused, navigation, height, sc
 
   function share() {
     setShowMenu(false);
-    Share.share({ message: post.caption || 'View this post on RimSocial' }).catch(logError);
+    navigation.navigate('SendTo', { url: postShareUrl(post.id), caption: post.caption || '' });
   }
 
   async function notInterested() {

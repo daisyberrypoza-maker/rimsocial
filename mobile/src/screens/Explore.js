@@ -12,6 +12,7 @@ import { formatCount } from '../lib/format';
 import { logError } from '../lib/toast';
 import { mediaUrl } from '../config';
 import { colors } from '../theme';
+import RimlightBadge from '../components/RimlightBadge';
 
 // Mirrors the web Explore page.
 // Explore: grid of posts. Find friends (route.friends): follow-back and suggested people.
@@ -156,6 +157,7 @@ export default function Explore() {
           {item.items.map((p) => (
             <Pressable key={p.id} style={styles.cell} onPress={() => navigation.navigate('ExploreWatch', { postId: p.id })}>
               <Image source={{ uri: mediaUrl(p.thumbUrl || p.mediaUrl) }} style={styles.fill} />
+              <RimlightBadge rating={p.rating} />
               <View style={styles.views}><Icon name="play" size={12} color="#fff" /><Text style={styles.viewsText}>{formatCount(p.viewCount)}</Text></View>
             </Pressable>
           ))}

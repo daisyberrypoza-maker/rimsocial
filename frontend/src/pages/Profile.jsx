@@ -25,6 +25,7 @@ import { goBack } from '../lib/goBack.js';
 import { logError } from '../toast.js';
 import '../settings-menu.css';
 import { confirmDialog } from '../lib/confirm.js';
+import RimlightBadge from '../components/RimlightBadge.jsx';
 
 const LIST_TYPES = ['followers', 'following', 'blocked', 'activity'];
 const PROFILE_TABS = ['posts', 'stories', 'reposts', 'saved'];
@@ -823,6 +824,7 @@ export default function Profile() {
                 {p.kind === 'video'
                   ? <video src={mediaUrl(p.mediaUrl)} poster={mediaUrl(p.thumbUrl) || undefined} muted playsInline preload="metadata" />
                   : p.kind === 'text' ? <span className="post-text-tile" style={{ background: backgroundCss(p.storyBackground) }}>{p.storyText}</span> : <img src={mediaUrl(p.mediaUrl)} alt="" loading="lazy" />}
+                <RimlightBadge rating={p.rating} />
                 <span className="sc-tile-count" aria-label={`${formatCount(p.uniqueViewers ?? 0)} viewers`}><Icon name="eye" size={12} />{formatCount(p.uniqueViewers ?? 0)}</span>
                 {profile.isMe && <button className="sc-tile-delete" disabled={deleting === p.id} aria-label="Delete post" title="Delete post" onClick={(e) => { e.stopPropagation(); deletePost(p); }}>×</button>}
               </div>
