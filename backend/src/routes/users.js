@@ -590,4 +590,31 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Delete account (App Store 5.1.1(v) and Google Play account deletion policy). The account is anonymised
+// rather than hard-deleted so chats and shared records keep their structure: the login details, name, photos
+// and bio are removed, every post and story is hidden, and follows and blocks are cleared.
+router.delete('/me', requireAuth, async (req, res, next) => {
+  try {
+    if (String(req.body?.confirm || '').trim().toUpperCase() !== 'DELETE') throw httpError(400, 'Type DELETE to confirm');
+    const me = req.user.id;
+    await sequelize.transaction(async (transaction) => {
+      await Post.update({ status: 'removed' }, { where: { authorId: me }, transaction });
+      await Follow.destroy({ where: { [Op.or]: [{ followerId: me }, { followeeId: me }] }, transaction });
+      await UserBlock.destroy({ where: { [Op.or]: [{ blockerId: me }, { blockedUserId: me }] }, transaction });
+      const tag = me.replace(/-/g, '').slice(0, 20);
+      await User.update({
+        username: `deleted_${tag}`,
+        email: `deleted-${tag}@deleted.invalid`,
+        passwordHash: `deleted-${tag}`,
+        displayName: 'Deleted account',
+        avatarUrl: null,
+        coverUrl: null,
+        isCreator: false,
+      }, { where: { id: me }, transaction });
+    });
+    await redis.set('acct-deleted:' + me, '1').catch(() => {});
+    res.json({ deleted: true });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

@@ -81,7 +81,8 @@ jobs:
             const plist = "ios/RimSocial/Info.plist";
             for (const [key, value] of Object.entries(ios.infoPlist || {})) {
               // plutil -replace inserts the key or replaces an existing one
-              require("child_process").execFileSync("plutil", ["-replace", key, "-string", value, plist]);
+              const args = typeof value === "boolean" ? ["-bool", value ? "YES" : "NO"] : ["-string", String(value)];
+              require("child_process").execFileSync("plutil", ["-replace", key, ...args, plist]);
             }
             const pbx = "ios/RimSocial.xcodeproj/project.pbxproj";
             let text = fs.readFileSync(pbx, "utf8");
@@ -97,6 +98,7 @@ jobs:
           grep -c 'PRODUCT_BUNDLE_IDENTIFIER = "com.clipverse.app"' ios/RimSocial.xcodeproj/project.pbxproj
           grep -q 'TARGETED_DEVICE_FAMILY = "1,2"' ios/RimSocial.xcodeproj/project.pbxproj
           plutil -p ios/RimSocial/Info.plist | grep -q NSCameraUsageDescription
+          plutil -p ios/RimSocial/Info.plist | grep -q ITSAppUsesNonExemptEncryption
 
       - name: Install CocoaPods dependencies
         working-directory: ${{ runner.temp }}/RimSocial/ios

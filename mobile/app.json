@@ -12,7 +12,8 @@
       "NSCameraUsageDescription": "RimSocial uses the camera so you can take photos and videos to post and send.",
       "NSMicrophoneUsageDescription": "RimSocial uses the microphone to record sound with your videos.",
       "NSPhotoLibraryUsageDescription": "RimSocial lets you choose photos and videos from your library to post and send.",
-      "NSPhotoLibraryAddUsageDescription": "RimSocial saves photos and videos you choose to your library."
+      "NSPhotoLibraryAddUsageDescription": "RimSocial saves photos and videos you choose to your library.",
+      "ITSAppUsesNonExemptEncryption": false
     }
   }
 }
