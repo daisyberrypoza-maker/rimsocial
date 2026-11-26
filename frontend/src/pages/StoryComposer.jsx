@@ -15,11 +15,12 @@ import './StoryComposer.css';
 // Text story: type on a background, add a music track and/or a voice note, then share.
 export default function StoryComposer() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const isPost = pathname.startsWith('/post/text');
   const [text, setText] = useState('');
   const [bgKey, setBgKey] = useState(STORY_BACKGROUNDS[0].key);
-  const [track, setTrack] = useState(null);
+  const [track, setTrack] = useState(() => location.state?.storyTrack || null);
   const [voice, setVoice] = useState(null);
   const [posting, setPosting] = useState(false);
   const me = useAppStore((st) => st.user);
@@ -31,11 +32,11 @@ export default function StoryComposer() {
   }
 
   async function share() {
-    if (posting || (!text.trim() && !voice)) return;
+    if (posting || (!text.trim() && !voice && !track)) return;
     setPosting(true);
     if (isPost) {
       try {
-        await api('/v1/posts/text', { method: 'POST', body: { text: text.trim(), background: bgKey, visibility: 'public' } });
+        await api('/v1/posts/text', { method: 'POST', body: { text: text.trim(), background: bgKey, visibility: 'public', ...(track?.source === 'audius' ? { audiusTrackId: track.id } : track?.id ? { musicId: track.id } : {}) } });
         refreshMyThumb();
         toast('Post published');
         navigate('/', { replace: true });
@@ -64,7 +65,7 @@ export default function StoryComposer() {
     }
   }
 
-  const canShare = Boolean(text.trim() || voice) && !posting;
+  const canShare = Boolean(text.trim() || voice || track) && !posting;
 
   return (
     <main className="sc-page" style={{ background: backgroundCss(bgKey) }}>
