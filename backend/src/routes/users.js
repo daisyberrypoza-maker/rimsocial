@@ -536,7 +536,7 @@ router.post('/:id/follow', requireAuth, async (req, res, next) => {
       }
     });
     await addFolloweeToTray(req.user.id, followeeId).catch((trayError) => console.error('Story tray update failed:', trayError.message));
-    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
+    await Promise.all([req.user.id, followeeId].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
 
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     res.json({ isFollowing: true, followerCount: fresh.followerCount });
@@ -573,8 +573,11 @@ router.delete('/:id/follower', requireAuth, async (req, res, next) => {
     let removed = 0;
     await sequelize.transaction(async (t) => {
       removed = await Follow.destroy({ where: { followerId: req.params.id, followeeId: req.user.id }, transaction: t });
+      const [userAId, userBId] = [String(req.user.id), String(req.params.id)].sort();
+      await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
       if (removed) await User.decrement('followerCount', { by: removed, where: { id: req.user.id }, transaction: t });
     });
+    await Promise.all([req.user.id, req.params.id].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
     const fresh = await User.findByPk(req.user.id, { attributes: ['followerCount'] });
     res.json({ removed: Boolean(removed), followerCount: fresh?.followerCount || 0 });
   } catch (e) { next(e); }
@@ -592,7 +595,7 @@ router.delete('/:id/follow', requireAuth, async (req, res, next) => {
       const [userAId, userBId] = [String(req.user.id), String(followeeId)].sort();
       await Friendship.destroy({ where: { userAId, userBId }, transaction: t });
     });
-    await redis.del(`stories:rail:${req.user.id}`).catch(() => {});
+    await Promise.all([req.user.id, followeeId].map((id) => redis.del(`stories:rail:${id}`).catch(() => {})));
     const fresh = await User.findByPk(followeeId, { attributes: ['followerCount'] });
     if (!fresh) throw httpError(404, 'User not found');
     res.json({ isFollowing: false, followerCount: fresh.followerCount });
