@@ -6,18 +6,9 @@ import { launchCamera } from 'react-native-image-picker';
 import Icon from '../components/Icon';
 import { logError } from '../lib/toast';
 
-// Add tab. Matches the Snapchat camera layout: top row and a bottom bar with the shutter and the latest photo.
+// Add tab. Matches the Snapchat camera layout: top row and a bottom bar with the shutter and a direct gallery-picker shortcut.
 // There is no live preview here (that needs a camera library); the shutter opens the phone's camera and the
 // captured photo or video goes straight into the Upload editor.
-async function requestGalleryPermission() {
-  if (Platform.OS !== 'android') return true;
-  const perms = Platform.Version >= 33
-    ? [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES, PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO]
-    : [PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE];
-  const result = await PermissionsAndroid.requestMultiple(perms);
-  return Object.values(result).every((r) => r === PermissionsAndroid.RESULTS.GRANTED);
-}
-
 export default function Camera() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
