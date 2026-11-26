@@ -51,7 +51,16 @@ function startCandidate() {
   audio.pause();
   audio.src = url;
   audio.load();
-  return audio.play().then(() => onPlaybackState?.(true));
+  try {
+    await audio.play();
+    onPlaybackState?.(true);
+  } catch (error) {
+    if (streamIndex + 1 < streamCandidates.length) {
+      streamIndex += 1;
+      return startCandidate();
+    }
+    throw error;
+  }
 }
 
 export async function playMusicTrack(urls, callbacks = {}) {
