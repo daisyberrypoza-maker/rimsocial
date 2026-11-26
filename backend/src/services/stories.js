@@ -155,6 +155,21 @@ async function getUserStories(userId, viewerId) {
     limit: 100,
   });
   stories.reverse();
+  // Resolve reshared-story attribution in one bounded lookup, not one query per story.
+  const sourceIds = [...new Set(stories.map((story) => story.sourcePostId).filter(Boolean).map(String))];
+  const sourcePosts = sourceIds.length ? await Post.findAll({
+    where: { id: sourceIds },
+    attributes: ['id', 'authorId'],
+    raw: true,
+  }) : [];
+  const sourceAuthorIds = [...new Set(sourcePosts.map((post) => String(post.authorId)))];
+  const sourceAuthors = sourceAuthorIds.length ? await User.findAll({
+    where: { id: sourceAuthorIds },
+    attributes: ['id', 'username', 'displayName', 'avatarUrl'],
+    raw: true,
+  }) : [];
+  const sourceAuthorById = new Map(sourceAuthors.map((author) => [String(author.id), author]));
+  const sourceByPostId = new Map(sourcePosts.map((post) => [String(post.id), sourceAuthorById.get(String(post.authorId)) || null]));
   const ids = stories.map((s) => s.id);
   const viewed = await viewedSet(viewerId, ids);
   // If migration 026 has not run yet, stories still load without like state instead of failing.
@@ -166,6 +181,7 @@ async function getUserStories(userId, viewerId) {
   const counts = new Map(countRows.map((r) => [r.postId, Number(r.n)]));
   return stories.map((s) => ({
     ...toPostDTO(s),
+    source: sourceByPostId.get(String(s.sourcePostId)) ? { ...sourceByPostId.get(String(s.sourcePostId)) } : null,
     viewed: viewed.has(s.id),
     liked: liked.has(s.id),
     likeCount: counts.get(s.id) || 0,
