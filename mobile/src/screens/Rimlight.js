@@ -94,7 +94,7 @@ export default function Rimlight() {
         data={items}
         keyExtractor={(p) => String(p.id)}
         renderItem={({ item, index }) => (
-          <PostCard post={item} active={index === active} focused={focused} navigation={navigation} height={pageHeight} scrolling={scrolling} />
+          <PostCard post={item} active={index === active} focused={focused} navigation={navigation} height={pageHeight} scrolling={scrolling} source="rimlight" />
         )}
         getItemLayout={(_, index) => ({ length: pageHeight, offset: pageHeight * index, index })}
         initialScrollIndex={startIndex}
