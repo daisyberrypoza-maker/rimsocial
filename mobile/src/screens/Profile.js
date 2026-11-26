@@ -480,6 +480,7 @@ export default function Profile() {
         <SheetRow icon={<Icon name="wallet" size={22} color={colors.text} />} label="Creator Studio · earnings & cashout" onPress={() => go('Creator')} />
         <SheetRow icon={<Megaphone size={22} color={colors.text} />} label="Ads & Sponsors" onPress={() => go('Ads')} />
         <SheetRow icon={<Shield size={22} color={colors.text} />} label="Blocked accounts" onPress={() => go('ProfileList', { username: me?.username || username, list: 'blocked' })} />
+        <SheetRow icon={<Icon name="file" size={22} color={colors.text} />} label="Terms of Service & EULA" onPress={() => go('Terms')} />
         <SheetRow icon={<Icon name="image" size={22} color={colors.text} />} label="Change profile or background image" onPress={() => setSheet('images')} />
         <SheetRow icon={<Icon name="video" size={22} color={colors.text} />} label="LIVE broadcasts" onPress={() => go('Live')} />
         <SheetRow icon={<Icon name="gift" size={22} color={colors.text} />} label="Get coins" onPress={() => go('Coins')} />
