@@ -209,7 +209,6 @@ export default function ShareSheet({ url, caption, onClose, onCopy, onMore, onAd
         )}
         {!query.trim() && source === 'rimlight' && (
           <>
-            <h2 className="sf-section-title">Post to…</h2>
             <button type="button" role="listitem" className={destination === 'story-friends' ? 'sf-person sf-destination on' : 'sf-person sf-destination'} onClick={() => setDestination(destination === 'story-friends' ? null : 'story-friends')} aria-pressed={destination === 'story-friends'}>
               <span className="sf-story-avatar"><Icon name="image" size={16} /></span><span className="sf-name"><strong>My Story · Friends only</strong><small>Just for Friends</small></span><span className={destination === 'story-friends' ? 'sf-radio on' : 'sf-radio'} />
             </button>
