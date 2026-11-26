@@ -36,7 +36,7 @@ export default function GlobalMusicPlayer() {
       onAudioFocusChanged={({ hasAudioFocus }) => {
         if (!hasAudioFocus) setMusic({ playing: false });
       }}
-      style={{ width: 0, height: 0 }}
+      style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
     />
   );
 }
