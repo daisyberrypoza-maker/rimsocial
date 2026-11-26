@@ -60,7 +60,7 @@ const Post = sequelize.define('Post', {
   isStory: { type: DataTypes.BOOLEAN, defaultValue: false },
   expiresAt: DataTypes.DATE,
   viewCount: { type: DataTypes.BIGINT, defaultValue: 0 },
-  // Curated 0–5 creator/content score; null means not yet rated.
+  // Curated 0–5 creator/content score; null means not yet rated. Keep aligned with migration 047-post-rating.sql.
   rating: { type: DataTypes.DECIMAL(3, 2), allowNull: true, validate: { min: 0, max: 5 } },
   likeCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   repostCount: { type: DataTypes.INTEGER, defaultValue: 0 },
