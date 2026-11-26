@@ -7900,3 +7900,31 @@ body:has([contenteditable="true"]:focus) .bottomnav { display: none !important; 
   .app { max-width: 640px; margin: 0 auto; box-shadow: 0 0 0 1px var(--line); }
   .bottomnav { left: 50%; right: auto; width: 100%; max-width: 640px; transform: translateX(-50%); }
 }
+
+
+/* Global Snapchat action colour: no primary/action button uses a black fill. */
+:root {
+  --brand-a: #fffc00;
+  --brand-b: #fffc00;
+  --brand: #fffc00;
+  --on-brand: #000000;
+  --snap-yellow: #fffc00;
+}
+button:not(.ghost):not(.icon-button):not(.topbar-back) {
+  --button-action-bg: var(--snap-yellow);
+}
+.seg button.on,
+.search-filters button.on,
+.upload-kind button.on,
+.upload-submit,
+.ads-create-button,
+.studio-share,
+.profile-actions-refresh > button:first-child,
+.profile-top .pill,
+.coin-checkout,
+.discover-follow,
+.follow-result {
+  background: var(--snap-yellow) !important;
+  color: #000 !important;
+  border-color: var(--snap-yellow) !important;
+}
