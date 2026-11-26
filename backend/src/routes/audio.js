@@ -104,6 +104,8 @@ router.get('/network-trending', async (req, res, next) => {
     const since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
     const follows = await Follow.findAll({ where: { followerId: req.user.id }, attributes: ['followeeId'], raw: true });
     const followeeIds = follows.map((row) => row.followeeId);
+    const offset = Math.min(10000, Math.max(0, parseInt(req.query.offset, 10) || 0));
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 30));
     if (!followeeIds.length) return res.json({ items: [], hasMore: false, nextOffset: 0 });
     const posts = await Post.findAll({
       attributes: ['musicUrl', 'musicSource', 'audiusTrackId', 'musicTitle', 'artistName', 'artworkUrl'],
@@ -124,7 +126,8 @@ router.get('/network-trending', async (req, res, next) => {
       entry.uses += 1;
       counts.set(key, entry);
     }
-    const top = [...counts.values()].sort((a, b) => b.uses - a.uses).slice(0, 30);
+    const ranked = [...counts.values()].sort((a, b) => b.uses - a.uses);
+    const top = ranked.slice(offset, offset + limit);
     const localUrls = top.filter((entry) => !(entry.post.musicSource === 'audius' && entry.post.audiusTrackId)).map((entry) => entry.post.musicUrl);
     const tracks = localUrls.length ? await AudioTrack.findAll({ where: { mediaUrl: localUrls } }) : [];
     const byUrl = new Map(tracks.map((track) => [track.mediaUrl, track]));
@@ -137,7 +140,7 @@ router.get('/network-trending', async (req, res, next) => {
         if (track) items.push({ ...toDTO(track), source: 'local' });
       }
     }
-    res.json({ items, hasMore: false, nextOffset: items.length });
+    res.json({ items, hasMore: offset + limit < ranked.length, nextOffset: offset + limit });
   } catch (e) { next(e); }
 });
 

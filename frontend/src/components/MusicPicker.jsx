@@ -59,10 +59,11 @@ export default function MusicPicker({ selectedId, onSelect, onClose, onSettings 
 
   // Load the next page when the list is scrolled near its end
   async function loadMore() {
-    if (!hasMore || loadingMore || chip === 'trending' || chip === 'saved') return;
+    if (!hasMore || loadingMore || chip === 'saved') return;
+    if (chip === 'trending' && query.trim()) return;
     setLoadingMore(true);
     try {
-      const data = await api(searchPath(query.trim(), chip, nextOffset));
+      const data = await api(chip === 'trending' ? `/v1/audio/network-trending?offset=${nextOffset}&limit=30` : searchPath(query.trim(), chip, nextOffset));
       const more = (data.items || []).map((item) => ({ ...item, source: 'local' }));
       setItems((list) => {
         const seen = new Set(list.map((item) => String(item.id)));
